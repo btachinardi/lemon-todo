@@ -164,6 +164,48 @@
 - **Strategy Options**: `generateSW` (auto) or `injectManifest` (custom control)
 - **Source**: [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
 
+### 2.7 Zustand 5
+
+- **Version**: 5.0.11 (latest stable)
+- **Purpose**: Lightweight client state management for React
+- **Key Features**:
+  - Minimal API (~1KB bundle), no boilerplate
+  - No providers needed - stores are plain hooks
+  - Built-in middleware: `persist` (localStorage/IndexedDB), `devtools`, `immer`
+  - First-class TypeScript support
+  - Compatible with React 19 and concurrent features
+- **v5 Changes**:
+  - Removed default equality function customization from `create` (use `createWithEqualityFn` for custom equality like `shallow`)
+  - `persist` middleware requires explicit state hydration pattern
+- **Why Zustand over Redux/Context**:
+  - No provider wrapper needed (simpler component tree)
+  - Stores are independent - no single global store monolith
+  - Perfect for client-only state (UI state, form drafts, offline queue)
+  - Naturally separates client state from server state (paired with TanStack Query)
+- **Source**: [Zustand GitHub](https://github.com/pmndrs/zustand)
+
+### 2.8 TanStack Query 5 (React Query)
+
+- **Version**: 5.90.21 (latest stable)
+- **Purpose**: Server state management - fetching, caching, synchronizing, and updating server data
+- **Key Features**:
+  - Automatic background refetching and cache invalidation
+  - First-class Suspense support (`useSuspenseQuery`, `useSuspenseInfiniteQuery`)
+  - Optimistic updates with rollback
+  - Infinite scroll/pagination built-in
+  - Offline support with mutation queue (pairs with our PWA requirement)
+  - ~20% smaller than v4
+  - Framework-agnostic devtools with cache editing and light mode
+  - Prefetch multiple pages at once for infinite queries
+- **Why TanStack Query**:
+  - Eliminates manual loading/error/data state management
+  - Cache deduplication (multiple components using same query share one request)
+  - Automatic retry, stale-while-revalidate, garbage collection
+  - Mutation queue supports offline-first (critical for our PWA scenario S06)
+  - Devtools for debugging cache state during development
+- **Requires**: React 18+ (uses `useSyncExternalStore`)
+- **Source**: [TanStack Query](https://tanstack.com/query/latest)
+
 ---
 
 ## 3. Testing Technologies
@@ -237,6 +279,8 @@
 | Vite 7 | Node 18+ | React 19, Vitest 3+, Tailwind 4 |
 | React 19 | Vite 6+ | Shadcn/ui, react-i18next 16 |
 | Shadcn/ui | React 18+ | React 19, Tailwind 4, Radix UI |
+| Zustand 5 | React 18+ | React 19, TypeScript 5 |
+| TanStack Query 5 | React 18+ | React 19, TypeScript 5 |
 | Playwright 1.58 | .NET 8+ | .NET 10, all major browsers |
 | Terraform azurerm | Terraform 1.x | Azure Container Apps, latest API |
 
@@ -267,6 +311,8 @@ tailwindcss: 4.x
 shadcn-ui: latest
 react-i18next: 16.x
 i18next: 25.x
+zustand: 5.x
+@tanstack/react-query: 5.x
 vite-plugin-pwa: latest
 vitest: 3.x
 playwright: latest

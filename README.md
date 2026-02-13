@@ -136,6 +136,30 @@ Before touching code, we established our rules of engagement ([GUIDELINES.md](./
 - **Security**: PII redaction in logs, OWASP Top 10 compliance, rate limiting.
 - **Accessibility**: WCAG 2.1 AA minimum, Radix primitives for built-in a11y.
 
+### Interlude: The State Management Gap
+
+During our checkpoint review of GUIDELINES.md, we realized we had a significant blind spot: **no explicit state management strategy for the frontend**. Our original 3-layer component architecture (L1/L2/L3) described what components render, but not how they get their data.
+
+We added two critical libraries to the stack:
+
+**TanStack Query 5** for server state (data from the API):
+- Replaces the `useState` + `useEffect` + `fetch` anti-pattern
+- Automatic caching, deduplication, and background refetching
+- Offline mutation queue - critical for our PWA scenario (Sarah on a plane)
+- Optimistic updates for that instant-feeling UI
+
+**Zustand 5** for client state (UI preferences, form drafts, offline queue):
+- No provider wrapper needed (unlike Redux or Context)
+- Built-in `persist` middleware for localStorage/IndexedDB
+- Tiny (~1KB) - important for our mobile-first PWA
+
+This gave us a **4-layer frontend architecture**:
+```
+L1 (Routes) -> State Layer (Zustand + TanStack Query) -> L2 (Domain UI) -> L3 (Design System)
+```
+
+The key rule: **TanStack Query owns all server data, Zustand owns all client state, React Context is only for low-frequency cross-cutting providers.** Components never mix `fetch` calls with rendering.
+
 ### Phase 3: Codebase Bootstrap
 
 *Coming next: We'll initialize the .NET Aspire solution, scaffold the React frontend, wire up the test infrastructure, and get health checks passing.*
@@ -172,6 +196,8 @@ Before touching code, we established our rules of engagement ([GUIDELINES.md](./
 | **Build** | Vite 7 | 7.x |
 | **UI** | Shadcn/ui + Radix | Latest |
 | **Styling** | Tailwind CSS | 4.x |
+| **Server State** | TanStack Query 5 | 5.x |
+| **Client State** | Zustand 5 | 5.x |
 | **i18n** | react-i18next | 16.x |
 | **PWA** | vite-plugin-pwa | Latest |
 | **Backend Tests** | xUnit + FsCheck | Latest |

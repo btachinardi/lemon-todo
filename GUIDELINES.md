@@ -1,7 +1,6 @@
 # LemonDo - Development Guidelines
 
 > These guidelines govern all code contributions to the LemonDo project.
-> Every developer (human or AI) must follow these rules without exception.
 
 ---
 
@@ -21,7 +20,7 @@ We follow strict Test-Driven Development with RED-GREEN-VALIDATE phases.
 
 - Never write production code without a failing test first
 - Tests are the specification. If there's no test for it, it doesn't exist
-- Each test should test ONE behavior, not one method
+- Each test should test one behavior, not one method
 - Test names describe behavior: `should_create_task_with_valid_title`, not `test_create_task`
 - Property tests cover domain invariants (value objects, entities)
 - Integration tests cover API endpoints
@@ -30,11 +29,12 @@ We follow strict Test-Driven Development with RED-GREEN-VALIDATE phases.
 ### Testing Pyramid
 
 ```
-        /  E2E (Playwright)  \          <- Few, slow, full-stack
-       / Integration (API)    \         <- Moderate, test endpoints
-      / Unit (Domain + Components) \    <- Many, fast, isolated
-     /  Property (Domain invariants) \  <- Many, fast, generated
-    +----------------------------------+
+         +-------------------------+
+        /      E2E (Playwright)     \     <- Few, slow, full-stack
+       /      Integration (API)      \    <- Moderate, test endpoints
+      /   Unit (Domain + Components)  \   <- Many, fast, isolated
+     /  Property (Domain invariants)   \  <- Many, fast, generated
+    +-----------------------------------+
 ```
 
 ### Coverage Targets
@@ -59,83 +59,408 @@ src/
 ├── LemonDo.ServiceDefaults/      # Shared Aspire defaults
 ├── LemonDo.Api/                  # ASP.NET Core API
 │   ├── Endpoints/                # Minimal API endpoint definitions
-│   ├── Middleware/                # Auth, error handling, PII redaction
-│   └── Program.cs               # App configuration
+│   ├── Middleware/               # Auth, error handling, PII redaction
+│   └── Program.cs                # App configuration
 ├── LemonDo.Application/          # Use cases layer
 │   ├── Identity/
-│   │   ├── Commands/            # RegisterUser, Login, etc.
-│   │   └── Queries/             # GetCurrentUser, ListUsers, etc.
+│   │   ├── Commands/             # RegisterUser, Login, etc.
+│   │   └── Queries/              # GetCurrentUser, ListUsers, etc.
 │   ├── Tasks/
-│   │   ├── Commands/            # CreateTask, MoveTask, etc.
-│   │   └── Queries/             # ListTasks, GetBoard, etc.
+│   │   ├── Commands/             # CreateTask, MoveTask, etc.
+│   │   └── Queries/              # ListTasks, GetBoard, etc.
 │   ├── Admin/
-│   └── Common/                  # Shared interfaces, behaviors
+│   └── Common/                   # Shared interfaces, behaviors
 ├── LemonDo.Domain/               # Pure domain layer
 │   ├── Identity/
-│   │   ├── Entities/            # User, Role
-│   │   ├── ValueObjects/        # Email, DisplayName, UserId
-│   │   ├── Events/              # UserRegistered, LoginSucceeded, etc.
-│   │   └── Repositories/        # IUserRepository (interface only)
+│   │   ├── Entities/             # User, Role
+│   │   ├── ValueObjects/         # Email, DisplayName, UserId
+│   │   ├── Events/               # UserRegistered, LoginSucceeded, etc.
+│   │   └── Repositories/         # IUserRepository (interface only)
 │   ├── Tasks/
-│   │   ├── Entities/            # TaskItem, Board, Column
-│   │   ├── ValueObjects/        # TaskTitle, Priority, Tag, etc.
-│   │   ├── Events/              # TaskCreated, TaskCompleted, etc.
-│   │   └── Repositories/        # ITaskItemRepository, IBoardRepository
+│   │   ├── Entities/             # TaskItem, Board, Column
+│   │   ├── ValueObjects/         # TaskTitle, Priority, Tag, etc.
+│   │   ├── Events/               # TaskCreated, TaskCompleted, etc.
+│   │   └── Repositories/         # ITaskItemRepository, IBoardRepository
 │   ├── Admin/
-│   └── Common/                  # Entity base, ValueObject base, Result<T>
+│   └── Common/                   # Entity base, ValueObject base, Result<T>
 ├── LemonDo.Infrastructure/       # Data access & external services
 │   ├── Persistence/
 │   │   ├── DbContext.cs
-│   │   ├── Configurations/      # EF Core entity configs
-│   │   ├── Repositories/        # Repository implementations
+│   │   ├── Configurations/       # EF Core entity configs
+│   │   ├── Repositories/         # Repository implementations
 │   │   └── Migrations/
-│   ├── Services/                # Email, PII encryption, etc.
-│   └── Extensions/              # DI registration
+│   ├── Services/                 # Email, PII encryption, etc.
+│   └── Extensions/               # DI registration
 ```
 
-### Frontend Project Structure (3-Layer Components)
+### Frontend Architecture: 4-Layer System
+
+The frontend follows a strict layered architecture that separates concerns and enforces
+unidirectional data flow. Each layer has a single responsibility and clear import rules.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  L1: Data Sourcing & Routing                                │
+│  Route components, page layouts, data orchestration         │
+│  Connects server state to domain UI                         │
+├─────────────────────────────────────────────────────────────┤
+│  State Layer: Stores, Queries & Hooks                       │
+│  Zustand stores, TanStack Query hooks, custom domain hooks  │
+│  The bridge between raw data and UI consumption             │
+├─────────────────────────────────────────────────────────────┤
+│  L2: Domain UI Components                                   │
+│  Domain-specific views that speak the business language      │
+│  Composed entirely from L3 components                       │
+├─────────────────────────────────────────────────────────────┤
+│  L3: Design System (Dumb UI)                                │
+│  Shadcn/ui, Radix primitives, pure presentational           │
+│  Zero business knowledge                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### L1: Data Sourcing & Routing Components
+
+**Responsibility**: L1 is the entry point for every page. Its ONLY job is to source
+data and wire it into L2 components via props. It handles route parameters, guards,
+layout composition, and loading/error boundaries.
+
+**What belongs here**:
+- Route components (one per route segment)
+- Page-level layout composition (sidebar + content, header + body)
+- Auth guards and redirect logic
+- Suspense/ErrorBoundary wrappers for data loading
+- Calls to State Layer hooks to fetch data
+- Passing fetched data as props to L2 components
+
+**What does NOT belong here**:
+- Business logic or data transformation
+- Direct API calls (use State Layer hooks instead)
+- Visual styling or UI markup (delegate to L2)
+- Native HTML tags beyond layout wrappers (`<div>` for layout is acceptable)
+
+```tsx
+// GOOD: L1 route component
+function TaskBoardPage() {
+  const { boardId } = useParams();
+  const { data: board, isLoading } = useBoardQuery(boardId);
+  const { data: tasks } = useTasksByBoardQuery(boardId);
+
+  if (isLoading) return <BoardSkeleton />;
+
+  return <KanbanBoard board={board} tasks={tasks} />;
+}
+
+// BAD: L1 doing too much
+function TaskBoardPage() {
+  const [tasks, setTasks] = useState([]);
+  useEffect(() => {
+    fetch('/api/tasks').then(r => r.json()).then(setTasks); // Direct API call
+  }, []);
+  return <div className="grid grid-cols-3">...</div>; // Styling in L1
+}
+```
+
+#### State Layer: Zustand Stores, TanStack Query & Custom Hooks
+
+**Responsibility**: This layer is the single source of truth for all application state.
+It cleanly separates **server state** (data from the API) from **client state** (UI
+preferences, form drafts, optimistic updates, offline queue).
+
+**Server State (TanStack Query)**:
+- All API data fetching, caching, and synchronization
+- Automatic background refetching and stale-while-revalidate
+- Mutation hooks with optimistic updates and rollback
+- Offline mutation queue (pairs with PWA service worker)
+- Cache invalidation after mutations
+
+```tsx
+// Server state: TanStack Query hook
+function useTasksQuery(filters: TaskFilters) {
+  return useQuery({
+    queryKey: ['tasks', filters],
+    queryFn: () => tasksApi.list(filters),
+  });
+}
+
+function useCompleteTaskMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: tasksApi.complete,
+    onMutate: async (taskId) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      queryClient.setQueryData(['tasks'], (old) =>
+        old.map(t => t.id === taskId ? { ...t, status: 'done' } : t)
+      );
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+}
+```
+
+**Client State (Zustand)**:
+- UI state: sidebar open/closed, active view (kanban/list), selected filters
+- Theme preference, locale selection
+- Onboarding progress (local until synced)
+- Form drafts and unsaved changes
+- Offline operation queue
+- Anything that does NOT come from the server
+
+```tsx
+// Client state: Zustand store
+interface TaskViewStore {
+  activeView: 'kanban' | 'list';
+  selectedFilters: TaskFilters;
+  setActiveView: (view: 'kanban' | 'list') => void;
+  setFilters: (filters: TaskFilters) => void;
+}
+
+const useTaskViewStore = create<TaskViewStore>()(
+  persist(
+    (set) => ({
+      activeView: 'kanban',
+      selectedFilters: {},
+      setActiveView: (view) => set({ activeView: view }),
+      setFilters: (filters) => set({ selectedFilters: filters }),
+    }),
+    { name: 'task-view-preferences' }
+  )
+);
+```
+
+**Custom Domain Hooks**:
+- Compose Zustand stores + TanStack Query into domain-specific hooks
+- Encapsulate complex state interactions
+- Provide a clean API for L1 and L2 components
+
+```tsx
+// Custom hook: composes server + client state
+function useTaskBoard(boardId: string) {
+  const { data: board, isLoading } = useBoardQuery(boardId);
+  const { data: tasks } = useTasksByBoardQuery(boardId);
+  const completeMutation = useCompleteTaskMutation();
+  const { activeView, setActiveView } = useTaskViewStore();
+
+  const completeTask = (taskId: string) => completeMutation.mutate(taskId);
+
+  return { board, tasks, isLoading, activeView, setActiveView, completeTask };
+}
+```
+
+**Rules for the State Layer**:
+- TanStack Query owns ALL server data. Never `useState` + `useEffect` + `fetch`.
+- Zustand owns ALL client-only state. Never React Context for frequently-changing state.
+- React Context is reserved for low-frequency cross-cutting concerns (theme provider, i18n provider, auth provider that wraps the query client).
+- Custom hooks compose stores + queries. Components never import both a store AND a query directly - they use the composed hook.
+- Query keys follow convention: `[domain, resource, ...params]` (e.g., `['tasks', 'list', { status: 'todo' }]`).
+- Zustand stores follow convention: `use{Domain}{Concept}Store` (e.g., `useTaskViewStore`, `useAuthSessionStore`).
+
+#### L2: Domain UI Components
+
+**Responsibility**: L2 components are the visual representation of domain concepts.
+They speak the language of the business: tasks, boards, columns, priorities - not
+buttons, inputs, or grids. They receive domain data as props and compose L3 components
+to render it.
+
+**What belongs here**:
+- Components that represent domain concepts: `KanbanBoard`, `TaskCard`, `LoginForm`, `AuditLogTable`
+- Domain-specific layout decisions (a task card shows title, priority badge, due date)
+- Event handlers that call domain actions (onComplete, onMove, onDelete)
+- Conditional rendering based on domain state (empty board, overdue task, locked account)
+- Domain-specific validation feedback
+
+**What does NOT belong here**:
+- Native HTML tags (`<div>`, `<span>`, `<button>`, `<input>`) - use L3 components instead
+- Direct API calls or store access (receive data via props or use State Layer hooks)
+- Generic/reusable presentational logic (that belongs in L3)
+- Route awareness (no `useParams`, `useNavigate` - that's L1)
+
+```tsx
+// GOOD: L2 domain component using L3 components only
+function TaskCard({ task, onComplete, onDelete }: TaskCardProps) {
+  const { t } = useTranslation();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{task.title}</CardTitle>
+        <PriorityBadge priority={task.priority} />
+      </CardHeader>
+      <CardContent>
+        {task.dueDate && <DueDateLabel date={task.dueDate} />}
+        <TagList tags={task.tags} />
+      </CardContent>
+      <CardFooter>
+        <Button variant="ghost" onClick={() => onComplete(task.id)}>
+          {t('tasks.card.complete')}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// BAD: L2 using native HTML
+function TaskCard({ task }: TaskCardProps) {
+  return (
+    <div className="border rounded p-4">          {/* native HTML! */}
+      <h3>{task.title}</h3>                        {/* native HTML! */}
+      <span className="text-red-500">High</span>   {/* native HTML! */}
+    </div>
+  );
+}
+```
+
+**L2 can reference domain types** (enums, interfaces from the domain types folder).
+This is what makes L2 "domain-aware" - it knows what a `Priority` is, what a `TaskStatus`
+means, and how to render them with semantic meaning.
+
+#### L3: Design System / Dumb UI Components
+
+**Responsibility**: L3 is our design system. These components are completely generic,
+reusable, and have ZERO knowledge of any business domain. They are the atoms and
+molecules of our UI. Shadcn/ui components live here, along with any custom primitives
+we build on top of Radix.
+
+**What belongs here**:
+- Shadcn/ui components (Button, Card, Input, Dialog, Toast, etc.)
+- Custom design system primitives built on Radix (e.g., `DragHandle`, `Badge`, `Skeleton`)
+- Layout primitives (Stack, Grid, Container)
+- Typography components (Heading, Text, Label)
+- Icon components
+- Animation primitives
+
+**What does NOT belong here**:
+- Any business/domain terms (no `TaskCard`, no `LoginForm`, no `Priority`)
+- Data fetching or state management
+- Domain types in props (use generic types: `string`, `ReactNode`, `variant`)
+- Business logic or conditional rendering based on domain state
+
+**Accessibility is paramount in L3**: Since all UI ultimately renders through L3,
+this is where we enforce WCAG 2.1 AA compliance. Radix primitives handle focus
+management, keyboard navigation, and ARIA attributes. Every L3 component must:
+- Be keyboard accessible
+- Have proper ARIA roles and labels
+- Meet 4.5:1 contrast ratio
+- Support screen readers
+
+```tsx
+// GOOD: L3 generic component
+interface BadgeProps {
+  variant: 'default' | 'success' | 'warning' | 'danger' | 'info';
+  children: ReactNode;
+}
+
+function Badge({ variant, children }: BadgeProps) {
+  return (
+    <span className={cn(badgeVariants({ variant }))}>
+      {children}
+    </span>
+  );
+}
+
+// BAD: L3 with domain knowledge
+function PriorityBadge({ priority }: { priority: Priority }) {
+  // This knows about Priority domain type! Should be in L2.
+}
+```
+
+### Frontend Project Structure
 
 ```
 client/
 ├── src/
-│   ├── app/                     # App shell, routing, providers
-│   │   ├── routes/              # L1: Route components (data sourcing)
-│   │   └── providers/           # Global providers (auth, theme, i18n)
-│   ├── domains/                 # L2: Domain UI components
+│   ├── app/                         # App shell, routing, providers
+│   │   ├── routes/                  # L1: Route/page components
+│   │   │   ├── auth/                #   Login, Register, ResetPassword pages
+│   │   │   ├── tasks/               #   Board, List pages
+│   │   │   ├── admin/               #   Admin panel pages
+│   │   │   └── onboarding/          #   Onboarding flow pages
+│   │   └── providers/               # Global providers (QueryClient, Auth, Theme, i18n)
+│   │
+│   ├── domains/                     # L2 + State Layer, organized by domain
 │   │   ├── auth/
-│   │   │   ├── components/      # LoginForm, RegisterForm, MfaSetup
-│   │   │   ├── hooks/           # useAuth, useCurrentUser
-│   │   │   └── types/           # Auth domain types
+│   │   │   ├── components/          # L2: LoginForm, RegisterForm, MfaSetup
+│   │   │   ├── hooks/               # State: useAuth, useCurrentUser, useLoginMutation
+│   │   │   ├── stores/              # State: useAuthSessionStore (Zustand)
+│   │   │   ├── api/                 # State: API client functions for auth endpoints
+│   │   │   └── types/               # Domain types: User, Role, AuthState
 │   │   ├── tasks/
-│   │   │   ├── components/      # KanbanBoard, TaskCard, TaskList
-│   │   │   ├── hooks/           # useTasks, useBoard
-│   │   │   └── types/           # Task domain types
+│   │   │   ├── components/          # L2: KanbanBoard, TaskCard, TaskList, QuickAdd
+│   │   │   ├── hooks/               # State: useTasks, useBoard, useCompleteTask
+│   │   │   ├── stores/              # State: useTaskViewStore, useOfflineQueueStore
+│   │   │   ├── api/                 # State: API client functions for task endpoints
+│   │   │   └── types/               # Domain types: TaskItem, Board, Column, Priority
 │   │   ├── admin/
+│   │   │   ├── components/          # L2: AuditLogTable, UserManagement, SystemHealth
+│   │   │   ├── hooks/               # State: useAuditLog, useAdminUsers
+│   │   │   ├── stores/              # State: useAdminFilterStore
+│   │   │   ├── api/                 # State: API client functions for admin endpoints
+│   │   │   └── types/               # Domain types: AuditEntry, AdminUser
 │   │   └── onboarding/
-│   ├── ui/                      # L3: Design system (dumb components)
-│   │   ├── button/
-│   │   ├── input/
-│   │   ├── card/
-│   │   ├── dialog/
-│   │   ├── toast/
-│   │   └── ...                  # Shadcn/ui + custom components
-│   ├── lib/                     # Utilities, API client, analytics
-│   ├── i18n/                    # Translation files
-│   └── test/                    # Test utilities, factories
-├── e2e/                         # Playwright E2E tests
+│   │       ├── components/          # L2: WelcomeScreen, OnboardingStep, Celebration
+│   │       ├── hooks/               # State: useOnboarding, useOnboardingProgress
+│   │       ├── stores/              # State: useOnboardingStore
+│   │       ├── api/                 # State: API client functions for onboarding
+│   │       └── types/               # Domain types: OnboardingStep, OnboardingProgress
+│   │
+│   ├── ui/                          # L3: Design system (domain-agnostic)
+│   │   ├── primitives/              #   Radix-based primitives (Badge, Tooltip, etc.)
+│   │   ├── layout/                  #   Stack, Grid, Container, Separator
+│   │   ├── feedback/                #   Toast, Skeleton, Spinner, EmptyState
+│   │   ├── forms/                   #   Input, Select, Checkbox, DatePicker, Field
+│   │   ├── data-display/            #   Card, Table, List, Avatar
+│   │   ├── navigation/              #   Tabs, Breadcrumb, Sidebar, NavLink
+│   │   ├── overlay/                 #   Dialog, Sheet, Popover, DropdownMenu
+│   │   └── typography/              #   Heading, Text, Label, Code
+│   │
+│   ├── lib/                         # Shared utilities
+│   │   ├── api-client.ts            #   Configured fetch/axios instance
+│   │   ├── analytics.ts             #   Analytics event tracking service
+│   │   ├── i18n.ts                  #   i18next configuration
+│   │   └── utils.ts                 #   cn(), formatDate(), etc.
+│   ├── i18n/                        # Translation JSON files (en, pt-BR, es)
+│   └── test/                        # Test utilities, factories, MSW handlers
+│
+├── e2e/                             # Playwright E2E tests
 ```
 
-### Layer Rules
+### Layer Import Rules
 
-| Layer | Can Import From | Cannot Import From |
-|-------|----------------|--------------------|
-| L1 (Routes) | L2, L3, hooks, lib | Nothing restricted |
-| L2 (Domain UI) | L3, domain types, hooks | L1, native HTML tags |
-| L3 (Design System) | Radix, Tailwind, React | L1, L2, domain types |
-| Domain (backend) | Common only | Application, Infrastructure, API |
-| Application | Domain | Infrastructure, API |
-| Infrastructure | Domain, Application interfaces | API |
-| API | Application, Infrastructure (via DI) | Domain directly |
+```
+                    ┌──────────────┐
+                    │  L1 (Routes) │  Can import: State Layer, L2, L3, lib
+                    └──────┬───────┘
+                           │ passes data via props
+                    ┌──────▼────────────────┐
+                    │  State Layer           │  Can import: api/, types/, lib
+                    │  (Stores + Queries     │  Zustand stores, TanStack hooks,
+                    │   + Custom Hooks)      │  custom composed hooks
+                    └──────┬────────────────┘
+                           │ consumed by L1 and L2
+                    ┌──────▼───────┐
+                    │  L2 (Domain) │  Can import: L3, types/, State Layer hooks
+                    └──────┬───────┘  CANNOT import: L1, native HTML
+                           │ composes
+                    ┌──────▼───────┐
+                    │  L3 (Design) │  Can import: Radix, Tailwind, React
+                    └──────────────┘  CANNOT import: L1, L2, domain types, State Layer
+```
+
+| Layer | Can Import | Cannot Import |
+|-------|-----------|---------------|
+| **L1** (Routes) | L2, L3, State Layer hooks, lib, types | Direct API calls (`fetch`/`axios`) |
+| **State Layer** (Stores/Queries/Hooks) | api/ functions, domain types, lib | L1, L2, L3 components |
+| **L2** (Domain UI) | L3 components, domain types, State Layer hooks, `useTranslation` | L1, native HTML tags (`<div>`, `<button>`, etc.), direct API calls |
+| **L3** (Design System) | Radix, Tailwind, React, generic TypeScript types | L1, L2, State Layer, domain types, `useTranslation` |
+
+### Backend Layer Rules
+
+| Layer | Can Import | Cannot Import |
+|-------|-----------|---------------|
+| **Domain** | Common (base classes, shared VOs) | Application, Infrastructure, API |
+| **Application** | Domain | Infrastructure, API |
+| **Infrastructure** | Domain, Application interfaces | API |
+| **API** | Application, Infrastructure (via DI) | Domain directly |
 
 ---
 
@@ -247,7 +572,6 @@ chore: upgrade Aspire to 13.1
 - Commit often, commit atomic logical blocks
 - Each commit should compile and pass tests
 - Never commit commented-out code
-- Never attribute commits (no "Co-authored-by" unless pair programming)
 - Squash WIP commits before merging to develop
 
 ---
@@ -269,13 +593,29 @@ services.AddScoped<CreateTaskHandler>();
 
 ### Frontend
 
-React Context for cross-cutting concerns:
+State management is split by state ownership:
 
 ```tsx
-// Auth context, Theme context, i18n provider
-// API client configured via provider
-// Analytics service injected via context
+// Server state: TanStack Query (configured via QueryClientProvider)
+// Client state: Zustand stores (no provider needed - stores are plain hooks)
+// Cross-cutting: React Context ONLY for low-frequency globals:
+//   - QueryClientProvider (TanStack Query)
+//   - AuthProvider (wraps query client, manages JWT refresh)
+//   - ThemeProvider (light/dark, reads from Zustand but provides CSS vars)
+//   - I18nProvider (react-i18next)
+//   - AnalyticsProvider (event tracking context)
 ```
+
+**When to use what**:
+
+| State Type | Tool | Example |
+|------------|------|---------|
+| Data from API | TanStack Query | Task list, user profile, board data |
+| UI preferences | Zustand (with `persist`) | Active view, theme, locale, sidebar state |
+| Form drafts | Zustand | Unsaved task edits, registration form progress |
+| Offline queue | Zustand (with `persist`) | Operations pending sync |
+| Auth tokens | Zustand (with `persist`) + TanStack Query | Token in store, user profile in query |
+| Theme/i18n | React Context | Low-frequency, tree-wide, CSS variable driven |
 
 ---
 

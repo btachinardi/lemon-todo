@@ -109,6 +109,9 @@
 | 2026-02-13 | PII default-redacted | Admin views mask PII by default, reveal is explicit + audited |
 | 2026-02-13 | TaskItem (not Task) | Avoids conflict with System.Threading.Tasks.Task |
 | 2026-02-13 | Result<T,E> over exceptions | Business logic errors are expected, not exceptional |
+| 2026-02-13 | Zustand 5 for client state | No provider needed, tiny bundle, persists UI prefs to localStorage |
+| 2026-02-13 | TanStack Query 5 for server state | Cache, dedup, offline mutations, replaces manual fetch+useState |
+| 2026-02-13 | 4-layer frontend (L1/State/L2/L3) | Added State Layer to cleanly separate server vs client state |
 
 ---
 
