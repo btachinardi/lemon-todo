@@ -10,26 +10,26 @@
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 0.1 | Create TASKS.md tracking document | DONE | This file |
-| 0.2 | Initialize git repository with gitflow | PENDING | |
-| 0.3 | Create initial project structure | PENDING | |
+| 0.2 | Initialize git repository with gitflow | DONE | main + develop branches |
+| 0.3 | Create initial project structure | PENDING | Awaiting bootstrap phase |
 
 ## Phase 1: Product Requirements
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1.1 | Write initial PRD (docs/PRD.md) | PENDING | Full functional + non-functional requirements |
-| 1.2 | Technology research (docs/RESEARCH.md) | PENDING | Latest versions, capabilities, compatibility |
-| 1.3 | User scenarios and storyboards (docs/SCENARIOS.md) | PENDING | Personas, JTBD, value proposition, north star metric |
-| 1.4 | Revised PRD (docs/PRD.reviewed.md) | PENDING | Polished after scenarios analysis |
+| 1.1 | Write initial PRD (docs/PRD.md) | DONE | 10 FR groups, 10 NFR groups, success metrics, risks |
+| 1.2 | Technology research (docs/RESEARCH.md) | DONE | .NET 10, Aspire 13, Vite 7, React 19, all versions locked |
+| 1.3 | User scenarios and storyboards (docs/SCENARIOS.md) | DONE | 3 personas, 10 scenarios, analytics events, north star metric |
+| 1.4 | Revised PRD (docs/PRD.reviewed.md) | DONE | Quick-add P0, offline CRUD, PII default-redacted, micro-interactions |
 
 ## Phase 2: Domain Design
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 2.1 | Domain modeling (docs/DOMAIN.md) | PENDING | Bounded contexts, aggregates, entities, events |
-| 2.2 | Development guidelines (GUIDELINES.md) | PENDING | TDD, clean code, architecture rules |
-| 2.3 | Professional README.md | PENDING | Also serves as "how we built this" article |
-| 2.4 | LICENSE file | PENDING | |
+| 2.1 | Domain modeling (docs/DOMAIN.md) | DONE | 6 bounded contexts, full entity/VO/event design, API endpoints |
+| 2.2 | Development guidelines (GUIDELINES.md) | DONE | TDD, 3-layer frontend, SOLID, gitflow, security |
+| 2.3 | Professional README.md | DONE | Development journal format, full tech stack, project structure |
+| 2.4 | LICENSE file | DONE | MIT |
 
 ## Phase 3: Codebase Bootstrap
 
@@ -104,13 +104,27 @@
 | 2026-02-13 | SQLite for MVP | Simple, zero-config, easy to swap later |
 | 2026-02-13 | Terraform over Bicep | Multi-cloud portability, team familiarity |
 | 2026-02-13 | Azure Container Apps | Aspire-native deployment target |
+| 2026-02-13 | WATC as North Star Metric | Weekly Active Task Completers - measures value delivery |
+| 2026-02-13 | Quick-add as P0 feature | Scenarios showed fast capture is the killer feature |
+| 2026-02-13 | PII default-redacted | Admin views mask PII by default, reveal is explicit + audited |
+| 2026-02-13 | TaskItem (not Task) | Avoids conflict with System.Threading.Tasks.Task |
+| 2026-02-13 | Result<T,E> over exceptions | Business logic errors are expected, not exceptional |
 
 ---
 
 ## Progress Summary
 
-- **Planning**: IN PROGRESS
-- **Design**: NOT STARTED
-- **Implementation**: NOT STARTED
+- **Planning**: DONE (Phase 1 complete)
+- **Design**: DONE (Phase 2 complete)
+- **Implementation**: NOT STARTED (awaiting checkpoint)
 - **Testing**: NOT STARTED
 - **Deployment**: NOT STARTED
+
+---
+
+## Commit History
+
+| Hash | Message | Phase |
+|------|---------|-------|
+| 8e61831 | docs: initial project planning documents | Phase 1 |
+| *next* | docs: domain design, guidelines, readme, license | Phase 2 |
