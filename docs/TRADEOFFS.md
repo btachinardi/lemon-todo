@@ -34,10 +34,10 @@
 
 ### What scales today
 
-- Repository pattern decouples data access from domain logic — swap SQLite to PostgreSQL with no domain changes
-- TanStack Query handles caching, deduplication, and background refetch — adding pagination is configuration, not rewrite
-- Aspire orchestration generates Kubernetes manifests — deployment scales via `aspire do`
-- Domain events decouple mutations from side effects — adding audit logging, notifications, or analytics is event subscription, not code modification
+- Repository pattern decouples data access from domain logic - swap SQLite to PostgreSQL with no domain changes
+- TanStack Query handles caching, deduplication, and background refetch - adding pagination is configuration, not rewrite
+- Aspire orchestration generates Kubernetes manifests - deployment scales via `aspire do`
+- Domain events decouple mutations from side effects - adding audit logging, notifications, or analytics is event subscription, not code modification
 
 ### What we'd add for production scale
 

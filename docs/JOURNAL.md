@@ -2,7 +2,7 @@
 
 > **Date**: 2026-02-13
 > **Status**: Active
-> **Purpose**: Captures our complete thought process, from inception to production — every decision, phase, and lesson learned.
+> **Purpose**: Captures our complete thought process, from inception to production - every decision, phase, and lesson learned.
 
 ---
 
@@ -73,7 +73,7 @@ Then we walked through 10 scenarios step-by-step, documenting:
 
 ### 1.4 Revised PRD
 
-After scenarios, we created [PRD.md](./PRD.md) — our official requirements document, incorporating everything we learned. Key changes:
+After scenarios, we created [PRD.md](./PRD.md) - our official requirements document, incorporating everything we learned. Key changes:
 - Quick-add promoted to P0
 - Onboarding celebrations upgraded from P1 to P0
 - Offline CRUD (not just viewing) became a requirement
@@ -106,7 +106,7 @@ With requirements solid, we designed our domain ([DOMAIN.md](./DOMAIN.md)):
 Before touching code, we established our rules of engagement ([../GUIDELINES.md](../GUIDELINES.md)):
 
 - **Strict TDD**: RED-GREEN-VALIDATE. No production code without a failing test.
-- **Frontend Architecture**: Two orthogonal systems — Architecture Tiers (Routing -> Pages & Layouts -> State Management -> Components) for separation of concerns, and Component Taxonomy (Design System -> Domain Atoms -> Domain Widgets -> Domain Views) for composition granularity.
+- **Frontend Architecture**: Two orthogonal systems - Architecture Tiers (Routing -> Pages & Layouts -> State Management -> Components) for separation of concerns, and Component Taxonomy (Design System -> Domain Atoms -> Domain Widgets -> Domain Views) for composition granularity.
 - **Gitflow**: main + develop + feature branches. Conventional commits. Atomic commits.
 - **Security**: PII redaction in logs, OWASP Top 10 compliance, rate limiting.
 - **Accessibility**: WCAG 2.1 AA minimum, Radix primitives for built-in a11y.
@@ -134,12 +134,12 @@ The key rule: **TanStack Query owns all server data, Zustand owns all client sta
 
 We realized we were conflating two orthogonal concepts under the same "layer" word. What we actually have are two independent organizational systems:
 
-**Architecture Tiers** answer *"what is this code responsible for?"* — separation of concerns:
+**Architecture Tiers** answer *"what is this code responsible for?"* - separation of concerns:
 ```
 Routing → Pages & Layouts → State Management → Components
 ```
 
-**Component Taxonomy** answers *"how big and domain-aware is this UI piece?"* — composition granularity:
+**Component Taxonomy** answers *"how big and domain-aware is this UI piece?"* - composition granularity:
 ```
 Design System → Domain Atoms → Domain Widgets → Domain Views
 ```
@@ -148,9 +148,9 @@ The old L1/L2/L3 labels tried to do both jobs at once and created confusion. The
 
 ### Interlude: Rethinking Delivery Strategy
 
-After running review agents against our documentation, we faced a hard truth: we were planning to build everything at once. Six bounded contexts, HIPAA compliance, three languages, offline CRUD, analytics — all marked as P0. The reviewers flagged this as over-engineering, and they were right.
+After running review agents against our documentation, we faced a hard truth: we were planning to build everything at once. Six bounded contexts, HIPAA compliance, three languages, offline CRUD, analytics - all marked as P0. The reviewers flagged this as over-engineering, and they were right.
 
-But the ambition isn't wrong — the delivery order is. We restructured into **checkpoint-based delivery**: five incremental checkpoints where each one produces a complete, runnable application. If we stop at any checkpoint, we have something presentable that demonstrates real architecture and thought process.
+But the ambition isn't wrong - the delivery order is. We restructured into **checkpoint-based delivery**: five incremental checkpoints where each one produces a complete, runnable application. If we stop at any checkpoint, we have something presentable that demonstrates real architecture and thought process.
 
 **The key insight**: Checkpoint 1 addresses *every* core evaluation criteria (API design, data structures, component design, F/E↔B/E communication, clean code). Later checkpoints layer on production features progressively.
 
@@ -162,9 +162,9 @@ But the ambition isn't wrong — the delivery order is. We restructured into **c
 | **CP4: Production** | Observability, PII, audit, i18n | "HIPAA-Ready" not certified |
 | **CP5: Advanced** | PWA, onboarding, analytics, E2E | Lightweight implementations proving architecture |
 
-**Decision**: Tasks before Auth. A bold but deliberate choice. CP1 runs in single-user mode so we can demonstrate clean architecture end-to-end without auth complexity. The repository pattern means adding user-scoped queries in CP2 is a one-line change — proving the architecture's extensibility.
+**Decision**: Tasks before Auth. A bold but deliberate choice. CP1 runs in single-user mode so we can demonstrate clean architecture end-to-end without auth complexity. The repository pattern means adding user-scoped queries in CP2 is a one-line change - proving the architecture's extensibility.
 
-**Decision**: HIPAA downgraded from P0 to "HIPAA-Ready infrastructure." Full HIPAA compliance requires BAAs, legal review, workforce training, and incident response procedures — that's a business framework, not a codebase feature. We implement the *technical controls* (encryption, audit trails, PII redaction) and document what's needed for full certification.
+**Decision**: HIPAA downgraded from P0 to "HIPAA-Ready infrastructure." Full HIPAA compliance requires BAAs, legal review, workforce training, and incident response procedures - that's a business framework, not a codebase feature. We implement the *technical controls* (encryption, audit trails, PII redaction) and document what's needed for full certification.
 
 See [../TASKS.md](../TASKS.md) for the complete checkpoint breakdown with every task.
 

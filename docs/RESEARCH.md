@@ -210,16 +210,16 @@
 
 - **Purpose**: Distributed tracing and performance monitoring for the browser, connected to the same OTel pipeline as the backend
 - **Key Packages**:
-  - `@opentelemetry/sdk-trace-web` (2.x) — Browser-specific trace provider
-  - `@opentelemetry/instrumentation-fetch` — Auto-instruments all fetch calls (TanStack Query uses fetch under the hood)
-  - `@opentelemetry/instrumentation-document-load` — Page load performance spans
-  - `@opentelemetry/exporter-trace-otlp-http` — Exports traces via OTLP HTTP to Aspire Dashboard
-  - `@opentelemetry/context-zone` — Zone.js-based context propagation for browser async operations
-  - `@opentelemetry/resources` — Resource identification (service name, version)
-- **Distributed Tracing**: W3C `traceparent` header propagation via `propagateTraceHeaderCorsUrls` in fetch instrumentation. Frontend spans connect to backend spans — one trace from button click → fetch → API → DB.
+  - `@opentelemetry/sdk-trace-web` (2.x) - Browser-specific trace provider
+  - `@opentelemetry/instrumentation-fetch` - Auto-instruments all fetch calls (TanStack Query uses fetch under the hood)
+  - `@opentelemetry/instrumentation-document-load` - Page load performance spans
+  - `@opentelemetry/exporter-trace-otlp-http` - Exports traces via OTLP HTTP to Aspire Dashboard
+  - `@opentelemetry/context-zone` - Zone.js-based context propagation for browser async operations
+  - `@opentelemetry/resources` - Resource identification (service name, version)
+- **Distributed Tracing**: W3C `traceparent` header propagation via `propagateTraceHeaderCorsUrls` in fetch instrumentation. Frontend spans connect to backend spans - one trace from button click → fetch → API → DB.
 - **Aspire Integration**: Aspire Dashboard exposes OTLP HTTP endpoint (port 4318) with CORS support for browser apps. When launched via `AddJavaScriptApp`, the endpoint URL and API key are available via `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` environment variables.
 - **What It Captures**: Fetch/XHR request timing with response status, page load performance (Navigation Timing API), user interaction spans (clicks, inputs), custom spans for business operations (task creation, board switch), errors and exceptions with stack traces.
-- **What It Doesn't Do** (vs Sentry): No source map processing, no session replays, no issue grouping/deduplication, no release tracking. For production, Sentry can be added alongside OTel — Sentry SDK v8+ supports OTLP export, so traces flow to both Sentry and the OTel collector.
+- **What It Doesn't Do** (vs Sentry): No source map processing, no session replays, no issue grouping/deduplication, no release tracking. For production, Sentry can be added alongside OTel - Sentry SDK v8+ supports OTLP export, so traces flow to both Sentry and the OTel collector.
 - **Phasing**: CP4 introduces OTel Browser SDK for unified observability. Sentry is a future production enhancement (Tier 9).
 - **Source**: [OpenTelemetry JS Browser Getting Started](https://opentelemetry.io/docs/languages/js/getting-started/browser/), [Aspire: Enable Browser Telemetry](https://aspire.dev/dashboard/enable-browser-telemetry/)
 
@@ -257,9 +257,9 @@
 **Cross-Browser Testing Strategy**:
 
 Playwright natively supports three rendering engines with a single API:
-- **Chromium** — Chrome, Edge, Opera, Brave, and all Chromium-based browsers
-- **Firefox** — Gecko engine
-- **WebKit** — Safari engine (derived from latest WebKit trunk, often ahead of shipping Safari)
+- **Chromium** - Chrome, Edge, Opera, Brave, and all Chromium-based browsers
+- **Firefox** - Gecko engine
+- **WebKit** - Safari engine (derived from latest WebKit trunk, often ahead of shipping Safari)
 
 Playwright projects configuration runs the same test suite against all three engines in CI. This covers the vast majority of desktop browser rendering differences.
 
@@ -274,7 +274,7 @@ Playwright includes predefined device descriptors (iPhone 14, Pixel 7, iPad, etc
 
 **Real Device Testing (Production)**:
 
-BrowserStack provides 3500+ real browsers and devices in the cloud. Playwright tests can run directly on BrowserStack via their integration — same test code, real hardware:
+BrowserStack provides 3500+ real browsers and devices in the cloud. Playwright tests can run directly on BrowserStack via their integration - same test code, real hardware:
 - Real iOS Safari on physical iPhones/iPads
 - Real Android Chrome on physical devices
 - Older browser versions (Safari 15, Chrome 100, Firefox ESR)

@@ -67,7 +67,7 @@ When the API is running, visit:
 
 ## Development Journal
 
-Our complete thought process — every decision, phase, and lesson learned — is documented in the **[Development Journal](./docs/JOURNAL.md)**.
+Our complete thought process - every decision, phase, and lesson learned - is documented in the **[Development Journal](./docs/JOURNAL.md)**.
 
 Highlights:
 - **Phase 1**: Product requirements, technology research, user scenarios (3 personas, 10 storyboards), revised PRD
@@ -153,7 +153,7 @@ See **[docs/TRADEOFFS.md](./docs/TRADEOFFS.md)** for the full assumptions list, 
 
 ## Roadmap
 
-Beyond CP5, the roadmap spans 9 capability tiers — from AI integration to production operations.
+Beyond CP5, the roadmap spans 9 capability tiers - from AI integration to production operations.
 
 | Tier | Focus |
 |------|-------|

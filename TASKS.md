@@ -65,7 +65,7 @@
 > **Goal**: A working full-stack todo app with clean architecture and tests.
 > **Demonstrates**: API design, data structures, component design, F/E↔B/E communication, clean code.
 > **Trade-off**: Single-user mode (no auth). Demonstrates architecture without auth complexity.
-> Auth adds in CP2 — the repository pattern means adding user-scoped queries is a one-line change.
+> Auth adds in CP2 - the repository pattern means adding user-scoped queries is a one-line change.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
@@ -124,7 +124,7 @@
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | CP3.1 | Kanban drag-and-drop | PENDING | Move tasks between columns via drag |
-| CP3.2 | Quick-add (title-only creation) | PENDING | One-tap task creation — our P0 feature |
+| CP3.2 | Quick-add (title-only creation) | PENDING | One-tap task creation - our P0 feature |
 | CP3.3 | Task detail modal/sheet | PENDING | Edit title, description, priority, due date, tags |
 | CP3.4 | Filters and search | PENDING | By priority, status, tag, text search |
 | CP3.5 | Dark/light theme toggle | PENDING | System-aware + manual toggle, Zustand persisted |
@@ -193,7 +193,7 @@
 | 2026-02-13 | SQLite for MVP | Simple, zero-config, easy to swap later via repository pattern |
 | 2026-02-13 | Terraform over Bicep | Multi-cloud portability, team familiarity |
 | 2026-02-13 | Azure Container Apps | Aspire-native deployment target |
-| 2026-02-13 | WATC as North Star Metric | Weekly Active Task Completers — measures value delivery |
+| 2026-02-13 | WATC as North Star Metric | Weekly Active Task Completers - measures value delivery |
 | 2026-02-13 | Quick-add as P0 feature | Scenarios showed fast capture is the killer feature |
 | 2026-02-13 | PII default-redacted | Admin views mask PII by default, reveal is explicit + audited |
 | 2026-02-13 | TaskItem (not Task) | Avoids conflict with System.Threading.Tasks.Task |

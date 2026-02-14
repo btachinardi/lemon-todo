@@ -97,9 +97,9 @@ src/
 
 The frontend is organized along two orthogonal dimensions:
 
-1. **Architecture Tiers** — Separation of concerns and data flow. Each tier has a single
+1. **Architecture Tiers** - Separation of concerns and data flow. Each tier has a single
    responsibility: routing, structural composition, state management, or visual rendering.
-2. **Component Taxonomy** — Composition granularity within the visual rendering tier. Small
+2. **Component Taxonomy** - Composition granularity within the visual rendering tier. Small
    primitives compose into bigger domain-aware pieces.
 
 These are independent concepts. Architecture Tiers answer *"what is this code responsible
@@ -127,7 +127,7 @@ The application flows data top-down through four tiers:
 │  The bridge between raw API data and UI consumption          │
 ├─────────────────────────────────────────────────────────────┤
 │  Components                                                  │
-│  All visual UI — organized by the Component Taxonomy below   │
+│  All visual UI - organized by the Component Taxonomy below   │
 │  Domain-aware and domain-agnostic pieces live here           │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -153,7 +153,7 @@ A route does not render anything visual itself.
 - Loading/error state rendering
 
 ```tsx
-// GOOD: Route — pure data sourcing, delegates to Page
+// GOOD: Route - pure data sourcing, delegates to Page
 function TaskBoardRoute() {
   const { boardId } = useParams();
   const { data: board, isLoading } = useBoardQuery(boardId);
@@ -175,14 +175,14 @@ function TaskBoardRoute() {
 ##### Pages & Layouts
 
 **Responsibility**: Pages and Layouts are the structural shells of the application.
-They define WHERE things go on screen — sidebars, headers, content areas, footers —
+They define WHERE things go on screen - sidebars, headers, content areas, footers -
 but NOT what domain content is displayed. Pages select a Layout and plug Domain
 Components into its slots. Layouts define the structural regions.
 
 This is the **only tier** where native HTML tags for structural wrappers and Design
 System layout primitives are acceptable, because its job is inherently structural.
 
-**Layouts** — Reusable structural shells shared across multiple pages:
+**Layouts** - Reusable structural shells shared across multiple pages:
 
 ```tsx
 // Layout: structural shell with named slots
@@ -209,7 +209,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
 }
 ```
 
-**Pages** — Compose a Layout with Domain Components:
+**Pages** - Compose a Layout with Domain Components:
 
 ```tsx
 // Page: plugs Domain Components into Layout slots
@@ -338,7 +338,7 @@ function useTaskBoard(boardId: string) {
 - TanStack Query owns ALL server data. Never `useState` + `useEffect` + `fetch`.
 - Zustand owns ALL client-only state. Never React Context for frequently-changing state.
 - React Context is reserved for low-frequency cross-cutting concerns (theme provider, i18n provider, auth provider that wraps the query client).
-- Custom hooks compose stores + queries. Components never import both a store AND a query directly — they use the composed hook.
+- Custom hooks compose stores + queries. Components never import both a store AND a query directly - they use the composed hook.
 - Query keys follow convention: `[domain, resource, ...params]` (e.g., `['tasks', 'list', { status: 'todo' }]`).
 - Zustand stores follow convention: `use{Domain}{Concept}Store` (e.g., `useTaskViewStore`, `useAuthSessionStore`).
 
@@ -371,11 +371,11 @@ Domain Atoms    ← Smallest domain-aware units with semantic meaning
      ▼
 Design System   ← Pure visual primitives, zero business knowledge
                     Button, Badge, Card, Dialog, Input, Skeleton
-                    Shadcn/ui, Radix, Tailwind — completely generic
+                    Shadcn/ui, Radix, Tailwind - completely generic
 ```
 
-The top three levels are **domain-aware** — they know about tasks, priorities, boards,
-users. The bottom level is **domain-agnostic** — it only knows about visual concepts
+The top three levels are **domain-aware** - they know about tasks, priorities, boards,
+users. The bottom level is **domain-agnostic** - it only knows about visual concepts
 like "variant", "size", "children".
 
 ##### Design System (Domain-Agnostic)
@@ -408,7 +408,7 @@ Design System component must:
 - Support screen readers
 
 ```tsx
-// Design System: generic component — no domain knowledge
+// Design System: generic component - no domain knowledge
 interface BadgeProps {
   variant: 'default' | 'success' | 'warning' | 'danger' | 'info';
   children: ReactNode;
@@ -515,10 +515,10 @@ function KanbanBoard({ board, tasks, isLoading }: KanbanBoardProps) {
 ##### What Domain Components Cannot Do
 
 All three domain levels (Views, Widgets, Atoms) share these constraints:
-- **No native HTML tags** (`<div>`, `<span>`, `<button>`, `<input>`) — use Design System components instead
-- **No direct API calls** — receive data via props or use State tier hooks
-- **No route awareness** — no `useParams`, `useNavigate` (that's the Routing tier's job)
-- **No structural page layout** — no sidebars, headers (that's the Pages & Layouts tier)
+- **No native HTML tags** (`<div>`, `<span>`, `<button>`, `<input>`) - use Design System components instead
+- **No direct API calls** - receive data via props or use State tier hooks
+- **No route awareness** - no `useParams`, `useNavigate` (that's the Routing tier's job)
+- **No structural page layout** - no sidebars, headers (that's the Pages & Layouts tier)
 
 Domain Components **CAN**:
 - Import and use Design System components
@@ -526,7 +526,7 @@ Domain Components **CAN**:
 - Use State tier hooks for user interactions (mutations, client state)
 - Use `useTranslation` for i18n
 
-> **Note**: The Views/Widgets/Atoms taxonomy is organizational — not a permission
+> **Note**: The Views/Widgets/Atoms taxonomy is organizational - not a permission
 > boundary. All three share the same import rules. However, we recommend that Atoms
 > prefer pure props over State hooks to maximize reusability and testability.
 
@@ -651,7 +651,7 @@ client/
 - **Pages CAN import Domain Components** (to fill layout slots) but **Layouts CANNOT** (layouts are generic shells with `children`/slot props)
 - **Pages CAN import State hooks** when a page needs to combine data for multiple Domain Components in different layout slots
 - **Layouts CAN use Design System layout primitives** (`ScrollArea`, `Separator`) and native HTML for structure, but NOT interactive Design System components (`Button`, `Dialog`)
-- **Domain Views/Widgets/Atoms** share the same import rules — the taxonomy is organizational, not a permission boundary
+- **Domain Views/Widgets/Atoms** share the same import rules - the taxonomy is organizational, not a permission boundary
 
 ### Backend Layer Rules
 
