@@ -1,7 +1,8 @@
 # LemonDo - Development Journal
 
-> This document captures our complete thought process, from inception to production.
-> Every decision, every phase, every lesson learned.
+> **Date**: 2026-02-13
+> **Status**: Active
+> **Purpose**: Captures our complete thought process, from inception to production — every decision, phase, and lesson learned.
 
 ---
 

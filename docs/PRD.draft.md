@@ -2,8 +2,7 @@
 
 > **Version**: 1.0 (Initial)
 > **Date**: 2026-02-13
-> **Status**: Draft
-> **Author**: Bruno (Product Owner / Lead Engineer)
+> **Status**: Historical
 
 ---
 

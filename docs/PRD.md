@@ -1,10 +1,9 @@
-# LemonDo - Product Requirements Document (Reviewed)
+# LemonDo - Product Requirements Document
 
-> **Version**: 2.0 (Post-Scenarios Review)
 > **Date**: 2026-02-13
-> **Status**: Reviewed
+> **Status**: Active
 > **Previous Version**: [PRD.draft.md](./PRD.draft.md) (Initial Draft)
-> **Informed By**: [docs/SCENARIOS.md](./SCENARIOS.md) (User Storyboards)
+> **Informed By**: [SCENARIOS.md](./SCENARIOS.md) (User Storyboards)
 
 ---
 

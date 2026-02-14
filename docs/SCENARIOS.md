@@ -1,8 +1,8 @@
 # LemonDo - User Scenarios & Storyboards
 
 > **Date**: 2026-02-13
-> **Purpose**: Define how real users will interact with LemonDo, from their perspective.
-> Every scenario maps user intent to expected behavior and analytics measurement.
+> **Status**: Active
+> **Purpose**: Define how real users will interact with LemonDo, from their perspective. Every scenario maps user intent to expected behavior and analytics measurement.
 
 ---
 

@@ -1,6 +1,7 @@
 # LemonDo - Domain Design
 
 > **Date**: 2026-02-13
+> **Status**: Active
 > **Architecture**: Domain-Driven Design (DDD)
 > **Pattern**: CQRS-light with Use Cases
 > **Informed By**: [PRD.md](./PRD.md), [SCENARIOS.md](./SCENARIOS.md)
