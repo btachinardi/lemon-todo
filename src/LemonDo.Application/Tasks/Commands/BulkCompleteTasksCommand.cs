@@ -11,6 +11,10 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
 public sealed record BulkCompleteTasksCommand(IReadOnlyList<Guid> TaskIds);
 
+/// <summary>
+/// Atomically completes multiple tasks and moves all their cards to the Done column.
+/// Fails fast on the first error (e.g., task not found or already deleted) and rolls back all changes.
+/// </summary>
 public sealed class BulkCompleteTasksCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,

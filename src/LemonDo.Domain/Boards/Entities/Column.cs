@@ -4,9 +4,17 @@ using LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.ValueObjects;
 
+/// <summary>
+/// A board column that maps to a specific <see cref="TaskStatus"/>.
+/// When a task card is placed in this column, its status should be set to <see cref="TargetStatus"/>.
+/// </summary>
 public sealed class Column : Entity<ColumnId>
 {
     public ColumnName Name { get; private set; }
+
+    /// <summary>
+    /// The <see cref="TaskStatus"/> that tasks in this column should have.
+    /// </summary>
     public TaskStatus TargetStatus { get; }
     public int Position { get; internal set; }
     public int? MaxTasks { get; private set; }

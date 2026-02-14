@@ -12,6 +12,10 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
 public sealed record MoveTaskCommand(Guid TaskId, Guid ColumnId, int Position);
 
+/// <summary>
+/// Moves a task card to a different column/position on the board, then syncs the task's status
+/// to match the target column's <see cref="LemonDo.Domain.Boards.Entities.Column.TargetStatus"/>.
+/// </summary>
 public sealed class MoveTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,

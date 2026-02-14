@@ -17,6 +17,10 @@ public sealed record CreateTaskCommand(
     DateTimeOffset? DueDate = null,
     IReadOnlyList<string>? Tags = null);
 
+/// <summary>
+/// Creates a task and places it on the user's default board in the initial (Todo) column.
+/// Coordinates both the Task and Board bounded contexts in a single unit of work.
+/// </summary>
 public sealed class CreateTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,

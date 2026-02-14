@@ -3,6 +3,10 @@ namespace LemonDo.Api.Middleware;
 using System.Net;
 using System.Text.Json;
 
+/// <summary>
+/// Catches unhandled exceptions and returns a structured JSON error response (500).
+/// In development, includes the full exception detail in the response body.
+/// </summary>
 public sealed class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context)

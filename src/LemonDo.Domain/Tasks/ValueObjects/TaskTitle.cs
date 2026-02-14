@@ -2,6 +2,9 @@ namespace LemonDo.Domain.Tasks.ValueObjects;
 
 using LemonDo.Domain.Common;
 
+/// <summary>
+/// Validated task title. Must be non-empty and at most <see cref="MaxLength"/> characters (trimmed).
+/// </summary>
 public sealed class TaskTitle : ValueObject
 {
     public const int MaxLength = 500;

@@ -2,6 +2,9 @@ namespace LemonDo.Domain.Boards.ValueObjects;
 
 using LemonDo.Domain.Common;
 
+/// <summary>
+/// Validated board name. Must be non-empty and at most <see cref="MaxLength"/> characters (trimmed).
+/// </summary>
 public sealed class BoardName : ValueObject
 {
     public const int MaxLength = 100;

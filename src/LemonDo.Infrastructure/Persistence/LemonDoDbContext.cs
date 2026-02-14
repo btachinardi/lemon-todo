@@ -8,6 +8,15 @@ using Microsoft.EntityFrameworkCore;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>
+/// EF Core DbContext that also implements <see cref="IUnitOfWork"/>.
+/// <see cref="SaveChangesAsync"/> auto-manages <c>CreatedAt</c>/<c>UpdatedAt</c> timestamps
+/// and dispatches collected domain events after committing.
+/// </summary>
+/// <remarks>
+/// SQLite does not natively support <see cref="DateTimeOffset"/>; values are stored as ISO 8601
+/// strings via <see cref="ConfigureConventions"/> to preserve correct sort order.
+/// </remarks>
 public sealed class LemonDoDbContext : DbContext, IUnitOfWork
 {
     private readonly IDomainEventDispatcher? _eventDispatcher;

@@ -11,6 +11,10 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
 public sealed record CompleteTaskCommand(Guid TaskId);
 
+/// <summary>
+/// Completes a task and moves its card to the Done column on the default board.
+/// Coordinates both the Task (status) and Board (spatial placement) contexts.
+/// </summary>
 public sealed class CompleteTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,

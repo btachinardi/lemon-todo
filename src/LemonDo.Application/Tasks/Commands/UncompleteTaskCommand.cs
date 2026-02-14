@@ -11,6 +11,10 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
 public sealed record UncompleteTaskCommand(Guid TaskId);
 
+/// <summary>
+/// Reverts a completed task back to Todo status and moves its card to the initial (Todo) column.
+/// Also clears <c>CompletedAt</c> and resets <c>IsArchived</c> via the domain entity.
+/// </summary>
 public sealed class UncompleteTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,

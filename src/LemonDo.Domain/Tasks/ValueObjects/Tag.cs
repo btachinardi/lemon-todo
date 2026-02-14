@@ -2,6 +2,10 @@ namespace LemonDo.Domain.Tasks.ValueObjects;
 
 using LemonDo.Domain.Common;
 
+/// <summary>
+/// Validated tag label. Must be non-empty and at most <see cref="MaxLength"/> characters.
+/// Values are trimmed and normalized to lowercase on creation.
+/// </summary>
 public sealed class Tag : ValueObject
 {
     public const int MaxLength = 50;

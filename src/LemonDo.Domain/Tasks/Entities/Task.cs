@@ -5,6 +5,15 @@ using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Events;
 using LemonDo.Domain.Tasks.ValueObjects;
 
+/// <summary>
+/// Aggregate root for the Task bounded context. Owns the task lifecycle (status, priority,
+/// tags, archival) but not spatial placement — that belongs to the Board context.
+/// </summary>
+/// <remarks>
+/// <para>All mutation methods enforce a soft-delete guard: deleted tasks reject edits.</para>
+/// <para>Status transitions are managed via <see cref="SetStatus"/>, which also maintains
+/// <see cref="CompletedAt"/> and resets <see cref="IsArchived"/> when uncompleting.</para>
+/// </remarks>
 public sealed class Task : Entity<TaskId>
 {
     public UserId OwnerId { get; }
@@ -47,6 +56,10 @@ public sealed class Task : Entity<TaskId>
     // EF Core constructor
     private Task() : base(default!) { OwnerId = default!; Title = default!; }
 
+    /// <summary>
+    /// Factory method that creates a new task with <see cref="TaskStatus.Todo"/> status.
+    /// Raises <see cref="Events.TaskCreatedEvent"/>.
+    /// </summary>
     public static Result<Task, DomainError> Create(
         UserId ownerId,
         TaskTitle title,
@@ -60,6 +73,13 @@ public sealed class Task : Entity<TaskId>
             new Task(id, ownerId, title, description, priority, dueDate, tags));
     }
 
+    /// <summary>
+    /// Transitions the task to a new status. No-ops if already in that status.
+    /// </summary>
+    /// <remarks>
+    /// Side effects: sets <see cref="CompletedAt"/> when transitioning to Done;
+    /// clears <see cref="CompletedAt"/> and resets <see cref="IsArchived"/> when leaving Done.
+    /// </remarks>
     public Result<DomainError> SetStatus(TaskStatus newStatus)
     {
         if (IsDeleted)
@@ -151,6 +171,9 @@ public sealed class Task : Entity<TaskId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>
+    /// Adds a tag to the task. Fails if a tag with the same value already exists (case-insensitive, since tags are normalized to lowercase).
+    /// </summary>
     public Result<DomainError> AddTag(Tag tag)
     {
         if (IsDeleted)
@@ -186,6 +209,9 @@ public sealed class Task : Entity<TaskId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>
+    /// Archives a completed task. Only tasks with <see cref="TaskStatus.Done"/> status can be archived.
+    /// </summary>
     public Result<DomainError> Archive()
     {
         if (IsDeleted)
@@ -220,6 +246,9 @@ public sealed class Task : Entity<TaskId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>
+    /// Soft-deletes the task. Once deleted, all other mutation methods will reject further changes.
+    /// </summary>
     public Result<DomainError> Delete()
     {
         if (IsDeleted)

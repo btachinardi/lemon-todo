@@ -2,6 +2,9 @@ namespace LemonDo.Domain.Tasks.ValueObjects;
 
 using LemonDo.Domain.Common;
 
+/// <summary>
+/// Validated task description. Allows empty strings; rejects values exceeding <see cref="MaxLength"/> characters.
+/// </summary>
 public sealed class TaskDescription : ValueObject
 {
     public const int MaxLength = 10_000;

@@ -6,6 +6,17 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.ValueObjects;
 
+/// <summary>
+/// Aggregate root for the Board bounded context (downstream conformist to Task context).
+/// Owns spatial placement of tasks via <see cref="TaskCard"/> and column structure.
+/// </summary>
+/// <remarks>
+/// <para>Each column has a <see cref="Column.TargetStatus"/> that determines which
+/// <see cref="Tasks.ValueObjects.TaskStatus"/> a task receives when placed or moved into it.
+/// The application layer coordinates this: <see cref="PlaceTask"/> and <see cref="MoveCard"/>
+/// return the target status so the caller can sync the Task aggregate.</para>
+/// <para>Invariants: a board must always have at least one Todo column and one Done column.</para>
+/// </remarks>
 public sealed class Board : Entity<BoardId>
 {
     private readonly List<Column> _columns = [];
@@ -22,6 +33,9 @@ public sealed class Board : Entity<BoardId>
         Name = name;
     }
 
+    /// <summary>
+    /// Creates a default board named "My Board" with three columns: To Do, In Progress, and Done.
+    /// </summary>
     public static Result<Board, DomainError> CreateDefault(UserId ownerId)
     {
         var nameResult = BoardName.Create("My Board");
@@ -38,6 +52,9 @@ public sealed class Board : Entity<BoardId>
         return Result<Board, DomainError>.Success(board);
     }
 
+    /// <summary>
+    /// Creates a board with a custom name and two default columns: To Do and Done.
+    /// </summary>
     public static Result<Board, DomainError> Create(UserId ownerId, BoardName name)
     {
         var board = new Board(BoardId.New(), ownerId, name);
@@ -86,6 +103,10 @@ public sealed class Board : Entity<BoardId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>
+    /// Removes a column from the board. Cannot remove the last column, nor the last column
+    /// targeting <see cref="TaskStatus.Todo"/> or <see cref="TaskStatus.Done"/>.
+    /// </summary>
     public Result<DomainError> RemoveColumn(ColumnId columnId)
     {
         var column = _columns.Find(c => c.Id == columnId);
@@ -158,6 +179,10 @@ public sealed class Board : Entity<BoardId>
 
     // --- Card Management ---
 
+    /// <summary>
+    /// Places a task card onto this board. Fails if the task is already on the board.
+    /// </summary>
+    /// <returns>The column's <see cref="Column.TargetStatus"/> so the caller can sync the Task aggregate's status.</returns>
     public Result<TaskStatus, DomainError> PlaceTask(TaskId taskId, ColumnId columnId, int position)
     {
         var column = _columns.Find(c => c.Id == columnId);
@@ -178,6 +203,10 @@ public sealed class Board : Entity<BoardId>
         return Result<TaskStatus, DomainError>.Success(column.TargetStatus);
     }
 
+    /// <summary>
+    /// Moves an existing card to a different column and/or position. Uses immutable remove-and-add.
+    /// </summary>
+    /// <returns>The target column's <see cref="Column.TargetStatus"/> so the caller can sync the Task aggregate's status.</returns>
     public Result<TaskStatus, DomainError> MoveCard(TaskId taskId, ColumnId toColumnId, int position)
     {
         var column = _columns.Find(c => c.Id == toColumnId);

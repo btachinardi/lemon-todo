@@ -3,6 +3,11 @@ namespace LemonDo.Api.Extensions;
 using LemonDo.Api.Contracts;
 using LemonDo.Domain.Common;
 
+/// <summary>
+/// Maps <see cref="Result{TValue, TError}"/> to minimal API <see cref="IResult"/> responses.
+/// Error classification: codes ending in <c>.not_found</c> → 404,
+/// <c>.validation</c> → 400, all others → 422.
+/// </summary>
 public static class ResultExtensions
 {
     public static IResult ToHttpResult<TValue>(this Result<TValue, DomainError> result, Func<TValue, IResult>? onSuccess = null)
