@@ -12,6 +12,7 @@ public sealed class ColumnId : ValueObject
     }
 
     public static ColumnId New() => new(Guid.NewGuid());
+    public static ColumnId From(Guid value) => new(value);
 
     protected override IEnumerable<object?> GetEqualityComponents()
     {

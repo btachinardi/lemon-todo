@@ -1,0 +1,51 @@
+namespace LemonDo.Application.Tasks.Commands;
+
+using LemonDo.Application.Common;
+using LemonDo.Application.Tasks.DTOs;
+using LemonDo.Domain.Common;
+using LemonDo.Domain.Identity.ValueObjects;
+using LemonDo.Domain.Tasks.Entities;
+using LemonDo.Domain.Tasks.Repositories;
+using LemonDo.Domain.Tasks.ValueObjects;
+
+public sealed record CreateTaskCommand(
+    string Title,
+    string? Description,
+    Priority Priority = Priority.None,
+    DateTimeOffset? DueDate = null,
+    IReadOnlyList<string>? Tags = null);
+
+public sealed class CreateTaskCommandHandler(ITaskItemRepository repository, IUnitOfWork unitOfWork)
+{
+    public async Task<Result<TaskItemDto, DomainError>> HandleAsync(CreateTaskCommand command, CancellationToken ct = default)
+    {
+        var titleResult = TaskTitle.Create(command.Title);
+        if (titleResult.IsFailure)
+            return Result<TaskItemDto, DomainError>.Failure(titleResult.Error);
+
+        var descResult = TaskDescription.Create(command.Description);
+        if (descResult.IsFailure)
+            return Result<TaskItemDto, DomainError>.Failure(descResult.Error);
+
+        var tags = new List<Tag>();
+        if (command.Tags is not null)
+        {
+            foreach (var tagStr in command.Tags)
+            {
+                var tagResult = Tag.Create(tagStr);
+                if (tagResult.IsFailure)
+                    return Result<TaskItemDto, DomainError>.Failure(tagResult.Error);
+                tags.Add(tagResult.Value);
+            }
+        }
+
+        var taskResult = TaskItem.Create(UserId.Default, titleResult.Value, descResult.Value, command.Priority, command.DueDate, tags);
+        if (taskResult.IsFailure)
+            return Result<TaskItemDto, DomainError>.Failure(taskResult.Error);
+
+        await repository.AddAsync(taskResult.Value, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+
+        return Result<TaskItemDto, DomainError>.Success(TaskItemDtoMapper.ToDto(taskResult.Value));
+    }
+}

@@ -12,6 +12,7 @@ public sealed class TaskItemId : ValueObject
     }
 
     public static TaskItemId New() => new(Guid.NewGuid());
+    public static TaskItemId From(Guid value) => new(value);
 
     protected override IEnumerable<object?> GetEqualityComponents()
     {
