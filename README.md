@@ -398,14 +398,59 @@ See [GUIDELINES.md](./GUIDELINES.md) for:
 
 ### What We Would Implement Next
 
-Beyond CP5, the roadmap includes:
-1. **Real-time collaboration** — SignalR for live board updates across team members
-2. **File attachments** — Azure Blob Storage with antivirus scanning
-3. **Recurring tasks** — Cron-based task generation with Hangfire or Azure Functions
-4. **API versioning** — URL-based versioning (/api/v1/, /api/v2/) with compatibility layer
-5. **Full HIPAA certification** — BAA templates, security risk assessment, workforce training, breach notification procedures
-6. **GDPR compliance** — Right to erasure, data portability, consent management
-7. **Mobile native apps** — React Native leveraging shared domain types from `packages/shared-types`
+Beyond CP5, the roadmap is organized into capability tiers:
+
+#### Tier 1: AI-Powered Task Management
+
+- **AI Assistant** — Natural language chat interface for managing tasks ("create a high-priority task to review the Q1 report by Friday", "what's overdue this week?", "summarize my board status"). Built as a new bounded context with a clean adapter pattern — swap between Azure OpenAI, Anthropic, or local models without domain changes.
+- **Smart Categorization** — Auto-suggest priority, tags, and columns based on task title content and historical patterns.
+- **Daily Digest** — AI-generated summary of what was accomplished, what's in progress, and what needs attention. Delivered via email or in-app notification.
+- **Natural Language Filters** — "Show me tasks Marcus created last week that are still in progress" → query builder.
+
+#### Tier 2: Third-Party Integrations
+
+- **Calendar Sync** — Two-way sync with Google Calendar and Outlook. Tasks with due dates appear as calendar events; calendar events can spawn tasks. OAuth2 integration via adapter pattern.
+- **Messaging Notifications** — Slack, Microsoft Teams, WhatsApp, and SMS reminders for due dates, mentions, and status changes. Each channel is a Notification bounded context adapter — add new channels without changing domain logic.
+- **Push Notifications** — Web Push API (building on our PWA service worker) for real-time browser notifications even when the app isn't open.
+- **Email-to-Task** — Forward emails to a dedicated address to create tasks. Azure Functions + SendGrid inbound parse.
+- **Zapier/Make Webhooks** — Outbound webhooks on domain events, enabling no-code integrations with 5000+ external services.
+
+#### Tier 3: Collaboration & Real-Time
+
+- **Multi-Tenancy** — Organization-scoped data isolation using EF Core global query filters. Our Board aggregate root naturally supports this — add an `OrganizationId` field and the filter does the rest.
+- **Teams & Projects** — Group boards under projects, assign team members, track per-team velocity.
+- **Real-Time Board Updates** — SignalR (or SSE for simpler clients) for live Kanban board sync across team members. See a task move the moment a colleague drags it.
+- **Idempotency & Conflict Resolution** — Idempotency keys on mutations, optimistic concurrency with ETag headers, last-write-wins with conflict notification for simultaneous edits.
+- **Message Queue / DLQ** — Azure Service Bus for reliable async event processing. Dead-letter queue for failed event handlers with retry policies and manual inspection.
+- **Activity Feed** — Per-task and per-board activity streams showing who did what and when. Built on top of our domain events + audit trail.
+- **Comments & Mentions** — Threaded comments on tasks with @mentions that trigger notifications.
+
+#### Tier 4: Advanced Task Modeling
+
+- **Task Dependencies** — "Blocked by" relationships with visual dependency graphs. Automatic status propagation (parent blocked until all blockers resolved).
+- **Subtasks & Checklists** — Nested task hierarchies with progress tracking.
+- **Recurring Tasks** — Cron-based task generation via Hangfire or Azure Functions. "Every Monday at 9am, create a 'Weekly standup prep' task."
+- **Time Tracking** — Start/stop timer on tasks, time estimates vs actuals, timesheet export.
+- **Custom Fields** — Extensible task schema per workspace (dropdown, date, number, text fields). JSON column in SQLite/PostgreSQL with indexed extraction.
+- **Templates** — Board templates ("Sprint Board", "Personal GTD") and task templates ("Bug Report", "Feature Request") with pre-filled fields.
+
+#### Tier 5: Reporting & Developer Experience
+
+- **Dashboards** — Burndown/burnup charts, velocity tracking, workload heatmaps, time-to-completion trends. Custom dashboard builder with drag-and-drop widgets.
+- **Public API + SDK** — Versioned REST API (/api/v1/, /api/v2/) with auto-generated TypeScript and C# SDKs via Scalar's code generation.
+- **CLI Tool** — `lemondo tasks list --status=todo --priority=high` for power users and CI/CD integration.
+- **GitHub/GitLab Integration** — Link commits and PRs to tasks, auto-transition task status on merge.
+- **Browser Extension** — Quick-capture from any webpage ("clip this page as a task" with URL, title, and screenshot).
+
+#### Tier 6: Platform & Compliance
+
+- **Desktop App** — Tauri (Rust shell wrapping our React frontend) for native desktop experience with system tray, global shortcuts, and offline-first storage.
+- **Mobile Native** — React Native sharing domain types from `packages/shared-types` for iOS and Android.
+- **SSO** — SAML 2.0 and OIDC for enterprise single sign-on (Okta, Azure AD, Auth0).
+- **Full HIPAA Certification** — BAA templates, annual security risk assessment, workforce training program, breach notification procedures, subcontractor BAA verification.
+- **GDPR Compliance** — Right to erasure, data portability (full JSON export), consent management, Data Protection Officer workflow.
+- **SOC 2 Type II** — Our audit trail and encryption foundations make this achievable. Add formal policies, evidence collection, and annual audit.
+- **Data Residency** — Region-specific database deployments for organizations with data sovereignty requirements.
 
 ---
 
