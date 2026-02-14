@@ -11,14 +11,14 @@ using NSubstitute;
 [TestClass]
 public sealed class MoveTaskCommandHandlerTests
 {
-    private ITaskItemRepository _repository = null!;
+    private IBoardTaskRepository _repository = null!;
     private IUnitOfWork _unitOfWork = null!;
     private MoveTaskCommandHandler _handler = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = Substitute.For<ITaskItemRepository>();
+        _repository = Substitute.For<IBoardTaskRepository>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _handler = new MoveTaskCommandHandler(_repository, _unitOfWork);
     }
@@ -26,9 +26,9 @@ public sealed class MoveTaskCommandHandlerTests
     [TestMethod]
     public async Task Should_MoveTask_When_ValidCommand()
     {
-        var task = TaskItem.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.None).Value;
+        var task = BoardTask.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.None).Value;
         var columnId = Guid.NewGuid();
-        _repository.GetByIdAsync(Arg.Any<TaskItemId>(), Arg.Any<CancellationToken>())
+        _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(new MoveTaskCommand(task.Id.Value, columnId, 2));
@@ -42,8 +42,8 @@ public sealed class MoveTaskCommandHandlerTests
     [TestMethod]
     public async Task Should_Fail_When_TaskNotFound()
     {
-        _repository.GetByIdAsync(Arg.Any<TaskItemId>(), Arg.Any<CancellationToken>())
-            .Returns((TaskItem?)null);
+        _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
+            .Returns((BoardTask?)null);
 
         var result = await _handler.HandleAsync(new MoveTaskCommand(Guid.NewGuid(), Guid.NewGuid(), 0));
 
@@ -53,8 +53,8 @@ public sealed class MoveTaskCommandHandlerTests
     [TestMethod]
     public async Task Should_Fail_When_NegativePosition()
     {
-        var task = TaskItem.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.None).Value;
-        _repository.GetByIdAsync(Arg.Any<TaskItemId>(), Arg.Any<CancellationToken>())
+        var task = BoardTask.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.None).Value;
+        _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(new MoveTaskCommand(task.Id.Value, Guid.NewGuid(), -1));

@@ -6,19 +6,19 @@ using LemonDo.Domain.Tasks.Events;
 using LemonDo.Domain.Tasks.ValueObjects;
 
 [TestClass]
-public sealed class TaskItemTests
+public sealed class BoardTaskTests
 {
     private static TaskTitle ValidTitle => TaskTitle.Create("Buy groceries").Value;
     private static TaskDescription ValidDescription => TaskDescription.Create("Milk, eggs, bread").Value;
     private static Tag ValidTag => Tag.Create("shopping").Value;
     private static UserId DefaultOwner => UserId.Default;
 
-    private static TaskItem CreateValidTask(
+    private static BoardTask CreateValidTask(
         Priority priority = Priority.None,
         DateTimeOffset? dueDate = null,
         IEnumerable<Tag>? tags = null)
     {
-        var result = TaskItem.Create(DefaultOwner, ValidTitle, ValidDescription, priority, dueDate, tags);
+        var result = BoardTask.Create(DefaultOwner, ValidTitle, ValidDescription, priority, dueDate, tags);
         Assert.IsTrue(result.IsSuccess);
         return result.Value;
     }
@@ -33,7 +33,7 @@ public sealed class TaskItemTests
         Assert.AreEqual("Buy groceries", task.Title.Value);
         Assert.AreEqual("Milk, eggs, bread", task.Description!.Value);
         Assert.AreEqual(Priority.High, task.Priority);
-        Assert.AreEqual(TaskItemStatus.Todo, task.Status);
+        Assert.AreEqual(BoardTaskStatus.Todo, task.Status);
         Assert.AreEqual(DefaultOwner, task.OwnerId);
         Assert.AreEqual(0, task.Position);
         Assert.IsFalse(task.IsArchived);
@@ -50,7 +50,7 @@ public sealed class TaskItemTests
         Assert.HasCount(1, task.DomainEvents);
         var evt = task.DomainEvents[0] as TaskCreatedEvent;
         Assert.IsNotNull(evt);
-        Assert.AreEqual(task.Id, evt.TaskItemId);
+        Assert.AreEqual(task.Id, evt.BoardTaskId);
         Assert.AreEqual(Priority.Medium, evt.Priority);
     }
 
@@ -209,7 +209,7 @@ public sealed class TaskItemTests
         var result = task.Complete();
 
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual(TaskItemStatus.Done, task.Status);
+        Assert.AreEqual(BoardTaskStatus.Done, task.Status);
         Assert.IsNotNull(task.CompletedAt);
     }
 
@@ -234,7 +234,7 @@ public sealed class TaskItemTests
         var result = task.Uncomplete();
 
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual(TaskItemStatus.Todo, task.Status);
+        Assert.AreEqual(BoardTaskStatus.Todo, task.Status);
         Assert.IsNull(task.CompletedAt);
     }
 
@@ -261,7 +261,7 @@ public sealed class TaskItemTests
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(task.IsArchived);
-        Assert.AreEqual(TaskItemStatus.Archived, task.Status);
+        Assert.AreEqual(BoardTaskStatus.Archived, task.Status);
     }
 
     [TestMethod]
@@ -286,7 +286,7 @@ public sealed class TaskItemTests
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsFalse(task.IsArchived);
-        Assert.AreEqual(TaskItemStatus.Done, task.Status);
+        Assert.AreEqual(BoardTaskStatus.Done, task.Status);
     }
 
     // --- MoveTo ---

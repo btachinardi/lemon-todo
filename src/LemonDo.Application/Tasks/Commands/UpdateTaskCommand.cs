@@ -14,60 +14,60 @@ public sealed record UpdateTaskCommand(
     DateTimeOffset? DueDate = null,
     bool ClearDueDate = false);
 
-public sealed class UpdateTaskCommandHandler(ITaskItemRepository repository, IUnitOfWork unitOfWork)
+public sealed class UpdateTaskCommandHandler(IBoardTaskRepository repository, IUnitOfWork unitOfWork)
 {
-    public async Task<Result<TaskItemDto, DomainError>> HandleAsync(UpdateTaskCommand command, CancellationToken ct = default)
+    public async Task<Result<BoardTaskDto, DomainError>> HandleAsync(UpdateTaskCommand command, CancellationToken ct = default)
     {
-        var task = await repository.GetByIdAsync(TaskItemId.From(command.TaskId), ct);
+        var task = await repository.GetByIdAsync(BoardTaskId.From(command.TaskId), ct);
         if (task is null)
-            return Result<TaskItemDto, DomainError>.Failure(
-                DomainError.NotFound("TaskItem", command.TaskId.ToString()));
+            return Result<BoardTaskDto, DomainError>.Failure(
+                DomainError.NotFound("BoardTask", command.TaskId.ToString()));
 
         if (command.Title is not null)
         {
             var titleResult = TaskTitle.Create(command.Title);
             if (titleResult.IsFailure)
-                return Result<TaskItemDto, DomainError>.Failure(titleResult.Error);
+                return Result<BoardTaskDto, DomainError>.Failure(titleResult.Error);
 
             var updateResult = task.UpdateTitle(titleResult.Value);
             if (updateResult.IsFailure)
-                return Result<TaskItemDto, DomainError>.Failure(updateResult.Error);
+                return Result<BoardTaskDto, DomainError>.Failure(updateResult.Error);
         }
 
         if (command.Description is not null)
         {
             var descResult = TaskDescription.Create(command.Description);
             if (descResult.IsFailure)
-                return Result<TaskItemDto, DomainError>.Failure(descResult.Error);
+                return Result<BoardTaskDto, DomainError>.Failure(descResult.Error);
 
             var updateResult = task.UpdateDescription(descResult.Value);
             if (updateResult.IsFailure)
-                return Result<TaskItemDto, DomainError>.Failure(updateResult.Error);
+                return Result<BoardTaskDto, DomainError>.Failure(updateResult.Error);
         }
 
         if (command.Priority.HasValue)
         {
             var priorityResult = task.SetPriority(command.Priority.Value);
             if (priorityResult.IsFailure)
-                return Result<TaskItemDto, DomainError>.Failure(priorityResult.Error);
+                return Result<BoardTaskDto, DomainError>.Failure(priorityResult.Error);
         }
 
         if (command.ClearDueDate)
         {
             var dueDateResult = task.SetDueDate(null);
             if (dueDateResult.IsFailure)
-                return Result<TaskItemDto, DomainError>.Failure(dueDateResult.Error);
+                return Result<BoardTaskDto, DomainError>.Failure(dueDateResult.Error);
         }
         else if (command.DueDate.HasValue)
         {
             var dueDateResult = task.SetDueDate(command.DueDate.Value);
             if (dueDateResult.IsFailure)
-                return Result<TaskItemDto, DomainError>.Failure(dueDateResult.Error);
+                return Result<BoardTaskDto, DomainError>.Failure(dueDateResult.Error);
         }
 
         await repository.UpdateAsync(task, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
-        return Result<TaskItemDto, DomainError>.Success(TaskItemDtoMapper.ToDto(task));
+        return Result<BoardTaskDto, DomainError>.Success(BoardTaskDtoMapper.ToDto(task));
     }
 }

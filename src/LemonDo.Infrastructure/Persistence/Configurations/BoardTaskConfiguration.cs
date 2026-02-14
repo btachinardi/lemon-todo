@@ -6,15 +6,15 @@ using LemonDo.Domain.Tasks.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-public sealed class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
+public sealed class BoardTaskConfiguration : IEntityTypeConfiguration<BoardTask>
 {
-    public void Configure(EntityTypeBuilder<TaskItem> builder)
+    public void Configure(EntityTypeBuilder<BoardTask> builder)
     {
         builder.ToTable("Tasks");
 
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Id)
-            .HasConversion(id => id.Value, guid => TaskItemId.From(guid));
+            .HasConversion(id => id.Value, guid => BoardTaskId.From(guid));
 
         builder.Property(t => t.Title)
             .HasConversion(t => t.Value, v => TaskTitle.Create(v).Value)
@@ -60,12 +60,12 @@ public sealed class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
         builder.OwnsMany(t => t.Tags, tagBuilder =>
         {
             tagBuilder.ToTable("TaskItemTags");
-            tagBuilder.WithOwner().HasForeignKey("TaskItemId");
+            tagBuilder.WithOwner().HasForeignKey("BoardTaskId");
             tagBuilder.Property(t => t.Value)
                 .HasColumnName("Value")
                 .HasMaxLength(Tag.MaxLength)
                 .IsRequired();
-            tagBuilder.HasKey("TaskItemId", "Value");
+            tagBuilder.HasKey("BoardTaskId", "Value");
         });
 
         builder.Navigation(t => t.Tags).HasField("_tags");

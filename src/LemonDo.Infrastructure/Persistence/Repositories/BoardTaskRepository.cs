@@ -7,16 +7,16 @@ using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
-public sealed class TaskItemRepository(LemonDoDbContext context) : ITaskItemRepository
+public sealed class BoardTaskRepository(LemonDoDbContext context) : IBoardTaskRepository
 {
-    public async Task<TaskItem?> GetByIdAsync(TaskItemId id, CancellationToken ct = default)
+    public async Task<BoardTask?> GetByIdAsync(BoardTaskId id, CancellationToken ct = default)
     {
         return await context.Tasks
             .Include(t => t.Tags)
             .FirstOrDefaultAsync(t => t.Id == id, ct);
     }
 
-    public async Task<IReadOnlyList<TaskItem>> GetByColumnAsync(ColumnId columnId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<BoardTask>> GetByColumnAsync(ColumnId columnId, CancellationToken ct = default)
     {
         return await context.Tasks
             .Include(t => t.Tags)
@@ -25,11 +25,11 @@ public sealed class TaskItemRepository(LemonDoDbContext context) : ITaskItemRepo
             .ToListAsync(ct);
     }
 
-    public async Task<PagedResult<TaskItem>> ListAsync(
+    public async Task<PagedResult<BoardTask>> ListAsync(
         UserId ownerId,
         ColumnId? columnId = null,
         Priority? priority = null,
-        TaskItemStatus? status = null,
+        BoardTaskStatus? status = null,
         string? searchTerm = null,
         int page = 1,
         int pageSize = 50,
@@ -59,15 +59,15 @@ public sealed class TaskItemRepository(LemonDoDbContext context) : ITaskItemRepo
             .Take(pageSize)
             .ToListAsync(ct);
 
-        return new PagedResult<TaskItem>(items, totalCount, page, pageSize);
+        return new PagedResult<BoardTask>(items, totalCount, page, pageSize);
     }
 
-    public async Task AddAsync(TaskItem task, CancellationToken ct = default)
+    public async Task AddAsync(BoardTask task, CancellationToken ct = default)
     {
         await context.Tasks.AddAsync(task, ct);
     }
 
-    public Task UpdateAsync(TaskItem task, CancellationToken ct = default)
+    public Task UpdateAsync(BoardTask task, CancellationToken ct = default)
     {
         context.Tasks.Update(task);
         return Task.CompletedTask;

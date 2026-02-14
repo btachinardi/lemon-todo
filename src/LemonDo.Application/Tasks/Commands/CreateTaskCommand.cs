@@ -16,19 +16,19 @@ public sealed record CreateTaskCommand(
     IReadOnlyList<string>? Tags = null);
 
 public sealed class CreateTaskCommandHandler(
-    ITaskItemRepository repository,
+    IBoardTaskRepository repository,
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork)
 {
-    public async Task<Result<TaskItemDto, DomainError>> HandleAsync(CreateTaskCommand command, CancellationToken ct = default)
+    public async Task<Result<BoardTaskDto, DomainError>> HandleAsync(CreateTaskCommand command, CancellationToken ct = default)
     {
         var titleResult = TaskTitle.Create(command.Title);
         if (titleResult.IsFailure)
-            return Result<TaskItemDto, DomainError>.Failure(titleResult.Error);
+            return Result<BoardTaskDto, DomainError>.Failure(titleResult.Error);
 
         var descResult = TaskDescription.Create(command.Description);
         if (descResult.IsFailure)
-            return Result<TaskItemDto, DomainError>.Failure(descResult.Error);
+            return Result<BoardTaskDto, DomainError>.Failure(descResult.Error);
 
         var tags = new List<Tag>();
         if (command.Tags is not null)
@@ -37,14 +37,14 @@ public sealed class CreateTaskCommandHandler(
             {
                 var tagResult = Tag.Create(tagStr);
                 if (tagResult.IsFailure)
-                    return Result<TaskItemDto, DomainError>.Failure(tagResult.Error);
+                    return Result<BoardTaskDto, DomainError>.Failure(tagResult.Error);
                 tags.Add(tagResult.Value);
             }
         }
 
-        var taskResult = TaskItem.Create(UserId.Default, titleResult.Value, descResult.Value, command.Priority, command.DueDate, tags);
+        var taskResult = BoardTask.Create(UserId.Default, titleResult.Value, descResult.Value, command.Priority, command.DueDate, tags);
         if (taskResult.IsFailure)
-            return Result<TaskItemDto, DomainError>.Failure(taskResult.Error);
+            return Result<BoardTaskDto, DomainError>.Failure(taskResult.Error);
 
         var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
         if (board is not null && board.Columns.Count > 0)
@@ -57,6 +57,6 @@ public sealed class CreateTaskCommandHandler(
         await repository.AddAsync(taskResult.Value, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
-        return Result<TaskItemDto, DomainError>.Success(TaskItemDtoMapper.ToDto(taskResult.Value));
+        return Result<BoardTaskDto, DomainError>.Success(BoardTaskDtoMapper.ToDto(taskResult.Value));
     }
 }

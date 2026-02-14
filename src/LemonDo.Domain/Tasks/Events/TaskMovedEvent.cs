@@ -4,7 +4,7 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.ValueObjects;
 
 public sealed record TaskMovedEvent(
-    TaskItemId TaskItemId,
+    BoardTaskId BoardTaskId,
     ColumnId? FromColumnId,
     ColumnId ToColumnId,
     int NewPosition) : DomainEvent;

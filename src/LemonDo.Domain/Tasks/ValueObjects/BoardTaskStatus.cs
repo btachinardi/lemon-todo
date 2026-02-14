@@ -1,6 +1,6 @@
 namespace LemonDo.Domain.Tasks.ValueObjects;
 
-public enum TaskItemStatus
+public enum BoardTaskStatus
 {
     Todo = 0,
     InProgress = 1,

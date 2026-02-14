@@ -45,7 +45,7 @@ namespace LemonDo.Infrastructure.Migrations
                     b.ToTable("Boards", (string)null);
                 });
 
-            modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.TaskItem", b =>
+            modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.BoardTask", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
@@ -145,11 +145,11 @@ namespace LemonDo.Infrastructure.Migrations
                     b.Navigation("Columns");
                 });
 
-            modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.TaskItem", b =>
+            modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.BoardTask", b =>
                 {
                     b.OwnsMany("LemonDo.Domain.Tasks.ValueObjects.Tag", "Tags", b1 =>
                         {
-                            b1.Property<Guid>("TaskItemId")
+                            b1.Property<Guid>("BoardTaskId")
                                 .HasColumnType("TEXT");
 
                             b1.Property<string>("Value")
@@ -157,12 +157,12 @@ namespace LemonDo.Infrastructure.Migrations
                                 .HasColumnType("TEXT")
                                 .HasColumnName("Value");
 
-                            b1.HasKey("TaskItemId", "Value");
+                            b1.HasKey("BoardTaskId", "Value");
 
                             b1.ToTable("TaskItemTags", (string)null);
 
                             b1.WithOwner()
-                                .HasForeignKey("TaskItemId");
+                                .HasForeignKey("BoardTaskId");
                         });
 
                     b.Navigation("Tags");

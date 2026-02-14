@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TaskListView } from './TaskListView';
-import { createTaskItem } from '@/test/factories';
+import { createBoardTask } from '@/test/factories';
 import { Priority, TaskStatus } from '../../types/task.types';
 
 describe('TaskListView', () => {
@@ -13,9 +13,9 @@ describe('TaskListView', () => {
 
   it('renders all tasks', () => {
     const tasks = [
-      createTaskItem({ title: 'Task Alpha' }),
-      createTaskItem({ title: 'Task Beta' }),
-      createTaskItem({ title: 'Task Gamma' }),
+      createBoardTask({ title: 'Task Alpha' }),
+      createBoardTask({ title: 'Task Beta' }),
+      createBoardTask({ title: 'Task Gamma' }),
     ];
     render(<TaskListView tasks={tasks} />);
     expect(screen.getByText('Task Alpha')).toBeInTheDocument();
@@ -25,7 +25,7 @@ describe('TaskListView', () => {
 
   it('renders task metadata (status, priority, tags)', () => {
     const tasks = [
-      createTaskItem({
+      createBoardTask({
         title: 'Rich Task',
         status: TaskStatus.InProgress,
         priority: Priority.High,
@@ -41,7 +41,7 @@ describe('TaskListView', () => {
   it('calls onCompleteTask when check button is clicked', async () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
-    const tasks = [createTaskItem({ id: 'task-99' })];
+    const tasks = [createBoardTask({ id: 'task-99' })];
     render(<TaskListView tasks={tasks} onCompleteTask={onComplete} />);
 
     await user.click(screen.getByRole('button', { name: /mark as complete/i }));
@@ -49,7 +49,7 @@ describe('TaskListView', () => {
   });
 
   it('applies line-through for completed tasks', () => {
-    const tasks = [createTaskItem({ title: 'Done Task', status: TaskStatus.Done })];
+    const tasks = [createBoardTask({ title: 'Done Task', status: TaskStatus.Done })];
     render(<TaskListView tasks={tasks} />);
     const title = screen.getByText('Done Task');
     expect(title.className).toContain('line-through');

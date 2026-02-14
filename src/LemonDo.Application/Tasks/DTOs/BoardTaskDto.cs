@@ -1,6 +1,6 @@
 namespace LemonDo.Application.Tasks.DTOs;
 
-public sealed record TaskItemDto
+public sealed record BoardTaskDto
 {
     public required Guid Id { get; init; }
     public required string Title { get; init; }

@@ -2,17 +2,17 @@ namespace LemonDo.Domain.Tasks.ValueObjects;
 
 using LemonDo.Domain.Common;
 
-public sealed class TaskItemId : ValueObject
+public sealed class BoardTaskId : ValueObject
 {
     public Guid Value { get; }
 
-    public TaskItemId(Guid value)
+    public BoardTaskId(Guid value)
     {
         Value = value;
     }
 
-    public static TaskItemId New() => new(Guid.NewGuid());
-    public static TaskItemId From(Guid value) => new(value);
+    public static BoardTaskId New() => new(Guid.NewGuid());
+    public static BoardTaskId From(Guid value) => new(value);
 
     protected override IEnumerable<object?> GetEqualityComponents()
     {

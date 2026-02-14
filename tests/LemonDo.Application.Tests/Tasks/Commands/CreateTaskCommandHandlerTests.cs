@@ -11,7 +11,7 @@ using NSubstitute;
 [TestClass]
 public sealed class CreateTaskCommandHandlerTests
 {
-    private ITaskItemRepository _repository = null!;
+    private IBoardTaskRepository _repository = null!;
     private IBoardRepository _boardRepository = null!;
     private IUnitOfWork _unitOfWork = null!;
     private CreateTaskCommandHandler _handler = null!;
@@ -19,7 +19,7 @@ public sealed class CreateTaskCommandHandlerTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = Substitute.For<ITaskItemRepository>();
+        _repository = Substitute.For<IBoardTaskRepository>();
         _boardRepository = Substitute.For<IBoardRepository>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
 
@@ -27,7 +27,7 @@ public sealed class CreateTaskCommandHandlerTests
         _boardRepository.GetDefaultForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(board);
         _repository.GetByColumnAsync(Arg.Any<ColumnId>(), Arg.Any<CancellationToken>())
-            .Returns(new List<TaskItem>());
+            .Returns(new List<BoardTask>());
 
         _handler = new CreateTaskCommandHandler(_repository, _boardRepository, _unitOfWork);
     }
@@ -43,7 +43,7 @@ public sealed class CreateTaskCommandHandlerTests
         Assert.AreEqual("Buy groceries", result.Value.Title);
         Assert.AreEqual("Milk and eggs", result.Value.Description);
         Assert.AreEqual("High", result.Value.Priority);
-        await _repository.Received(1).AddAsync(Arg.Any<TaskItem>(), Arg.Any<CancellationToken>());
+        await _repository.Received(1).AddAsync(Arg.Any<BoardTask>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -66,10 +66,10 @@ public sealed class CreateTaskCommandHandlerTests
     public async Task Should_SetPositionToEndOfColumn_When_ColumnHasExistingTasks()
     {
         // Arrange: 3 tasks already in the column
-        var existingTasks = new List<TaskItem>();
+        var existingTasks = new List<BoardTask>();
         for (var i = 0; i < 3; i++)
         {
-            var t = TaskItem.Create(UserId.Default, TaskTitle.Create($"Task {i}").Value).Value;
+            var t = BoardTask.Create(UserId.Default, TaskTitle.Create($"Task {i}").Value).Value;
             existingTasks.Add(t);
         }
         _repository.GetByColumnAsync(Arg.Any<ColumnId>(), Arg.Any<CancellationToken>())
@@ -102,7 +102,7 @@ public sealed class CreateTaskCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         Assert.IsTrue(result.IsFailure);
-        await _repository.DidNotReceive().AddAsync(Arg.Any<TaskItem>(), Arg.Any<CancellationToken>());
+        await _repository.DidNotReceive().AddAsync(Arg.Any<BoardTask>(), Arg.Any<CancellationToken>());
     }
 
     [TestMethod]

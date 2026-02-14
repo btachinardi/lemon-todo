@@ -16,6 +16,6 @@ public sealed class GetBoardQueryHandler(IBoardRepository repository)
             return Result<BoardDto, DomainError>.Failure(
                 DomainError.NotFound("Board", query.BoardId.ToString()));
 
-        return Result<BoardDto, DomainError>.Success(TaskItemDtoMapper.ToDto(board));
+        return Result<BoardDto, DomainError>.Success(BoardTaskDtoMapper.ToDto(board));
     }
 }

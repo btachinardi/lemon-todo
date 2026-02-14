@@ -1,4 +1,4 @@
-import type { TaskItem } from '@/domains/tasks/types/task.types';
+import type { BoardTask } from '@/domains/tasks/types/task.types';
 import { Priority, TaskStatus } from '@/domains/tasks/types/task.types';
 import type { Board, Column } from '@/domains/tasks/types/board.types';
 
@@ -8,7 +8,7 @@ function nextId(): string {
   return `00000000-0000-0000-0000-${String(counter).padStart(12, '0')}`;
 }
 
-export function createTaskItem(overrides: Partial<TaskItem> = {}): TaskItem {
+export function createBoardTask(overrides: Partial<BoardTask> = {}): BoardTask {
   return {
     id: nextId(),
     title: 'Test Task',

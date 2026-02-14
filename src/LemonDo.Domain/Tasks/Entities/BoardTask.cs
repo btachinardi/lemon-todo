@@ -5,13 +5,13 @@ using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Events;
 using LemonDo.Domain.Tasks.ValueObjects;
 
-public sealed class TaskItem : Entity<TaskItemId>
+public sealed class BoardTask : Entity<BoardTaskId>
 {
     public UserId OwnerId { get; }
     public TaskTitle Title { get; private set; }
     public TaskDescription? Description { get; private set; }
     public Priority Priority { get; private set; }
-    public TaskItemStatus Status { get; private set; }
+    public BoardTaskStatus Status { get; private set; }
     public DateTimeOffset? DueDate { get; private set; }
     public ColumnId? ColumnId { get; private set; }
     public int Position { get; private set; }
@@ -22,8 +22,8 @@ public sealed class TaskItem : Entity<TaskItemId>
     private readonly List<Tag> _tags = [];
     public IReadOnlyList<Tag> Tags => _tags.AsReadOnly();
 
-    private TaskItem(
-        TaskItemId id,
+    private BoardTask(
+        BoardTaskId id,
         UserId ownerId,
         TaskTitle title,
         TaskDescription? description,
@@ -35,7 +35,7 @@ public sealed class TaskItem : Entity<TaskItemId>
         Title = title;
         Description = description;
         Priority = priority;
-        Status = TaskItemStatus.Todo;
+        Status = BoardTaskStatus.Todo;
         DueDate = dueDate;
         Position = 0;
         IsArchived = false;
@@ -48,9 +48,9 @@ public sealed class TaskItem : Entity<TaskItemId>
     }
 
     // EF Core constructor
-    private TaskItem() : base(default!) { OwnerId = default!; Title = default!; }
+    private BoardTask() : base(default!) { OwnerId = default!; Title = default!; }
 
-    public static Result<TaskItem, DomainError> Create(
+    public static Result<BoardTask, DomainError> Create(
         UserId ownerId,
         TaskTitle title,
         TaskDescription? description = null,
@@ -58,9 +58,9 @@ public sealed class TaskItem : Entity<TaskItemId>
         DateTimeOffset? dueDate = null,
         IEnumerable<Tag>? tags = null)
     {
-        var id = TaskItemId.New();
-        return Result<TaskItem, DomainError>.Success(
-            new TaskItem(id, ownerId, title, description, priority, dueDate, tags));
+        var id = BoardTaskId.New();
+        return Result<BoardTask, DomainError>.Success(
+            new BoardTask(id, ownerId, title, description, priority, dueDate, tags));
     }
 
     public Result<DomainError> UpdateTitle(TaskTitle newTitle)
@@ -179,11 +179,11 @@ public sealed class TaskItem : Entity<TaskItemId>
             return Result<DomainError>.Failure(
                 DomainError.BusinessRule("task.deleted", "Cannot edit a deleted task."));
 
-        if (Status == TaskItemStatus.Done)
+        if (Status == BoardTaskStatus.Done)
             return Result<DomainError>.Failure(
                 DomainError.BusinessRule("task.already_completed", "Task is already completed."));
 
-        Status = TaskItemStatus.Done;
+        Status = BoardTaskStatus.Done;
         CompletedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -197,11 +197,11 @@ public sealed class TaskItem : Entity<TaskItemId>
             return Result<DomainError>.Failure(
                 DomainError.BusinessRule("task.deleted", "Cannot edit a deleted task."));
 
-        if (Status != TaskItemStatus.Done)
+        if (Status != BoardTaskStatus.Done)
             return Result<DomainError>.Failure(
                 DomainError.BusinessRule("task.not_completed", "Task is not completed."));
 
-        Status = TaskItemStatus.Todo;
+        Status = BoardTaskStatus.Todo;
         CompletedAt = null;
         IsArchived = false;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -216,12 +216,12 @@ public sealed class TaskItem : Entity<TaskItemId>
             return Result<DomainError>.Failure(
                 DomainError.BusinessRule("task.deleted", "Cannot edit a deleted task."));
 
-        if (Status != TaskItemStatus.Done)
+        if (Status != BoardTaskStatus.Done)
             return Result<DomainError>.Failure(
                 DomainError.BusinessRule("task.not_completed", "Cannot archive a non-completed task."));
 
         IsArchived = true;
-        Status = TaskItemStatus.Archived;
+        Status = BoardTaskStatus.Archived;
         UpdatedAt = DateTimeOffset.UtcNow;
 
         RaiseDomainEvent(new TaskArchivedEvent(Id));
@@ -239,7 +239,7 @@ public sealed class TaskItem : Entity<TaskItemId>
                 DomainError.BusinessRule("task.not_archived", "Task is not archived."));
 
         IsArchived = false;
-        Status = TaskItemStatus.Done;
+        Status = BoardTaskStatus.Done;
         UpdatedAt = DateTimeOffset.UtcNow;
 
         RaiseDomainEvent(new TaskUnarchivedEvent(Id));

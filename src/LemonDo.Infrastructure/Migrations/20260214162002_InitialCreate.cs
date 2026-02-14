@@ -76,14 +76,14 @@ namespace LemonDo.Infrastructure.Migrations
                 columns: table => new
                 {
                     Value = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    TaskItemId = table.Column<Guid>(type: "TEXT", nullable: false)
+                    BoardTaskId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TaskItemTags", x => new { x.TaskItemId, x.Value });
+                    table.PrimaryKey("PK_TaskItemTags", x => new { x.BoardTaskId, x.Value });
                     table.ForeignKey(
-                        name: "FK_TaskItemTags_Tasks_TaskItemId",
-                        column: x => x.TaskItemId,
+                        name: "FK_TaskItemTags_Tasks_BoardTaskId",
+                        column: x => x.BoardTaskId,
                         principalTable: "Tasks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);

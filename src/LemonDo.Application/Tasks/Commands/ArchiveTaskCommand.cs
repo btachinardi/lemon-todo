@@ -7,14 +7,14 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 public sealed record ArchiveTaskCommand(Guid TaskId);
 
-public sealed class ArchiveTaskCommandHandler(ITaskItemRepository repository, IUnitOfWork unitOfWork)
+public sealed class ArchiveTaskCommandHandler(IBoardTaskRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<DomainError>> HandleAsync(ArchiveTaskCommand command, CancellationToken ct = default)
     {
-        var task = await repository.GetByIdAsync(TaskItemId.From(command.TaskId), ct);
+        var task = await repository.GetByIdAsync(BoardTaskId.From(command.TaskId), ct);
         if (task is null)
             return Result<DomainError>.Failure(
-                DomainError.NotFound("TaskItem", command.TaskId.ToString()));
+                DomainError.NotFound("BoardTask", command.TaskId.ToString()));
 
         var result = task.Archive();
         if (result.IsFailure)

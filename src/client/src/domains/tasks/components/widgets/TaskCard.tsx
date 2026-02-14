@@ -2,14 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card';
 import { cn } from '@/lib/utils';
 import { CheckCircle2Icon, MoreHorizontalIcon } from 'lucide-react';
 import { Button } from '@/ui/button';
-import type { TaskItem } from '../../types/task.types';
+import type { BoardTask } from '../../types/task.types';
 import { TaskStatus } from '../../types/task.types';
 import { PriorityBadge } from '../atoms/PriorityBadge';
 import { DueDateLabel } from '../atoms/DueDateLabel';
 import { TagList } from '../atoms/TagList';
 
 interface TaskCardProps {
-  task: TaskItem;
+  task: BoardTask;
   onComplete?: (id: string) => void;
   onSelect?: (id: string) => void;
   className?: string;

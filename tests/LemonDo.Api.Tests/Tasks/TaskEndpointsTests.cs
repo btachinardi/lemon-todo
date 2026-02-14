@@ -35,7 +35,7 @@ public sealed class TaskEndpointsTests
 
         Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
 
-        var dto = await response.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var dto = await response.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
         Assert.IsNotNull(dto);
         Assert.AreEqual("Test task", dto.Title);
         Assert.AreEqual("A description", dto.Description);
@@ -61,7 +61,7 @@ public sealed class TaskEndpointsTests
 
         Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
 
-        var dto = await response.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var dto = await response.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
         Assert.IsNotNull(dto);
         Assert.HasCount(2, dto.Tags);
         Assert.IsTrue(dto.Tags.Contains("urgent"));
@@ -72,12 +72,12 @@ public sealed class TaskEndpointsTests
     public async Task GetTaskById_WithExistingTask_Returns200()
     {
         var createResponse = await _client.PostAsJsonAsync("/api/tasks", new { Title = "Get by ID test" });
-        var created = await createResponse.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var created = await createResponse.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
 
         var response = await _client.GetAsync($"/api/tasks/{created!.Id}");
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        var dto = await response.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var dto = await response.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
         Assert.IsNotNull(dto);
         Assert.AreEqual("Get by ID test", dto.Title);
     }
@@ -93,7 +93,7 @@ public sealed class TaskEndpointsTests
     public async Task UpdateTask_WithValidData_Returns200()
     {
         var createResponse = await _client.PostAsJsonAsync("/api/tasks", new { Title = "Original title" });
-        var created = await createResponse.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var created = await createResponse.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
 
         var updateResponse = await _client.PutAsJsonAsync(
             $"/api/tasks/{created!.Id}",
@@ -101,7 +101,7 @@ public sealed class TaskEndpointsTests
 
         Assert.AreEqual(HttpStatusCode.OK, updateResponse.StatusCode);
 
-        var dto = await updateResponse.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var dto = await updateResponse.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
         Assert.IsNotNull(dto);
         Assert.AreEqual("Updated title", dto.Title);
         Assert.AreEqual("High", dto.Priority);
@@ -111,7 +111,7 @@ public sealed class TaskEndpointsTests
     public async Task CompleteTask_Returns200()
     {
         var createResponse = await _client.PostAsJsonAsync("/api/tasks", new { Title = "Task to complete" });
-        var created = await createResponse.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var created = await createResponse.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
 
         var response = await _client.PostAsync($"/api/tasks/{created!.Id}/complete", null);
 
@@ -122,7 +122,7 @@ public sealed class TaskEndpointsTests
     public async Task CompleteTask_ThenUncomplete_Returns200()
     {
         var createResponse = await _client.PostAsJsonAsync("/api/tasks", new { Title = "Complete then uncomplete" });
-        var created = await createResponse.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var created = await createResponse.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
 
         await _client.PostAsync($"/api/tasks/{created!.Id}/complete", null);
         var response = await _client.PostAsync($"/api/tasks/{created.Id}/uncomplete", null);
@@ -134,7 +134,7 @@ public sealed class TaskEndpointsTests
     public async Task DeleteTask_SoftDeletes_Returns200()
     {
         var createResponse = await _client.PostAsJsonAsync("/api/tasks", new { Title = "Task to delete" });
-        var created = await createResponse.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var created = await createResponse.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
 
         var response = await _client.DeleteAsync($"/api/tasks/{created!.Id}");
 
@@ -149,7 +149,7 @@ public sealed class TaskEndpointsTests
         var board = await boardResponse.Content.ReadFromJsonAsync<BoardDto>(JsonOpts);
 
         var createResponse = await _client.PostAsJsonAsync("/api/tasks", new { Title = "Task to move" });
-        var created = await createResponse.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var created = await createResponse.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
 
         var columnId = board!.Columns[0].Id;
         var response = await _client.PostAsJsonAsync(
@@ -163,7 +163,7 @@ public sealed class TaskEndpointsTests
     public async Task AddTag_Returns200()
     {
         var createResponse = await _client.PostAsJsonAsync("/api/tasks", new { Title = "Tag test" });
-        var created = await createResponse.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var created = await createResponse.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
 
         var response = await _client.PostAsJsonAsync(
             $"/api/tasks/{created!.Id}/tags",
@@ -177,7 +177,7 @@ public sealed class TaskEndpointsTests
     {
         var createResponse = await _client.PostAsJsonAsync("/api/tasks",
             new { Title = "Remove tag test", Tags = new[] { "toremove" } });
-        var created = await createResponse.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var created = await createResponse.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
 
         var response = await _client.DeleteAsync($"/api/tasks/{created!.Id}/tags/toremove");
 
@@ -193,7 +193,7 @@ public sealed class TaskEndpointsTests
         var response = await _client.GetAsync("/api/tasks");
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        var result = await response.Content.ReadFromJsonAsync<PagedResult<TaskItemDto>>(JsonOpts);
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<BoardTaskDto>>(JsonOpts);
         Assert.IsNotNull(result);
         Assert.IsNotEmpty(result.Items);
     }
@@ -202,10 +202,10 @@ public sealed class TaskEndpointsTests
     public async Task BulkComplete_CompletesMultipleTasks()
     {
         var response1 = await _client.PostAsJsonAsync("/api/tasks", new { Title = "Bulk 1" });
-        var task1 = await response1.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var task1 = await response1.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
 
         var response2 = await _client.PostAsJsonAsync("/api/tasks", new { Title = "Bulk 2" });
-        var task2 = await response2.Content.ReadFromJsonAsync<TaskItemDto>(JsonOpts);
+        var task2 = await response2.Content.ReadFromJsonAsync<BoardTaskDto>(JsonOpts);
 
         var bulkResponse = await _client.PostAsJsonAsync("/api/tasks/bulk/complete",
             new { TaskIds = new[] { task1!.Id, task2!.Id } });

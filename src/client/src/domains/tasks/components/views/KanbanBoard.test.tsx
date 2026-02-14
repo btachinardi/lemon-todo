@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { KanbanBoard } from './KanbanBoard';
-import { createBoard, createTaskItem } from '@/test/factories';
+import { createBoard, createBoardTask } from '@/test/factories';
 
 describe('KanbanBoard', () => {
   it('renders all columns from board', () => {
@@ -18,8 +18,8 @@ describe('KanbanBoard', () => {
     const doneColumnId = board.columns[2].id;
 
     const tasks = [
-      createTaskItem({ title: 'Task in Todo', columnId: todoColumnId, position: 0 }),
-      createTaskItem({ title: 'Task in Done', columnId: doneColumnId, position: 0 }),
+      createBoardTask({ title: 'Task in Todo', columnId: todoColumnId, position: 0 }),
+      createBoardTask({ title: 'Task in Done', columnId: doneColumnId, position: 0 }),
     ];
 
     render(<KanbanBoard board={board} tasks={tasks} />);

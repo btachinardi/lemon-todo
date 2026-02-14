@@ -40,7 +40,7 @@ public static class TaskEndpoints
     {
         var filter = new TaskListFilter
         {
-            Status = Enum.TryParse<TaskItemStatus>(status, true, out var s) ? s : null,
+            Status = Enum.TryParse<BoardTaskStatus>(status, true, out var s) ? s : null,
             Priority = Enum.TryParse<Priority>(priority, true, out var p) ? p : null,
             SearchTerm = search,
             Page = page,

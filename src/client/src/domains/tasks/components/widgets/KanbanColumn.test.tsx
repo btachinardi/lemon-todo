@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { KanbanColumn } from './KanbanColumn';
-import { createColumn, createTaskItem } from '@/test/factories';
+import { createColumn, createBoardTask } from '@/test/factories';
 
 describe('KanbanColumn', () => {
   it('renders column name', () => {
@@ -12,14 +12,14 @@ describe('KanbanColumn', () => {
 
   it('renders task count', () => {
     const column = createColumn();
-    const tasks = [createTaskItem(), createTaskItem()];
+    const tasks = [createBoardTask(), createBoardTask()];
     render(<KanbanColumn column={column} tasks={tasks} />);
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
   it('shows WIP limit when set', () => {
     const column = createColumn({ wipLimit: 5 });
-    const tasks = [createTaskItem(), createTaskItem()];
+    const tasks = [createBoardTask(), createBoardTask()];
     render(<KanbanColumn column={column} tasks={tasks} />);
     expect(screen.getByText('2/5')).toBeInTheDocument();
   });
@@ -27,8 +27,8 @@ describe('KanbanColumn', () => {
   it('renders task cards', () => {
     const column = createColumn();
     const tasks = [
-      createTaskItem({ title: 'Task A' }),
-      createTaskItem({ title: 'Task B' }),
+      createBoardTask({ title: 'Task A' }),
+      createBoardTask({ title: 'Task B' }),
     ];
     render(<KanbanColumn column={column} tasks={tasks} />);
     expect(screen.getByText('Task A')).toBeInTheDocument();

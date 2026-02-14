@@ -4,5 +4,5 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.ValueObjects;
 
 public sealed record TaskCompletedEvent(
-    TaskItemId TaskItemId,
+    BoardTaskId BoardTaskId,
     DateTimeOffset CompletedAt) : DomainEvent;

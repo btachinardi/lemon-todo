@@ -2,9 +2,9 @@ namespace LemonDo.Application.Tasks.DTOs;
 
 using LemonDo.Domain.Tasks.Entities;
 
-public static class TaskItemDtoMapper
+public static class BoardTaskDtoMapper
 {
-    public static TaskItemDto ToDto(TaskItem task) => new()
+    public static BoardTaskDto ToDto(BoardTask task) => new()
     {
         Id = task.Id.Value,
         Title = task.Title.Value,

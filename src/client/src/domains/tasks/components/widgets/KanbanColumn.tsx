@@ -1,12 +1,12 @@
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/ui/scroll-area';
 import type { Column } from '../../types/board.types';
-import type { TaskItem } from '../../types/task.types';
+import type { BoardTask } from '../../types/task.types';
 import { TaskCard } from './TaskCard';
 
 interface KanbanColumnProps {
   column: Column;
-  tasks: TaskItem[];
+  tasks: BoardTask[];
   onCompleteTask?: (id: string) => void;
   onSelectTask?: (id: string) => void;
   className?: string;

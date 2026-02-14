@@ -1,12 +1,12 @@
 import { ScrollArea, ScrollBar } from '@/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import type { Board } from '../../types/board.types';
-import type { TaskItem } from '../../types/task.types';
+import type { BoardTask } from '../../types/task.types';
 import { KanbanColumn } from '../widgets/KanbanColumn';
 
 interface KanbanBoardProps {
   board: Board;
-  tasks: TaskItem[];
+  tasks: BoardTask[];
   onCompleteTask?: (id: string) => void;
   onSelectTask?: (id: string) => void;
   className?: string;
@@ -21,7 +21,7 @@ export function KanbanBoard({
 }: KanbanBoardProps) {
   const sortedColumns = [...board.columns].sort((a, b) => a.position - b.position);
 
-  const tasksByColumn = new Map<string, TaskItem[]>();
+  const tasksByColumn = new Map<string, BoardTask[]>();
   for (const column of sortedColumns) {
     tasksByColumn.set(column.id, []);
   }

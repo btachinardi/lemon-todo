@@ -17,7 +17,7 @@ public static class InfrastructureServiceExtensions
                 ?? "Data Source=lemondo.db"));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<LemonDoDbContext>());
-        services.AddScoped<ITaskItemRepository, TaskItemRepository>();
+        services.AddScoped<IBoardTaskRepository, BoardTaskRepository>();
         services.AddScoped<IBoardRepository, BoardRepository>();
 
         return services;

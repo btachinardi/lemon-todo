@@ -15,7 +15,7 @@ public sealed class GetDefaultBoardQueryHandler(IBoardRepository repository, IUn
     {
         var board = await repository.GetDefaultForUserAsync(UserId.Default, ct);
         if (board is not null)
-            return Result<BoardDto, DomainError>.Success(TaskItemDtoMapper.ToDto(board));
+            return Result<BoardDto, DomainError>.Success(BoardTaskDtoMapper.ToDto(board));
 
         var createResult = Board.CreateDefault(UserId.Default);
         if (createResult.IsFailure)
@@ -24,6 +24,6 @@ public sealed class GetDefaultBoardQueryHandler(IBoardRepository repository, IUn
         await repository.AddAsync(createResult.Value, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
-        return Result<BoardDto, DomainError>.Success(TaskItemDtoMapper.ToDto(createResult.Value));
+        return Result<BoardDto, DomainError>.Success(BoardTaskDtoMapper.ToDto(createResult.Value));
     }
 }

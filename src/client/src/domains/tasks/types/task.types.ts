@@ -17,7 +17,7 @@ export const TaskStatus = {
 
 export type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus];
 
-export interface TaskItem {
+export interface BoardTask {
   id: string;
   title: string;
   description: string | null;

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed class LemonDoDbContext(DbContextOptions<LemonDoDbContext> options) : DbContext(options), IUnitOfWork
 {
-    public DbSet<TaskItem> Tasks => Set<TaskItem>();
+    public DbSet<BoardTask> Tasks => Set<BoardTask>();
     public DbSet<Board> Boards => Set<Board>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

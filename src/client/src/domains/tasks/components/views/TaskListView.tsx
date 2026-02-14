@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Separator } from '@/ui/separator';
-import type { TaskItem } from '../../types/task.types';
+import type { BoardTask } from '../../types/task.types';
 import { PriorityBadge } from '../atoms/PriorityBadge';
 import { TaskStatusChip } from '../atoms/TaskStatusChip';
 import { DueDateLabel } from '../atoms/DueDateLabel';
@@ -10,7 +10,7 @@ import { Button } from '@/ui/button';
 import { CheckCircle2Icon } from 'lucide-react';
 
 interface TaskListViewProps {
-  tasks: TaskItem[];
+  tasks: BoardTask[];
   onCompleteTask?: (id: string) => void;
   onSelectTask?: (id: string) => void;
   className?: string;

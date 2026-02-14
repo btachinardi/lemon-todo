@@ -4,6 +4,6 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.ValueObjects;
 
 public sealed record TaskDueDateChangedEvent(
-    TaskItemId TaskItemId,
+    BoardTaskId BoardTaskId,
     DateTimeOffset? OldDueDate,
     DateTimeOffset? NewDueDate) : DomainEvent;

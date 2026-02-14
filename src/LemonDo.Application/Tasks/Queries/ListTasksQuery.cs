@@ -8,9 +8,9 @@ using LemonDo.Domain.Tasks.Repositories;
 
 public sealed record ListTasksQuery(TaskListFilter Filter);
 
-public sealed class ListTasksQueryHandler(ITaskItemRepository repository)
+public sealed class ListTasksQueryHandler(IBoardTaskRepository repository)
 {
-    public async Task<PagedResult<TaskItemDto>> HandleAsync(ListTasksQuery query, CancellationToken ct = default)
+    public async Task<PagedResult<BoardTaskDto>> HandleAsync(ListTasksQuery query, CancellationToken ct = default)
     {
         var filter = query.Filter;
         var pagedResult = await repository.ListAsync(
@@ -23,7 +23,7 @@ public sealed class ListTasksQueryHandler(ITaskItemRepository repository)
             filter.PageSize,
             ct);
 
-        var dtos = pagedResult.Items.Select(TaskItemDtoMapper.ToDto).ToList();
-        return new PagedResult<TaskItemDto>(dtos, pagedResult.TotalCount, pagedResult.Page, pagedResult.PageSize);
+        var dtos = pagedResult.Items.Select(BoardTaskDtoMapper.ToDto).ToList();
+        return new PagedResult<BoardTaskDto>(dtos, pagedResult.TotalCount, pagedResult.Page, pagedResult.PageSize);
     }
 }

@@ -11,14 +11,14 @@ using NSubstitute;
 [TestClass]
 public sealed class CompleteTaskCommandHandlerTests
 {
-    private ITaskItemRepository _repository = null!;
+    private IBoardTaskRepository _repository = null!;
     private IUnitOfWork _unitOfWork = null!;
     private CompleteTaskCommandHandler _handler = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = Substitute.For<ITaskItemRepository>();
+        _repository = Substitute.For<IBoardTaskRepository>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _handler = new CompleteTaskCommandHandler(_repository, _unitOfWork);
     }
@@ -26,22 +26,22 @@ public sealed class CompleteTaskCommandHandlerTests
     [TestMethod]
     public async Task Should_CompleteTask_When_TaskExists()
     {
-        var task = TaskItem.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.None).Value;
-        _repository.GetByIdAsync(Arg.Any<TaskItemId>(), Arg.Any<CancellationToken>())
+        var task = BoardTask.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.None).Value;
+        _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(new CompleteTaskCommand(task.Id.Value));
 
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual(TaskItemStatus.Done, task.Status);
+        Assert.AreEqual(BoardTaskStatus.Done, task.Status);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [TestMethod]
     public async Task Should_Fail_When_TaskNotFound()
     {
-        _repository.GetByIdAsync(Arg.Any<TaskItemId>(), Arg.Any<CancellationToken>())
-            .Returns((TaskItem?)null);
+        _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
+            .Returns((BoardTask?)null);
 
         var result = await _handler.HandleAsync(new CompleteTaskCommand(Guid.NewGuid()));
 
@@ -52,9 +52,9 @@ public sealed class CompleteTaskCommandHandlerTests
     [TestMethod]
     public async Task Should_Fail_When_AlreadyCompleted()
     {
-        var task = TaskItem.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.None).Value;
+        var task = BoardTask.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.None).Value;
         task.Complete();
-        _repository.GetByIdAsync(Arg.Any<TaskItemId>(), Arg.Any<CancellationToken>())
+        _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(new CompleteTaskCommand(task.Id.Value));

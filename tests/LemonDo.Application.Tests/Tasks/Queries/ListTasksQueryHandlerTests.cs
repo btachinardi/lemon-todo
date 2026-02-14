@@ -12,28 +12,28 @@ using NSubstitute;
 [TestClass]
 public sealed class ListTasksQueryHandlerTests
 {
-    private ITaskItemRepository _repository = null!;
+    private IBoardTaskRepository _repository = null!;
     private ListTasksQueryHandler _handler = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = Substitute.For<ITaskItemRepository>();
+        _repository = Substitute.For<IBoardTaskRepository>();
         _handler = new ListTasksQueryHandler(_repository);
     }
 
     [TestMethod]
     public async Task Should_ReturnPagedTasks_When_Queried()
     {
-        var task1 = TaskItem.Create(UserId.Default, TaskTitle.Create("Task 1").Value, null, Priority.None).Value;
-        var task2 = TaskItem.Create(UserId.Default, TaskTitle.Create("Task 2").Value, null, Priority.High).Value;
+        var task1 = BoardTask.Create(UserId.Default, TaskTitle.Create("Task 1").Value, null, Priority.None).Value;
+        var task2 = BoardTask.Create(UserId.Default, TaskTitle.Create("Task 2").Value, null, Priority.High).Value;
 
         _repository.ListAsync(
             Arg.Any<UserId>(),
-            Arg.Any<ColumnId?>(), Arg.Any<Priority?>(), Arg.Any<TaskItemStatus?>(),
+            Arg.Any<ColumnId?>(), Arg.Any<Priority?>(), Arg.Any<BoardTaskStatus?>(),
             Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(),
             Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<TaskItem>([task1, task2], 2, 1, 50));
+            .Returns(new PagedResult<BoardTask>([task1, task2], 2, 1, 50));
 
         var result = await _handler.HandleAsync(new ListTasksQuery(new TaskListFilter()));
 
@@ -48,10 +48,10 @@ public sealed class ListTasksQueryHandlerTests
     {
         _repository.ListAsync(
             Arg.Any<UserId>(),
-            Arg.Any<ColumnId?>(), Arg.Any<Priority?>(), Arg.Any<TaskItemStatus?>(),
+            Arg.Any<ColumnId?>(), Arg.Any<Priority?>(), Arg.Any<BoardTaskStatus?>(),
             Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(),
             Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<TaskItem>([], 0, 1, 50));
+            .Returns(new PagedResult<BoardTask>([], 0, 1, 50));
 
         var result = await _handler.HandleAsync(new ListTasksQuery(new TaskListFilter()));
 
@@ -67,7 +67,7 @@ public sealed class ListTasksQueryHandlerTests
         {
             ColumnId = columnId,
             Priority = Priority.High,
-            Status = TaskItemStatus.Todo,
+            Status = BoardTaskStatus.Todo,
             SearchTerm = "groceries",
             Page = 2,
             PageSize = 10
@@ -75,10 +75,10 @@ public sealed class ListTasksQueryHandlerTests
 
         _repository.ListAsync(
             Arg.Any<UserId>(),
-            Arg.Any<ColumnId?>(), Arg.Any<Priority?>(), Arg.Any<TaskItemStatus?>(),
+            Arg.Any<ColumnId?>(), Arg.Any<Priority?>(), Arg.Any<BoardTaskStatus?>(),
             Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(),
             Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<TaskItem>([], 0, 2, 10));
+            .Returns(new PagedResult<BoardTask>([], 0, 2, 10));
 
         await _handler.HandleAsync(new ListTasksQuery(filter));
 
@@ -86,7 +86,7 @@ public sealed class ListTasksQueryHandlerTests
             UserId.Default,
             columnId,
             Priority.High,
-            TaskItemStatus.Todo,
+            BoardTaskStatus.Todo,
             "groceries",
             2,
             10,
