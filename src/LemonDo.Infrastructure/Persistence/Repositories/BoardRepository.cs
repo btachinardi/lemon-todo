@@ -1,9 +1,9 @@
 namespace LemonDo.Infrastructure.Persistence.Repositories;
 
+using LemonDo.Domain.Boards.Entities;
+using LemonDo.Domain.Boards.Repositories;
+using LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Identity.ValueObjects;
-using LemonDo.Domain.Tasks.Entities;
-using LemonDo.Domain.Tasks.Repositories;
-using LemonDo.Domain.Tasks.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class BoardRepository(LemonDoDbContext context) : IBoardRepository
@@ -12,6 +12,7 @@ public sealed class BoardRepository(LemonDoDbContext context) : IBoardRepository
     {
         return await context.Boards
             .Include(b => b.Columns)
+            .Include(b => b.Cards)
             .FirstOrDefaultAsync(b => b.Id == id, ct);
     }
 
@@ -19,6 +20,7 @@ public sealed class BoardRepository(LemonDoDbContext context) : IBoardRepository
     {
         return await context.Boards
             .Include(b => b.Columns)
+            .Include(b => b.Cards)
             .FirstOrDefaultAsync(b => b.OwnerId == ownerId, ct);
     }
 

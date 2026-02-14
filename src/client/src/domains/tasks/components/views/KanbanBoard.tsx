@@ -1,12 +1,12 @@
 import { ScrollArea, ScrollBar } from '@/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import type { Board } from '../../types/board.types';
-import type { BoardTask } from '../../types/task.types';
+import type { Task } from '../../types/task.types';
 import { KanbanColumn } from '../widgets/KanbanColumn';
 
 interface KanbanBoardProps {
   board: Board;
-  tasks: BoardTask[];
+  tasks: Task[];
   onCompleteTask?: (id: string) => void;
   onSelectTask?: (id: string) => void;
   className?: string;
@@ -21,17 +21,34 @@ export function KanbanBoard({
 }: KanbanBoardProps) {
   const sortedColumns = [...board.columns].sort((a, b) => a.position - b.position);
 
-  const tasksByColumn = new Map<string, BoardTask[]>();
+  // Build a map of taskId → card for quick lookup
+  const cardByTaskId = new Map(
+    (board.cards ?? []).map((card) => [card.taskId, card]),
+  );
+
+  // Build a map of tasks by ID for quick lookup
+  const tasksById = new Map(tasks.map((task) => [task.id, task]));
+
+  const tasksByColumn = new Map<string, Task[]>();
   for (const column of sortedColumns) {
     tasksByColumn.set(column.id, []);
   }
-  for (const task of tasks) {
-    if (tasksByColumn.has(task.columnId)) {
-      tasksByColumn.get(task.columnId)!.push(task);
+
+  // Place tasks into columns using the board's cards
+  for (const card of board.cards ?? []) {
+    const task = tasksById.get(card.taskId);
+    if (task && tasksByColumn.has(card.columnId)) {
+      tasksByColumn.get(card.columnId)!.push(task);
     }
   }
-  for (const columnTasks of tasksByColumn.values()) {
-    columnTasks.sort((a, b) => a.position - b.position);
+
+  // Sort tasks within each column by position
+  for (const [, columnTasks] of tasksByColumn) {
+    columnTasks.sort((a, b) => {
+      const cardA = cardByTaskId.get(a.id);
+      const cardB = cardByTaskId.get(b.id);
+      return (cardA?.position ?? 0) - (cardB?.position ?? 0);
+    });
   }
 
   return (

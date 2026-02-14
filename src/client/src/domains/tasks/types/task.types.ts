@@ -16,7 +16,7 @@ export const TaskStatus = {
 
 export type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus];
 
-export interface BoardTask {
+export interface Task {
   id: string;
   title: string;
   description: string | null;
@@ -24,8 +24,6 @@ export interface BoardTask {
   status: TaskStatus;
   dueDate: string | null;
   tags: string[];
-  columnId: string;
-  position: number;
   isArchived: boolean;
   isDeleted: boolean;
   completedAt: string | null;

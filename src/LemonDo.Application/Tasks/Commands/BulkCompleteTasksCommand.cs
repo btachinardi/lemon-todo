@@ -1,15 +1,18 @@
 namespace LemonDo.Application.Tasks.Commands;
 
 using LemonDo.Application.Common;
+using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
 
+using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
+
 public sealed record BulkCompleteTasksCommand(IReadOnlyList<Guid> TaskIds);
 
 public sealed class BulkCompleteTasksCommandHandler(
-    IBoardTaskRepository repository,
+    ITaskRepository taskRepository,
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork)
 {
@@ -21,24 +24,27 @@ public sealed class BulkCompleteTasksCommandHandler(
                 DomainError.NotFound("Board", "default"));
 
         var doneColumn = board.GetDoneColumn();
-        var existingTasks = await repository.GetByColumnAsync(doneColumn.Id, ct);
-        var nextPosition = existingTasks.Count;
 
         foreach (var taskId in command.TaskIds)
         {
-            var task = await repository.GetByIdAsync(BoardTaskId.From(taskId), ct);
+            var task = await taskRepository.GetByIdAsync(TaskId.From(taskId), ct);
             if (task is null)
                 return Result<DomainError>.Failure(
-                    DomainError.NotFound("BoardTask", taskId.ToString()));
+                    DomainError.NotFound("Task", taskId.ToString()));
 
-            var result = task.MoveTo(doneColumn.Id, nextPosition, BoardTaskStatus.Done);
-            if (result.IsFailure)
-                return result;
+            var completeResult = task.Complete();
+            if (completeResult.IsFailure)
+                return completeResult;
 
-            nextPosition++;
-            await repository.UpdateAsync(task, ct);
+            var position = board.GetCardCountInColumn(doneColumn.Id);
+            var moveResult = board.MoveCard(task.Id, doneColumn.Id, position);
+            if (moveResult.IsFailure)
+                return Result<DomainError>.Failure(moveResult.Error);
+
+            await taskRepository.UpdateAsync(task, ct);
         }
 
+        await boardRepository.UpdateAsync(board, ct);
         await unitOfWork.SaveChangesAsync(ct);
         return Result<DomainError>.Success();
     }

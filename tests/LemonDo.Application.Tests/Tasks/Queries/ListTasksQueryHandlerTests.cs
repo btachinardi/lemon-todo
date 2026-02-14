@@ -1,44 +1,43 @@
 namespace LemonDo.Application.Tests.Tasks.Queries;
 
 using LemonDo.Application.Common;
+using LemonDo.Application.Tasks.DTOs;
 using LemonDo.Application.Tasks.Queries;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
-using LemonDo.Domain.Tasks.Entities;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
 using NSubstitute;
 
+using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
+
 [TestClass]
 public sealed class ListTasksQueryHandlerTests
 {
-    private IBoardTaskRepository _repository = null!;
+    private ITaskRepository _repository = null!;
     private ListTasksQueryHandler _handler = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = Substitute.For<IBoardTaskRepository>();
+        _repository = Substitute.For<ITaskRepository>();
         _handler = new ListTasksQueryHandler(_repository);
     }
 
     [TestMethod]
     public async Task Should_ReturnPagedTasks_When_Queried()
     {
-        var columnId = ColumnId.New();
-        var task1 = BoardTask.Create(
-            UserId.Default, columnId, 0, BoardTaskStatus.Todo,
-            TaskTitle.Create("Task 1").Value).Value;
-        var task2 = BoardTask.Create(
-            UserId.Default, columnId, 1, BoardTaskStatus.Todo,
-            TaskTitle.Create("Task 2").Value, priority: Priority.High).Value;
+        var task1 = TaskEntity.Create(
+            UserId.Default, TaskTitle.Create("Task 1").Value).Value;
+        var task2 = TaskEntity.Create(
+            UserId.Default, TaskTitle.Create("Task 2").Value, priority: Priority.High).Value;
 
         _repository.ListAsync(
             Arg.Any<UserId>(),
-            Arg.Any<ColumnId?>(), Arg.Any<Priority?>(), Arg.Any<BoardTaskStatus?>(),
+            Arg.Any<Priority?>(), Arg.Any<TaskStatus?>(),
             Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(),
             Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<BoardTask>([task1, task2], 2, 1, 50));
+            .Returns(new PagedResult<TaskEntity>([task1, task2], 2, 1, 50));
 
         var result = await _handler.HandleAsync(new ListTasksQuery(new TaskListFilter()));
 
@@ -53,10 +52,10 @@ public sealed class ListTasksQueryHandlerTests
     {
         _repository.ListAsync(
             Arg.Any<UserId>(),
-            Arg.Any<ColumnId?>(), Arg.Any<Priority?>(), Arg.Any<BoardTaskStatus?>(),
+            Arg.Any<Priority?>(), Arg.Any<TaskStatus?>(),
             Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(),
             Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<BoardTask>([], 0, 1, 50));
+            .Returns(new PagedResult<TaskEntity>([], 0, 1, 50));
 
         var result = await _handler.HandleAsync(new ListTasksQuery(new TaskListFilter()));
 
@@ -67,12 +66,10 @@ public sealed class ListTasksQueryHandlerTests
     [TestMethod]
     public async Task Should_PassFilterToRepository_When_Provided()
     {
-        var columnId = ColumnId.New();
         var filter = new TaskListFilter
         {
-            ColumnId = columnId,
             Priority = Priority.High,
-            Status = BoardTaskStatus.Todo,
+            Status = TaskStatus.Todo,
             SearchTerm = "groceries",
             Page = 2,
             PageSize = 10
@@ -80,18 +77,17 @@ public sealed class ListTasksQueryHandlerTests
 
         _repository.ListAsync(
             Arg.Any<UserId>(),
-            Arg.Any<ColumnId?>(), Arg.Any<Priority?>(), Arg.Any<BoardTaskStatus?>(),
+            Arg.Any<Priority?>(), Arg.Any<TaskStatus?>(),
             Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(),
             Arg.Any<CancellationToken>())
-            .Returns(new PagedResult<BoardTask>([], 0, 2, 10));
+            .Returns(new PagedResult<TaskEntity>([], 0, 2, 10));
 
         await _handler.HandleAsync(new ListTasksQuery(filter));
 
         await _repository.Received(1).ListAsync(
             UserId.Default,
-            columnId,
             Priority.High,
-            BoardTaskStatus.Todo,
+            TaskStatus.Todo,
             "groceries",
             2,
             10,

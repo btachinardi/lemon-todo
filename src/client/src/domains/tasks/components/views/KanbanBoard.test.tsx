@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { KanbanBoard } from './KanbanBoard';
-import { createBoard, createBoardTask } from '@/test/factories';
+import { createBoard, createTask, createTaskCard } from '@/test/factories';
 import { TaskStatus } from '../../types/task.types';
 
 describe('KanbanBoard', () => {
@@ -18,12 +18,15 @@ describe('KanbanBoard', () => {
     const todoColumnId = board.columns[0].id;
     const doneColumnId = board.columns[2].id;
 
-    const tasks = [
-      createBoardTask({ title: 'Task in Todo', columnId: todoColumnId, position: 0 }),
-      createBoardTask({ title: 'Task in Done', columnId: doneColumnId, position: 0 }),
+    const task1 = createTask({ title: 'Task in Todo' });
+    const task2 = createTask({ title: 'Task in Done' });
+
+    board.cards = [
+      createTaskCard({ taskId: task1.id, columnId: todoColumnId, position: 0 }),
+      createTaskCard({ taskId: task2.id, columnId: doneColumnId, position: 0 }),
     ];
 
-    render(<KanbanBoard board={board} tasks={tasks} />);
+    render(<KanbanBoard board={board} tasks={[task1, task2]} />);
     expect(screen.getByText('Task in Todo')).toBeInTheDocument();
     expect(screen.getByText('Task in Done')).toBeInTheDocument();
   });

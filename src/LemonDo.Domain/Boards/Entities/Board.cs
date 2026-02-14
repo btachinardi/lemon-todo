@@ -1,0 +1,237 @@
+namespace LemonDo.Domain.Boards.Entities;
+
+using LemonDo.Domain.Boards.Events;
+using LemonDo.Domain.Boards.ValueObjects;
+using LemonDo.Domain.Common;
+using LemonDo.Domain.Identity.ValueObjects;
+using LemonDo.Domain.Tasks.ValueObjects;
+
+public sealed class Board : Entity<BoardId>
+{
+    private readonly List<Column> _columns = [];
+    private readonly List<TaskCard> _cards = [];
+
+    public UserId OwnerId { get; }
+    public BoardName Name { get; private set; }
+    public IReadOnlyList<Column> Columns => _columns.AsReadOnly();
+    public IReadOnlyList<TaskCard> Cards => _cards.AsReadOnly();
+
+    private Board(BoardId id, UserId ownerId, BoardName name) : base(id)
+    {
+        OwnerId = ownerId;
+        Name = name;
+    }
+
+    public static Result<Board, DomainError> CreateDefault(UserId ownerId)
+    {
+        var nameResult = BoardName.Create("My Board");
+        if (nameResult.IsFailure)
+            return Result<Board, DomainError>.Failure(nameResult.Error);
+
+        var board = new Board(BoardId.New(), ownerId, nameResult.Value);
+
+        board._columns.Add(Column.Create(ColumnName.Create("To Do").Value, 0, TaskStatus.Todo));
+        board._columns.Add(Column.Create(ColumnName.Create("In Progress").Value, 1, TaskStatus.InProgress));
+        board._columns.Add(Column.Create(ColumnName.Create("Done").Value, 2, TaskStatus.Done));
+
+        board.RaiseDomainEvent(new BoardCreatedEvent(board.Id, ownerId));
+        return Result<Board, DomainError>.Success(board);
+    }
+
+    public static Result<Board, DomainError> Create(UserId ownerId, BoardName name)
+    {
+        var board = new Board(BoardId.New(), ownerId, name);
+        board._columns.Add(Column.Create(ColumnName.Create("To Do").Value, 0, TaskStatus.Todo));
+        board._columns.Add(Column.Create(ColumnName.Create("Done").Value, 1, TaskStatus.Done));
+        board.RaiseDomainEvent(new BoardCreatedEvent(board.Id, ownerId));
+        return Result<Board, DomainError>.Success(board);
+    }
+
+    public Column GetInitialColumn()
+    {
+        return _columns.Where(c => c.TargetStatus == TaskStatus.Todo).OrderBy(c => c.Position).First();
+    }
+
+    public Column GetDoneColumn()
+    {
+        return _columns.Where(c => c.TargetStatus == TaskStatus.Done).OrderBy(c => c.Position).First();
+    }
+
+    public Column? FindColumnById(ColumnId columnId)
+    {
+        return _columns.Find(c => c.Id == columnId);
+    }
+
+    public Result<DomainError> AddColumn(ColumnName name, TaskStatus targetStatus, int? position = null)
+    {
+        if (_columns.Any(c => c.Name.Value.Equals(name.Value, StringComparison.OrdinalIgnoreCase)))
+            return Result<DomainError>.Failure(
+                DomainError.BusinessRule("board.duplicate_column_name", "A column with this name already exists."));
+
+        var targetPosition = position ?? _columns.Count;
+
+        var column = Column.Create(name, targetPosition, targetStatus);
+
+        if (targetPosition < _columns.Count)
+        {
+            _columns.Insert(targetPosition, column);
+            ReindexPositions();
+        }
+        else
+        {
+            _columns.Add(column);
+        }
+
+        RaiseDomainEvent(new ColumnAddedEvent(Id, column.Id, name.Value));
+        return Result<DomainError>.Success();
+    }
+
+    public Result<DomainError> RemoveColumn(ColumnId columnId)
+    {
+        var column = _columns.Find(c => c.Id == columnId);
+        if (column is null)
+            return Result<DomainError>.Failure(
+                new DomainError("board.column_not_found", "Column not found."));
+
+        if (_columns.Count <= 1)
+            return Result<DomainError>.Failure(
+                DomainError.BusinessRule("board.cannot_remove_last_column", "Cannot remove the last column."));
+
+        // Cannot remove the last column targeting Todo or Done status
+        if (column.TargetStatus is TaskStatus.Todo or TaskStatus.Done)
+        {
+            var sameStatusCount = _columns.Count(c => c.TargetStatus == column.TargetStatus);
+            if (sameStatusCount <= 1)
+                return Result<DomainError>.Failure(
+                    DomainError.BusinessRule("board.cannot_remove_last_status_column",
+                        $"Cannot remove the last {column.TargetStatus} column. Board must have at least one."));
+        }
+
+        _columns.Remove(column);
+        ReindexPositions();
+
+        RaiseDomainEvent(new ColumnRemovedEvent(Id, columnId));
+        return Result<DomainError>.Success();
+    }
+
+    public Result<DomainError> ReorderColumn(ColumnId columnId, int newPosition)
+    {
+        if (newPosition < 0 || newPosition >= _columns.Count)
+            return Result<DomainError>.Failure(
+                new DomainError("position.validation", "Position is out of range."));
+
+        var column = _columns.Find(c => c.Id == columnId);
+        if (column is null)
+            return Result<DomainError>.Failure(
+                new DomainError("board.column_not_found", "Column not found."));
+
+        var oldPosition = column.Position;
+
+        _columns.Remove(column);
+        _columns.Insert(newPosition, column);
+        ReindexPositions();
+
+        RaiseDomainEvent(new ColumnReorderedEvent(Id, columnId, oldPosition, newPosition));
+        return Result<DomainError>.Success();
+    }
+
+    public Result<DomainError> RenameColumn(ColumnId columnId, ColumnName newName)
+    {
+        var column = _columns.Find(c => c.Id == columnId);
+        if (column is null)
+            return Result<DomainError>.Failure(
+                new DomainError("board.column_not_found", "Column not found."));
+
+        var isDuplicate = _columns.Any(c =>
+            c.Id != columnId &&
+            c.Name.Value.Equals(newName.Value, StringComparison.OrdinalIgnoreCase));
+
+        if (isDuplicate)
+            return Result<DomainError>.Failure(
+                DomainError.BusinessRule("board.duplicate_column_name", "A column with this name already exists."));
+
+        column.Rename(newName);
+
+        RaiseDomainEvent(new ColumnRenamedEvent(Id, columnId, newName.Value));
+        return Result<DomainError>.Success();
+    }
+
+    // --- Card Management ---
+
+    public Result<TaskStatus, DomainError> PlaceTask(TaskId taskId, ColumnId columnId, int position)
+    {
+        var column = _columns.Find(c => c.Id == columnId);
+        if (column is null)
+            return Result<TaskStatus, DomainError>.Failure(
+                new DomainError("board.column_not_found", "Column not found."));
+
+        if (_cards.Any(c => c.TaskId == taskId))
+            return Result<TaskStatus, DomainError>.Failure(
+                DomainError.BusinessRule("board.task_already_placed", "Task is already on this board."));
+
+        if (position < 0)
+            return Result<TaskStatus, DomainError>.Failure(
+                DomainError.Validation("position", "Position must be >= 0."));
+
+        _cards.Add(new TaskCard(taskId, columnId, position));
+        RaiseDomainEvent(new CardPlacedEvent(Id, taskId, columnId, position));
+        return Result<TaskStatus, DomainError>.Success(column.TargetStatus);
+    }
+
+    public Result<TaskStatus, DomainError> MoveCard(TaskId taskId, ColumnId toColumnId, int position)
+    {
+        var column = _columns.Find(c => c.Id == toColumnId);
+        if (column is null)
+            return Result<TaskStatus, DomainError>.Failure(
+                new DomainError("board.column_not_found", "Column not found."));
+
+        var card = _cards.Find(c => c.TaskId == taskId);
+        if (card is null)
+            return Result<TaskStatus, DomainError>.Failure(
+                new DomainError("board.card_not_found", "Task is not on this board."));
+
+        if (position < 0)
+            return Result<TaskStatus, DomainError>.Failure(
+                DomainError.Validation("position", "Position must be >= 0."));
+
+        var fromColumnId = card.ColumnId;
+        card.ColumnId = toColumnId;
+        card.Position = position;
+
+        RaiseDomainEvent(new CardMovedEvent(Id, taskId, fromColumnId, toColumnId, position));
+        return Result<TaskStatus, DomainError>.Success(column.TargetStatus);
+    }
+
+    public Result<DomainError> RemoveCard(TaskId taskId)
+    {
+        var card = _cards.Find(c => c.TaskId == taskId);
+        if (card is null)
+            return Result<DomainError>.Failure(
+                new DomainError("board.card_not_found", "Task is not on this board."));
+
+        _cards.Remove(card);
+        RaiseDomainEvent(new CardRemovedEvent(Id, taskId));
+        return Result<DomainError>.Success();
+    }
+
+    public TaskCard? FindCardByTaskId(TaskId taskId)
+    {
+        return _cards.Find(c => c.TaskId == taskId);
+    }
+
+    public int GetCardCountInColumn(ColumnId columnId)
+    {
+        return _cards.Count(c => c.ColumnId == columnId);
+    }
+
+    private void ReindexPositions()
+    {
+        for (var i = 0; i < _columns.Count; i++)
+        {
+            _columns[i].Position = i;
+        }
+    }
+
+    // EF Core constructor
+    private Board() : base(default!) { OwnerId = default!; Name = default!; }
+}

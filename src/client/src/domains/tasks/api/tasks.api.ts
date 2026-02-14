@@ -8,25 +8,25 @@ import type {
   PagedResult,
   UpdateTaskRequest,
 } from '../types/api.types';
-import type { BoardTask } from '../types/task.types';
+import type { Task } from '../types/task.types';
 
 const BASE = '/api/tasks';
 
 export const tasksApi = {
-  list(params?: ListTasksParams): Promise<PagedResult<BoardTask>> {
-    return apiClient.get<PagedResult<BoardTask>>(BASE, params as Record<string, string | number | undefined>);
+  list(params?: ListTasksParams): Promise<PagedResult<Task>> {
+    return apiClient.get<PagedResult<Task>>(BASE, params as Record<string, string | number | undefined>);
   },
 
-  getById(id: string): Promise<BoardTask> {
-    return apiClient.get<BoardTask>(`${BASE}/${id}`);
+  getById(id: string): Promise<Task> {
+    return apiClient.get<Task>(`${BASE}/${id}`);
   },
 
-  create(request: CreateTaskRequest): Promise<BoardTask> {
-    return apiClient.post<BoardTask>(BASE, request);
+  create(request: CreateTaskRequest): Promise<Task> {
+    return apiClient.post<Task>(BASE, request);
   },
 
-  update(id: string, request: UpdateTaskRequest): Promise<BoardTask> {
-    return apiClient.put<BoardTask>(`${BASE}/${id}`, request);
+  update(id: string, request: UpdateTaskRequest): Promise<Task> {
+    return apiClient.put<Task>(`${BASE}/${id}`, request);
   },
 
   delete(id: string): Promise<void> {

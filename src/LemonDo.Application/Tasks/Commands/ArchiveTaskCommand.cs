@@ -5,16 +5,18 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
 
+using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
+
 public sealed record ArchiveTaskCommand(Guid TaskId);
 
-public sealed class ArchiveTaskCommandHandler(IBoardTaskRepository repository, IUnitOfWork unitOfWork)
+public sealed class ArchiveTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<DomainError>> HandleAsync(ArchiveTaskCommand command, CancellationToken ct = default)
     {
-        var task = await repository.GetByIdAsync(BoardTaskId.From(command.TaskId), ct);
+        var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), ct);
         if (task is null)
             return Result<DomainError>.Failure(
-                DomainError.NotFound("BoardTask", command.TaskId.ToString()));
+                DomainError.NotFound("Task", command.TaskId.ToString()));
 
         var result = task.Archive();
         if (result.IsFailure)

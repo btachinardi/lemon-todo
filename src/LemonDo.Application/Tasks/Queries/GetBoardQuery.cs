@@ -1,9 +1,9 @@
 namespace LemonDo.Application.Tasks.Queries;
 
 using LemonDo.Application.Tasks.DTOs;
+using LemonDo.Domain.Boards.Repositories;
+using LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Common;
-using LemonDo.Domain.Tasks.Repositories;
-using LemonDo.Domain.Tasks.ValueObjects;
 
 public sealed record GetBoardQuery(Guid BoardId);
 
@@ -16,6 +16,6 @@ public sealed class GetBoardQueryHandler(IBoardRepository repository)
             return Result<BoardDto, DomainError>.Failure(
                 DomainError.NotFound("Board", query.BoardId.ToString()));
 
-        return Result<BoardDto, DomainError>.Success(BoardTaskDtoMapper.ToDto(board));
+        return Result<BoardDto, DomainError>.Success(BoardDtoMapper.ToDto(board));
     }
 }

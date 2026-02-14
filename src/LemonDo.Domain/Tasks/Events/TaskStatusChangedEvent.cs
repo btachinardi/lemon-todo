@@ -4,6 +4,6 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.ValueObjects;
 
 public sealed record TaskStatusChangedEvent(
-    BoardTaskId BoardTaskId,
-    BoardTaskStatus OldStatus,
-    BoardTaskStatus NewStatus) : DomainEvent;
+    TaskId TaskId,
+    TaskStatus OldStatus,
+    TaskStatus NewStatus) : DomainEvent;

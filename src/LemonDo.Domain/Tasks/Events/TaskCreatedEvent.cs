@@ -5,10 +5,7 @@ using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.ValueObjects;
 
 public sealed record TaskCreatedEvent(
-    BoardTaskId BoardTaskId,
+    TaskId TaskId,
     UserId OwnerId,
     string Title,
-    Priority Priority,
-    ColumnId ColumnId,
-    int Position,
-    BoardTaskStatus InitialStatus) : DomainEvent;
+    Priority Priority) : DomainEvent;

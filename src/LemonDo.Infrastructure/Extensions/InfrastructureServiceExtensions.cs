@@ -1,6 +1,7 @@
 namespace LemonDo.Infrastructure.Extensions;
 
 using LemonDo.Application.Common;
+using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Infrastructure.Persistence;
 using LemonDo.Infrastructure.Persistence.Repositories;
@@ -17,7 +18,7 @@ public static class InfrastructureServiceExtensions
                 ?? "Data Source=lemondo.db"));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<LemonDoDbContext>());
-        services.AddScoped<IBoardTaskRepository, BoardTaskRepository>();
+        services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IBoardRepository, BoardRepository>();
 
         return services;

@@ -1,7 +1,8 @@
 namespace LemonDo.Infrastructure.Persistence.Configurations;
 
+using LemonDo.Domain.Boards.Entities;
+using LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Identity.ValueObjects;
-using LemonDo.Domain.Tasks.Entities;
 using LemonDo.Domain.Tasks.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -30,6 +31,7 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
 
         builder.Ignore(b => b.DomainEvents);
 
+        // Columns (existing, unchanged except namespace)
         builder.OwnsMany(b => b.Columns, columnBuilder =>
         {
             columnBuilder.ToTable("Columns");
@@ -59,6 +61,27 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
         });
 
         builder.Navigation(b => b.Columns).HasField("_columns");
+
+        // TaskCards (NEW)
+        builder.OwnsMany(b => b.Cards, cardBuilder =>
+        {
+            cardBuilder.ToTable("TaskCards");
+            cardBuilder.WithOwner().HasForeignKey("BoardId");
+
+            cardBuilder.Property(c => c.TaskId)
+                .HasConversion(id => id.Value, guid => TaskId.From(guid))
+                .IsRequired();
+
+            cardBuilder.Property(c => c.ColumnId)
+                .HasConversion(id => id.Value, guid => ColumnId.From(guid))
+                .IsRequired();
+
+            cardBuilder.Property(c => c.Position);
+
+            cardBuilder.HasKey("BoardId", nameof(TaskCard.TaskId));
+        });
+
+        builder.Navigation(b => b.Cards).HasField("_cards");
 
         builder.HasIndex(b => b.OwnerId);
     }

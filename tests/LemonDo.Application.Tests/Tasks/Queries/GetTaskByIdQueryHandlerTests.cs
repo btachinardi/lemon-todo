@@ -2,32 +2,31 @@ namespace LemonDo.Application.Tests.Tasks.Queries;
 
 using LemonDo.Application.Tasks.Queries;
 using LemonDo.Domain.Identity.ValueObjects;
-using LemonDo.Domain.Tasks.Entities;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
 using NSubstitute;
 
+using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
+
 [TestClass]
 public sealed class GetTaskByIdQueryHandlerTests
 {
-    private IBoardTaskRepository _repository = null!;
+    private ITaskRepository _repository = null!;
     private GetTaskByIdQueryHandler _handler = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = Substitute.For<IBoardTaskRepository>();
+        _repository = Substitute.For<ITaskRepository>();
         _handler = new GetTaskByIdQueryHandler(_repository);
     }
 
     [TestMethod]
     public async Task Should_ReturnTask_When_Exists()
     {
-        var columnId = ColumnId.New();
-        var task = BoardTask.Create(
-            UserId.Default, columnId, 0, BoardTaskStatus.Todo,
-            TaskTitle.Create("Test").Value, priority: Priority.High).Value;
-        _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
+        var task = TaskEntity.Create(
+            UserId.Default, TaskTitle.Create("Test").Value, priority: Priority.High).Value;
+        _repository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(new GetTaskByIdQuery(task.Id.Value));
@@ -40,8 +39,8 @@ public sealed class GetTaskByIdQueryHandlerTests
     [TestMethod]
     public async Task Should_ReturnFailure_When_NotFound()
     {
-        _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
-            .Returns((BoardTask?)null);
+        _repository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+            .Returns((TaskEntity?)null);
 
         var result = await _handler.HandleAsync(new GetTaskByIdQuery(Guid.NewGuid()));
 

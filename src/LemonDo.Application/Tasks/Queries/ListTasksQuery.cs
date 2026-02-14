@@ -6,16 +6,17 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 
+using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
+
 public sealed record ListTasksQuery(TaskListFilter Filter);
 
-public sealed class ListTasksQueryHandler(IBoardTaskRepository repository)
+public sealed class ListTasksQueryHandler(ITaskRepository repository)
 {
-    public async Task<PagedResult<BoardTaskDto>> HandleAsync(ListTasksQuery query, CancellationToken ct = default)
+    public async Task<PagedResult<TaskDto>> HandleAsync(ListTasksQuery query, CancellationToken ct = default)
     {
         var filter = query.Filter;
         var pagedResult = await repository.ListAsync(
             UserId.Default,
-            filter.ColumnId,
             filter.Priority,
             filter.Status,
             filter.SearchTerm,
@@ -23,7 +24,7 @@ public sealed class ListTasksQueryHandler(IBoardTaskRepository repository)
             filter.PageSize,
             ct);
 
-        var dtos = pagedResult.Items.Select(BoardTaskDtoMapper.ToDto).ToList();
-        return new PagedResult<BoardTaskDto>(dtos, pagedResult.TotalCount, pagedResult.Page, pagedResult.PageSize);
+        var dtos = pagedResult.Items.Select(TaskDtoMapper.ToDto).ToList();
+        return new PagedResult<TaskDto>(dtos, pagedResult.TotalCount, pagedResult.Page, pagedResult.PageSize);
     }
 }

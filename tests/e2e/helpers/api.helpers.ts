@@ -14,7 +14,6 @@ interface TaskResponse {
   status: string;
   priority: string;
   tags: string[];
-  columnId: string;
 }
 
 interface BoardResponse {

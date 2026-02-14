@@ -223,6 +223,10 @@
 | 2026-02-14 | DesignTimeDbContextFactory for EF migrations | EF tools can't resolve DbContext without DI. Factory provides standalone context creation. |
 | 2026-02-14 | Sonner directly over Shadcn Toaster wrapper | Shadcn Toaster requires next-themes ThemeProvider. Direct sonner import avoids unnecessary provider for CP1. |
 | 2026-02-14 | erasableSyntaxOnly in tsconfig | Vite + TypeScript 5.9 enables erasableSyntaxOnly which disallows class parameter properties with `readonly`. Use explicit field declarations instead. |
+| 2026-02-14 | Split Task Management into Task + Board bounded contexts | DDD review found tight coupling: Tasks stored ColumnId/Position (board concerns), status changes required Board aggregate. Separate contexts with conformist relationship gives clearer boundaries. |
+| 2026-02-14 | BoardTask → Task rename | Tasks exist independently of boards. Use qualified names (`using TaskEntity = ...`) for System.Threading.Tasks.Task collisions. |
+| 2026-02-14 | TaskCard value object on Board aggregate | Board owns spatial placement (TaskId + ColumnId + Position). Tasks don't need to know about columns. |
+| 2026-02-14 | Application-layer cross-context coordination | CreateTask/MoveCard/Complete/Uncomplete handlers coordinate between Task and Board aggregates. No domain-level coupling. |
 
 ---
 
@@ -230,7 +234,8 @@
 
 - **Planning**: DONE (Phase 0 + 1 + 2 complete)
 - **Bootstrap**: DONE (Phase 3 - solution, frontend, tests, Aspire integration)
-- **Checkpoint 1**: DONE (Core Task Management - 149 backend + 49 frontend tests, 0 warnings)
+- **Checkpoint 1**: DONE (Core Task Management - 174 backend + 48 frontend + 20 E2E = 242 tests, 0 warnings)
+  - Domain Redesign: Bounded context split (Task + Board) complete
 - **Checkpoint 2**: NOT STARTED (Auth & Authorization)
 - **Checkpoint 3**: NOT STARTED (Rich UX & Polish)
 - **Checkpoint 4**: NOT STARTED (Production Hardening)

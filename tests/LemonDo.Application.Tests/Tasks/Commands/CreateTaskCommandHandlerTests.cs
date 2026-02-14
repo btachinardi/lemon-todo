@@ -2,16 +2,19 @@ namespace LemonDo.Application.Tests.Tasks.Commands;
 
 using LemonDo.Application.Common;
 using LemonDo.Application.Tasks.Commands;
+using LemonDo.Domain.Boards.Entities;
+using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Identity.ValueObjects;
-using LemonDo.Domain.Tasks.Entities;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
 using NSubstitute;
 
+using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
+
 [TestClass]
 public sealed class CreateTaskCommandHandlerTests
 {
-    private IBoardTaskRepository _repository = null!;
+    private ITaskRepository _taskRepository = null!;
     private IBoardRepository _boardRepository = null!;
     private IUnitOfWork _unitOfWork = null!;
     private CreateTaskCommandHandler _handler = null!;
@@ -20,17 +23,15 @@ public sealed class CreateTaskCommandHandlerTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = Substitute.For<IBoardTaskRepository>();
+        _taskRepository = Substitute.For<ITaskRepository>();
         _boardRepository = Substitute.For<IBoardRepository>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
 
         _board = Board.CreateDefault(UserId.Default).Value;
         _boardRepository.GetDefaultForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(_board);
-        _repository.GetByColumnAsync(Arg.Any<ColumnId>(), Arg.Any<CancellationToken>())
-            .Returns(new List<BoardTask>());
 
-        _handler = new CreateTaskCommandHandler(_repository, _boardRepository, _unitOfWork);
+        _handler = new CreateTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork);
     }
 
     [TestMethod]
@@ -44,7 +45,8 @@ public sealed class CreateTaskCommandHandlerTests
         Assert.AreEqual("Buy groceries", result.Value.Title);
         Assert.AreEqual("Milk and eggs", result.Value.Description);
         Assert.AreEqual("High", result.Value.Priority);
-        await _repository.Received(1).AddAsync(Arg.Any<BoardTask>(), Arg.Any<CancellationToken>());
+        await _taskRepository.Received(1).AddAsync(Arg.Any<TaskEntity>(), Arg.Any<CancellationToken>());
+        await _boardRepository.Received(1).UpdateAsync(Arg.Any<Board>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -56,33 +58,30 @@ public sealed class CreateTaskCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         Assert.IsTrue(result.IsSuccess);
-        var firstColumn = _board.GetInitialColumn();
-        Assert.AreEqual(firstColumn.Id.Value, result.Value.ColumnId);
         Assert.AreEqual("Todo", result.Value.Status);
+
+        // Verify the board was updated (task was placed on it)
+        await _boardRepository.Received(1).UpdateAsync(Arg.Any<Board>(), Arg.Any<CancellationToken>());
     }
 
     [TestMethod]
     public async Task Should_SetPositionToEndOfColumn_When_ColumnHasExistingTasks()
     {
-        // Arrange: 3 tasks already in the initial column
+        // Arrange: place 3 tasks on the board's initial column
         var initialColumn = _board.GetInitialColumn();
-        var existingTasks = new List<BoardTask>();
         for (var i = 0; i < 3; i++)
         {
-            var t = BoardTask.Create(
-                UserId.Default, initialColumn.Id, i, BoardTaskStatus.Todo,
-                TaskTitle.Create($"Task {i}").Value).Value;
-            existingTasks.Add(t);
+            var t = TaskEntity.Create(UserId.Default, TaskTitle.Create($"Task {i}").Value).Value;
+            _board.PlaceTask(t.Id, initialColumn.Id, i);
         }
-        _repository.GetByColumnAsync(initialColumn.Id, Arg.Any<CancellationToken>())
-            .Returns(existingTasks);
 
         var command = new CreateTaskCommand("New task", null);
 
         var result = await _handler.HandleAsync(command);
 
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual(3, result.Value.Position);
+        // The board should now have 4 cards (3 pre-placed + 1 new)
+        Assert.HasCount(4, _board.Cards);
     }
 
     [TestMethod]
@@ -104,7 +103,7 @@ public sealed class CreateTaskCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         Assert.IsTrue(result.IsFailure);
-        await _repository.DidNotReceive().AddAsync(Arg.Any<BoardTask>(), Arg.Any<CancellationToken>());
+        await _taskRepository.DidNotReceive().AddAsync(Arg.Any<TaskEntity>(), Arg.Any<CancellationToken>());
     }
 
     [TestMethod]

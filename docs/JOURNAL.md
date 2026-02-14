@@ -341,9 +341,75 @@ The core redesign. Key design decisions:
 
 ---
 
+## Bounded Context Split: Task & Board Separation
+
+**Date: February 14, 2026**
+
+### The Problem
+
+A DDD review of the CP1 codebase identified that Task and Board were tightly coupled in a single bounded context. Tasks stored `ColumnId` and `Position` (board spatial concerns), and every status change required loading the Board aggregate. This violated several DDD principles: bounded context identification (FAIL -- everything was lumped into "Task Management"), aggregate design (FAIL -- Task carried responsibilities belonging to Board), and context mapping (FAIL -- no explicit relationship between the two concepts).
+
+### The Solution
+
+Split into two bounded contexts with a clear dependency direction:
+
+- **Task Context** (upstream): `Task` entity owns its own lifecycle -- status, priority, tags, due date, description. It knows nothing about boards or columns.
+- **Board Context** (downstream, conformist): `Board` aggregate manages spatial placement via `TaskCard` value objects (`TaskId` + `ColumnId` + `Position`). It imports `TaskId` and `TaskStatus` from the Task context.
+
+Application handlers coordinate cross-context operations. There is no domain-level coupling between the two contexts.
+
+### Key Design Decisions
+
+1. **Board gains TaskCard value object**. Instead of Task storing `ColumnId` and `Position`, the Board aggregate owns a `Cards: List<TaskCard>` collection where each `TaskCard` holds `TaskId + ColumnId + Position`. Spatial placement is a board concern, not a task concern.
+
+2. **Entity renamed from BoardTask to Task**. Tasks exist independently of boards. The `BoardTask` name from the previous redesign implied tasks were owned by boards, which is no longer true. For `System.Threading.Tasks.Task` collisions, we use qualified names (`using TaskEntity = LemonDo.Domain.Tasks.Task`).
+
+3. **Board is conformist to Task context**. The Board context imports `TaskId` and `TaskStatus` directly from the Task context. No anti-corruption layer needed -- the conformist relationship keeps things simple since we own both contexts.
+
+4. **Application-layer cross-context coordination**. Handlers orchestrate between the two aggregates:
+   - `CreateTask` = `Task.Create()` + `board.PlaceTask()`
+   - `MoveTask` = `board.MoveCard()` + `task.SetStatus()`
+   - `CompleteTask` = resolve Done column + `board.MoveCard()` + `task.SetStatus()`
+   - `UncompleteTask` = resolve Todo column + `board.MoveCard()` + `task.SetStatus()`
+
+### The Migration
+
+A two-table approach for the `SplitTaskBoardContexts` migration:
+
+1. Created `TaskCards` table, populated from existing `Tasks.ColumnId` + `Tasks.Position` data
+2. Dropped `ColumnId` and `Position` columns from the `Tasks` table
+3. Renamed `BoardTaskTags` table to `TaskTags`
+
+### Frontend Impact
+
+The KanbanBoard view was rewritten to use `board.cards` for task-to-column mapping instead of `task.columnId`. The card collection on the board response now drives which tasks appear in which columns. Mutation hooks were updated to invalidate both task and board queries after operations that affect placement.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| **Backend Tests** | 174 passed, 0 failed |
+| **Frontend Tests** | 48 passed, 0 failed |
+| **E2E Tests** | 20 passed, 0 failed |
+| **Total Tests** | 242 |
+| **Build Warnings** | 0 |
+| **Files Changed** | ~98 |
+
+### Lessons Learned
+
+1. **Spatial placement is a BOARD concern, not a task concern.** Which column a task sits in and what position it occupies are questions about board layout, not task identity. Tasks should only know about their own lifecycle (status, priority, tags).
+
+2. **Bounded context splits are major refactors but they pay off.** ~98 files changed across all layers, but the result is clearer responsibilities and simpler aggregates. Each context can now evolve independently.
+
+3. **The conformist relationship keeps things simple.** Since we own both contexts and they live in the same process, Board just imports types from Task directly. No anti-corruption layer, no translation, no mapping -- just direct dependency. This is the right trade-off for a monolith.
+
+---
+
 ## What's Next
 
 ### Checkpoint 1 Complete
+
+The bounded context split is complete. Task and Board are now separate contexts with clear boundaries. All 242 tests pass with zero build warnings. Next step: merge to develop and begin CP2.
 
 ### Checkpoint 2: Authentication & Authorization
 

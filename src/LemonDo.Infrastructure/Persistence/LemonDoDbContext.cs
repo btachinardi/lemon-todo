@@ -1,12 +1,14 @@
 namespace LemonDo.Infrastructure.Persistence;
 
 using LemonDo.Application.Common;
-using LemonDo.Domain.Tasks.Entities;
+using LemonDo.Domain.Boards.Entities;
 using Microsoft.EntityFrameworkCore;
+
+using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
 public sealed class LemonDoDbContext(DbContextOptions<LemonDoDbContext> options) : DbContext(options), IUnitOfWork
 {
-    public DbSet<BoardTask> Tasks => Set<BoardTask>();
+    public DbSet<TaskEntity> Tasks => Set<TaskEntity>();
     public DbSet<Board> Boards => Set<Board>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

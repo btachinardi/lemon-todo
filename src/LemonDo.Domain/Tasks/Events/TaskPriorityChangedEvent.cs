@@ -4,6 +4,6 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.ValueObjects;
 
 public sealed record TaskPriorityChangedEvent(
-    BoardTaskId BoardTaskId,
+    TaskId TaskId,
     Priority OldPriority,
     Priority NewPriority) : DomainEvent;
