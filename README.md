@@ -493,6 +493,76 @@ Features focused on *how it feels* to use LemonDo, not just what it does.
 - **Contextual Empty States** — Not just "No tasks yet" but specific, actionable prompts: "Create your first task" with a single CTA, "No results for this filter" with a "Clear filters" link, "This column is empty — drag tasks here or create one" with inline quick-add.
 - **Session Analytics** — PostHog for heatmaps, session replays, and funnel analysis. Understand how users *actually* use the product, not how we *assume* they do. Feed insights back into UX improvements.
 
+#### Tier 9: Reliability & Operations
+
+The unglamorous work that separates a demo from a product people depend on.
+
+**Scaling Strategy**:
+- **Horizontal API Scaling** — Stateless API behind Azure Container Apps auto-scaler. JWT tokens mean no session affinity needed. Scale to zero on idle, burst to N replicas on demand.
+- **Database Scaling Path** — SQLite (MVP) → PostgreSQL single instance → PostgreSQL with read replicas (read-heavy task queries go to replicas, writes to primary) → Citus for horizontal sharding by organization if multi-tenancy demands it. Each step is a repository implementation swap, no domain changes.
+- **Caching Tiers** — L1: In-memory response cache (hot queries). L2: Redis for shared cache across API replicas (board data, user profiles). L3: CDN for static frontend assets. Cache invalidation via domain events — when a task changes, invalidate its board cache entry.
+- **Connection Pooling** — PgBouncer in front of PostgreSQL. EF Core configured for transient lifetime in pooled mode. Prevents connection exhaustion under load.
+
+**SLI, SLO, SLA**:
+- **Service Level Indicators** — API response latency (p50, p95, p99), error rate (5xx / total), availability (successful health checks / total), task creation success rate, frontend Time to Interactive (TTI), Core Web Vitals (LCP, FID, CLS).
+- **Service Level Objectives** — API p95 latency < 200ms, availability 99.9% (8.7h downtime/year), error rate < 0.1%, task creation success > 99.95%. These are internal targets — aggressive enough to catch degradation early.
+- **Service Level Agreements** — External commitments per pricing tier: Free (no SLA), Pro (99.5%), Team (99.9%), Enterprise (99.95% with financial credits). SLAs are always looser than SLOs — the error budget between them is our breathing room.
+- **Error Budgets** — Monthly error budget = 1 - SLO. If we burn through the budget, freeze feature releases and focus on reliability. Dashboard showing real-time budget consumption. Alerts at 50%, 75%, 90% burn rate.
+- **Monitoring Stack** — OpenTelemetry → Aspire Dashboard (dev) → Grafana + Prometheus (production). PagerDuty for on-call alerting. Uptime monitoring via external probe (Checkly or Pingdom). Synthetic monitoring for critical user journeys.
+
+**Disaster Recovery & Backups**:
+- **RPO / RTO Targets** — Recovery Point Objective: 1 hour (max data loss). Recovery Time Objective: 4 hours (max downtime). These drive our backup frequency and recovery procedure design.
+- **Backup Strategy** — Automated PostgreSQL backups every hour to geo-redundant Azure Blob Storage. Daily full backup + hourly WAL archiving for point-in-time recovery. Backup encryption with customer-managed keys.
+- **Backup Verification** — Weekly automated restore-to-staging to prove backups actually work. An untested backup is not a backup.
+- **Geo-Redundancy** — Active-passive across two Azure regions. Primary serves traffic, secondary receives replicated data. Failover via Azure Traffic Manager with health probe. Manual failover trigger (not automatic — avoid split-brain).
+- **Runbooks** — Documented step-by-step recovery procedures for every failure scenario: database corruption, region outage, credential compromise, dependency failure. Practiced quarterly via game days.
+
+**Deployment & Release Strategy**:
+- **Deployment Model** — Blue/green deployments via Azure Container Apps revisions. New version deploys to "green" slot, health checks validate, traffic shifts 10% → 50% → 100% (canary progression). Instant rollback by shifting traffic back to "blue."
+- **Database Migrations — EXPAND / MIGRATE / SHRINK** — Zero-downtime schema changes:
+  1. **EXPAND**: Add new columns/tables alongside existing ones. Both old and new code work against the expanded schema. Deploy the expanded schema first, then deploy new application code.
+  2. **MIGRATE**: Dual-write to old and new columns. Backfill historical data with a background job. Validate data consistency between old and new.
+  3. **SHRINK**: Once all application code reads from new columns and old columns have zero reads, drop old columns in a subsequent release. Never expand and shrink in the same release.
+- **Release Cadence** — Continuous deployment to staging on every merge to `develop`. Weekly release trains to production (Tuesday mornings, never Fridays). Hotfix path for critical issues: `hotfix/*` branch → direct to `main` + `develop`.
+- **Rollback Procedure** — Application rollback: revert Container Apps revision (< 30 seconds). Database rollback: never — EXPAND/MIGRATE/SHRINK means every migration is forward-only and backward-compatible.
+
+**Feature Flags & Experimentation**:
+- **Feature Flag System** — LaunchDarkly (or open-source Unleash) for runtime feature control. Every new feature ships behind a flag. Flags enable: gradual rollouts (1% → 10% → 100%), kill switches (disable broken features without deploy), beta programs (enable for specific users/organizations).
+- **A/B Testing** — Experimentation framework for UX decisions. Split traffic between variants, measure impact on WATC (our north star metric). Examples: "Does confetti on task completion increase weekly completion rate?" "Does the quick-add bar perform better at the top or bottom of the board?"
+- **Flag Lifecycle** — Flags are not permanent. Every flag has an expiry date. After full rollout, the flag is removed in the next release cycle. Stale flags are tech debt.
+
+**Environments & Promotion**:
+- **Environment Chain** — `local` → `dev` → `staging` → `production`. Each environment is a full replica of the production stack (API + frontend + database + Redis + monitoring). No "works in dev, breaks in prod" surprises.
+- **Staging = Production Mirror** — Same container images, same environment variables (except secrets), same database schema, same feature flags (with staging-specific overrides). Staging receives production-like traffic via load replay.
+- **Promotion Gates** — Merge to `develop` → auto-deploy to `dev` → automated test suite passes → promote to `staging` → QA approval + smoke tests → promote to `production` with canary progression. Any gate failure blocks promotion.
+- **Environment Parity** — Infrastructure-as-code (Terraform) ensures all environments are structurally identical. Drift detection alerts if staging diverges from production config.
+
+**Developer Experience & Containers**:
+- **Dev Containers** — `.devcontainer/` configuration for VS Code / GitHub Codespaces. One-click development environment with .NET 10 SDK, Node.js 23, pnpm, all tools pre-installed. New developer goes from clone to running app in under 5 minutes.
+- **Docker Compose for Local Dev** — `docker compose up` starts the full stack: API, frontend, SQLite (or PostgreSQL), Redis, Aspire Dashboard, mock mail server. Matches production topology without cloud dependencies.
+- **Testcontainers** — Integration tests spin up real PostgreSQL and Redis containers via Testcontainers for .NET. No in-memory fakes for integration testing — test against the real thing, then throw it away.
+- **Seed Data & Fixtures** — Development seed script that populates realistic data: users with different roles, boards with tasks in various states, audit entries, onboarding progress. Developers always work with representative data, not empty databases.
+- **Hot Reload Everywhere** — Backend: `dotnet watch`. Frontend: Vite HMR. Both restart automatically on file change. Aspire orchestrates both with `AddJavaScriptApp` — one terminal, full stack.
+
+**Incident Management**:
+- **Severity Levels** — SEV1 (total outage, all users affected), SEV2 (major feature broken, significant user impact), SEV3 (minor feature degraded, workaround available), SEV4 (cosmetic or low-impact issue).
+- **On-Call Rotation** — PagerDuty rotation with primary + secondary. Escalation policy: page primary → 5 min → page secondary → 10 min → page engineering lead. On-call handoff includes "state of the world" briefing.
+- **Incident Response** — Detect → Acknowledge → Communicate (status page update) → Mitigate (restore service) → Resolve (permanent fix) → Review (post-mortem within 48 hours).
+- **Post-Mortems** — Blameless post-mortem for every SEV1/SEV2. Document: timeline, root cause, impact, what went well, what went wrong, action items with owners and deadlines. Published internally for organizational learning.
+- **Status Page** — Public status page (Statuspage.io or Instatus) showing real-time service health. Automated incident creation from monitoring alerts. Subscriber notifications via email and webhook.
+
+**Security Operations**:
+- **Dependency Scanning** — Dependabot (GitHub) + Snyk for automated CVE detection in NuGet and npm packages. PRs auto-created for security patches. Critical CVEs block deployment pipeline.
+- **SAST / DAST** — Static analysis (SonarQube or CodeQL) on every PR. Dynamic analysis (OWASP ZAP) against staging environment weekly. Findings triaged by severity, critical/high block release.
+- **Penetration Testing** — Annual third-party pen test. Findings documented, remediated, and verified. Report available to Enterprise customers on request.
+- **Secrets Rotation** — Azure Key Vault for all secrets. JWT signing keys rotate every 90 days (automated). Database credentials rotate every 30 days. API keys for third-party services rotate on compromise or annually.
+- **Supply Chain Security** — Lockfile integrity verification in CI. Package provenance checking. No `npm install` in production — only `pnpm install --frozen-lockfile` from verified lockfile.
+
+**Cost Management**:
+- **Cloud Cost Monitoring** — Azure Cost Management with per-environment and per-service tagging. Monthly budget alerts at 80% and 100% of target. Cost anomaly detection for unexpected spikes.
+- **Right-Sizing** — Quarterly review of container resource allocations (CPU/memory). Auto-scale policies tuned to actual traffic patterns, not worst-case estimates. Scale-to-zero for non-production environments outside business hours.
+- **Reserved Capacity** — Azure Reserved Instances for predictable production workloads (database, Redis). Pay-as-you-go for burst capacity. Estimated 30-40% savings over on-demand pricing.
+
 ---
 
 ## Contributing
