@@ -242,4 +242,10 @@
 | 27e04b6 | docs(guidelines): fix L1 layer import rules consistency | Phase 2 |
 | 36b53fa | docs(guidelines): add Pages/Layouts layer and L2 granularity levels | Phase 2 |
 | 3790514 | docs(guidelines): replace L1/L2/L3 with Architecture Tiers and Component Taxonomy | Phase 2 |
-| *next* | docs: checkpoint-based delivery plan and evaluation alignment | Phase 2 |
+| 38cd7bb | docs: text formatting and copy editing pass | Phase 2 |
+| 3797bdf | chore: add global.json for MTP test runner and update .gitignore | Phase 3 |
+| 5d88566 | feat: scaffold .NET Aspire solution with DDD project structure | Phase 3 |
+| 56cb48b | feat: scaffold Vite + React frontend with Tailwind and Shadcn/ui | Phase 3 |
+| a9ebce9 | test: add MSTest 4 + MTP test infrastructure with smoke tests | Phase 3 |
+| 310782b | docs: update documentation for Phase 3 bootstrap completion | Phase 3 |
+| 5f3b3c8 | merge: Phase 3 codebase bootstrap | Phase 3 |
