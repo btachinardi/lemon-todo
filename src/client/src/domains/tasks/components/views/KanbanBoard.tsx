@@ -9,6 +9,7 @@ interface KanbanBoardProps {
   tasks: Task[];
   onCompleteTask?: (id: string) => void;
   onSelectTask?: (id: string) => void;
+  togglingTaskId?: string | null;
   className?: string;
 }
 
@@ -17,11 +18,12 @@ export function KanbanBoard({
   tasks,
   onCompleteTask,
   onSelectTask,
+  togglingTaskId,
   className,
 }: KanbanBoardProps) {
   const sortedColumns = [...board.columns].sort((a, b) => a.position - b.position);
 
-  // Build a map of taskId → card for quick lookup
+  // Build a map of taskId -> card for quick lookup
   const cardByTaskId = new Map(
     (board.cards ?? []).map((card) => [card.taskId, card]),
   );
@@ -61,6 +63,7 @@ export function KanbanBoard({
             tasks={tasksByColumn.get(column.id) ?? []}
             onCompleteTask={onCompleteTask}
             onSelectTask={onSelectTask}
+            togglingTaskId={togglingTaskId}
           />
         ))}
       </div>

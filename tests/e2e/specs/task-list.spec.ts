@@ -6,9 +6,10 @@ test.beforeEach(async () => {
 });
 
 test.describe('Task List', () => {
-  test('"No tasks found" empty state on fresh DB', async ({ page }) => {
+  test('empty state on fresh DB', async ({ page }) => {
     await page.goto('/list');
-    await expect(page.getByText('No tasks found')).toBeVisible();
+    await expect(page.getByText('No tasks yet')).toBeVisible();
+    await expect(page.getByText('Add a task above to get started.')).toBeVisible();
   });
 
   test('tasks display with status chip in list', async ({ page }) => {

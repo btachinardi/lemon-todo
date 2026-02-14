@@ -3,9 +3,9 @@ import { cn } from '@/lib/utils';
 import { TaskStatus } from '../../types/task.types';
 
 const statusConfig: Record<TaskStatus, { label: string; className: string }> = {
-  [TaskStatus.Todo]: { label: 'To Do', className: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' },
-  [TaskStatus.InProgress]: { label: 'In Progress', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' },
-  [TaskStatus.Done]: { label: 'Done', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
+  [TaskStatus.Todo]: { label: 'To Do', className: 'bg-status-todo text-status-todo-foreground' },
+  [TaskStatus.InProgress]: { label: 'In Progress', className: 'bg-status-in-progress text-status-in-progress-foreground' },
+  [TaskStatus.Done]: { label: 'Done', className: 'bg-status-done text-status-done-foreground' },
 };
 
 interface TaskStatusChipProps {

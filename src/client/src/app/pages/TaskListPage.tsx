@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { AlertCircleIcon } from 'lucide-react';
+import { Button } from '@/ui/button';
 import { Skeleton } from '@/ui/skeleton';
 import { TaskListView } from '@/domains/tasks/components/views/TaskListView';
 import { QuickAddForm } from '@/domains/tasks/components/widgets/QuickAddForm';
@@ -11,25 +14,23 @@ export function TaskListPage() {
   const createTask = useCreateTask();
   const completeTask = useCompleteTask();
   const uncompleteTask = useUncompleteTask();
+  const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
 
   const handleToggleComplete = (id: string) => {
     const task = tasksQuery.data?.items.find((t) => t.id === id);
     if (!task) return;
 
-    if (task.status === TaskStatus.Done) {
-      uncompleteTask.mutate(id, {
-        onError: () => toast.error('Failed to uncomplete task'),
-      });
-    } else {
-      completeTask.mutate(id, {
-        onError: () => toast.error('Failed to complete task'),
-      });
-    }
+    setTogglingTaskId(id);
+    const mutation = task.status === TaskStatus.Done ? uncompleteTask : completeTask;
+    mutation.mutate(id, {
+      onError: () => toast.error('Could not update task. Try again.'),
+      onSettled: () => setTogglingTaskId(null),
+    });
   };
 
   if (tasksQuery.isLoading) {
     return (
-      <div className="space-y-3 p-6">
+      <div className="mx-auto max-w-4xl space-y-3 p-6">
         {[1, 2, 3, 4, 5].map((i) => (
           <Skeleton key={i} className="h-16 w-full" />
         ))}
@@ -39,8 +40,15 @@ export function TaskListPage() {
 
   if (tasksQuery.error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <p className="text-destructive">Failed to load tasks</p>
+      <div className="flex flex-col items-center justify-center gap-4 py-16">
+        <AlertCircleIcon className="size-10 text-destructive/70" />
+        <div className="text-center">
+          <p className="font-medium">Could not load tasks</p>
+          <p className="mt-1 text-sm text-muted-foreground">Check your connection and try again.</p>
+        </div>
+        <Button variant="outline" onClick={() => tasksQuery.refetch()}>
+          Try Again
+        </Button>
       </div>
     );
   }
@@ -49,17 +57,23 @@ export function TaskListPage() {
 
   return (
     <div className="flex flex-col">
-      <div className="border-b px-6 py-3">
-        <QuickAddForm
-          onSubmit={(request) =>
-            createTask.mutate(request, {
-              onError: () => toast.error('Failed to create task'),
-            })
-          }
-          isLoading={createTask.isPending}
-        />
+      <div className="border-b px-4 py-3 sm:px-6">
+        <div className="mx-auto max-w-4xl">
+          <QuickAddForm
+            onSubmit={(request) =>
+              createTask.mutate(request, {
+                onError: () => toast.error('Could not save task. Try again.'),
+              })
+            }
+            isLoading={createTask.isPending}
+          />
+        </div>
       </div>
-      <TaskListView tasks={tasks} onCompleteTask={handleToggleComplete} />
+      <TaskListView
+        tasks={tasks}
+        onCompleteTask={handleToggleComplete}
+        togglingTaskId={togglingTaskId}
+      />
     </div>
   );
 }

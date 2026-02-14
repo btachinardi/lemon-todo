@@ -1,39 +1,54 @@
 import { cn } from '@/lib/utils';
 import { Separator } from '@/ui/separator';
+import { Button } from '@/ui/button';
+import { CheckCircle2Icon, InboxIcon, LoaderIcon } from 'lucide-react';
 import type { Task } from '../../types/task.types';
+import { TaskStatus } from '../../types/task.types';
 import { PriorityBadge } from '../atoms/PriorityBadge';
 import { TaskStatusChip } from '../atoms/TaskStatusChip';
 import { DueDateLabel } from '../atoms/DueDateLabel';
 import { TagList } from '../atoms/TagList';
-import { TaskStatus } from '../../types/task.types';
-import { Button } from '@/ui/button';
-import { CheckCircle2Icon } from 'lucide-react';
 
 interface TaskListViewProps {
   tasks: Task[];
   onCompleteTask?: (id: string) => void;
   onSelectTask?: (id: string) => void;
+  togglingTaskId?: string | null;
   className?: string;
 }
 
-export function TaskListView({ tasks, onCompleteTask, onSelectTask, className }: TaskListViewProps) {
+export function TaskListView({ tasks, onCompleteTask, onSelectTask, togglingTaskId, className }: TaskListViewProps) {
   if (tasks.length === 0) {
     return (
-      <div className={cn('flex flex-col items-center justify-center py-16', className)}>
-        <p className="text-muted-foreground">No tasks found</p>
+      <div className={cn('flex flex-col items-center justify-center gap-3 py-16', className)}>
+        <InboxIcon className="size-10 text-muted-foreground/50" />
+        <div className="text-center">
+          <p className="font-medium">No tasks yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Add a task above to get started.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={cn('flex flex-col', className)}>
+    <div className={cn('mx-auto w-full max-w-4xl flex-col', className)}>
       {tasks.map((task, index) => {
         const isDone = task.status === TaskStatus.Done;
+        const isToggling = togglingTaskId === task.id;
         return (
           <div key={task.id}>
             <div
-              className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+              className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+              role="button"
+              tabIndex={0}
+              aria-label={`Task: ${task.title}`}
               onClick={() => onSelectTask?.(task.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectTask?.(task.id);
+                }
+              }}
             >
               <Button
                 variant="ghost"
@@ -43,11 +58,16 @@ export function TaskListView({ tasks, onCompleteTask, onSelectTask, className }:
                   e.stopPropagation();
                   onCompleteTask?.(task.id);
                 }}
+                disabled={isToggling}
                 aria-label={isDone ? 'Mark as incomplete' : 'Mark as complete'}
               >
-                <CheckCircle2Icon
-                  className={cn('size-4', isDone ? 'text-green-600' : 'text-muted-foreground')}
-                />
+                {isToggling ? (
+                  <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
+                ) : (
+                  <CheckCircle2Icon
+                    className={cn('size-4', isDone ? 'text-success-foreground' : 'text-muted-foreground')}
+                  />
+                )}
               </Button>
               <div className="min-w-0 flex-1">
                 <p className={cn('truncate text-sm font-medium', isDone && 'line-through opacity-60')}>

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { CalendarIcon } from 'lucide-react';
+import { AlertTriangleIcon, CalendarIcon } from 'lucide-react';
 
 interface DueDateLabelProps {
   dueDate: string | null;
@@ -23,19 +23,23 @@ export function DueDateLabel({ dueDate, className }: DueDateLabelProps) {
     label = 'Today';
   } else if (isTomorrow) {
     label = 'Tomorrow';
+  } else if (isOverdue) {
+    label = `Overdue: ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
   } else {
     label = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
+
+  const Icon = isOverdue && !isToday ? AlertTriangleIcon : CalendarIcon;
 
   return (
     <span
       className={cn(
         'inline-flex items-center gap-1 text-xs',
-        isOverdue && !isToday ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground',
+        isOverdue && !isToday ? 'text-destructive font-medium' : 'text-muted-foreground',
         className,
       )}
     >
-      <CalendarIcon className="size-3" />
+      <Icon className="size-3" />
       {label}
     </span>
   );

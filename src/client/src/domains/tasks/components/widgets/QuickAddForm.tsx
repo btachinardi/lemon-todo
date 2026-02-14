@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
-import { PlusIcon } from 'lucide-react';
+import { LoaderIcon, PlusIcon } from 'lucide-react';
 import type { CreateTaskRequest } from '../../types/api.types';
 
 interface QuickAddFormProps {
@@ -25,17 +25,24 @@ export function QuickAddForm({ onSubmit, isLoading, className }: QuickAddFormPro
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className="flex gap-2">
+        <label htmlFor="quick-add-input" className="sr-only">
+          New task title
+        </label>
         <Input
+          id="quick-add-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Add a task..."
+          placeholder="What needs to be done?"
           maxLength={500}
           disabled={isLoading}
-          aria-label="New task title"
         />
         <Button type="submit" size="sm" disabled={!title.trim() || isLoading}>
-          <PlusIcon className="size-4" />
-          Add
+          {isLoading ? (
+            <LoaderIcon className="size-4 animate-spin" />
+          ) : (
+            <PlusIcon className="size-4" />
+          )}
+          Add Task
         </Button>
       </div>
     </form>

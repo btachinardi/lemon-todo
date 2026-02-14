@@ -9,8 +9,14 @@ export default function globalSetup() {
   for (const suffix of ['', '-shm', '-wal']) {
     const filePath = path.join(API_DIR, `${DB_NAME}${suffix}`);
     if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`Deleted ${filePath}`);
+      try {
+        fs.unlinkSync(filePath);
+        console.log(`Deleted ${filePath}`);
+      } catch {
+        // File may be locked by the webServer process that started before globalSetup.
+        // The API will recreate it via MigrateAsync() on startup anyway.
+        console.log(`Skipped ${filePath} (locked by running process)`);
+      }
     }
   }
 }

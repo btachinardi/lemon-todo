@@ -8,7 +8,8 @@ import { Priority, TaskStatus } from '../../types/task.types';
 describe('TaskListView', () => {
   it('shows empty state when no tasks', () => {
     render(<TaskListView tasks={[]} />);
-    expect(screen.getByText('No tasks found')).toBeInTheDocument();
+    expect(screen.getByText('No tasks yet')).toBeInTheDocument();
+    expect(screen.getByText('Add a task above to get started.')).toBeInTheDocument();
   });
 
   it('renders all tasks', () => {
