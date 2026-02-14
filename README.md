@@ -171,25 +171,51 @@ Design System → Domain Atoms → Domain Widgets → Domain Views
 
 The old L1/L2/L3 labels tried to do both jobs at once and created confusion. The new model is cleaner: Architecture Tiers flow data top-down (from URL to pixels), while the Component Taxonomy flows bottom-up (small primitives compose into bigger domain-aware pieces). See [GUIDELINES.md](./GUIDELINES.md) for the full specification with examples and import rules.
 
+### Interlude: Rethinking Delivery Strategy
+
+After running review agents against our documentation, we faced a hard truth: we were planning to build everything at once. Six bounded contexts, HIPAA compliance, three languages, offline CRUD, analytics — all marked as P0. The reviewers flagged this as over-engineering, and they were right.
+
+But the ambition isn't wrong — the delivery order is. We restructured into **checkpoint-based delivery**: five incremental checkpoints where each one produces a complete, runnable application. If we stop at any checkpoint, we have something presentable that demonstrates real architecture and thought process.
+
+**The key insight**: Checkpoint 1 addresses *every* core evaluation criteria (API design, data structures, component design, F/E↔B/E communication, clean code). Later checkpoints layer on production features progressively.
+
+| Checkpoint | Focus | Key Trade-off |
+|---|---|---|
+| **CP1: Core Tasks** | Working full-stack CRUD | Single-user mode (no auth yet) |
+| **CP2: Auth** | User accounts, JWT, RBAC | Two roles (User, Admin), not three |
+| **CP3: Rich UX** | Drag-drop, theme, quick-add, polish | Theme before i18n |
+| **CP4: Production** | Observability, PII, audit, i18n | "HIPAA-Ready" not certified |
+| **CP5: Advanced** | PWA, onboarding, analytics, E2E | Lightweight implementations proving architecture |
+
+**Decision**: Tasks before Auth. A bold but deliberate choice. CP1 runs in single-user mode so we can demonstrate clean architecture end-to-end without auth complexity. The repository pattern means adding user-scoped queries in CP2 is a one-line change — proving the architecture's extensibility.
+
+**Decision**: HIPAA downgraded from P0 to "HIPAA-Ready infrastructure." Full HIPAA compliance requires BAAs, legal review, workforce training, and incident response procedures — that's a business framework, not a codebase feature. We implement the *technical controls* (encryption, audit trails, PII redaction) and document what's needed for full certification.
+
+See [TASKS.md](./TASKS.md) for the complete checkpoint breakdown with every task.
+
 ### Phase 3: Codebase Bootstrap
 
-*Coming next: We'll initialize the .NET Aspire solution, scaffold the React frontend, wire up the test infrastructure, and get health checks passing.*
+*Coming next: Initialize the .NET Aspire solution with DDD project structure, scaffold the React frontend with Tailwind + Shadcn/ui, wire up test infrastructure (xUnit, FsCheck, Vitest, fast-check), connect Aspire ↔ React via AddJavaScriptApp, and verify health checks + Scalar API docs are serving.*
 
-### Phase 4: Auth Domain (TDD)
+### Checkpoint 1: Core Task Management
 
-*Planned: TDD implementation of the Identity bounded context - API and Frontend together.*
+*Planned: Full-stack task CRUD in single-user mode. Backend: TaskItem/Board/Column entities with TDD, EF Core + SQLite, minimal API endpoints. Frontend: Design System setup, Domain Components (Atoms/Widgets/Views), TanStack Query hooks, Zustand stores, React Router. Integration tests for all endpoints. Working kanban board and list view.*
 
-### Phase 5: Tasks Domain (TDD)
+### Checkpoint 2: Authentication & Authorization
 
-*Planned: TDD implementation of the Task Management bounded context - Kanban and list views.*
+*Planned: ASP.NET Core Identity with JWT tokens, register/login/logout endpoints, user-scoped task queries, React auth pages with route guards and redirects, token refresh handling.*
 
-### Phase 6: Cross-Cutting Concerns
+### Checkpoint 3: Rich UX & Polish
 
-*Planned: Onboarding, admin panel, HIPAA compliance, analytics, i18n, PWA, themes, observability.*
+*Planned: Kanban drag-and-drop, quick-add, task detail editing, filters/search, dark/light theme, responsive design, loading skeletons, empty states, toast notifications, error boundaries.*
 
-### Phase 7: Full E2E Validation
+### Checkpoint 4: Production Hardening
 
-*Planned: Playwright tests covering every scenario from SCENARIOS.md across the entire stack.*
+*Planned: OpenTelemetry + Serilog observability, PII redaction in admin views, audit trail, admin panel, SystemAdmin role, i18n (en + pt-BR), rate limiting, data encryption at rest.*
+
+### Checkpoint 5: Advanced & Delight
+
+*Planned: PWA with offline support, onboarding flow, analytics event tracking, in-app notifications, Playwright E2E tests, Spanish language, offline mutation queue.*
 
 ---
 
@@ -207,6 +233,7 @@ The old L1/L2/L3 labels tried to do both jobs at once and created confusion. The
 | **Build** | Vite 7 | 7.x |
 | **UI** | Shadcn/ui + Radix | Latest |
 | **Styling** | Tailwind CSS | 4.x |
+| **Routing** | React Router | 7.x |
 | **Server State** | TanStack Query 5 | 5.x |
 | **Client State** | Zustand 5 | 5.x |
 | **i18n** | react-i18next | 16.x |
@@ -327,6 +354,58 @@ See [GUIDELINES.md](./GUIDELINES.md) for:
 - Code quality standards
 - Git workflow
 - Security and accessibility guidelines
+
+---
+
+## Trade-offs and Assumptions
+
+### Assumptions
+
+- **Single developer, time-boxed**: The project is designed for incremental delivery with meaningful checkpoints, not waterfall completion.
+- **SQLite is sufficient for MVP**: Our data model is simple (tasks, boards, users). The repository pattern makes swapping to PostgreSQL a one-file change when scaling requires it.
+- **Evaluators have .NET 10 SDK + Node.js 23+**: We target the latest LTS runtime. Aspire handles service orchestration so `dotnet run` starts everything.
+- **Browser-first, not native**: We chose PWA over native apps. Service workers provide offline support without app store distribution.
+
+### Key Trade-offs
+
+| Trade-off | What we chose | What we gave up | Why |
+|---|---|---|---|
+| **Auth timing** | Tasks first (CP1), auth second (CP2) | Auth-gated MVP from day one | Demonstrates architecture faster; adding user-scoping is a one-line repository change |
+| **Database** | SQLite | PostgreSQL/SQL Server | Zero-config for evaluators; repository pattern means swap is trivial |
+| **HIPAA** | Technical controls ("HIPAA-Ready") | Full certification | Certification requires legal/BAA framework beyond code scope |
+| **State management** | Zustand + TanStack Query | Redux, React Context | Smaller bundle, no providers needed, natural server/client split |
+| **API docs** | Scalar | Swagger UI | Faster, better search, dark mode, .NET 9+ default |
+| **Offline strategy** | Read-only first, CRUD later | Full offline from day one | Incremental complexity; read-only covers 80% of offline scenarios |
+| **i18n** | English-first, add languages later | Multi-language from start | i18next is cheap to retrofit; translation files are additive |
+| **Bounded contexts** | All 6 designed, 2-4 implemented per checkpoint | Implement all at once | Incremental delivery proves extensibility without over-building |
+
+### Scalability Considerations
+
+**What scales today**:
+- Repository pattern decouples data access from domain logic — swap SQLite to PostgreSQL with no domain changes
+- TanStack Query handles caching, deduplication, and background refetch — adding pagination is configuration, not rewrite
+- Aspire orchestration generates Kubernetes manifests — deployment scales via `aspire do`
+- Domain events decouple mutations from side effects — adding audit logging, notifications, or analytics is event subscription, not code modification
+
+**What we'd add for production scale**:
+- **Database migration**: PostgreSQL with connection pooling (PgBouncer) behind the repository interface
+- **Caching layer**: Redis for session storage and query caching (Aspire has built-in Redis integration)
+- **CDN**: Static assets served via Azure CDN or CloudFront
+- **Search**: Elasticsearch for full-text task search (replace in-memory filtering)
+- **Queue**: Azure Service Bus for async domain event processing (replace in-process event dispatch)
+- **Monitoring**: Grafana dashboards consuming OpenTelemetry data, PagerDuty alerting
+- **Multi-tenancy**: Organization-scoped data isolation (the Board aggregate root naturally supports this)
+
+### What We Would Implement Next
+
+Beyond CP5, the roadmap includes:
+1. **Real-time collaboration** — SignalR for live board updates across team members
+2. **File attachments** — Azure Blob Storage with antivirus scanning
+3. **Recurring tasks** — Cron-based task generation with Hangfire or Azure Functions
+4. **API versioning** — URL-based versioning (/api/v1/, /api/v2/) with compatibility layer
+5. **Full HIPAA certification** — BAA templates, security risk assessment, workforce training, breach notification procedures
+6. **GDPR compliance** — Right to erasure, data portability, consent management
+7. **Mobile native apps** — React Native leveraging shared domain types from `packages/shared-types`
 
 ---
 
