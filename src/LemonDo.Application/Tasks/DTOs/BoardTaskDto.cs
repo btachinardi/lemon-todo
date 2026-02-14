@@ -9,7 +9,7 @@ public sealed record BoardTaskDto
     public required string Status { get; init; }
     public DateTimeOffset? DueDate { get; init; }
     public required IReadOnlyList<string> Tags { get; init; }
-    public Guid? ColumnId { get; init; }
+    public required Guid ColumnId { get; init; }
     public required int Position { get; init; }
     public required bool IsArchived { get; init; }
     public required bool IsDeleted { get; init; }

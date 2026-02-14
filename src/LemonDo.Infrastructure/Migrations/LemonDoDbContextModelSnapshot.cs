@@ -50,7 +50,7 @@ namespace LemonDo.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("ColumnId")
+                    b.Property<Guid>("ColumnId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CompletedAt")
@@ -121,6 +121,9 @@ namespace LemonDo.Infrastructure.Migrations
                             b1.Property<Guid>("BoardId")
                                 .HasColumnType("TEXT");
 
+                            b1.Property<int?>("MaxTasks")
+                                .HasColumnType("INTEGER");
+
                             b1.Property<string>("Name")
                                 .IsRequired()
                                 .HasMaxLength(50)
@@ -129,8 +132,10 @@ namespace LemonDo.Infrastructure.Migrations
                             b1.Property<int>("Position")
                                 .HasColumnType("INTEGER");
 
-                            b1.Property<int?>("WipLimit")
-                                .HasColumnType("INTEGER");
+                            b1.Property<string>("TargetStatus")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("TEXT");
 
                             b1.HasKey("Id");
 
@@ -159,7 +164,7 @@ namespace LemonDo.Infrastructure.Migrations
 
                             b1.HasKey("BoardTaskId", "Value");
 
-                            b1.ToTable("TaskItemTags", (string)null);
+                            b1.ToTable("BoardTaskTags", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("BoardTaskId");

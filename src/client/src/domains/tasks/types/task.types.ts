@@ -12,7 +12,6 @@ export const TaskStatus = {
   Todo: 'Todo',
   InProgress: 'InProgress',
   Done: 'Done',
-  Archived: 'Archived',
 } as const;
 
 export type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus];
@@ -25,7 +24,7 @@ export interface BoardTask {
   status: TaskStatus;
   dueDate: string | null;
   tags: string[];
-  columnId: string | null;
+  columnId: string;
   position: number;
   isArchived: boolean;
   isDeleted: boolean;

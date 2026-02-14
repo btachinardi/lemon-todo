@@ -8,4 +8,7 @@ public sealed record TaskCreatedEvent(
     BoardTaskId BoardTaskId,
     UserId OwnerId,
     string Title,
-    Priority Priority) : DomainEvent;
+    Priority Priority,
+    ColumnId ColumnId,
+    int Position,
+    BoardTaskStatus InitialStatus) : DomainEvent;

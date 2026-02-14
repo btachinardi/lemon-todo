@@ -13,7 +13,7 @@ public static class BoardTaskDtoMapper
         Status = task.Status.ToString(),
         DueDate = task.DueDate,
         Tags = task.Tags.Select(t => t.Value).ToList(),
-        ColumnId = task.ColumnId?.Value,
+        ColumnId = task.ColumnId.Value,
         Position = task.Position,
         IsArchived = task.IsArchived,
         IsDeleted = task.IsDeleted,
@@ -30,8 +30,9 @@ public static class BoardTaskDtoMapper
         {
             Id = c.Id.Value,
             Name = c.Name.Value,
+            TargetStatus = c.TargetStatus.ToString(),
             Position = c.Position,
-            WipLimit = c.WipLimit
+            MaxTasks = c.MaxTasks
         }).ToList(),
         CreatedAt = board.CreatedAt
     };

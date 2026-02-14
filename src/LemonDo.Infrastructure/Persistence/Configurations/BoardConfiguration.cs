@@ -43,8 +43,13 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
                 .HasMaxLength(ColumnName.MaxLength)
                 .IsRequired();
 
+            columnBuilder.Property(c => c.TargetStatus)
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .IsRequired();
+
             columnBuilder.Property(c => c.Position);
-            columnBuilder.Property(c => c.WipLimit);
+            columnBuilder.Property(c => c.MaxTasks);
 
             columnBuilder.WithOwner().HasForeignKey("BoardId");
 

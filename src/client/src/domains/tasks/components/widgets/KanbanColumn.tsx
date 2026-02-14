@@ -25,7 +25,7 @@ export function KanbanColumn({
         <h3 className="text-sm font-semibold">{column.name}</h3>
         <span className="text-xs text-muted-foreground">
           {tasks.length}
-          {column.wipLimit != null && `/${column.wipLimit}`}
+          {column.maxTasks != null && `/${column.maxTasks}`}
         </span>
       </div>
       <ScrollArea className="flex-1">

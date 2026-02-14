@@ -37,7 +37,7 @@ namespace LemonDo.Infrastructure.Migrations
                     Priority = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     DueDate = table.Column<string>(type: "TEXT", nullable: true),
-                    ColumnId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    ColumnId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Position = table.Column<int>(type: "INTEGER", nullable: false),
                     IsArchived = table.Column<bool>(type: "INTEGER", nullable: false),
                     IsDeleted = table.Column<bool>(type: "INTEGER", nullable: false),
@@ -56,8 +56,9 @@ namespace LemonDo.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    TargetStatus = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     Position = table.Column<int>(type: "INTEGER", nullable: false),
-                    WipLimit = table.Column<int>(type: "INTEGER", nullable: true),
+                    MaxTasks = table.Column<int>(type: "INTEGER", nullable: true),
                     BoardId = table.Column<Guid>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -72,7 +73,7 @@ namespace LemonDo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TaskItemTags",
+                name: "BoardTaskTags",
                 columns: table => new
                 {
                     Value = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
@@ -80,9 +81,9 @@ namespace LemonDo.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TaskItemTags", x => new { x.BoardTaskId, x.Value });
+                    table.PrimaryKey("PK_BoardTaskTags", x => new { x.BoardTaskId, x.Value });
                     table.ForeignKey(
-                        name: "FK_TaskItemTags_Tasks_BoardTaskId",
+                        name: "FK_BoardTaskTags_Tasks_BoardTaskId",
                         column: x => x.BoardTaskId,
                         principalTable: "Tasks",
                         principalColumn: "Id",
@@ -124,16 +125,16 @@ namespace LemonDo.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "BoardTaskTags");
+
+            migrationBuilder.DropTable(
                 name: "Columns");
 
             migrationBuilder.DropTable(
-                name: "TaskItemTags");
+                name: "Tasks");
 
             migrationBuilder.DropTable(
                 name: "Boards");
-
-            migrationBuilder.DropTable(
-                name: "Tasks");
         }
     }
 }

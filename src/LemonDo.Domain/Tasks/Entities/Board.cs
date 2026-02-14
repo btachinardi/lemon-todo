@@ -27,9 +27,9 @@ public sealed class Board : Entity<BoardId>
 
         var board = new Board(BoardId.New(), ownerId, nameResult.Value);
 
-        board._columns.Add(Column.Create(ColumnName.Create("To Do").Value, 0));
-        board._columns.Add(Column.Create(ColumnName.Create("In Progress").Value, 1));
-        board._columns.Add(Column.Create(ColumnName.Create("Done").Value, 2));
+        board._columns.Add(Column.Create(ColumnName.Create("To Do").Value, 0, BoardTaskStatus.Todo));
+        board._columns.Add(Column.Create(ColumnName.Create("In Progress").Value, 1, BoardTaskStatus.InProgress));
+        board._columns.Add(Column.Create(ColumnName.Create("Done").Value, 2, BoardTaskStatus.Done));
 
         board.RaiseDomainEvent(new BoardCreatedEvent(board.Id, ownerId));
         return Result<Board, DomainError>.Success(board);
@@ -38,12 +38,28 @@ public sealed class Board : Entity<BoardId>
     public static Result<Board, DomainError> Create(UserId ownerId, BoardName name)
     {
         var board = new Board(BoardId.New(), ownerId, name);
-        board._columns.Add(Column.Create(ColumnName.Create("To Do").Value, 0));
+        board._columns.Add(Column.Create(ColumnName.Create("To Do").Value, 0, BoardTaskStatus.Todo));
+        board._columns.Add(Column.Create(ColumnName.Create("Done").Value, 1, BoardTaskStatus.Done));
         board.RaiseDomainEvent(new BoardCreatedEvent(board.Id, ownerId));
         return Result<Board, DomainError>.Success(board);
     }
 
-    public Result<DomainError> AddColumn(ColumnName name, int? position = null)
+    public Column GetInitialColumn()
+    {
+        return _columns.Where(c => c.TargetStatus == BoardTaskStatus.Todo).OrderBy(c => c.Position).First();
+    }
+
+    public Column GetDoneColumn()
+    {
+        return _columns.Where(c => c.TargetStatus == BoardTaskStatus.Done).OrderBy(c => c.Position).First();
+    }
+
+    public Column? FindColumnById(ColumnId columnId)
+    {
+        return _columns.Find(c => c.Id == columnId);
+    }
+
+    public Result<DomainError> AddColumn(ColumnName name, BoardTaskStatus targetStatus, int? position = null)
     {
         if (_columns.Any(c => c.Name.Value.Equals(name.Value, StringComparison.OrdinalIgnoreCase)))
             return Result<DomainError>.Failure(
@@ -51,7 +67,7 @@ public sealed class Board : Entity<BoardId>
 
         var targetPosition = position ?? _columns.Count;
 
-        var column = Column.Create(name, targetPosition);
+        var column = Column.Create(name, targetPosition, targetStatus);
 
         if (targetPosition < _columns.Count)
         {
@@ -77,6 +93,16 @@ public sealed class Board : Entity<BoardId>
         if (_columns.Count <= 1)
             return Result<DomainError>.Failure(
                 DomainError.BusinessRule("board.cannot_remove_last_column", "Cannot remove the last column."));
+
+        // Cannot remove the last column targeting Todo or Done status
+        if (column.TargetStatus is BoardTaskStatus.Todo or BoardTaskStatus.Done)
+        {
+            var sameStatusCount = _columns.Count(c => c.TargetStatus == column.TargetStatus);
+            if (sameStatusCount <= 1)
+                return Result<DomainError>.Failure(
+                    DomainError.BusinessRule("board.cannot_remove_last_status_column",
+                        $"Cannot remove the last {column.TargetStatus} column. Board must have at least one."));
+        }
 
         _columns.Remove(column);
         ReindexPositions();

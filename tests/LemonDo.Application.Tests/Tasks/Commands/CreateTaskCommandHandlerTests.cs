@@ -15,6 +15,7 @@ public sealed class CreateTaskCommandHandlerTests
     private IBoardRepository _boardRepository = null!;
     private IUnitOfWork _unitOfWork = null!;
     private CreateTaskCommandHandler _handler = null!;
+    private Board _board = null!;
 
     [TestInitialize]
     public void Setup()
@@ -23,9 +24,9 @@ public sealed class CreateTaskCommandHandlerTests
         _boardRepository = Substitute.For<IBoardRepository>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
 
-        var board = Board.CreateDefault(UserId.Default).Value;
+        _board = Board.CreateDefault(UserId.Default).Value;
         _boardRepository.GetDefaultForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
-            .Returns(board);
+            .Returns(_board);
         _repository.GetByColumnAsync(Arg.Any<ColumnId>(), Arg.Any<CancellationToken>())
             .Returns(new List<BoardTask>());
 
@@ -48,31 +49,32 @@ public sealed class CreateTaskCommandHandlerTests
     }
 
     [TestMethod]
-    public async Task Should_AssignTaskToFirstColumn_When_DefaultBoardExists()
+    public async Task Should_AssignTaskToInitialColumn_When_Created()
     {
         var command = new CreateTaskCommand("New task", null);
 
         var result = await _handler.HandleAsync(command);
 
         Assert.IsTrue(result.IsSuccess);
-        Assert.IsNotNull(result.Value.ColumnId, "Task should be assigned to a column");
-
-        var board = await _boardRepository.GetDefaultForUserAsync(UserId.Default);
-        var firstColumn = board!.Columns.OrderBy(c => c.Position).First();
+        var firstColumn = _board.GetInitialColumn();
         Assert.AreEqual(firstColumn.Id.Value, result.Value.ColumnId);
+        Assert.AreEqual("Todo", result.Value.Status);
     }
 
     [TestMethod]
     public async Task Should_SetPositionToEndOfColumn_When_ColumnHasExistingTasks()
     {
-        // Arrange: 3 tasks already in the column
+        // Arrange: 3 tasks already in the initial column
+        var initialColumn = _board.GetInitialColumn();
         var existingTasks = new List<BoardTask>();
         for (var i = 0; i < 3; i++)
         {
-            var t = BoardTask.Create(UserId.Default, TaskTitle.Create($"Task {i}").Value).Value;
+            var t = BoardTask.Create(
+                UserId.Default, initialColumn.Id, i, BoardTaskStatus.Todo,
+                TaskTitle.Create($"Task {i}").Value).Value;
             existingTasks.Add(t);
         }
-        _repository.GetByColumnAsync(Arg.Any<ColumnId>(), Arg.Any<CancellationToken>())
+        _repository.GetByColumnAsync(initialColumn.Id, Arg.Any<CancellationToken>())
             .Returns(existingTasks);
 
         var command = new CreateTaskCommand("New task", null);
@@ -80,7 +82,7 @@ public sealed class CreateTaskCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual(3, result.Value.Position, "New task should be positioned after existing 3 tasks");
+        Assert.AreEqual(3, result.Value.Position);
     }
 
     [TestMethod]

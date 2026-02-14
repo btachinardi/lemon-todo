@@ -175,51 +175,63 @@ public interface IUserRepository
 
 ## 3. Task Management Context
 
-### 3.1 Entities
+### 3.1 Design Principles
 
-#### TaskItem (Aggregate Root)
+1. **Column determines status** — A column declares a `TargetStatus` (Todo, InProgress, Done). When a task is placed in a column, it inherits that status. One source of truth.
+2. **Status changes require column transitions** — You cannot set a task's status directly. `MoveTo()` is the single method for all column/status transitions.
+3. **Archive is a visibility flag, NOT a lifecycle status** — `IsArchived` is a boolean orthogonal to board position. A task stays `Done` when archived.
+4. **Complete/Uncomplete are convenience routes** — The application layer resolves them to `MoveTo()` calls targeting the board's Done/Todo column.
+
+### 3.2 Entities
+
+#### BoardTask (Aggregate Root)
 
 ```
-TaskItem
-├── Id: TaskItemId (value object)
+BoardTask
+├── Id: BoardTaskId (value object)
 ├── OwnerId: UserId (value object, from Identity context)
 ├── Title: TaskTitle (value object)
 ├── Description: TaskDescription? (value object)
 ├── Priority: Priority (value object / enum)
-├── Status: TaskStatus (value object / enum)
+├── Status: BoardTaskStatus (derived from column's TargetStatus)
 ├── DueDate: DateTimeOffset?
 ├── Tags: IReadOnlyList<Tag>
-├── ColumnId: ColumnId? (null for unassigned)
+├── ColumnId: ColumnId (required, non-nullable)
 ├── Position: int (sort order within column)
-├── IsArchived: bool
-├── CompletedAt: DateTimeOffset?
+├── IsArchived: bool (visibility flag, orthogonal to status)
+├── IsDeleted: bool (soft delete flag)
+├── CompletedAt: DateTimeOffset? (set when status becomes Done)
 ├── CreatedAt: DateTimeOffset
 ├── UpdatedAt: DateTimeOffset
 │
 ├── Methods:
-│   ├── Create(ownerId, title, description?, priority?, dueDate?, tags?) -> TaskCreatedEvent
+│   ├── Create(ownerId, columnId, position, initialStatus, title, description?, priority?, dueDate?, tags?)
+│   │       -> TaskCreatedEvent
 │   ├── UpdateTitle(title) -> TaskUpdatedEvent
 │   ├── UpdateDescription(description) -> TaskUpdatedEvent
 │   ├── SetPriority(priority) -> TaskPriorityChangedEvent
 │   ├── SetDueDate(dueDate) -> TaskDueDateChangedEvent
 │   ├── AddTag(tag) -> TaskTagAddedEvent
 │   ├── RemoveTag(tag) -> TaskTagRemovedEvent
-│   ├── MoveTo(columnId, position) -> TaskMovedEvent
-│   ├── Complete() -> TaskCompletedEvent
-│   ├── Uncomplete() -> TaskUncompletedEvent
-│   ├── Archive() -> TaskArchivedEvent
+│   ├── MoveTo(columnId, position, targetStatus)
+│   │       -> TaskMovedEvent + TaskStatusChangedEvent (if status changes)
+│   ├── Archive() -> TaskArchivedEvent (requires Status == Done)
 │   ├── Unarchive() -> TaskUnarchivedEvent
 │   └── Delete() -> TaskDeletedEvent (soft delete)
 │
 └── Invariants:
     ├── Title must be 1-500 characters
     ├── Description must be 0-10000 characters
-    ├── Cannot complete an already completed task
-    ├── Cannot archive a non-completed task
+    ├── ColumnId is required (task always belongs to a column)
+    ├── Status is always consistent with the column's TargetStatus
+    ├── Cannot archive a non-completed task (Status must be Done)
     ├── Cannot edit a deleted task
     ├── Tags are unique per task (no duplicates)
     ├── Position must be >= 0
-    └── OwnerId cannot change after creation
+    ├── OwnerId cannot change after creation
+    ├── CompletedAt is set when status transitions to Done
+    ├── CompletedAt is cleared when status transitions away from Done
+    └── IsArchived is cleared when moving away from Done
 ```
 
 #### Board (Aggregate Root)
@@ -229,21 +241,27 @@ Board
 ├── Id: BoardId (value object)
 ├── OwnerId: UserId
 ├── Name: BoardName (value object)
-├── Columns: IReadOnlyList<Column> (ordered)
+├── Columns: IReadOnlyList<Column> (ordered by position)
 ├── CreatedAt: DateTimeOffset
 │
 ├── Methods:
-│   ├── Create(ownerId, name) -> BoardCreatedEvent
-│   ├── AddColumn(name, position?) -> ColumnAddedEvent
+│   ├── CreateDefault(ownerId) -> BoardCreatedEvent (3 columns: To Do, In Progress, Done)
+│   ├── Create(ownerId, name) -> BoardCreatedEvent (2 columns: To Do, Done)
+│   ├── GetInitialColumn() -> Column (first Todo column by position)
+│   ├── GetDoneColumn() -> Column (first Done column by position)
+│   ├── FindColumnById(columnId) -> Column? (lookup for validation)
+│   ├── AddColumn(name, targetStatus, position?) -> ColumnAddedEvent
 │   ├── RemoveColumn(columnId) -> ColumnRemovedEvent
 │   ├── ReorderColumn(columnId, newPosition) -> ColumnReorderedEvent
 │   └── RenameColumn(columnId, name) -> ColumnRenamedEvent
 │
 └── Invariants:
-    ├── Must have at least 1 column
-    ├── Default board has 3 columns: To Do, In Progress, Done
-    ├── Column names must be unique within a board
-    └── Cannot remove last column
+    ├── Must have at least one column with TargetStatus = Todo
+    ├── Must have at least one column with TargetStatus = Done
+    ├── Default board has 3 columns: To Do (Todo), In Progress (InProgress), Done (Done)
+    ├── Custom board starts with at least To Do + Done columns
+    ├── Column names must be unique within a board (case-insensitive)
+    └── Cannot remove the last column targeting a required status (Todo or Done)
 ```
 
 #### Column (Entity, owned by Board)
@@ -252,19 +270,21 @@ Board
 Column
 ├── Id: ColumnId (value object)
 ├── Name: ColumnName (value object)
+├── TargetStatus: BoardTaskStatus (the status tasks get when placed here)
 ├── Position: int
-├── WipLimit: int? (null = unlimited)
+├── MaxTasks: int? (null = unlimited)
 │
 └── Invariants:
     ├── Name must be 1-50 characters
     ├── Position must be >= 0
-    └── WipLimit must be > 0 if set
+    ├── MaxTasks must be > 0 if set
+    └── TargetStatus is immutable after creation
 ```
 
-### 3.2 Value Objects
+### 3.3 Value Objects
 
 ```
-TaskItemId      -> Guid wrapper
+BoardTaskId     -> Guid wrapper
 BoardId         -> Guid wrapper
 ColumnId        -> Guid wrapper
 TaskTitle       -> Non-empty string, 1-500 chars, trimmed
@@ -273,69 +293,74 @@ BoardName       -> Non-empty string, 1-100 chars
 ColumnName      -> Non-empty string, 1-50 chars
 Tag             -> Non-empty string, 1-50 chars, lowercase, trimmed
 Priority        -> Enum: None, Low, Medium, High, Critical
-TaskStatus      -> Enum: Todo, InProgress, Done, Archived
+BoardTaskStatus -> Enum: Todo, InProgress, Done (NO Archived — archive is a visibility flag)
 ```
 
-### 3.3 Domain Events
+### 3.4 Domain Events
 
 ```
-TaskCreatedEvent            { TaskItemId, OwnerId, Title, Priority }
-TaskUpdatedEvent            { TaskItemId, FieldName, OldValue, NewValue }
-TaskPriorityChangedEvent    { TaskItemId, OldPriority, NewPriority }
-TaskDueDateChangedEvent     { TaskItemId, OldDueDate?, NewDueDate? }
-TaskTagAddedEvent           { TaskItemId, Tag }
-TaskTagRemovedEvent         { TaskItemId, Tag }
-TaskMovedEvent              { TaskItemId, FromColumnId?, ToColumnId, NewPosition }
-TaskCompletedEvent          { TaskItemId, CompletedAt }
-TaskUncompletedEvent        { TaskItemId }
-TaskArchivedEvent           { TaskItemId }
-TaskUnarchivedEvent         { TaskItemId }
-TaskDeletedEvent            { TaskItemId, DeletedAt }
+TaskCreatedEvent            { BoardTaskId, OwnerId, Title, Priority, ColumnId, Position, InitialStatus }
+TaskUpdatedEvent            { BoardTaskId, FieldName, OldValue, NewValue }
+TaskPriorityChangedEvent    { BoardTaskId, OldPriority, NewPriority }
+TaskDueDateChangedEvent     { BoardTaskId, OldDueDate?, NewDueDate? }
+TaskTagAddedEvent           { BoardTaskId, Tag }
+TaskTagRemovedEvent         { BoardTaskId, Tag }
+TaskMovedEvent              { BoardTaskId, FromColumnId, ToColumnId, NewPosition }
+TaskStatusChangedEvent      { BoardTaskId, OldStatus, NewStatus }
+TaskArchivedEvent           { BoardTaskId }
+TaskUnarchivedEvent         { BoardTaskId }
+TaskDeletedEvent            { BoardTaskId, DeletedAt }
 BoardCreatedEvent           { BoardId, OwnerId }
 ColumnAddedEvent            { BoardId, ColumnId, ColumnName }
 ColumnRemovedEvent          { BoardId, ColumnId }
 ColumnReorderedEvent        { BoardId, ColumnId, OldPosition, NewPosition }
+ColumnRenamedEvent          { BoardId, ColumnId, Name }
 ```
 
-### 3.4 Use Cases
+### 3.5 Use Cases
 
 ```
 Commands:
 ├── CreateTaskCommand            { Title, Description?, Priority?, DueDate?, Tags? }
-├── UpdateTaskCommand            { TaskItemId, Title?, Description?, Priority?, DueDate? }
-├── AddTagToTaskCommand          { TaskItemId, Tag }
-├── RemoveTagFromTaskCommand     { TaskItemId, Tag }
-├── MoveTaskCommand              { TaskItemId, ColumnId, Position }
-├── CompleteTaskCommand          { TaskItemId }
-├── UncompleteTaskCommand        { TaskItemId }
-├── ArchiveTaskCommand           { TaskItemId }
-├── DeleteTaskCommand            { TaskItemId }
-├── CreateBoardCommand           { Name }
-├── AddColumnCommand             { BoardId, Name, Position? }
+│       → Resolves board's initial (Todo) column, creates task at end of column
+├── UpdateTaskCommand            { BoardTaskId, Title?, Description?, Priority?, DueDate? }
+├── AddTagToTaskCommand          { BoardTaskId, Tag }
+├── RemoveTagFromTaskCommand     { BoardTaskId, Tag }
+├── MoveTaskCommand              { BoardTaskId, ColumnId, Position }
+│       → Validates column exists on board, derives status from column's TargetStatus
+├── CompleteTaskCommand          { BoardTaskId }
+│       → Resolves board's Done column, calls MoveTo with Done status
+├── UncompleteTaskCommand        { BoardTaskId }
+│       → Resolves board's Todo column, calls MoveTo with Todo status
+├── ArchiveTaskCommand           { BoardTaskId }
+├── DeleteTaskCommand            { BoardTaskId }
+├── AddColumnCommand             { BoardId, Name, TargetStatus, Position? }
 ├── RemoveColumnCommand          { BoardId, ColumnId }
 ├── ReorderColumnCommand         { BoardId, ColumnId, NewPosition }
 ├── RenameColumnCommand          { BoardId, ColumnId, Name }
-└── BulkCompleteTasksCommand     { TaskItemIds }
+└── BulkCompleteTasksCommand     { BoardTaskIds }
 
 Queries:
-├── GetTaskByIdQuery             { TaskItemId } -> TaskItemDto
-├── ListTasksQuery               { Status?, Priority?, Search?, Tags?, Sort, Page, PageSize } -> PagedResult<TaskItemDto>
-├── GetBoardQuery                { BoardId } -> BoardDto (with tasks per column)
-├── GetDefaultBoardQuery         {} -> BoardDto
-└── GetTasksByColumnQuery        { ColumnId, Page, PageSize } -> PagedResult<TaskItemDto>
+├── GetTaskByIdQuery             { BoardTaskId } -> BoardTaskDto
+├── ListTasksQuery               { Status?, Priority?, Search?, Page, PageSize } -> PagedResult<BoardTaskDto>
+├── GetBoardQuery                { BoardId } -> BoardDto
+├── GetDefaultBoardQuery         {} -> BoardDto (auto-creates if missing)
+└── GetTasksByColumnQuery        { ColumnId, Page, PageSize } -> PagedResult<BoardTaskDto>
 ```
 
-### 3.5 Repository Interfaces
+### 3.6 Repository Interfaces
 
 ```csharp
-public interface ITaskItemRepository
+public interface IBoardTaskRepository
 {
-    Task<TaskItem?> GetByIdAsync(TaskItemId id, CancellationToken ct);
-    Task<IReadOnlyList<TaskItem>> ListAsync(UserId ownerId, TaskListFilter filter, CancellationToken ct);
-    Task<int> CountAsync(UserId ownerId, TaskListFilter filter, CancellationToken ct);
-    Task<IReadOnlyList<TaskItem>> GetByColumnAsync(ColumnId columnId, CancellationToken ct);
-    Task AddAsync(TaskItem task, CancellationToken ct);
-    Task UpdateAsync(TaskItem task, CancellationToken ct);
+    Task<BoardTask?> GetByIdAsync(BoardTaskId id, CancellationToken ct);
+    Task<IReadOnlyList<BoardTask>> GetByColumnAsync(ColumnId columnId, CancellationToken ct);
+    Task<PagedResult<BoardTask>> ListAsync(
+        UserId ownerId, ColumnId? columnId, Priority? priority,
+        BoardTaskStatus? status, string? searchTerm,
+        int page, int pageSize, CancellationToken ct);
+    Task AddAsync(BoardTask task, CancellationToken ct);
+    Task UpdateAsync(BoardTask task, CancellationToken ct);
 }
 
 public interface IBoardRepository
@@ -541,15 +566,16 @@ ValueObject         -> Base class with structural equality
 ## 9. Entity Relationship Diagram
 
 ```
-+----------+       +------------+       +--------+
-|   User   |1---N  | TaskItem   |N---1  | Column |
-+----------+       +------------+       +--------+
-| Id       |       | Id         |       | Id     |
-| Email    |       | OwnerId   |----+  | Name   |
-| Name     |       | Title      |    |  | Pos    |
-| Roles[]  |       | Priority   |    |  +--------+
-+----------+       | Status     |    |      |
-     |             | ColumnId  |----+      |
++----------+       +------------+       +-----------+
+|   User   |1---N  | BoardTask  |N---1  |  Column   |
++----------+       +------------+       +-----------+
+| Id       |       | Id         |       | Id        |
+| Email    |       | OwnerId   |----+  | Name      |
+| Name     |       | Title      |    |  | TargetSt. |
+| Roles[]  |       | Priority   |    |  | Pos       |
++----------+       | Status     |    |  | MaxTasks  |
+     |             | ColumnId  |----+  +-----------+
+     |             | IsArchived |           |
      |             | Tags[]    |       +--------+
      |             +------------+       | Board  |
      |                                  +--------+

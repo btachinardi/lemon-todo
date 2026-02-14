@@ -25,8 +25,13 @@ public sealed class ListTasksQueryHandlerTests
     [TestMethod]
     public async Task Should_ReturnPagedTasks_When_Queried()
     {
-        var task1 = BoardTask.Create(UserId.Default, TaskTitle.Create("Task 1").Value, null, Priority.None).Value;
-        var task2 = BoardTask.Create(UserId.Default, TaskTitle.Create("Task 2").Value, null, Priority.High).Value;
+        var columnId = ColumnId.New();
+        var task1 = BoardTask.Create(
+            UserId.Default, columnId, 0, BoardTaskStatus.Todo,
+            TaskTitle.Create("Task 1").Value).Value;
+        var task2 = BoardTask.Create(
+            UserId.Default, columnId, 1, BoardTaskStatus.Todo,
+            TaskTitle.Create("Task 2").Value, priority: Priority.High).Value;
 
         _repository.ListAsync(
             Arg.Any<UserId>(),

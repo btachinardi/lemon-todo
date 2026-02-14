@@ -12,21 +12,34 @@ using NSubstitute;
 public sealed class CompleteTaskCommandHandlerTests
 {
     private IBoardTaskRepository _repository = null!;
+    private IBoardRepository _boardRepository = null!;
     private IUnitOfWork _unitOfWork = null!;
     private CompleteTaskCommandHandler _handler = null!;
+    private Board _board = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _repository = Substitute.For<IBoardTaskRepository>();
+        _boardRepository = Substitute.For<IBoardRepository>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
-        _handler = new CompleteTaskCommandHandler(_repository, _unitOfWork);
+
+        _board = Board.CreateDefault(UserId.Default).Value;
+        _boardRepository.GetDefaultForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(_board);
+        _repository.GetByColumnAsync(Arg.Any<ColumnId>(), Arg.Any<CancellationToken>())
+            .Returns(new List<BoardTask>());
+
+        _handler = new CompleteTaskCommandHandler(_repository, _boardRepository, _unitOfWork);
     }
 
     [TestMethod]
     public async Task Should_CompleteTask_When_TaskExists()
     {
-        var task = BoardTask.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.None).Value;
+        var initialColumn = _board.GetInitialColumn();
+        var task = BoardTask.Create(
+            UserId.Default, initialColumn.Id, 0, BoardTaskStatus.Todo,
+            TaskTitle.Create("Test").Value).Value;
         _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
@@ -34,6 +47,7 @@ public sealed class CompleteTaskCommandHandlerTests
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(BoardTaskStatus.Done, task.Status);
+        Assert.AreEqual(_board.GetDoneColumn().Id, task.ColumnId);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -50,16 +64,29 @@ public sealed class CompleteTaskCommandHandlerTests
     }
 
     [TestMethod]
-    public async Task Should_Fail_When_AlreadyCompleted()
+    public async Task Should_PositionAtEndOfDoneColumn_When_DoneColumnHasTasks()
     {
-        var task = BoardTask.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.None).Value;
-        task.Complete();
+        var initialColumn = _board.GetInitialColumn();
+        var doneColumn = _board.GetDoneColumn();
+
+        var task = BoardTask.Create(
+            UserId.Default, initialColumn.Id, 0, BoardTaskStatus.Todo,
+            TaskTitle.Create("Test").Value).Value;
         _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
+        // 2 tasks already in done column
+        var existingDoneTasks = new List<BoardTask>
+        {
+            BoardTask.Create(UserId.Default, doneColumn.Id, 0, BoardTaskStatus.Done, TaskTitle.Create("Done 1").Value).Value,
+            BoardTask.Create(UserId.Default, doneColumn.Id, 1, BoardTaskStatus.Done, TaskTitle.Create("Done 2").Value).Value,
+        };
+        _repository.GetByColumnAsync(doneColumn.Id, Arg.Any<CancellationToken>())
+            .Returns(existingDoneTasks);
+
         var result = await _handler.HandleAsync(new CompleteTaskCommand(task.Id.Value));
 
-        Assert.IsTrue(result.IsFailure);
-        Assert.AreEqual("task.already_completed", result.Error.Code);
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(2, task.Position);
     }
 }

@@ -57,7 +57,10 @@ public static class BoardEndpoints
         if (nameResult.IsFailure)
             return Result<DomainError>.Failure(nameResult.Error).ToHttpResult();
 
-        var result = board.AddColumn(nameResult.Value, request.Position);
+        if (!Enum.TryParse<BoardTaskStatus>(request.TargetStatus, true, out var targetStatus))
+            return Results.BadRequest(new { Error = $"Invalid target status: '{request.TargetStatus}'. Valid values: Todo, InProgress, Done." });
+
+        var result = board.AddColumn(nameResult.Value, targetStatus, request.Position);
         if (result.IsFailure)
             return result.ToHttpResult();
 
@@ -69,8 +72,9 @@ public static class BoardEndpoints
         {
             Id = addedColumn.Id.Value,
             Name = addedColumn.Name.Value,
+            TargetStatus = addedColumn.TargetStatus.ToString(),
             Position = addedColumn.Position,
-            WipLimit = addedColumn.WipLimit
+            MaxTasks = addedColumn.MaxTasks
         });
     }
 
@@ -102,8 +106,9 @@ public static class BoardEndpoints
         {
             Id = column.Id.Value,
             Name = column.Name.Value,
+            TargetStatus = column.TargetStatus.ToString(),
             Position = column.Position,
-            WipLimit = column.WipLimit
+            MaxTasks = column.MaxTasks
         });
     }
 
@@ -151,8 +156,9 @@ public static class BoardEndpoints
         {
             Id = column.Id.Value,
             Name = column.Name.Value,
+            TargetStatus = column.TargetStatus.ToString(),
             Position = column.Position,
-            WipLimit = column.WipLimit
+            MaxTasks = column.MaxTasks
         });
     }
 

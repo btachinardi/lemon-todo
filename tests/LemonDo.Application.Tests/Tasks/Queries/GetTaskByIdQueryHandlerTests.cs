@@ -23,7 +23,10 @@ public sealed class GetTaskByIdQueryHandlerTests
     [TestMethod]
     public async Task Should_ReturnTask_When_Exists()
     {
-        var task = BoardTask.Create(UserId.Default, TaskTitle.Create("Test").Value, null, Priority.High).Value;
+        var columnId = ColumnId.New();
+        var task = BoardTask.Create(
+            UserId.Default, columnId, 0, BoardTaskStatus.Todo,
+            TaskTitle.Create("Test").Value, priority: Priority.High).Value;
         _repository.GetByIdAsync(Arg.Any<BoardTaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 

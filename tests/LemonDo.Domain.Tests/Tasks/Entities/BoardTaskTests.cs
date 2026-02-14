@@ -12,13 +12,17 @@ public sealed class BoardTaskTests
     private static TaskDescription ValidDescription => TaskDescription.Create("Milk, eggs, bread").Value;
     private static Tag ValidTag => Tag.Create("shopping").Value;
     private static UserId DefaultOwner => UserId.Default;
+    private static ColumnId DefaultColumnId => ColumnId.New();
 
     private static BoardTask CreateValidTask(
         Priority priority = Priority.None,
         DateTimeOffset? dueDate = null,
-        IEnumerable<Tag>? tags = null)
+        IEnumerable<Tag>? tags = null,
+        ColumnId? columnId = null,
+        BoardTaskStatus initialStatus = BoardTaskStatus.Todo)
     {
-        var result = BoardTask.Create(DefaultOwner, ValidTitle, ValidDescription, priority, dueDate, tags);
+        var colId = columnId ?? DefaultColumnId;
+        var result = BoardTask.Create(DefaultOwner, colId, 0, initialStatus, ValidTitle, ValidDescription, priority, dueDate, tags);
         Assert.IsTrue(result.IsSuccess);
         return result.Value;
     }
@@ -28,30 +32,35 @@ public sealed class BoardTaskTests
     [TestMethod]
     public void Should_CreateTask_When_ValidInputs()
     {
-        var task = CreateValidTask(Priority.High);
+        var columnId = ColumnId.New();
+        var task = CreateValidTask(Priority.High, columnId: columnId);
 
         Assert.AreEqual("Buy groceries", task.Title.Value);
         Assert.AreEqual("Milk, eggs, bread", task.Description!.Value);
         Assert.AreEqual(Priority.High, task.Priority);
         Assert.AreEqual(BoardTaskStatus.Todo, task.Status);
         Assert.AreEqual(DefaultOwner, task.OwnerId);
+        Assert.AreEqual(columnId, task.ColumnId);
         Assert.AreEqual(0, task.Position);
         Assert.IsFalse(task.IsArchived);
         Assert.IsFalse(task.IsDeleted);
         Assert.IsNull(task.CompletedAt);
-        Assert.IsNull(task.ColumnId);
     }
 
     [TestMethod]
     public void Should_RaiseTaskCreatedEvent_When_Created()
     {
-        var task = CreateValidTask(Priority.Medium);
+        var columnId = ColumnId.New();
+        var task = CreateValidTask(Priority.Medium, columnId: columnId);
 
         Assert.HasCount(1, task.DomainEvents);
         var evt = task.DomainEvents[0] as TaskCreatedEvent;
         Assert.IsNotNull(evt);
         Assert.AreEqual(task.Id, evt.BoardTaskId);
         Assert.AreEqual(Priority.Medium, evt.Priority);
+        Assert.AreEqual(columnId, evt.ColumnId);
+        Assert.AreEqual(0, evt.Position);
+        Assert.AreEqual(BoardTaskStatus.Todo, evt.InitialStatus);
     }
 
     [TestMethod]
@@ -61,6 +70,15 @@ public sealed class BoardTaskTests
         var task = CreateValidTask(tags: tags);
 
         Assert.HasCount(2, task.Tags);
+    }
+
+    [TestMethod]
+    public void Should_FailCreate_When_NegativePosition()
+    {
+        var result = BoardTask.Create(DefaultOwner, DefaultColumnId, -1, BoardTaskStatus.Todo, ValidTitle);
+
+        Assert.IsTrue(result.IsFailure);
+        Assert.AreEqual("position.validation", result.Error.Code);
     }
 
     // --- UpdateTitle ---
@@ -199,73 +217,128 @@ public sealed class BoardTaskTests
         Assert.AreEqual("task.tag_not_found", result.Error.Code);
     }
 
-    // --- Complete / Uncomplete ---
+    // --- MoveTo (column-status invariant) ---
 
     [TestMethod]
-    public void Should_Complete_When_NotCompleted()
+    public void Should_SetStatusFromColumn_When_MovedToDoneColumn()
     {
         var task = CreateValidTask();
+        task.ClearDomainEvents();
+        var doneColumnId = ColumnId.New();
 
-        var result = task.Complete();
+        var result = task.MoveTo(doneColumnId, 0, BoardTaskStatus.Done);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(BoardTaskStatus.Done, task.Status);
+        Assert.AreEqual(doneColumnId, task.ColumnId);
+        Assert.AreEqual(0, task.Position);
+    }
+
+    [TestMethod]
+    public void Should_SetCompletedAt_When_MovedToDone()
+    {
+        var task = CreateValidTask();
+
+        task.MoveTo(ColumnId.New(), 0, BoardTaskStatus.Done);
+
         Assert.IsNotNull(task.CompletedAt);
     }
 
     [TestMethod]
-    public void Should_FailComplete_When_AlreadyCompleted()
+    public void Should_ClearCompletedAt_When_MovedFromDoneToTodo()
     {
         var task = CreateValidTask();
-        task.Complete();
+        task.MoveTo(ColumnId.New(), 0, BoardTaskStatus.Done);
+        Assert.IsNotNull(task.CompletedAt);
 
-        var result = task.Complete();
+        task.MoveTo(ColumnId.New(), 0, BoardTaskStatus.Todo);
 
-        Assert.IsTrue(result.IsFailure);
-        Assert.AreEqual("task.already_completed", result.Error.Code);
-    }
-
-    [TestMethod]
-    public void Should_Uncomplete_When_Completed()
-    {
-        var task = CreateValidTask();
-        task.Complete();
-
-        var result = task.Uncomplete();
-
-        Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual(BoardTaskStatus.Todo, task.Status);
         Assert.IsNull(task.CompletedAt);
+        Assert.AreEqual(BoardTaskStatus.Todo, task.Status);
     }
 
     [TestMethod]
-    public void Should_FailUncomplete_When_NotCompleted()
+    public void Should_ClearIsArchived_When_MovedFromDoneToNonDone()
+    {
+        var task = CreateValidTask();
+        task.MoveTo(ColumnId.New(), 0, BoardTaskStatus.Done);
+        task.Archive();
+        Assert.IsTrue(task.IsArchived);
+
+        task.MoveTo(ColumnId.New(), 0, BoardTaskStatus.Todo);
+
+        Assert.IsFalse(task.IsArchived);
+    }
+
+    [TestMethod]
+    public void Should_RaiseMovedEvent_When_Moved()
+    {
+        var fromColumnId = ColumnId.New();
+        var task = CreateValidTask(columnId: fromColumnId);
+        task.ClearDomainEvents();
+        var toColumnId = ColumnId.New();
+
+        task.MoveTo(toColumnId, 3, BoardTaskStatus.InProgress);
+
+        var movedEvt = task.DomainEvents.OfType<TaskMovedEvent>().Single();
+        Assert.AreEqual(fromColumnId, movedEvt.FromColumnId);
+        Assert.AreEqual(toColumnId, movedEvt.ToColumnId);
+        Assert.AreEqual(3, movedEvt.NewPosition);
+    }
+
+    [TestMethod]
+    public void Should_RaiseStatusChangedEvent_When_StatusChanges()
+    {
+        var task = CreateValidTask();
+        task.ClearDomainEvents();
+
+        task.MoveTo(ColumnId.New(), 0, BoardTaskStatus.Done);
+
+        var statusEvt = task.DomainEvents.OfType<TaskStatusChangedEvent>().Single();
+        Assert.AreEqual(BoardTaskStatus.Todo, statusEvt.OldStatus);
+        Assert.AreEqual(BoardTaskStatus.Done, statusEvt.NewStatus);
+    }
+
+    [TestMethod]
+    public void Should_NotRaiseStatusChangedEvent_When_StatusUnchanged()
+    {
+        var task = CreateValidTask();
+        task.ClearDomainEvents();
+
+        task.MoveTo(ColumnId.New(), 5, BoardTaskStatus.Todo);
+
+        Assert.IsFalse(task.DomainEvents.OfType<TaskStatusChangedEvent>().Any());
+        Assert.IsTrue(task.DomainEvents.OfType<TaskMovedEvent>().Any());
+    }
+
+    [TestMethod]
+    public void Should_FailMove_When_NegativePosition()
     {
         var task = CreateValidTask();
 
-        var result = task.Uncomplete();
+        var result = task.MoveTo(ColumnId.New(), -1, BoardTaskStatus.Todo);
 
         Assert.IsTrue(result.IsFailure);
-        Assert.AreEqual("task.not_completed", result.Error.Code);
+        Assert.AreEqual("position.validation", result.Error.Code);
     }
 
     // --- Archive / Unarchive ---
 
     [TestMethod]
-    public void Should_Archive_When_Completed()
+    public void Should_Archive_When_Done()
     {
         var task = CreateValidTask();
-        task.Complete();
+        task.MoveTo(ColumnId.New(), 0, BoardTaskStatus.Done);
 
         var result = task.Archive();
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(task.IsArchived);
-        Assert.AreEqual(BoardTaskStatus.Archived, task.Status);
+        Assert.AreEqual(BoardTaskStatus.Done, task.Status); // Status stays Done
     }
 
     [TestMethod]
-    public void Should_FailArchive_When_NotCompleted()
+    public void Should_FailArchive_When_NotDone()
     {
         var task = CreateValidTask();
 
@@ -279,40 +352,14 @@ public sealed class BoardTaskTests
     public void Should_Unarchive_When_Archived()
     {
         var task = CreateValidTask();
-        task.Complete();
+        task.MoveTo(ColumnId.New(), 0, BoardTaskStatus.Done);
         task.Archive();
 
         var result = task.Unarchive();
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsFalse(task.IsArchived);
-        Assert.AreEqual(BoardTaskStatus.Done, task.Status);
-    }
-
-    // --- MoveTo ---
-
-    [TestMethod]
-    public void Should_MoveTask_When_ValidColumnAndPosition()
-    {
-        var task = CreateValidTask();
-        var columnId = ColumnId.New();
-
-        var result = task.MoveTo(columnId, 3);
-
-        Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual(columnId, task.ColumnId);
-        Assert.AreEqual(3, task.Position);
-    }
-
-    [TestMethod]
-    public void Should_FailMove_When_NegativePosition()
-    {
-        var task = CreateValidTask();
-
-        var result = task.MoveTo(ColumnId.New(), -1);
-
-        Assert.IsTrue(result.IsFailure);
-        Assert.AreEqual("position.validation", result.Error.Code);
+        Assert.AreEqual(BoardTaskStatus.Done, task.Status); // Status stays Done
     }
 
     // --- Delete ---
@@ -349,13 +396,11 @@ public sealed class BoardTaskTests
         var titleResult = task.UpdateTitle(TaskTitle.Create("New").Value);
         var priorityResult = task.SetPriority(Priority.High);
         var tagResult = task.AddTag(ValidTag);
-        var completeResult = task.Complete();
-        var moveResult = task.MoveTo(ColumnId.New(), 0);
+        var moveResult = task.MoveTo(ColumnId.New(), 0, BoardTaskStatus.Todo);
 
         Assert.IsTrue(titleResult.IsFailure);
         Assert.IsTrue(priorityResult.IsFailure);
         Assert.IsTrue(tagResult.IsFailure);
-        Assert.IsTrue(completeResult.IsFailure);
         Assert.IsTrue(moveResult.IsFailure);
 
         Assert.AreEqual("task.deleted", titleResult.Error.Code);
@@ -371,7 +416,7 @@ public sealed class BoardTaskTests
 
         task.UpdateTitle(TaskTitle.Create("Changed").Value);
         task.SetPriority(Priority.Critical);
-        task.Complete();
+        task.MoveTo(ColumnId.New(), 0, BoardTaskStatus.Done);
 
         Assert.AreEqual(originalOwner, task.OwnerId);
     }

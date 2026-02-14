@@ -6,7 +6,6 @@ const statusConfig: Record<TaskStatus, { label: string; className: string }> = {
   [TaskStatus.Todo]: { label: 'To Do', className: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' },
   [TaskStatus.InProgress]: { label: 'In Progress', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' },
   [TaskStatus.Done]: { label: 'Done', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
-  [TaskStatus.Archived]: { label: 'Archived', className: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' },
 };
 
 interface TaskStatusChipProps {

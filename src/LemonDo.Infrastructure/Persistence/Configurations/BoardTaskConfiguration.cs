@@ -42,9 +42,8 @@ public sealed class BoardTaskConfiguration : IEntityTypeConfiguration<BoardTask>
             .IsRequired();
 
         builder.Property(t => t.ColumnId)
-            .HasConversion(
-                id => id != null ? id.Value : (Guid?)null,
-                guid => guid.HasValue ? ColumnId.From(guid.Value) : null);
+            .HasConversion(id => id.Value, guid => ColumnId.From(guid))
+            .IsRequired();
 
         builder.Property(t => t.Position);
         builder.Property(t => t.IsArchived);
@@ -59,7 +58,7 @@ public sealed class BoardTaskConfiguration : IEntityTypeConfiguration<BoardTask>
         // Tags as separate table for queryability
         builder.OwnsMany(t => t.Tags, tagBuilder =>
         {
-            tagBuilder.ToTable("TaskItemTags");
+            tagBuilder.ToTable("BoardTaskTags");
             tagBuilder.WithOwner().HasForeignKey("BoardTaskId");
             tagBuilder.Property(t => t.Value)
                 .HasColumnName("Value")

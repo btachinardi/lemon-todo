@@ -1,8 +1,11 @@
+import type { TaskStatus } from './task.types';
+
 export interface Column {
   id: string;
   name: string;
+  targetStatus: TaskStatus;
   position: number;
-  wipLimit: number | null;
+  maxTasks: number | null;
 }
 
 export interface Board {

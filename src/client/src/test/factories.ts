@@ -17,7 +17,7 @@ export function createBoardTask(overrides: Partial<BoardTask> = {}): BoardTask {
     status: TaskStatus.Todo,
     dueDate: null,
     tags: [],
-    columnId: null,
+    columnId: nextId(),
     position: 0,
     isArchived: false,
     isDeleted: false,
@@ -32,8 +32,9 @@ export function createColumn(overrides: Partial<Column> = {}): Column {
   return {
     id: nextId(),
     name: 'Test Column',
+    targetStatus: TaskStatus.Todo,
     position: 0,
-    wipLimit: null,
+    maxTasks: null,
     ...overrides,
   };
 }
@@ -43,9 +44,9 @@ export function createBoard(overrides: Partial<Board> = {}): Board {
     id: nextId(),
     name: 'Test Board',
     columns: [
-      createColumn({ name: 'To Do', position: 0 }),
-      createColumn({ name: 'In Progress', position: 1 }),
-      createColumn({ name: 'Done', position: 2 }),
+      createColumn({ name: 'To Do', targetStatus: TaskStatus.Todo, position: 0 }),
+      createColumn({ name: 'In Progress', targetStatus: TaskStatus.InProgress, position: 1 }),
+      createColumn({ name: 'Done', targetStatus: TaskStatus.Done, position: 2 }),
     ],
     createdAt: '2026-01-01T00:00:00Z',
     ...overrides,

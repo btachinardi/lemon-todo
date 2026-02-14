@@ -42,17 +42,27 @@ public sealed class CreateTaskCommandHandler(
             }
         }
 
-        var taskResult = BoardTask.Create(UserId.Default, titleResult.Value, descResult.Value, command.Priority, command.DueDate, tags);
+        var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
+        if (board is null)
+            return Result<BoardTaskDto, DomainError>.Failure(
+                DomainError.NotFound("Board", "default"));
+
+        var initialColumn = board.GetInitialColumn();
+        var existingTasks = await repository.GetByColumnAsync(initialColumn.Id, ct);
+
+        var taskResult = BoardTask.Create(
+            UserId.Default,
+            initialColumn.Id,
+            existingTasks.Count,
+            initialColumn.TargetStatus,
+            titleResult.Value,
+            descResult.Value,
+            command.Priority,
+            command.DueDate,
+            tags);
+
         if (taskResult.IsFailure)
             return Result<BoardTaskDto, DomainError>.Failure(taskResult.Error);
-
-        var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
-        if (board is not null && board.Columns.Count > 0)
-        {
-            var firstColumn = board.Columns.OrderBy(c => c.Position).First();
-            var existingTasks = await repository.GetByColumnAsync(firstColumn.Id, ct);
-            taskResult.Value.MoveTo(firstColumn.Id, existingTasks.Count);
-        }
 
         await repository.AddAsync(taskResult.Value, ct);
         await unitOfWork.SaveChangesAsync(ct);

@@ -13,7 +13,7 @@ public sealed class BoardTask : Entity<BoardTaskId>
     public Priority Priority { get; private set; }
     public BoardTaskStatus Status { get; private set; }
     public DateTimeOffset? DueDate { get; private set; }
-    public ColumnId? ColumnId { get; private set; }
+    public ColumnId ColumnId { get; private set; }
     public int Position { get; private set; }
     public bool IsArchived { get; private set; }
     public bool IsDeleted { get; private set; }
@@ -25,6 +25,9 @@ public sealed class BoardTask : Entity<BoardTaskId>
     private BoardTask(
         BoardTaskId id,
         UserId ownerId,
+        ColumnId columnId,
+        int position,
+        BoardTaskStatus initialStatus,
         TaskTitle title,
         TaskDescription? description,
         Priority priority,
@@ -32,35 +35,43 @@ public sealed class BoardTask : Entity<BoardTaskId>
         IEnumerable<Tag>? tags) : base(id)
     {
         OwnerId = ownerId;
+        ColumnId = columnId;
+        Position = position;
+        Status = initialStatus;
         Title = title;
         Description = description;
         Priority = priority;
-        Status = BoardTaskStatus.Todo;
         DueDate = dueDate;
-        Position = 0;
         IsArchived = false;
         IsDeleted = false;
 
         if (tags is not null)
             _tags.AddRange(tags);
 
-        RaiseDomainEvent(new TaskCreatedEvent(id, ownerId, title.Value, priority));
+        RaiseDomainEvent(new TaskCreatedEvent(id, ownerId, title.Value, priority, columnId, position, initialStatus));
     }
 
     // EF Core constructor
-    private BoardTask() : base(default!) { OwnerId = default!; Title = default!; }
+    private BoardTask() : base(default!) { OwnerId = default!; Title = default!; ColumnId = default!; }
 
     public static Result<BoardTask, DomainError> Create(
         UserId ownerId,
+        ColumnId columnId,
+        int position,
+        BoardTaskStatus initialStatus,
         TaskTitle title,
         TaskDescription? description = null,
         Priority priority = Priority.None,
         DateTimeOffset? dueDate = null,
         IEnumerable<Tag>? tags = null)
     {
+        if (position < 0)
+            return Result<BoardTask, DomainError>.Failure(
+                DomainError.Validation("position", "Position must be >= 0."));
+
         var id = BoardTaskId.New();
         return Result<BoardTask, DomainError>.Success(
-            new BoardTask(id, ownerId, title, description, priority, dueDate, tags));
+            new BoardTask(id, ownerId, columnId, position, initialStatus, title, description, priority, dueDate, tags));
     }
 
     public Result<DomainError> UpdateTitle(TaskTitle newTitle)
@@ -154,7 +165,7 @@ public sealed class BoardTask : Entity<BoardTaskId>
         return Result<DomainError>.Success();
     }
 
-    public Result<DomainError> MoveTo(ColumnId columnId, int position)
+    public Result<DomainError> MoveTo(ColumnId columnId, int position, BoardTaskStatus targetStatus)
     {
         if (IsDeleted)
             return Result<DomainError>.Failure(
@@ -165,48 +176,28 @@ public sealed class BoardTask : Entity<BoardTaskId>
                 DomainError.Validation("position", "Position must be >= 0."));
 
         var fromColumnId = ColumnId;
+        var oldStatus = Status;
+
         ColumnId = columnId;
         Position = position;
+        Status = targetStatus;
+
+        // Manage CompletedAt based on status transition
+        if (targetStatus == BoardTaskStatus.Done && oldStatus != BoardTaskStatus.Done)
+            CompletedAt = DateTimeOffset.UtcNow;
+        else if (targetStatus != BoardTaskStatus.Done && oldStatus == BoardTaskStatus.Done)
+        {
+            CompletedAt = null;
+            IsArchived = false;
+        }
+
         UpdatedAt = DateTimeOffset.UtcNow;
 
         RaiseDomainEvent(new TaskMovedEvent(Id, fromColumnId, columnId, position));
-        return Result<DomainError>.Success();
-    }
 
-    public Result<DomainError> Complete()
-    {
-        if (IsDeleted)
-            return Result<DomainError>.Failure(
-                DomainError.BusinessRule("task.deleted", "Cannot edit a deleted task."));
+        if (oldStatus != targetStatus)
+            RaiseDomainEvent(new TaskStatusChangedEvent(Id, oldStatus, targetStatus));
 
-        if (Status == BoardTaskStatus.Done)
-            return Result<DomainError>.Failure(
-                DomainError.BusinessRule("task.already_completed", "Task is already completed."));
-
-        Status = BoardTaskStatus.Done;
-        CompletedAt = DateTimeOffset.UtcNow;
-        UpdatedAt = DateTimeOffset.UtcNow;
-
-        RaiseDomainEvent(new TaskCompletedEvent(Id, CompletedAt.Value));
-        return Result<DomainError>.Success();
-    }
-
-    public Result<DomainError> Uncomplete()
-    {
-        if (IsDeleted)
-            return Result<DomainError>.Failure(
-                DomainError.BusinessRule("task.deleted", "Cannot edit a deleted task."));
-
-        if (Status != BoardTaskStatus.Done)
-            return Result<DomainError>.Failure(
-                DomainError.BusinessRule("task.not_completed", "Task is not completed."));
-
-        Status = BoardTaskStatus.Todo;
-        CompletedAt = null;
-        IsArchived = false;
-        UpdatedAt = DateTimeOffset.UtcNow;
-
-        RaiseDomainEvent(new TaskUncompletedEvent(Id));
         return Result<DomainError>.Success();
     }
 
@@ -221,7 +212,6 @@ public sealed class BoardTask : Entity<BoardTaskId>
                 DomainError.BusinessRule("task.not_completed", "Cannot archive a non-completed task."));
 
         IsArchived = true;
-        Status = BoardTaskStatus.Archived;
         UpdatedAt = DateTimeOffset.UtcNow;
 
         RaiseDomainEvent(new TaskArchivedEvent(Id));
@@ -239,7 +229,6 @@ public sealed class BoardTask : Entity<BoardTaskId>
                 DomainError.BusinessRule("task.not_archived", "Task is not archived."));
 
         IsArchived = false;
-        Status = BoardTaskStatus.Done;
         UpdatedAt = DateTimeOffset.UtcNow;
 
         RaiseDomainEvent(new TaskUnarchivedEvent(Id));

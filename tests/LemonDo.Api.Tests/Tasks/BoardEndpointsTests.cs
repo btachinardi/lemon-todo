@@ -71,7 +71,7 @@ public sealed class BoardEndpointsTests
 
         var response = await _client.PostAsJsonAsync(
             $"/api/boards/{board!.Id}/columns",
-            new { Name = "Review" });
+            new { Name = "Review", TargetStatus = "InProgress" });
 
         Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
 
@@ -104,10 +104,10 @@ public sealed class BoardEndpointsTests
         var defaultResponse = await _client.GetAsync("/api/boards/default");
         var board = await defaultResponse.Content.ReadFromJsonAsync<BoardDto>(JsonOpts);
 
-        // Add an extra column
+        // Add an extra column (InProgress so it can be removed)
         var addResponse = await _client.PostAsJsonAsync(
             $"/api/boards/{board!.Id}/columns",
-            new { Name = "Temporary" });
+            new { Name = "Temporary", TargetStatus = "InProgress" });
         var addedColumn = await addResponse.Content.ReadFromJsonAsync<ColumnDto>(JsonOpts);
 
         var response = await _client.DeleteAsync(

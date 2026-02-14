@@ -20,7 +20,7 @@ interface TaskResponse {
 interface BoardResponse {
   id: string;
   name: string;
-  columns: { id: string; name: string; position: number; wipLimit: number | null }[];
+  columns: { id: string; name: string; targetStatus: string; position: number; maxTasks: number | null }[];
 }
 
 export async function createTask(request: CreateTaskRequest): Promise<TaskResponse> {

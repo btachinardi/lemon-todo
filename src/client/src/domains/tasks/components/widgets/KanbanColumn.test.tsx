@@ -17,8 +17,8 @@ describe('KanbanColumn', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 
-  it('shows WIP limit when set', () => {
-    const column = createColumn({ wipLimit: 5 });
+  it('shows max tasks limit when set', () => {
+    const column = createColumn({ maxTasks: 5 });
     const tasks = [createBoardTask(), createBoardTask()];
     render(<KanbanColumn column={column} tasks={tasks} />);
     expect(screen.getByText('2/5')).toBeInTheDocument();

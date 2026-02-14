@@ -287,6 +287,60 @@ EF Core with SQLite. Key discoveries:
 
 ---
 
+## Domain Redesign: Column-Status Invariant
+
+**Date: February 14, 2026**
+
+### The Problem
+
+During CP1 validation, tasks never appeared on the kanban board. Root cause: `TaskItem.Create()` didn't assign a `ColumnId`, creating an orphaned task with no board position. A quick fix was applied, but the real problem ran deeper — the domain model had **two independent sources of truth** for task lifecycle (Status enum and Column position) that could desync.
+
+### The Solution: Two-Commit Redesign
+
+#### Commit 1: Rename TaskItem to BoardTask
+
+Mechanical rename across ~73 files. Tasks are always bound to boards — `BoardTask` reflects this. No behavior changes.
+
+Renames: `TaskItem→BoardTask`, `TaskItemId→BoardTaskId`, `TaskItemStatus→BoardTaskStatus`, `ITaskItemRepository→IBoardTaskRepository`, `TaskItemDto→BoardTaskDto`, etc.
+
+#### Commit 2: Column-Status Invariant
+
+The core redesign. Key design decisions:
+
+1. **Column determines status (one source of truth)**. Each Column stores a `TargetStatus: BoardTaskStatus` (Todo, InProgress, Done). When a task is placed in a column via `MoveTo()`, its status is atomically set to the column's target.
+
+2. **ColumnRole rejected as redundant**. Initially planned a separate `ColumnRole` enum, but it was a 1:1 mapping to `BoardTaskStatus`. The column directly stores what status it assigns — no extra indirection.
+
+3. **Archived is NOT a lifecycle status**. Removed `Archived` from the `BoardTaskStatus` enum. Archive is a visibility flag (`IsArchived` bool) orthogonal to board position. A task stays `Done` when archived.
+
+4. **MoveTo() is the single source of truth**. `Complete()` and `Uncomplete()` removed from the entity. The application layer convenience handlers resolve them to `MoveTo()` calls targeting the board's Done/Todo column.
+
+5. **Separate events for separate concerns**. `TaskMovedEvent` tracks column movement. `TaskStatusChangedEvent` tracks lifecycle changes. Both raised independently. `TaskCompletedEvent` and `TaskUncompletedEvent` deleted.
+
+6. **Board invariants enforced**. Board must always have at least one Todo column and one Done column. `GetInitialColumn()` and `GetDoneColumn()` provide entry/exit points.
+
+7. **WipLimit renamed to MaxTasks**. The "WIP" terminology had no place in our domain vocabulary.
+
+### Key Files Changed
+
+| Area | Changes |
+|------|---------|
+| Domain entities | BoardTask (ColumnId required, MoveTo sets status), Board (TargetStatus on columns, invariants), Column (TargetStatus instead of ColumnRole) |
+| Domain events | TaskCreatedEvent (+ ColumnId, Position, InitialStatus), TaskMovedEvent (FromColumnId non-nullable), NEW TaskStatusChangedEvent, DELETED TaskCompletedEvent/TaskUncompletedEvent |
+| Application handlers | All command handlers updated to resolve columns from board, derive status from column's TargetStatus |
+| DTOs | ColumnDto (+ TargetStatus, MaxTasks), BoardTaskDto (ColumnId required) |
+| Frontend types | TaskStatus (removed Archived), Column (+ targetStatus as TaskStatus, maxTasks) |
+| EF configuration | Column TargetStatus mapping, BoardTask ColumnId required, fresh migration |
+| Tests | 162 backend + 48 frontend = 210 total, all passing |
+
+### Lessons Learned
+
+- **Two sources of truth always desync eventually.** Column + Status looked independent but had implicit coupling. Making the relationship explicit (column determines status) eliminated an entire class of bugs.
+- **Avoid unnecessary abstractions.** ColumnRole was a 1:1 mapping to BoardTaskStatus. Direct usage is clearer than an indirection layer.
+- **Archive ≠ lifecycle state.** Visibility flags (archive, soft-delete) are orthogonal to entity lifecycle. Mixing them into the status enum creates invalid state combinations.
+
+---
+
 ## What's Next
 
 ### Checkpoint 1 Complete

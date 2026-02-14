@@ -26,7 +26,7 @@ export function KanbanBoard({
     tasksByColumn.set(column.id, []);
   }
   for (const task of tasks) {
-    if (task.columnId && tasksByColumn.has(task.columnId)) {
+    if (tasksByColumn.has(task.columnId)) {
       tasksByColumn.get(task.columnId)!.push(task);
     }
   }

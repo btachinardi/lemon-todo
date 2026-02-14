@@ -3,6 +3,7 @@ namespace LemonDo.Domain.Tasks.Events;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.ValueObjects;
 
-public sealed record TaskCompletedEvent(
+public sealed record TaskStatusChangedEvent(
     BoardTaskId BoardTaskId,
-    DateTimeOffset CompletedAt) : DomainEvent;
+    BoardTaskStatus OldStatus,
+    BoardTaskStatus NewStatus) : DomainEvent;

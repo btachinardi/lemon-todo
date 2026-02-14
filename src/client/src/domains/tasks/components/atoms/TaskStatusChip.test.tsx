@@ -18,9 +18,4 @@ describe('TaskStatusChip', () => {
     render(<TaskStatusChip status={TaskStatus.Done} />);
     expect(screen.getByText('Done')).toBeInTheDocument();
   });
-
-  it('renders Archived status', () => {
-    render(<TaskStatusChip status={TaskStatus.Archived} />);
-    expect(screen.getByText('Archived')).toBeInTheDocument();
-  });
 });

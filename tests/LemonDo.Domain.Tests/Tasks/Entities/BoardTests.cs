@@ -65,8 +65,67 @@ public sealed class BoardTests
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual("Sprint Board", result.Value.Name.Value);
-        Assert.HasCount(1, result.Value.Columns);
+        Assert.HasCount(2, result.Value.Columns);
         Assert.AreEqual("To Do", result.Value.Columns[0].Name.Value);
+        Assert.AreEqual("Done", result.Value.Columns[1].Name.Value);
+    }
+
+    // --- Column TargetStatus ---
+
+    [TestMethod]
+    public void Should_AssignTargetStatus_When_DefaultCreated()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+
+        Assert.AreEqual(BoardTaskStatus.Todo, board.Columns[0].TargetStatus);
+        Assert.AreEqual(BoardTaskStatus.InProgress, board.Columns[1].TargetStatus);
+        Assert.AreEqual(BoardTaskStatus.Done, board.Columns[2].TargetStatus);
+    }
+
+    // --- GetInitialColumn / GetDoneColumn / FindColumnById ---
+
+    [TestMethod]
+    public void Should_ReturnFirstTodoColumn_When_GetInitialColumn()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+
+        var initial = board.GetInitialColumn();
+
+        Assert.AreEqual("To Do", initial.Name.Value);
+        Assert.AreEqual(BoardTaskStatus.Todo, initial.TargetStatus);
+    }
+
+    [TestMethod]
+    public void Should_ReturnFirstDoneColumn_When_GetDoneColumn()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+
+        var done = board.GetDoneColumn();
+
+        Assert.AreEqual("Done", done.Name.Value);
+        Assert.AreEqual(BoardTaskStatus.Done, done.TargetStatus);
+    }
+
+    [TestMethod]
+    public void Should_ReturnColumn_When_FindColumnByIdExists()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var expectedColumn = board.Columns[1];
+
+        var found = board.FindColumnById(expectedColumn.Id);
+
+        Assert.IsNotNull(found);
+        Assert.AreEqual(expectedColumn.Id, found.Id);
+    }
+
+    [TestMethod]
+    public void Should_ReturnNull_When_FindColumnByIdNotFound()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+
+        var found = board.FindColumnById(ColumnId.New());
+
+        Assert.IsNull(found);
     }
 
     // --- AddColumn ---
@@ -78,7 +137,7 @@ public sealed class BoardTests
         board.ClearDomainEvents();
         var colName = ColumnName.Create("Review").Value;
 
-        var result = board.AddColumn(colName);
+        var result = board.AddColumn(colName, BoardTaskStatus.InProgress);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.HasCount(4, board.Columns);
@@ -93,7 +152,7 @@ public sealed class BoardTests
         board.ClearDomainEvents();
         var colName = ColumnName.Create("Review").Value;
 
-        var result = board.AddColumn(colName, 1);
+        var result = board.AddColumn(colName, BoardTaskStatus.InProgress, 1);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.HasCount(4, board.Columns);
@@ -110,7 +169,7 @@ public sealed class BoardTests
         board.ClearDomainEvents();
         var colName = ColumnName.Create("Review").Value;
 
-        board.AddColumn(colName);
+        board.AddColumn(colName, BoardTaskStatus.InProgress);
 
         var evt = board.DomainEvents.OfType<ColumnAddedEvent>().SingleOrDefault();
         Assert.IsNotNull(evt);
@@ -124,7 +183,7 @@ public sealed class BoardTests
         var board = Board.CreateDefault(DefaultOwner).Value;
         var colName = ColumnName.Create("To Do").Value;
 
-        var result = board.AddColumn(colName);
+        var result = board.AddColumn(colName, BoardTaskStatus.Todo);
 
         Assert.IsTrue(result.IsFailure);
         Assert.AreEqual("board.duplicate_column_name", result.Error.Code);
@@ -151,7 +210,8 @@ public sealed class BoardTests
     public void Should_ReindexPositions_When_ColumnRemoved()
     {
         var board = Board.CreateDefault(DefaultOwner).Value;
-        var columnId = board.Columns[0].Id;
+        // Remove InProgress column (not a required status)
+        var columnId = board.Columns[1].Id;
 
         board.RemoveColumn(columnId);
 
@@ -175,16 +235,33 @@ public sealed class BoardTests
     }
 
     [TestMethod]
-    public void Should_FailRemoveColumn_When_LastColumn()
+    public void Should_FailRemoveColumn_When_LastTodoColumn()
     {
         var board = Board.CreateDefault(DefaultOwner).Value;
-        board.RemoveColumn(board.Columns[2].Id);
+        // Remove InProgress first (allowed)
         board.RemoveColumn(board.Columns[1].Id);
+        // Now only To Do and Done remain — try removing the last Todo column
+        var todoColumnId = board.Columns[0].Id;
 
-        var result = board.RemoveColumn(board.Columns[0].Id);
+        var result = board.RemoveColumn(todoColumnId);
 
         Assert.IsTrue(result.IsFailure);
-        Assert.AreEqual("board.cannot_remove_last_column", result.Error.Code);
+        Assert.AreEqual("board.cannot_remove_last_status_column", result.Error.Code);
+    }
+
+    [TestMethod]
+    public void Should_FailRemoveColumn_When_LastDoneColumn()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        // Remove InProgress first (allowed)
+        board.RemoveColumn(board.Columns[1].Id);
+        // Now only To Do and Done remain — try removing the last Done column
+        var doneColumnId = board.Columns[1].Id;
+
+        var result = board.RemoveColumn(doneColumnId);
+
+        Assert.IsTrue(result.IsFailure);
+        Assert.AreEqual("board.cannot_remove_last_status_column", result.Error.Code);
     }
 
     [TestMethod]
