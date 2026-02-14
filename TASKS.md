@@ -70,22 +70,22 @@
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | | **Backend** | | |
-| CP1.1 | TaskItem entity + value objects (TDD) | PENDING | TaskTitle, Priority, TaskStatus, Tag, DueDate |
-| CP1.2 | Board + Column entities (TDD) | PENDING | Default board with Todo/InProgress/Done columns |
-| CP1.3 | Task use cases (TDD) | PENDING | Create, Update, Complete, Delete, Move, List, GetById |
-| CP1.4 | EF Core configuration + SQLite | PENDING | Entity configs, migrations, seed data |
-| CP1.5 | Task API endpoints | PENDING | CRUD + move + complete, Scalar docs |
-| CP1.6 | API integration tests | PENDING | All endpoints, happy + error paths |
+| CP1.1 | TaskItem entity + value objects (TDD) | DONE | TaskTitle, Priority, TaskStatus, Tag, DueDate. 80+ unit + property tests. |
+| CP1.2 | Board + Column entities (TDD) | DONE | Default board with Todo/InProgress/Done columns. OwnsMany for columns. |
+| CP1.3 | Task use cases (TDD) | DONE | 10 commands + 4 queries. NSubstitute mocks. 130 tests total. |
+| CP1.4 | EF Core configuration + SQLite | DONE | Entity configs, OwnsMany tags, DateTimeOffset→string convention, seed data. DesignTimeDbContextFactory for migrations. |
+| CP1.5 | Task API endpoints | DONE | 12 task + 6 board routes. ResultExtensions for error mapping (400/404/422). ErrorHandlingMiddleware. |
+| CP1.6 | API integration tests | DONE | 13 task + 6 board tests. In-memory SQLite via WebApplicationFactory. ClassLevel parallelism. |
 | | **Frontend** | | |
-| CP1.7 | Design System setup (Shadcn/ui) | PENDING | Button, Card, Badge, Input, Dialog, Toast, layout primitives |
-| CP1.8 | Layouts + Pages | PENDING | DashboardLayout, TaskBoardPage, TaskListPage |
-| CP1.9 | Domain Atoms | PENDING | PriorityBadge, TaskStatusChip, DueDateLabel, TagList |
-| CP1.10 | Domain Widgets | PENDING | TaskCard, KanbanColumn, QuickAddForm |
-| CP1.11 | Domain Views | PENDING | KanbanBoard, TaskListView |
-| CP1.12 | State: TanStack Query hooks | PENDING | useTasksQuery, useBoardQuery, mutations |
-| CP1.13 | State: Zustand stores | PENDING | useTaskViewStore (kanban/list toggle, filters) |
-| CP1.14 | Routing setup (React Router) | PENDING | Board route, list route, 404 |
-| CP1.15 | Frontend component tests | PENDING | Vitest + Testing Library |
+| CP1.7 | Design System setup (Shadcn/ui) | DONE | 12 components: button, card, badge, input, textarea, select, dialog, sonner, scroll-area, separator, skeleton, dropdown-menu. ESLint override for ui/ dir. |
+| CP1.8 | Layouts + Pages | DONE | DashboardLayout, TaskBoardPage, TaskListPage, NotFoundPage |
+| CP1.9 | Domain Atoms | DONE | PriorityBadge, TaskStatusChip, DueDateLabel, TagList |
+| CP1.10 | Domain Widgets | DONE | TaskCard, KanbanColumn, QuickAddForm |
+| CP1.11 | Domain Views | DONE | KanbanBoard, TaskListView |
+| CP1.12 | State: TanStack Query hooks | DONE | useTasksQuery, useBoardQuery, useTaskQuery + 8 mutation hooks |
+| CP1.13 | State: Zustand stores | DONE | useTaskViewStore (kanban/list toggle, filters, persisted) |
+| CP1.14 | Routing setup (React Router) | DONE | Board route (/), list route (/list), 404 |
+| CP1.15 | Frontend component tests | DONE | 49 tests: 4 atom + 3 widget + 2 view test suites. fast-check property tests for PriorityBadge and TagList. |
 | | **Deliverable** | | `dotnet run --project src/LemonDo.AppHost` → full working app |
 
 ---
@@ -217,6 +217,12 @@
 | 2026-02-14 | .NET 10 uses .slnx format | `dotnet new sln` creates `.slnx` (XML-based) by default, not `.sln`. Lighter, cleaner format. |
 | 2026-02-14 | Aspire workload deprecated | Aspire is now distributed as NuGet packages + templates. `dotnet new install Aspire.ProjectTemplates` replaces `dotnet workload install aspire`. |
 | 2026-02-14 | `dotnet test --solution` syntax | .NET 10 changed `dotnet test` to require `--solution` flag for solution paths (no positional argument). |
+| 2026-02-14 | OwnsMany for Tags (not JSON column) | Tags mapped to separate TaskItemTags table via EF Core OwnsMany for queryability. |
+| 2026-02-14 | DateTimeOffset→string for SQLite | SQLite doesn't support DateTimeOffset in ORDER BY. Used ConfigureConventions to convert all DateTimeOffset to string globally. |
+| 2026-02-14 | ClassLevel test parallelism for integration tests | MethodLevel caused race conditions on shared in-memory SQLite DB. ClassLevel isolates test classes. |
+| 2026-02-14 | DesignTimeDbContextFactory for EF migrations | EF tools can't resolve DbContext without DI. Factory provides standalone context creation. |
+| 2026-02-14 | Sonner directly over Shadcn Toaster wrapper | Shadcn Toaster requires next-themes ThemeProvider. Direct sonner import avoids unnecessary provider for CP1. |
+| 2026-02-14 | erasableSyntaxOnly in tsconfig | Vite + TypeScript 5.9 enables erasableSyntaxOnly which disallows class parameter properties with `readonly`. Use explicit field declarations instead. |
 
 ---
 
@@ -224,7 +230,7 @@
 
 - **Planning**: DONE (Phase 0 + 1 + 2 complete)
 - **Bootstrap**: DONE (Phase 3 - solution, frontend, tests, Aspire integration)
-- **Checkpoint 1**: NOT STARTED (Core Task Management)
+- **Checkpoint 1**: DONE (Core Task Management - 149 backend + 49 frontend tests, 0 warnings)
 - **Checkpoint 2**: NOT STARTED (Auth & Authorization)
 - **Checkpoint 3**: NOT STARTED (Rich UX & Polish)
 - **Checkpoint 4**: NOT STARTED (Production Hardening)
@@ -249,3 +255,14 @@
 | a9ebce9 | test: add MSTest 4 + MTP test infrastructure with smoke tests | Phase 3 |
 | 310782b | docs: update documentation for Phase 3 bootstrap completion | Phase 3 |
 | 5f3b3c8 | merge: Phase 3 codebase bootstrap | Phase 3 |
+| 3058446 | feat(domain): add common base types (Entity, ValueObject, Result, DomainEvent) | CP1 |
+| 0ee06a4 | feat(tasks): add TaskItem entity with value objects and domain events | CP1 |
+| 26b88bf | feat(tasks): add Board and Column entities with domain events | CP1 |
+| 644bbf6 | feat(tasks): add task use cases (commands, queries, handlers) | CP1 |
+| 42f629b | feat(infra): add EF Core configuration, SQLite, and initial migration | CP1 |
+| 1200e66 | feat(api): add task and board minimal API endpoints | CP1 |
+| 29dcd4f | test(api): add integration tests for task and board endpoints | CP1 |
+| 87ddca2 | feat(ui): fix Shadcn alias and install design system components | CP1 |
+| d9c3f84 | feat(tasks): add domain types, API client, and task components | CP1 |
+| 5a556f9 | feat(tasks): add state management, routing, pages, and layouts | CP1 |
+| 45644af | test(tasks): add frontend component tests | CP1 |

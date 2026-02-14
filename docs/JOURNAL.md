@@ -227,11 +227,69 @@ AppHost orchestrates both the API and React frontend via `AddJavaScriptApp`. Vit
 
 ---
 
+## Checkpoint 1: Core Task Management
+
+**Date: February 14, 2026**
+
+Full-stack task management in single-user mode. 11 commits, 149 backend tests + 49 frontend tests, 0 build warnings.
+
+### 1.1 Domain Layer (Steps 0-2)
+
+Built the complete domain model following DDD principles:
+
+- **Common base types**: `Entity<TId>`, `ValueObject`, `Result<TValue, TError>`, `DomainEvent`, `PagedResult<T>`
+- **TaskItem aggregate**: 7 value objects (TaskItemId, TaskTitle, TaskDescription, Tag, Priority, TaskStatus, UserId), 12 domain events, full invariant enforcement
+- **Board/Column aggregates**: Board owns Columns via aggregate boundary, default board factory with 3 columns
+
+**Property testing with FsCheck**: Every value object validated with `Prop.ForAll` - any string 1-500 chars creates a valid TaskTitle, any string 1-50 chars lowercase creates a valid Tag, etc.
+
+### 1.2 Application Layer (Step 3)
+
+10 command handlers + 4 query handlers. Clean separation - handlers receive repository interfaces, return `Result<T, DomainError>`. NSubstitute for mocking. All tests verify both happy path and error cases.
+
+### 1.3 Infrastructure Layer (Step 4)
+
+EF Core with SQLite. Key discoveries:
+
+- **SQLite DateTimeOffset limitation**: SQLite can't ORDER BY DateTimeOffset columns. Fixed with `ConfigureConventions` to convert all DateTimeOffset to string globally.
+- **DesignTimeDbContextFactory**: EF migration tools need to instantiate DbContext without DI. Created a factory that provides standalone context creation.
+- **OwnsMany for Tags**: Tags stored in a separate `TaskItemTags` table (not JSON column) for queryability.
+
+### 1.4 API Layer (Steps 5-6)
+
+12 task endpoints + 6 board endpoints using minimal API pattern. `ResultExtensions` maps domain errors to HTTP status codes (validation→400, not_found→404, business_rule→422). `ErrorHandlingMiddleware` catches unhandled exceptions.
+
+19 integration tests using `WebApplicationFactory` with in-memory SQLite. **ClassLevel parallelism** required - MethodLevel caused race conditions on shared database state.
+
+### 1.5 Frontend (Steps 7-10)
+
+- **Design System**: 12 Shadcn components installed to flat `src/ui/` directory
+- **Domain types**: TypeScript interfaces matching backend DTOs exactly (camelCase)
+- **API client**: Fetch-based with error handling, type-safe methods for all endpoints
+- **Component hierarchy**: Atoms (PriorityBadge, TaskStatusChip, DueDateLabel, TagList) → Widgets (TaskCard, KanbanColumn, QuickAddForm) → Views (KanbanBoard, TaskListView)
+- **State management**: TanStack Query hooks for server state, Zustand store for view preferences (persisted)
+- **Routing**: React Router with `/` (kanban), `/list`, and 404
+- **Tests**: 49 component tests including fast-check property tests
+
+**Key frontend decision**: Used sonner Toaster directly instead of Shadcn wrapper to avoid requiring next-themes ThemeProvider in CP1. Theme support comes in CP3.
+
+**Key frontend lesson**: TypeScript 5.9 with `erasableSyntaxOnly` disallows class parameter properties with `readonly` keyword. Use explicit field declarations instead.
+
+### 1.6 Verification
+
+| Check | Result |
+|---|---|
+| **Backend Build** | 9/9 projects, 0 warnings, 0 errors |
+| **Frontend Build** | 1908 modules, 412 KB JS + 39 KB CSS |
+| **Backend Tests** | 149 passed, 0 failed, 0 skipped |
+| **Frontend Tests** | 49 passed, 0 failed |
+| **Frontend Lint** | Clean, no issues |
+
+---
+
 ## What's Next
 
-### Checkpoint 1: Core Task Management
-
-*Next up: Full-stack task CRUD in single-user mode. Backend: TaskItem/Board/Column entities with TDD (MSTest + FsCheck), EF Core + SQLite, minimal API endpoints. Frontend: Design System setup, Domain Components (Atoms/Widgets/Views), TanStack Query hooks, Zustand stores, React Router. Integration tests for all endpoints. Working kanban board and list view.*
+### Checkpoint 1 Complete
 
 ### Checkpoint 2: Authentication & Authorization
 
