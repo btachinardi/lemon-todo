@@ -33,7 +33,7 @@ We follow strict Test-Driven Development with RED-GREEN-VALIDATE phases.
         /      E2E (Playwright)     \     <- Few, slow, full-stack
        /      Integration (API)      \    <- Moderate, test endpoints
       /   Unit (Domain + Components)  \   <- Many, fast, isolated
-     /  Property (Domain invariants)   \  <- Many, fast, generated
+     /   Property (Domain invariants)  \  <- Many, fast, generated
     +-----------------------------------+
 ```
 
@@ -95,57 +95,65 @@ src/
 
 ### Frontend Architecture
 
-The frontend follows a strict layered architecture that separates concerns and enforces
-unidirectional data flow. Each layer has a single responsibility and clear import rules.
+The frontend is organized along two orthogonal dimensions:
+
+1. **Architecture Tiers** — Separation of concerns and data flow. Each tier has a single
+   responsibility: routing, structural composition, state management, or visual rendering.
+2. **Component Taxonomy** — Composition granularity within the visual rendering tier. Small
+   primitives compose into bigger domain-aware pieces.
+
+These are independent concepts. Architecture Tiers answer *"what is this code responsible
+for?"* Component Taxonomy answers *"how big and domain-aware is this piece of UI?"*
+
+---
+
+#### Part 1: Architecture Tiers
+
+The application flows data top-down through four tiers:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Routes                                                     │
-│  URL mapping, route guards, data sourcing                   │
-│  Selects a Page and feeds it data from the State Layer      │
+│  Routing                                                     │
+│  URL mapping, route guards, data sourcing                    │
+│  Selects a Page and feeds it data from the State tier        │
 ├─────────────────────────────────────────────────────────────┤
-│  Pages & Layouts                                            │
-│  App-level composition shells (DashboardLayout, AuthLayout) │
-│  Arrange L2 components within structural regions            │
-│  CAN use L3 layout primitives and native HTML for structure │
+│  Pages & Layouts                                             │
+│  Structural composition shells (DashboardLayout, AuthLayout) │
+│  Arrange Domain Components within structural regions         │
+│  CAN use Design System layout primitives and native HTML     │
 ├─────────────────────────────────────────────────────────────┤
-│  State Layer: Stores, Queries & Hooks                       │
-│  Zustand stores, TanStack Query hooks, custom domain hooks  │
-│  The bridge between raw data and UI consumption             │
+│  State Management                                            │
+│  Zustand stores, TanStack Query hooks, custom domain hooks   │
+│  The bridge between raw API data and UI consumption          │
 ├─────────────────────────────────────────────────────────────┤
-│  L2: Domain UI Components                                   │
-│  Domain-specific views that speak the business language      │
-│  Composed entirely from L3 components, multiple granularity  │
-│  levels: Views → Widgets → Atoms                            │
-├─────────────────────────────────────────────────────────────┤
-│  L3: Design System (Dumb UI)                                │
-│  Shadcn/ui, Radix primitives, pure presentational           │
-│  Zero business knowledge                                    │
+│  Components                                                  │
+│  All visual UI — organized by the Component Taxonomy below   │
+│  Domain-aware and domain-agnostic pieces live here           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### Routes (Data Sourcing & URL Mapping)
+##### Routing
 
-**Responsibility**: Routes are the entry point for every URL. Their ONLY job is to
-map a URL to a Page component, enforce auth guards, source data from the State Layer,
-and pass it down. A route does not render anything visual itself.
+**Responsibility**: Routes are the entry point for every URL. Their ONLY job is to map
+a URL to a Page, enforce auth guards, source data from the State tier, and pass it down.
+A route does not render anything visual itself.
 
 **What belongs here**:
 - Route definitions (one per URL segment)
 - Auth guards and redirect logic
-- Calls to State Layer hooks to fetch data
+- Calls to State tier hooks to fetch data
 - Selecting which Page/Layout to render
 - Passing fetched data as props to the Page
 
 **What does NOT belong here**:
 - Business logic or data transformation
-- Direct API calls (use State Layer hooks instead)
+- Direct API calls (use State tier hooks instead)
 - Visual styling, CSS classes, or any UI markup
-- L3 components, L2 components, native HTML tags
+- Design System components, Domain Components, native HTML tags
 - Loading/error state rendering
 
 ```tsx
-// GOOD: Route - pure data sourcing, delegates to Page
+// GOOD: Route — pure data sourcing, delegates to Page
 function TaskBoardRoute() {
   const { boardId } = useParams();
   const { data: board, isLoading } = useBoardQuery(boardId);
@@ -160,25 +168,25 @@ function TaskBoardRoute() {
 function TaskBoardRoute() {
   const { data, isLoading } = useBoardQuery(boardId);
   if (isLoading) return <Skeleton className="h-64" />;  // Visual rendering in route!
-  return <KanbanBoard board={data} />;                   // Skipping the Page layer!
+  return <KanbanBoard board={data} />;                   // Skipping the Page tier!
 }
 ```
 
-#### Pages & Layouts (App-Level Composition)
+##### Pages & Layouts
 
 **Responsibility**: Pages and Layouts are the structural shells of the application.
-They define WHERE things go on screen - sidebars, headers, content areas, footers -
-but NOT what domain content is displayed. Pages select a Layout and plug L2 domain
-components into its slots. Layouts define the structural regions.
+They define WHERE things go on screen — sidebars, headers, content areas, footers —
+but NOT what domain content is displayed. Pages select a Layout and plug Domain
+Components into its slots. Layouts define the structural regions.
 
-This is the **only layer** where native HTML tags for structural wrappers and L3
-layout primitives are acceptable, because its job is inherently structural.
+This is the **only tier** where native HTML tags for structural wrappers and Design
+System layout primitives are acceptable, because its job is inherently structural.
 
-**Layouts** - Reusable structural shells shared across multiple pages:
+**Layouts** — Reusable structural shells shared across multiple pages:
 
 ```tsx
 // Layout: structural shell with named slots
-// CAN use L3 layout primitives and native HTML for structure
+// CAN use Design System layout primitives and native HTML for structure
 function DashboardLayout({ sidebar, header, children }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen">
@@ -201,10 +209,10 @@ function AuthLayout({ children }: AuthLayoutProps) {
 }
 ```
 
-**Pages** - Compose a Layout with L2 domain components:
+**Pages** — Compose a Layout with Domain Components:
 
 ```tsx
-// Page: plugs L2 components into Layout slots
+// Page: plugs Domain Components into Layout slots
 function TaskBoardPage({ board, tasks, isLoading }: TaskBoardPageProps) {
   return (
     <DashboardLayout
@@ -228,20 +236,20 @@ function LoginPage() {
 
 **What belongs in Pages & Layouts**:
 - Layout shells with structural regions (sidebar, header, content, footer)
-- Page components that select a Layout and fill its slots with L2 components
+- Page components that select a Layout and fill its slots with Domain Components
 - Native HTML for structural wrappers (`<div>`, `<aside>`, `<main>`, `<header>`)
-- L3 layout primitives (`Stack`, `Grid`, `Container`, `Separator`)
+- Design System layout primitives (`Stack`, `Grid`, `Container`, `Separator`)
 - Structural CSS (flexbox, grid, positioning, spacing)
 
 **What does NOT belong here**:
-- Domain logic or domain-specific rendering (that's L2)
-- Data fetching or State Layer hooks (that's the Route's job)
-- Non-layout L3 components (`<Button>`, `<Card>`, `<Dialog>`)
+- Domain logic or domain-specific rendering (that's a Domain Component)
+- Data fetching or State tier hooks (that's the Route's job)
+- Non-layout Design System components (`<Button>`, `<Card>`, `<Dialog>`)
 - Direct API calls
 
-#### State Layer: Zustand Stores, TanStack Query & Custom Hooks
+##### State Management
 
-**Responsibility**: This layer is the single source of truth for all application state.
+**Responsibility**: This tier is the single source of truth for all application state.
 It cleanly separates **server state** (data from the API) from **client state** (UI
 preferences, form drafts, optimistic updates, offline queue).
 
@@ -310,7 +318,7 @@ const useTaskViewStore = create<TaskViewStore>()(
 **Custom Domain Hooks**:
 - Compose Zustand stores + TanStack Query into domain-specific hooks
 - Encapsulate complex state interactions
-- Provide a clean API for L1 and L2 components
+- Provide a clean API for Routes and Domain Components
 
 ```tsx
 // Custom hook: composes server + client state
@@ -326,61 +334,109 @@ function useTaskBoard(boardId: string) {
 }
 ```
 
-**Rules for the State Layer**:
+**Rules for the State Management tier**:
 - TanStack Query owns ALL server data. Never `useState` + `useEffect` + `fetch`.
 - Zustand owns ALL client-only state. Never React Context for frequently-changing state.
 - React Context is reserved for low-frequency cross-cutting concerns (theme provider, i18n provider, auth provider that wraps the query client).
-- Custom hooks compose stores + queries. Components never import both a store AND a query directly - they use the composed hook.
+- Custom hooks compose stores + queries. Components never import both a store AND a query directly — they use the composed hook.
 - Query keys follow convention: `[domain, resource, ...params]` (e.g., `['tasks', 'list', { status: 'todo' }]`).
 - Zustand stores follow convention: `use{Domain}{Concept}Store` (e.g., `useTaskViewStore`, `useAuthSessionStore`).
 
-#### L2: Domain UI Components
+##### Components
 
-**Responsibility**: L2 components are the visual representation of domain concepts.
-They speak the language of the business: tasks, boards, columns, priorities - not
-buttons, inputs, or grids. They receive domain data as props and compose L3 components
-to render it.
+Components are the visual building blocks of the application. They are organized by the
+**Component Taxonomy** described in Part 2 below. This tier contains both domain-aware
+components (Domain Views, Widgets, Atoms) and domain-agnostic primitives (Design System).
 
-L2 naturally has **multiple levels of granularity**. This is not a strict sub-layer
-hierarchy, but a naming convention that helps reason about composition:
+---
+
+#### Part 2: Component Taxonomy
+
+Within the Components tier, UI pieces are organized by **domain awareness** and
+**composition granularity**. This answers: *"how big is this component, and does it
+know about our business domain?"*
 
 ```
-L2 Views      Large composite views that fill a page region
-              KanbanBoard, TaskListView, AuditLogPanel, LoginForm
-              Compose multiple L2 Widgets together
-                    │
-                    ▼
-L2 Widgets    Mid-size domain components that represent a single concept
-              TaskCard, KanbanColumn, UserRow, OnboardingStep
-              Compose L2 Atoms and L3 components
-                    │
-                    ▼
-L2 Atoms      Small domain-specific elements with semantic meaning
-              PriorityBadge, DueDateLabel, TagList, TaskStatusIcon
-              Thin wrappers around L3 that map domain values to visual variants
+Domain Views    ← Large compositions that fill a page region
+     │              KanbanBoard, TaskListView, AuditLogPanel, LoginForm
+     │              Compose Domain Widgets together
+     ▼
+Domain Widgets  ← Mid-size blocks representing a single concept
+     │              TaskCard, KanbanColumn, UserRow, OnboardingStep
+     │              Compose Domain Atoms + Design System
+     ▼
+Domain Atoms    ← Smallest domain-aware units with semantic meaning
+     │              PriorityBadge, DueDateLabel, TagList, TaskStatusIcon
+     │              Thin bridge: maps domain values → Design System variants
+     ▼
+Design System   ← Pure visual primitives, zero business knowledge
+                    Button, Badge, Card, Dialog, Input, Skeleton
+                    Shadcn/ui, Radix, Tailwind — completely generic
 ```
 
-**Views** compose Widgets. **Widgets** compose Atoms and L3. **Atoms** are the
-thinnest domain wrappers - they translate a domain concept (like `Priority.High`)
-into an L3 variant (like `<Badge variant="danger">`). The atom IS the bridge between
-domain semantics and generic UI.
+The top three levels are **domain-aware** — they know about tasks, priorities, boards,
+users. The bottom level is **domain-agnostic** — it only knows about visual concepts
+like "variant", "size", "children".
+
+##### Design System (Domain-Agnostic)
+
+**Responsibility**: The Design System is our library of generic, reusable visual
+primitives. These components have ZERO knowledge of any business domain. Shadcn/ui
+components live here, along with any custom primitives built on Radix.
 
 **What belongs here**:
-- Components that represent domain concepts at any granularity level
-- Domain-specific layout decisions (a task card shows title, priority badge, due date)
-- Event handlers that call domain actions (onComplete, onMove, onDelete)
-- Conditional rendering based on domain state (empty board, overdue task, locked account)
-- Domain-specific validation feedback
+- Shadcn/ui components (Button, Card, Input, Dialog, Toast, etc.)
+- Custom design system primitives built on Radix (e.g., `DragHandle`, `Badge`, `Skeleton`)
+- Layout primitives (Stack, Grid, Container)
+- Typography components (Heading, Text, Label)
+- Icon components
+- Animation primitives
 
 **What does NOT belong here**:
-- Native HTML tags (`<div>`, `<span>`, `<button>`, `<input>`) - use L3 components instead
-- Direct API calls or store access (receive data via props or use State Layer hooks)
-- Generic/reusable presentational logic (that belongs in L3)
-- Route awareness (no `useParams`, `useNavigate` - that's the Route's job)
-- Structural page layout (that's the Pages & Layouts layer)
+- Any business/domain terms (no `TaskCard`, no `LoginForm`, no `Priority`)
+- Data fetching or state management
+- Domain types in props (use generic types: `string`, `ReactNode`, `variant`)
+- Business logic or conditional rendering based on domain state
+
+**Accessibility is paramount in the Design System**: Since all UI ultimately renders
+through these primitives, this is where we enforce WCAG 2.1 AA compliance. Radix
+primitives handle focus management, keyboard navigation, and ARIA attributes. Every
+Design System component must:
+- Be keyboard accessible
+- Have proper ARIA roles and labels
+- Meet 4.5:1 contrast ratio
+- Support screen readers
 
 ```tsx
-// L2 Atom: translates domain value to L3 variant
+// Design System: generic component — no domain knowledge
+interface BadgeProps {
+  variant: 'default' | 'success' | 'warning' | 'danger' | 'info';
+  children: ReactNode;
+}
+
+function Badge({ variant, children }: BadgeProps) {
+  return (
+    <span className={cn(badgeVariants({ variant }))}>
+      {children}
+    </span>
+  );
+}
+
+// BAD: Design System component with domain knowledge
+function PriorityBadge({ priority }: { priority: Priority }) {
+  // This knows about Priority domain type! Should be a Domain Atom.
+}
+```
+
+##### Domain Atoms (Domain-Aware, Smallest)
+
+**Responsibility**: Domain Atoms are the thinnest bridge between domain semantics and
+the Design System. They translate a domain concept (like `Priority.High`) into a Design
+System variant (like `<Badge variant="danger">`). An atom knows what a domain value
+*means* visually.
+
+```tsx
+// Domain Atom: translates domain value → Design System variant
 function PriorityBadge({ priority }: { priority: Priority }) {
   const { t } = useTranslation();
   const variantMap: Record<Priority, BadgeVariant> = {
@@ -393,7 +449,21 @@ function PriorityBadge({ priority }: { priority: Priority }) {
   return <Badge variant={variantMap[priority]}>{t(`tasks.priority.${priority}`)}</Badge>;
 }
 
-// L2 Widget: composes L2 Atoms and L3 components
+// Domain Atom: date display with overdue awareness
+function DueDateLabel({ date }: { date: Date }) {
+  const isOverdue = date < new Date();
+  return <Text color={isOverdue ? 'danger' : 'muted'}>{formatDate(date)}</Text>;
+}
+```
+
+##### Domain Widgets (Domain-Aware, Mid-Size)
+
+**Responsibility**: Domain Widgets are reusable blocks that represent a single domain
+concept. They compose Domain Atoms and Design System components into a cohesive unit
+that can be used in multiple Domain Views.
+
+```tsx
+// Domain Widget: composes Domain Atoms + Design System
 function TaskCard({ task, onComplete }: TaskCardProps) {
   const { t } = useTranslation();
   return (
@@ -414,8 +484,16 @@ function TaskCard({ task, onComplete }: TaskCardProps) {
     </Card>
   );
 }
+```
 
-// L2 View: composes L2 Widgets into a full board
+##### Domain Views (Domain-Aware, Largest)
+
+**Responsibility**: Domain Views are the largest domain-aware compositions. They fill
+an entire page region (the content area, a sidebar panel, a modal body). Pages plug
+Domain Views into Layout slots.
+
+```tsx
+// Domain View: composes Domain Widgets into a full board
 function KanbanBoard({ board, tasks, isLoading }: KanbanBoardProps) {
   if (isLoading) return <BoardSkeleton />;
   if (!board) return <EmptyBoard />;
@@ -432,130 +510,86 @@ function KanbanBoard({ board, tasks, isLoading }: KanbanBoardProps) {
     </ScrollArea>
   );
 }
-
-// BAD: L2 using native HTML
-function TaskCard({ task }: TaskCardProps) {
-  return (
-    <div className="border rounded p-4">          {/* native HTML! */}
-      <h3>{task.title}</h3>                        {/* native HTML! */}
-      <span className="text-red-500">High</span>   {/* native HTML! */}
-    </div>
-  );
-}
 ```
 
-**L2 can reference domain types** (enums, interfaces from the domain types folder).
-This is what makes L2 "domain-aware" - it knows what a `Priority` is, what a `TaskStatus`
-means, and how to render them with semantic meaning.
+##### What Domain Components Cannot Do
 
-#### L3: Design System / Dumb UI Components
+All three domain levels (Views, Widgets, Atoms) share these constraints:
+- **No native HTML tags** (`<div>`, `<span>`, `<button>`, `<input>`) — use Design System components instead
+- **No direct API calls** — receive data via props or use State tier hooks
+- **No route awareness** — no `useParams`, `useNavigate` (that's the Routing tier's job)
+- **No structural page layout** — no sidebars, headers (that's the Pages & Layouts tier)
 
-**Responsibility**: L3 is our design system. These components are completely generic,
-reusable, and have ZERO knowledge of any business domain. They are the atoms and
-molecules of our UI. Shadcn/ui components live here, along with any custom primitives
-we build on top of Radix.
+Domain Components **CAN**:
+- Import and use Design System components
+- Import domain types (enums, interfaces from the `types/` folder)
+- Use State tier hooks for user interactions (mutations, client state)
+- Use `useTranslation` for i18n
 
-**What belongs here**:
-- Shadcn/ui components (Button, Card, Input, Dialog, Toast, etc.)
-- Custom design system primitives built on Radix (e.g., `DragHandle`, `Badge`, `Skeleton`)
-- Layout primitives (Stack, Grid, Container)
-- Typography components (Heading, Text, Label)
-- Icon components
-- Animation primitives
+> **Note**: The Views/Widgets/Atoms taxonomy is organizational — not a permission
+> boundary. All three share the same import rules. However, we recommend that Atoms
+> prefer pure props over State hooks to maximize reusability and testability.
 
-**What does NOT belong here**:
-- Any business/domain terms (no `TaskCard`, no `LoginForm`, no `Priority`)
-- Data fetching or state management
-- Domain types in props (use generic types: `string`, `ReactNode`, `variant`)
-- Business logic or conditional rendering based on domain state
+---
 
-**Accessibility is paramount in L3**: Since all UI ultimately renders through L3,
-this is where we enforce WCAG 2.1 AA compliance. Radix primitives handle focus
-management, keyboard navigation, and ARIA attributes. Every L3 component must:
-- Be keyboard accessible
-- Have proper ARIA roles and labels
-- Meet 4.5:1 contrast ratio
-- Support screen readers
-
-```tsx
-// GOOD: L3 generic component
-interface BadgeProps {
-  variant: 'default' | 'success' | 'warning' | 'danger' | 'info';
-  children: ReactNode;
-}
-
-function Badge({ variant, children }: BadgeProps) {
-  return (
-    <span className={cn(badgeVariants({ variant }))}>
-      {children}
-    </span>
-  );
-}
-
-// BAD: L3 with domain knowledge
-function PriorityBadge({ priority }: { priority: Priority }) {
-  // This knows about Priority domain type! Should be in L2.
-}
-```
-
-### Frontend Project Structure
+#### Frontend Project Structure
 
 ```
 client/
 ├── src/
 │   ├── app/                         # App shell, routing, providers
-│   │   ├── routes/                  # Routes: URL mapping + data sourcing
+│   │   ├── routes/                  # Routing tier: URL mapping + data sourcing
 │   │   │   ├── auth/                #   Auth routes (login, register, reset)
 │   │   │   ├── tasks/               #   Task routes (board, list)
 │   │   │   ├── admin/               #   Admin routes (users, audit, health)
 │   │   │   └── onboarding/          #   Onboarding routes
-│   │   ├── pages/                   # Pages: compose Layouts + L2 components
-│   │   │   ├── TaskBoardPage.tsx     #   DashboardLayout + KanbanBoard
-│   │   │   ├── TaskListPage.tsx      #   DashboardLayout + TaskListView
-│   │   │   ├── LoginPage.tsx         #   AuthLayout + LoginForm
-│   │   │   ├── RegisterPage.tsx      #   AuthLayout + RegisterForm
-│   │   │   ├── AdminUsersPage.tsx    #   AdminLayout + UserManagement
+│   │   ├── pages/                   # Pages: compose Layouts + Domain Components
+│   │   │   ├── TaskBoardPage.tsx
+│   │   │   ├── TaskListPage.tsx
+│   │   │   ├── LoginPage.tsx
+│   │   │   ├── RegisterPage.tsx
+│   │   │   ├── AdminUsersPage.tsx
 │   │   │   └── ...
 │   │   ├── layouts/                 # Layouts: structural shells
-│   │   │   ├── DashboardLayout.tsx   #   Sidebar + Header + Content
-│   │   │   ├── AuthLayout.tsx        #   Centered card
-│   │   │   ├── AdminLayout.tsx       #   Admin sidebar + Content
-│   │   │   ├── OnboardingLayout.tsx  #   Onboarding stepper shell
-│   │   │   └── PublicLayout.tsx      #   Landing, marketing pages
+│   │   │   ├── DashboardLayout.tsx  #   Sidebar + Header + Content
+│   │   │   ├── AuthLayout.tsx       #   Centered card
+│   │   │   ├── AdminLayout.tsx      #   Admin sidebar + Content
+│   │   │   ├── OnboardingLayout.tsx #   Onboarding stepper shell
+│   │   │   └── PublicLayout.tsx     #   Landing, marketing pages
 │   │   └── providers/               # Global providers (QueryClient, Auth, Theme, i18n)
 │   │
-│   ├── domains/                     # L2 + State Layer, organized by domain
+│   ├── domains/                     # Domain Components + State, organized by domain
 │   │   ├── auth/
-│   │   │   ├── components/          # L2: LoginForm, RegisterForm, MfaSetup
+│   │   │   ├── components/          # Domain Components: LoginForm, RegisterForm, MfaSetup
 │   │   │   ├── hooks/               # State: useAuth, useCurrentUser, useLoginMutation
 │   │   │   ├── stores/              # State: useAuthSessionStore (Zustand)
 │   │   │   ├── api/                 # State: API client functions for auth endpoints
 │   │   │   └── types/               # Domain types: User, Role, AuthState
 │   │   ├── tasks/
-│   │   │   ├── components/          # L2: KanbanBoard, TaskCard, TaskList, QuickAdd
-│   │   │   │   ├── views/           #   L2 Views: KanbanBoard, TaskListView
-│   │   │   │   ├── widgets/         #   L2 Widgets: TaskCard, KanbanColumn
-│   │   │   │   └── atoms/           #   L2 Atoms: PriorityBadge, DueDateLabel, TagList
+│   │   │   ├── components/          # Domain Components
+│   │   │   │   ├── views/           #   Domain Views: KanbanBoard, TaskListView
+│   │   │   │   ├── widgets/         #   Domain Widgets: TaskCard, KanbanColumn
+│   │   │   │   └── atoms/           #   Domain Atoms: PriorityBadge, DueDateLabel, TagList
 │   │   │   ├── hooks/               # State: useTasks, useBoard, useCompleteTask
 │   │   │   ├── stores/              # State: useTaskViewStore, useOfflineQueueStore
 │   │   │   ├── api/                 # State: API client functions for task endpoints
 │   │   │   └── types/               # Domain types: TaskItem, Board, Column, Priority
 │   │   ├── admin/
-│   │   │   ├── components/          # L2: AuditLogTable, UserManagement, SystemHealth
+│   │   │   ├── components/          # Domain Components: AuditLogTable, UserManagement
 │   │   │   ├── hooks/               # State: useAuditLog, useAdminUsers
 │   │   │   ├── stores/              # State: useAdminFilterStore
 │   │   │   ├── api/                 # State: API client functions for admin endpoints
 │   │   │   └── types/               # Domain types: AuditEntry, AdminUser
 │   │   ├── onboarding/
-│   │   │   ├── components/          # L2: WelcomeScreen, OnboardingStep, Celebration
+│   │   │   ├── components/          # Domain Components: WelcomeScreen, Celebration
 │   │   │   ├── hooks/               # State: useOnboarding, useOnboardingProgress
 │   │   │   ├── stores/              # State: useOnboardingStore
 │   │   │   ├── api/                 # State: API client functions for onboarding
 │   │   │   └── types/               # Domain types: OnboardingStep, OnboardingProgress
-│   │   └── shared/                  # L2 components shared across domains
+│   │   └── shared/                  # Shared Domain Components across domains
 │   │       └── components/          #   AppSidebar, AppHeader, UserMenu, NotificationBell
 │   │
-│   ├── ui/                          # L3: Design system (domain-agnostic)
+│   ├── ui/                          # Design System (domain-agnostic)
 │   │   ├── primitives/              #   Radix-based primitives (Badge, Tooltip, etc.)
 │   │   ├── layout/                  #   Stack, Grid, Container, Separator, ScrollArea
 │   │   ├── feedback/                #   Toast, Skeleton, Spinner, EmptyState
@@ -576,46 +610,48 @@ client/
 ├── e2e/                             # Playwright E2E tests
 ```
 
-### Layer Import Rules
+#### Import Rules
 
 ```
                     ┌────────────────┐
-                    │    Routes      │  Can import: Pages, State Layer
-                    └──────┬─────────┘  CANNOT: L2, L3, native HTML
+                    │    Routing     │  Can import: Pages, State hooks
+                    └──────┬─────────┘  CANNOT: Domain Components, Design System, native HTML
                            │ passes data via props
                     ┌──────▼─────────┐
-                    │ Pages/Layouts  │  Can import: Layouts, L2, L3 layout primitives
-                    └──────┬─────────┘  CAN use native HTML for structural wrappers
-                           │ fills layout slots with L2
+                    │ Pages/Layouts  │  Can import: Layouts, Domain Components,
+                    └──────┬─────────┘  Design System layout primitives, native HTML
+                           │ fills layout slots
                     ┌──────▼────────────────┐
-                    │  State Layer           │  Can import: api/, types/, lib
+                    │  State Management      │  Can import: api/, types/, lib/
                     │  (Stores + Queries     │  Zustand stores, TanStack hooks,
                     │   + Custom Hooks)      │  custom composed hooks
                     └──────┬────────────────┘
-                           │ consumed by Routes, Pages, and L2
-                    ┌──────▼───────┐
-                    │  L2 (Domain) │  Can import: L3, types/, State Layer hooks
-                    └──────┬───────┘  CANNOT: Routes, Pages, native HTML
-                           │ composes
-                    ┌──────▼───────┐
-                    │  L3 (Design) │  Can import: Radix, Tailwind, React
-                    └──────────────┘  CANNOT: Routes, Pages, L2, domain types, State Layer
+                           │ consumed by Routing, Pages, and Domain Components
+              ┌────────────▼───────────────────────┐
+              │         Components                  │
+              │  ┌─────────────┐  ┌──────────────┐ │
+              │  │   Domain    │  │   Design     │ │
+              │  │   Views /   │→ │   System     │ │
+              │  │   Widgets / │  │  (Shadcn/ui, │ │
+              │  │   Atoms     │  │   Radix)     │ │
+              │  └─────────────┘  └──────────────┘ │
+              └────────────────────────────────────┘
 ```
 
-| Layer | Can Import | Cannot Import |
-|-------|-----------|---------------|
-| **Routes** | Pages, State Layer hooks | L2, L3, native HTML, direct API calls |
-| **Pages** | Layouts, L2, State Layer hooks | L3 (except layout primitives), direct API calls |
-| **Layouts** | L3 layout primitives, native HTML (structural only) | L2, State Layer, domain types |
-| **State Layer** | api/ functions, domain types, lib | Routes, Pages, L2, L3 components |
-| **L2** (Domain UI) | L3, domain types, State Layer hooks, `useTranslation` | Routes, Pages, native HTML, direct API calls |
-| **L3** (Design System) | Radix, Tailwind, React, generic TS types | Routes, Pages, L2, State Layer, domain types, `useTranslation` |
+| Tier / Level | Can Import | Cannot Import |
+|---|---|---|
+| **Routing** | Pages, State hooks | Domain Components, Design System, native HTML, direct API calls |
+| **Pages** | Layouts, Domain Components, State hooks | Design System (except layout primitives), direct API calls |
+| **Layouts** | Design System layout primitives, native HTML (structural only) | Domain Components, State hooks, domain types |
+| **State Management** | api/ functions, domain types, lib/ | Routing, Pages, Domain Components, Design System |
+| **Domain Components** (Views, Widgets, Atoms) | Design System, domain types, State hooks, `useTranslation` | Routing, Pages, native HTML, direct API calls |
+| **Design System** | Radix, Tailwind, React, generic TS types | Routing, Pages, Domain Components, State, domain types, `useTranslation` |
 
-**Subtle but important distinctions**:
-- **Pages CAN import L2** (to fill layout slots) but **Layouts CANNOT import L2** (layouts are generic shells with `children`/slot props)
-- **Pages CAN import State Layer hooks** when a page needs to combine data for multiple L2 components in different layout slots
-- **Layouts CAN use L3 layout primitives** (`ScrollArea`, `Separator`) and native HTML for structure, but NOT interactive L3 components (`Button`, `Dialog`)
-- **L2 Views/Widgets/Atoms** all share the same import rules - the granularity is organizational, not a permission boundary
+**Key distinctions**:
+- **Pages CAN import Domain Components** (to fill layout slots) but **Layouts CANNOT** (layouts are generic shells with `children`/slot props)
+- **Pages CAN import State hooks** when a page needs to combine data for multiple Domain Components in different layout slots
+- **Layouts CAN use Design System layout primitives** (`ScrollArea`, `Separator`) and native HTML for structure, but NOT interactive Design System components (`Button`, `Dialog`)
+- **Domain Views/Widgets/Atoms** share the same import rules — the taxonomy is organizational, not a permission boundary
 
 ### Backend Layer Rules
 

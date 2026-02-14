@@ -131,14 +131,14 @@ With requirements solid, we designed our domain ([docs/DOMAIN.md](./docs/DOMAIN.
 Before touching code, we established our rules of engagement ([GUIDELINES.md](./GUIDELINES.md)):
 
 - **Strict TDD**: RED-GREEN-VALIDATE. No production code without a failing test.
-- **3-Layer Frontend**: L1 (Data/Routing) -> L2 (Domain UI) -> L3 (Design System). L2 cannot use native HTML tags. L3 cannot reference domain types.
+- **Frontend Architecture**: Two orthogonal systems — Architecture Tiers (Routing -> Pages & Layouts -> State Management -> Components) for separation of concerns, and Component Taxonomy (Design System -> Domain Atoms -> Domain Widgets -> Domain Views) for composition granularity.
 - **Gitflow**: main + develop + feature branches. Conventional commits. Atomic commits.
 - **Security**: PII redaction in logs, OWASP Top 10 compliance, rate limiting.
 - **Accessibility**: WCAG 2.1 AA minimum, Radix primitives for built-in a11y.
 
 ### Interlude: The State Management Gap
 
-During our checkpoint review of GUIDELINES.md, we realized we had a significant blind spot: **no explicit state management strategy for the frontend**. Our original 3-layer component architecture (L1/L2/L3) described what components render, but not how they get their data.
+During our checkpoint review of GUIDELINES.md, we realized we had a significant blind spot: **no explicit state management strategy for the frontend**. Our original component architecture described what components render, but not how they get their data.
 
 We added two critical libraries to the stack:
 
@@ -153,12 +153,23 @@ We added two critical libraries to the stack:
 - Built-in `persist` middleware for localStorage/IndexedDB
 - Tiny (~1KB) - important for our mobile-first PWA
 
-This gave us a **4-layer frontend architecture**:
+The key rule: **TanStack Query owns all server data, Zustand owns all client state, React Context is only for low-frequency cross-cutting providers.** Components never mix `fetch` calls with rendering.
+
+### Interlude: Untangling "Layers"
+
+We realized we were conflating two orthogonal concepts under the same "layer" word. What we actually have are two independent organizational systems:
+
+**Architecture Tiers** answer *"what is this code responsible for?"* — separation of concerns:
 ```
-L1 (Routes) -> State Layer (Zustand + TanStack Query) -> L2 (Domain UI) -> L3 (Design System)
+Routing → Pages & Layouts → State Management → Components
 ```
 
-The key rule: **TanStack Query owns all server data, Zustand owns all client state, React Context is only for low-frequency cross-cutting providers.** Components never mix `fetch` calls with rendering.
+**Component Taxonomy** answers *"how big and domain-aware is this UI piece?"* — composition granularity:
+```
+Design System → Domain Atoms → Domain Widgets → Domain Views
+```
+
+The old L1/L2/L3 labels tried to do both jobs at once and created confusion. The new model is cleaner: Architecture Tiers flow data top-down (from URL to pixels), while the Component Taxonomy flows bottom-up (small primitives compose into bigger domain-aware pieces). See [GUIDELINES.md](./GUIDELINES.md) for the full specification with examples and import rules.
 
 ### Phase 3: Codebase Bootstrap
 
