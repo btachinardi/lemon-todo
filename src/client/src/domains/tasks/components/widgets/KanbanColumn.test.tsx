@@ -1,0 +1,43 @@
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { KanbanColumn } from './KanbanColumn';
+import { createColumn, createTaskItem } from '@/test/factories';
+
+describe('KanbanColumn', () => {
+  it('renders column name', () => {
+    const column = createColumn({ name: 'In Progress' });
+    render(<KanbanColumn column={column} tasks={[]} />);
+    expect(screen.getByText('In Progress')).toBeInTheDocument();
+  });
+
+  it('renders task count', () => {
+    const column = createColumn();
+    const tasks = [createTaskItem(), createTaskItem()];
+    render(<KanbanColumn column={column} tasks={tasks} />);
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('shows WIP limit when set', () => {
+    const column = createColumn({ wipLimit: 5 });
+    const tasks = [createTaskItem(), createTaskItem()];
+    render(<KanbanColumn column={column} tasks={tasks} />);
+    expect(screen.getByText('2/5')).toBeInTheDocument();
+  });
+
+  it('renders task cards', () => {
+    const column = createColumn();
+    const tasks = [
+      createTaskItem({ title: 'Task A' }),
+      createTaskItem({ title: 'Task B' }),
+    ];
+    render(<KanbanColumn column={column} tasks={tasks} />);
+    expect(screen.getByText('Task A')).toBeInTheDocument();
+    expect(screen.getByText('Task B')).toBeInTheDocument();
+  });
+
+  it('shows empty state when no tasks', () => {
+    const column = createColumn();
+    render(<KanbanColumn column={column} tasks={[]} />);
+    expect(screen.getByText('No tasks')).toBeInTheDocument();
+  });
+});
