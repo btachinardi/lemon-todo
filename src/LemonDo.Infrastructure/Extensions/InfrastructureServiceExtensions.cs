@@ -3,6 +3,7 @@ namespace LemonDo.Infrastructure.Extensions;
 using LemonDo.Application.Common;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Tasks.Repositories;
+using LemonDo.Infrastructure.Events;
 using LemonDo.Infrastructure.Persistence;
 using LemonDo.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,7 @@ public static class InfrastructureServiceExtensions
                 ?? "Data Source=lemondo.db"));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<LemonDoDbContext>());
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IBoardRepository, BoardRepository>();
 

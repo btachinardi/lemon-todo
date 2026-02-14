@@ -4,7 +4,7 @@ namespace LemonDo.Domain.Common;
 /// Base class for domain entities. Identity is determined by <see cref="Id"/>.
 /// Supports domain event collection.
 /// </summary>
-public abstract class Entity<TId> : IEquatable<Entity<TId>> where TId : notnull
+public abstract class Entity<TId> : IEquatable<Entity<TId>>, IHasDomainEvents where TId : notnull
 {
     public TId Id { get; }
     public DateTimeOffset CreatedAt { get; protected set; }

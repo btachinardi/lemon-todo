@@ -2,12 +2,22 @@ namespace LemonDo.Infrastructure.Persistence;
 
 using LemonDo.Application.Common;
 using LemonDo.Domain.Boards.Entities;
+using LemonDo.Domain.Common;
+using LemonDo.Infrastructure.Events;
 using Microsoft.EntityFrameworkCore;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
-public sealed class LemonDoDbContext(DbContextOptions<LemonDoDbContext> options) : DbContext(options), IUnitOfWork
+public sealed class LemonDoDbContext : DbContext, IUnitOfWork
 {
+    private readonly IDomainEventDispatcher? _eventDispatcher;
+
+    public LemonDoDbContext(DbContextOptions<LemonDoDbContext> options, IDomainEventDispatcher? eventDispatcher = null)
+        : base(options)
+    {
+        _eventDispatcher = eventDispatcher;
+    }
+
     public DbSet<TaskEntity> Tasks => Set<TaskEntity>();
     public DbSet<Board> Boards => Set<Board>();
 
@@ -26,7 +36,7 @@ public sealed class LemonDoDbContext(DbContextOptions<LemonDoDbContext> options)
             .HaveConversion<string>();
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var entries = ChangeTracker.Entries()
             .Where(e => e.State is EntityState.Added or EntityState.Modified);
@@ -41,6 +51,24 @@ public sealed class LemonDoDbContext(DbContextOptions<LemonDoDbContext> options)
                 entry.Property("CreatedAt").CurrentValue = now;
         }
 
-        return base.SaveChangesAsync(cancellationToken);
+        // Collect domain events before save (entities might be detached after)
+        var domainEvents = ChangeTracker.Entries<IHasDomainEvents>()
+            .Select(e => e.Entity)
+            .Where(e => e.DomainEvents.Count > 0)
+            .SelectMany(e =>
+            {
+                var events = e.DomainEvents.ToList();
+                e.ClearDomainEvents();
+                return events;
+            })
+            .ToList();
+
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        // Dispatch events after save (events represent committed facts)
+        if (_eventDispatcher is not null && domainEvents.Count > 0)
+            await _eventDispatcher.DispatchAsync(domainEvents, cancellationToken);
+
+        return result;
     }
 }
