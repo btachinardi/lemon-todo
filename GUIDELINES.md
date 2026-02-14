@@ -101,8 +101,8 @@ unidirectional data flow. Each layer has a single responsibility and clear impor
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  L1: Data Sourcing & Routing                                │
-│  Route components, page layouts, data orchestration         │
-│  Connects server state to domain UI                         │
+│  Route components, data orchestration, auth guards          │
+│  Connects server state to domain UI via props               │
 ├─────────────────────────────────────────────────────────────┤
 │  State Layer: Stores, Queries & Hooks                       │
 │  Zustand stores, TanStack Query hooks, custom domain hooks  │
@@ -126,37 +126,45 @@ layout composition, and loading/error boundaries.
 
 **What belongs here**:
 - Route components (one per route segment)
-- Page-level layout composition (sidebar + content, header + body)
 - Auth guards and redirect logic
-- Suspense/ErrorBoundary wrappers for data loading
 - Calls to State Layer hooks to fetch data
 - Passing fetched data as props to L2 components
+- Composing multiple L2 components into a page (e.g., `<Sidebar />` + `<BoardContent />`)
 
 **What does NOT belong here**:
 - Business logic or data transformation
 - Direct API calls (use State Layer hooks instead)
-- Visual styling or UI markup (delegate to L2)
-- Native HTML tags beyond layout wrappers (`<div>` for layout is acceptable)
+- Visual styling, CSS classes, or UI markup (delegate to L2)
+- L3 components (`<Button>`, `<Card>`, `<Skeleton>` - those are composed by L2)
+- Native HTML tags (`<div>`, `<span>`, `<section>`) - use L2 layout components instead
+- Loading/error state rendering (L2 handles its own via props like `isLoading`)
 
 ```tsx
-// GOOD: L1 route component
+// GOOD: L1 route component - data sourcing only, delegates everything to L2
 function TaskBoardPage() {
   const { boardId } = useParams();
   const { data: board, isLoading } = useBoardQuery(boardId);
   const { data: tasks } = useTasksByBoardQuery(boardId);
 
-  if (isLoading) return <BoardSkeleton />;
-
-  return <KanbanBoard board={board} tasks={tasks} />;
+  return (
+    <KanbanBoard board={board} tasks={tasks} isLoading={isLoading} />
+  );
 }
 
-// BAD: L1 doing too much
+// BAD: L1 rendering L3 components directly
+function TaskBoardPage() {
+  const { data, isLoading } = useBoardQuery(boardId);
+  if (isLoading) return <Skeleton className="h-64" />;  // L3 in L1!
+  return <KanbanBoard board={data} />;
+}
+
+// BAD: L1 using native HTML and styling
 function TaskBoardPage() {
   const [tasks, setTasks] = useState([]);
   useEffect(() => {
     fetch('/api/tasks').then(r => r.json()).then(setTasks); // Direct API call
   }, []);
-  return <div className="grid grid-cols-3">...</div>; // Styling in L1
+  return <div className="grid grid-cols-3">...</div>;     // Native HTML in L1!
 }
 ```
 
@@ -428,8 +436,8 @@ client/
 
 ```
                     ┌──────────────┐
-                    │  L1 (Routes) │  Can import: State Layer, L2, L3, lib
-                    └──────┬───────┘
+                    │  L1 (Routes) │  Can import: State Layer, L2
+                    └──────┬───────┘  CANNOT import: L3, native HTML
                            │ passes data via props
                     ┌──────▼────────────────┐
                     │  State Layer           │  Can import: api/, types/, lib
@@ -448,7 +456,7 @@ client/
 
 | Layer | Can Import | Cannot Import |
 |-------|-----------|---------------|
-| **L1** (Routes) | L2, L3, State Layer hooks, lib, types | Direct API calls (`fetch`/`axios`) |
+| **L1** (Routes) | L2, State Layer hooks, lib, types | L3, native HTML tags, direct API calls (`fetch`/`axios`) |
 | **State Layer** (Stores/Queries/Hooks) | api/ functions, domain types, lib | L1, L2, L3 components |
 | **L2** (Domain UI) | L3 components, domain types, State Layer hooks, `useTranslation` | L1, native HTML tags (`<div>`, `<button>`, etc.), direct API calls |
 | **L3** (Design System) | Radix, Tailwind, React, generic TypeScript types | L1, L2, State Layer, domain types, `useTranslation` |
