@@ -33,10 +33,10 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1.1 | Write initial PRD (docs/PRD.md) | DONE | 10 FR groups, 10 NFR groups, success metrics, risks |
+| 1.1 | Write initial PRD (docs/PRD.draft.md) | DONE | 10 FR groups, 10 NFR groups, success metrics, risks |
 | 1.2 | Technology research (docs/RESEARCH.md) | DONE | .NET 10, Aspire 13, Vite 7, React 19, all versions locked |
 | 1.3 | User scenarios and storyboards (docs/SCENARIOS.md) | DONE | 3 personas, 10 scenarios, analytics events, north star metric |
-| 1.4 | Revised PRD (docs/PRD.reviewed.md) | DONE | Quick-add P0, offline CRUD, PII default-redacted, micro-interactions |
+| 1.4 | Revised PRD (docs/PRD.md) | DONE | Quick-add P0, offline CRUD, PII default-redacted, micro-interactions |
 
 ## Phase 2: Domain Design
 

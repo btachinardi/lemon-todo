@@ -3,7 +3,7 @@
 > **Date**: 2026-02-13
 > **Architecture**: Domain-Driven Design (DDD)
 > **Pattern**: CQRS-light with Use Cases
-> **Informed By**: [PRD.reviewed.md](./PRD.reviewed.md), [SCENARIOS.md](./SCENARIOS.md)
+> **Informed By**: [PRD.md](./PRD.md), [SCENARIOS.md](./SCENARIOS.md)
 
 ---
 

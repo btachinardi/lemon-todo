@@ -127,8 +127,8 @@ Highlights:
 ```
 lemon-todo/
 ├── docs/                          # Design documents
-│   ├── PRD.md                     # Initial product requirements
-│   ├── PRD.reviewed.md            # Revised requirements post-scenarios
+│   ├── PRD.md                     # Product requirements (official)
+│   ├── PRD.draft.md               # Initial draft PRD (historical)
 │   ├── RESEARCH.md                # Technology research
 │   ├── SCENARIOS.md               # User storyboards and analytics
 │   ├── DOMAIN.md                  # DDD domain design

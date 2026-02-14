@@ -24,7 +24,7 @@ We believe planning is not wasted time. It's compressed debugging. We created fi
 
 ### 1.1 Product Requirements Document (PRD)
 
-Our first document ([PRD.md](./PRD.md)) captured everything we knew we needed:
+Our first document ([PRD.draft.md](./PRD.draft.md)) captured everything we knew we needed:
 - 10 functional requirement groups (FR-001 through FR-010)
 - 10 non-functional requirement groups (NFR-001 through NFR-010)
 - Success metrics with concrete targets
@@ -72,7 +72,7 @@ Then we walked through 10 scenarios step-by-step, documenting:
 
 ### 1.4 Revised PRD
 
-After scenarios, we created [PRD.reviewed.md](./PRD.reviewed.md) - a revised PRD that incorporated everything we learned. Key changes:
+After scenarios, we created [PRD.md](./PRD.md) — our official requirements document, incorporating everything we learned. Key changes:
 - Quick-add promoted to P0
 - Onboarding celebrations upgraded from P1 to P0
 - Offline CRUD (not just viewing) became a requirement
