@@ -206,6 +206,23 @@
 - **Requires**: React 18+ (uses `useSyncExternalStore`)
 - **Source**: [TanStack Query](https://tanstack.com/query/latest)
 
+### 2.9 OpenTelemetry Browser SDK (Frontend Telemetry)
+
+- **Purpose**: Distributed tracing and performance monitoring for the browser, connected to the same OTel pipeline as the backend
+- **Key Packages**:
+  - `@opentelemetry/sdk-trace-web` (2.x) — Browser-specific trace provider
+  - `@opentelemetry/instrumentation-fetch` — Auto-instruments all fetch calls (TanStack Query uses fetch under the hood)
+  - `@opentelemetry/instrumentation-document-load` — Page load performance spans
+  - `@opentelemetry/exporter-trace-otlp-http` — Exports traces via OTLP HTTP to Aspire Dashboard
+  - `@opentelemetry/context-zone` — Zone.js-based context propagation for browser async operations
+  - `@opentelemetry/resources` — Resource identification (service name, version)
+- **Distributed Tracing**: W3C `traceparent` header propagation via `propagateTraceHeaderCorsUrls` in fetch instrumentation. Frontend spans connect to backend spans — one trace from button click → fetch → API → DB.
+- **Aspire Integration**: Aspire Dashboard exposes OTLP HTTP endpoint (port 4318) with CORS support for browser apps. When launched via `AddJavaScriptApp`, the endpoint URL and API key are available via `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS` environment variables.
+- **What It Captures**: Fetch/XHR request timing with response status, page load performance (Navigation Timing API), user interaction spans (clicks, inputs), custom spans for business operations (task creation, board switch), errors and exceptions with stack traces.
+- **What It Doesn't Do** (vs Sentry): No source map processing, no session replays, no issue grouping/deduplication, no release tracking. For production, Sentry can be added alongside OTel — Sentry SDK v8+ supports OTLP export, so traces flow to both Sentry and the OTel collector.
+- **Phasing**: CP4 introduces OTel Browser SDK for unified observability. Sentry is a future production enhancement (Tier 9).
+- **Source**: [OpenTelemetry JS Browser Getting Started](https://opentelemetry.io/docs/languages/js/getting-started/browser/), [Aspire: Enable Browser Telemetry](https://aspire.dev/dashboard/enable-browser-telemetry/)
+
 ---
 
 ## 3. Testing Technologies
@@ -229,12 +246,62 @@
 | fast-check | 4.x | Property-based testing (JS) |
 | MSW (Mock Service Worker) | 2.x | API mocking in tests |
 
-### 3.3 E2E Testing
+### 3.3 E2E & Cross-Browser Testing
 
 | Tool | Version | Purpose |
 |------|---------|---------|
 | Playwright | 1.58.0 (.NET) | Cross-browser E2E testing |
 | @playwright/test | 1.x | Frontend E2E via Node |
+| BrowserStack | Cloud service | Real device/browser testing |
+
+**Cross-Browser Testing Strategy**:
+
+Playwright natively supports three rendering engines with a single API:
+- **Chromium** — Chrome, Edge, Opera, Brave, and all Chromium-based browsers
+- **Firefox** — Gecko engine
+- **WebKit** — Safari engine (derived from latest WebKit trunk, often ahead of shipping Safari)
+
+Playwright projects configuration runs the same test suite against all three engines in CI. This covers the vast majority of desktop browser rendering differences.
+
+**Device Emulation**:
+
+Playwright includes predefined device descriptors (iPhone 14, Pixel 7, iPad, etc.) that configure viewport, user agent, touch events, and device scale factor. This validates:
+- Responsive breakpoints (mobile, tablet, desktop)
+- Touch interaction behavior
+- Viewport-dependent layout and overflow
+
+**Limitation**: Emulation is not real-device testing. It simulates viewport and user agent but runs in the same desktop engine. Real Safari on iOS has rendering quirks that WebKit emulation may not catch.
+
+**Real Device Testing (Production)**:
+
+BrowserStack provides 3500+ real browsers and devices in the cloud. Playwright tests can run directly on BrowserStack via their integration — same test code, real hardware:
+- Real iOS Safari on physical iPhones/iPads
+- Real Android Chrome on physical devices
+- Older browser versions (Safari 15, Chrome 100, Firefox ESR)
+- Real OS-level rendering (font smoothing, scrollbar behavior, safe areas)
+
+**Phasing**:
+- **CP5**: Playwright E2E with Chromium + Firefox + WebKit projects + device emulation (iPhone, iPad, Pixel). Covers ~95% of rendering scenarios.
+- **Production**: BrowserStack for real device matrix. Run on every release candidate. Focus on iOS Safari (historically most quirky) and older Android versions.
+
+### 3.4 Visual Regression Testing
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| Playwright screenshots | Built-in | Baseline visual comparison |
+| Percy (BrowserStack) | Cloud service | AI-powered cross-browser visual diffs |
+
+**Strategy**:
+
+- **CP5**: Playwright's built-in `toHaveScreenshot()` for baseline visual comparison. Captures screenshots during E2E runs, compares against committed baselines, fails on pixel-level drift. Free, no external service, works in CI.
+- **Production**: Percy (by BrowserStack) or Chromatic for AI-powered visual regression. These render snapshots across real browser engines (not emulated), detect meaningful visual changes vs noise (anti-aliasing, font rendering), and provide team review workflows with approval flows.
+
+**What Visual Regression Catches**:
+- CSS regressions (margin collapse, flexbox/grid issues across browsers)
+- Font rendering differences across OS (Windows ClearType vs macOS subpixel)
+- Theme inconsistencies (dark mode colors, contrast ratios)
+- Responsive breakpoint edge cases (content overflow, truncation)
+- i18n layout issues (longer text in pt-BR/es breaking layouts)
 
 ---
 
@@ -281,7 +348,8 @@
 | Shadcn/ui | React 18+ | React 19, Tailwind 4, Radix UI |
 | Zustand 5 | React 18+ | React 19, TypeScript 5 |
 | TanStack Query 5 | React 18+ | React 19, TypeScript 5 |
-| Playwright 1.58 | .NET 8+ | .NET 10, all major browsers |
+| OTel Browser SDK | ES2022+ browsers | Aspire Dashboard (OTLP HTTP) |
+| Playwright 1.58 | .NET 8+ | .NET 10, Chromium, Firefox, WebKit |
 | Terraform azurerm | Terraform 1.x | Azure Container Apps, latest API |
 
 ---
@@ -315,6 +383,9 @@ i18next: 25.x
 zustand: 5.x
 @tanstack/react-query: 5.x
 vite-plugin-pwa: 1.x
+@opentelemetry/sdk-trace-web: 2.x
+@opentelemetry/instrumentation-fetch: 0.x (experimental, follows OTel JS contrib)
+@opentelemetry/exporter-trace-otlp-http: 0.x (experimental, follows OTel JS contrib)
 
 # Testing
 vitest: 3.x

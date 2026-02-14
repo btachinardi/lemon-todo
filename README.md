@@ -114,7 +114,8 @@ Highlights:
 | **Backend Tests** | xUnit v3 + FsCheck | 3.x |
 | **Frontend Tests** | Vitest + fast-check | 3.x / 4.x |
 | **E2E Tests** | Playwright | 1.x |
-| **Observability** | OpenTelemetry + Serilog | 1.x / 4.x |
+| **Backend Observability** | OpenTelemetry + Serilog | 1.x / 4.x |
+| **Frontend Observability** | OTel Browser SDK | 2.x |
 | **CI/CD** | GitHub Actions | N/A |
 | **IaC** | Terraform + azurerm | 1.x / 4.x |
 | **Containers** | Docker Engine | 29.x |

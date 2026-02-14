@@ -146,7 +146,8 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| CP4.1 | OpenTelemetry traces + metrics | PENDING | Aspire Dashboard integration |
+| CP4.1 | Backend OpenTelemetry traces + metrics | PENDING | Aspire Dashboard integration |
+| CP4.1b | Frontend OpenTelemetry (browser SDK) | PENDING | OTel Browser SDK → OTLP HTTP → Aspire Dashboard, distributed tracing |
 | CP4.2 | Structured logging (Serilog) | PENDING | Correlation IDs, request context, PII-safe |
 | CP4.3 | PII redaction in admin views | PENDING | Default-masked, reveal with audit log entry |
 | CP4.4 | Audit trail | PENDING | Log all data access and mutations |
@@ -174,7 +175,8 @@
 | CP5.3 | Onboarding flow | PENDING | Guided first task creation + celebration |
 | CP5.4 | Analytics event tracking | PENDING | Privacy-first, hashed IDs, funnel events |
 | CP5.5 | Notification system (in-app) | PENDING | Task reminders, due date alerts |
-| CP5.6 | E2E tests (Playwright) | PENDING | Full scenario coverage from SCENARIOS.md |
+| CP5.6 | E2E tests (Playwright) | PENDING | Chromium + Firefox + WebKit, device emulation (iPhone, iPad, Pixel) |
+| CP5.6b | Visual regression baselines | PENDING | Playwright `toHaveScreenshot()` for all key views |
 | CP5.7 | Spanish language support | PENDING | Third language option |
 | CP5.8 | Offline mutation queue | PENDING | Create/complete tasks offline, sync when online |
 | | **Deliverable** | | Feature-complete platform showcasing full production ambition |
@@ -207,6 +209,9 @@
 | 2026-02-14 | Deferred: i18n beyond English | English-only through CP3, add pt-BR in CP4, es in CP5 |
 | 2026-02-14 | Deferred: Offline CRUD | Read-only offline in CP5.2, full mutation queue in CP5.8 |
 | 2026-02-14 | CI/CD + Docker + Terraform deferred | Infrastructure as code planned but not blocking checkpoints |
+| 2026-02-14 | OTel Browser SDK over Sentry for frontend telemetry | Unified OTel pipeline (frontend + backend), Aspire-native, free; Sentry as future production add-on |
+| 2026-02-14 | Playwright 3-engine matrix for cross-browser testing | Chromium + Firefox + WebKit covers ~95% of browsers; BrowserStack for real devices in production |
+| 2026-02-14 | Playwright screenshots for visual regression baseline | Built-in `toHaveScreenshot()` in CP5; Percy/Chromatic for production cross-browser visual diffs |
 
 ---
 
