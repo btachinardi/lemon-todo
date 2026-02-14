@@ -15,7 +15,10 @@ public sealed record CreateTaskCommand(
     DateTimeOffset? DueDate = null,
     IReadOnlyList<string>? Tags = null);
 
-public sealed class CreateTaskCommandHandler(ITaskItemRepository repository, IUnitOfWork unitOfWork)
+public sealed class CreateTaskCommandHandler(
+    ITaskItemRepository repository,
+    IBoardRepository boardRepository,
+    IUnitOfWork unitOfWork)
 {
     public async Task<Result<TaskItemDto, DomainError>> HandleAsync(CreateTaskCommand command, CancellationToken ct = default)
     {
@@ -42,6 +45,14 @@ public sealed class CreateTaskCommandHandler(ITaskItemRepository repository, IUn
         var taskResult = TaskItem.Create(UserId.Default, titleResult.Value, descResult.Value, command.Priority, command.DueDate, tags);
         if (taskResult.IsFailure)
             return Result<TaskItemDto, DomainError>.Failure(taskResult.Error);
+
+        var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
+        if (board is not null && board.Columns.Count > 0)
+        {
+            var firstColumn = board.Columns.OrderBy(c => c.Position).First();
+            var existingTasks = await repository.GetByColumnAsync(firstColumn.Id, ct);
+            taskResult.Value.MoveTo(firstColumn.Id, existingTasks.Count);
+        }
 
         await repository.AddAsync(taskResult.Value, ct);
         await unitOfWork.SaveChangesAsync(ct);

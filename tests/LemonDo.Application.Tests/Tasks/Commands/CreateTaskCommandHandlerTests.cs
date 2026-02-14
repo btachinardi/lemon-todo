@@ -2,6 +2,7 @@ namespace LemonDo.Application.Tests.Tasks.Commands;
 
 using LemonDo.Application.Common;
 using LemonDo.Application.Tasks.Commands;
+using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Entities;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
@@ -11,6 +12,7 @@ using NSubstitute;
 public sealed class CreateTaskCommandHandlerTests
 {
     private ITaskItemRepository _repository = null!;
+    private IBoardRepository _boardRepository = null!;
     private IUnitOfWork _unitOfWork = null!;
     private CreateTaskCommandHandler _handler = null!;
 
@@ -18,8 +20,16 @@ public sealed class CreateTaskCommandHandlerTests
     public void Setup()
     {
         _repository = Substitute.For<ITaskItemRepository>();
+        _boardRepository = Substitute.For<IBoardRepository>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
-        _handler = new CreateTaskCommandHandler(_repository, _unitOfWork);
+
+        var board = Board.CreateDefault(UserId.Default).Value;
+        _boardRepository.GetDefaultForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
+            .Returns(board);
+        _repository.GetByColumnAsync(Arg.Any<ColumnId>(), Arg.Any<CancellationToken>())
+            .Returns(new List<TaskItem>());
+
+        _handler = new CreateTaskCommandHandler(_repository, _boardRepository, _unitOfWork);
     }
 
     [TestMethod]
@@ -35,6 +45,42 @@ public sealed class CreateTaskCommandHandlerTests
         Assert.AreEqual("High", result.Value.Priority);
         await _repository.Received(1).AddAsync(Arg.Any<TaskItem>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
+    public async Task Should_AssignTaskToFirstColumn_When_DefaultBoardExists()
+    {
+        var command = new CreateTaskCommand("New task", null);
+
+        var result = await _handler.HandleAsync(command);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsNotNull(result.Value.ColumnId, "Task should be assigned to a column");
+
+        var board = await _boardRepository.GetDefaultForUserAsync(UserId.Default);
+        var firstColumn = board!.Columns.OrderBy(c => c.Position).First();
+        Assert.AreEqual(firstColumn.Id.Value, result.Value.ColumnId);
+    }
+
+    [TestMethod]
+    public async Task Should_SetPositionToEndOfColumn_When_ColumnHasExistingTasks()
+    {
+        // Arrange: 3 tasks already in the column
+        var existingTasks = new List<TaskItem>();
+        for (var i = 0; i < 3; i++)
+        {
+            var t = TaskItem.Create(UserId.Default, TaskTitle.Create($"Task {i}").Value).Value;
+            existingTasks.Add(t);
+        }
+        _repository.GetByColumnAsync(Arg.Any<ColumnId>(), Arg.Any<CancellationToken>())
+            .Returns(existingTasks);
+
+        var command = new CreateTaskCommand("New task", null);
+
+        var result = await _handler.HandleAsync(command);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(3, result.Value.Position, "New task should be positioned after existing 3 tasks");
     }
 
     [TestMethod]
