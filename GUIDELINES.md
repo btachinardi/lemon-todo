@@ -93,16 +93,21 @@ src/
 │   └── Extensions/               # DI registration
 ```
 
-### Frontend Architecture: 4-Layer System
+### Frontend Architecture
 
 The frontend follows a strict layered architecture that separates concerns and enforces
 unidirectional data flow. Each layer has a single responsibility and clear import rules.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  L1: Data Sourcing & Routing                                │
-│  Route components, data orchestration, auth guards          │
-│  Connects server state to domain UI via props               │
+│  Routes                                                     │
+│  URL mapping, route guards, data sourcing                   │
+│  Selects a Page and feeds it data from the State Layer      │
+├─────────────────────────────────────────────────────────────┤
+│  Pages & Layouts                                            │
+│  App-level composition shells (DashboardLayout, AuthLayout) │
+│  Arrange L2 components within structural regions            │
+│  CAN use L3 layout primitives and native HTML for structure │
 ├─────────────────────────────────────────────────────────────┤
 │  State Layer: Stores, Queries & Hooks                       │
 │  Zustand stores, TanStack Query hooks, custom domain hooks  │
@@ -110,7 +115,8 @@ unidirectional data flow. Each layer has a single responsibility and clear impor
 ├─────────────────────────────────────────────────────────────┤
 │  L2: Domain UI Components                                   │
 │  Domain-specific views that speak the business language      │
-│  Composed entirely from L3 components                       │
+│  Composed entirely from L3 components, multiple granularity  │
+│  levels: Views → Widgets → Atoms                            │
 ├─────────────────────────────────────────────────────────────┤
 │  L3: Design System (Dumb UI)                                │
 │  Shadcn/ui, Radix primitives, pure presentational           │
@@ -118,55 +124,120 @@ unidirectional data flow. Each layer has a single responsibility and clear impor
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### L1: Data Sourcing & Routing Components
+#### Routes (Data Sourcing & URL Mapping)
 
-**Responsibility**: L1 is the entry point for every page. Its ONLY job is to source
-data and wire it into L2 components via props. It handles route parameters, guards,
-layout composition, and loading/error boundaries.
+**Responsibility**: Routes are the entry point for every URL. Their ONLY job is to
+map a URL to a Page component, enforce auth guards, source data from the State Layer,
+and pass it down. A route does not render anything visual itself.
 
 **What belongs here**:
-- Route components (one per route segment)
+- Route definitions (one per URL segment)
 - Auth guards and redirect logic
 - Calls to State Layer hooks to fetch data
-- Passing fetched data as props to L2 components
-- Composing multiple L2 components into a page (e.g., `<Sidebar />` + `<BoardContent />`)
+- Selecting which Page/Layout to render
+- Passing fetched data as props to the Page
 
 **What does NOT belong here**:
 - Business logic or data transformation
 - Direct API calls (use State Layer hooks instead)
-- Visual styling, CSS classes, or UI markup (delegate to L2)
-- L3 components (`<Button>`, `<Card>`, `<Skeleton>` - those are composed by L2)
-- Native HTML tags (`<div>`, `<span>`, `<section>`) - use L2 layout components instead
-- Loading/error state rendering (L2 handles its own via props like `isLoading`)
+- Visual styling, CSS classes, or any UI markup
+- L3 components, L2 components, native HTML tags
+- Loading/error state rendering
 
 ```tsx
-// GOOD: L1 route component - data sourcing only, delegates everything to L2
-function TaskBoardPage() {
+// GOOD: Route - pure data sourcing, delegates to Page
+function TaskBoardRoute() {
   const { boardId } = useParams();
   const { data: board, isLoading } = useBoardQuery(boardId);
   const { data: tasks } = useTasksByBoardQuery(boardId);
 
   return (
-    <KanbanBoard board={board} tasks={tasks} isLoading={isLoading} />
+    <TaskBoardPage board={board} tasks={tasks} isLoading={isLoading} />
   );
 }
 
-// BAD: L1 rendering L3 components directly
-function TaskBoardPage() {
+// BAD: Route rendering UI directly
+function TaskBoardRoute() {
   const { data, isLoading } = useBoardQuery(boardId);
-  if (isLoading) return <Skeleton className="h-64" />;  // L3 in L1!
-  return <KanbanBoard board={data} />;
-}
-
-// BAD: L1 using native HTML and styling
-function TaskBoardPage() {
-  const [tasks, setTasks] = useState([]);
-  useEffect(() => {
-    fetch('/api/tasks').then(r => r.json()).then(setTasks); // Direct API call
-  }, []);
-  return <div className="grid grid-cols-3">...</div>;     // Native HTML in L1!
+  if (isLoading) return <Skeleton className="h-64" />;  // Visual rendering in route!
+  return <KanbanBoard board={data} />;                   // Skipping the Page layer!
 }
 ```
+
+#### Pages & Layouts (App-Level Composition)
+
+**Responsibility**: Pages and Layouts are the structural shells of the application.
+They define WHERE things go on screen - sidebars, headers, content areas, footers -
+but NOT what domain content is displayed. Pages select a Layout and plug L2 domain
+components into its slots. Layouts define the structural regions.
+
+This is the **only layer** where native HTML tags for structural wrappers and L3
+layout primitives are acceptable, because its job is inherently structural.
+
+**Layouts** - Reusable structural shells shared across multiple pages:
+
+```tsx
+// Layout: structural shell with named slots
+// CAN use L3 layout primitives and native HTML for structure
+function DashboardLayout({ sidebar, header, children }: DashboardLayoutProps) {
+  return (
+    <div className="flex h-screen">
+      <aside className="w-64 border-r">{sidebar}</aside>
+      <div className="flex flex-col flex-1">
+        <header className="h-14 border-b">{header}</header>
+        <main className="flex-1 overflow-auto p-6">{children}</main>
+      </div>
+    </div>
+  );
+}
+
+// Layout: simpler shell for auth pages
+function AuthLayout({ children }: AuthLayoutProps) {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-muted">
+      <div className="w-full max-w-md">{children}</div>
+    </div>
+  );
+}
+```
+
+**Pages** - Compose a Layout with L2 domain components:
+
+```tsx
+// Page: plugs L2 components into Layout slots
+function TaskBoardPage({ board, tasks, isLoading }: TaskBoardPageProps) {
+  return (
+    <DashboardLayout
+      sidebar={<AppSidebar />}
+      header={<AppHeader />}
+    >
+      <KanbanBoard board={board} tasks={tasks} isLoading={isLoading} />
+    </DashboardLayout>
+  );
+}
+
+// Page: auth page using auth layout
+function LoginPage() {
+  return (
+    <AuthLayout>
+      <LoginForm />
+    </AuthLayout>
+  );
+}
+```
+
+**What belongs in Pages & Layouts**:
+- Layout shells with structural regions (sidebar, header, content, footer)
+- Page components that select a Layout and fill its slots with L2 components
+- Native HTML for structural wrappers (`<div>`, `<aside>`, `<main>`, `<header>`)
+- L3 layout primitives (`Stack`, `Grid`, `Container`, `Separator`)
+- Structural CSS (flexbox, grid, positioning, spacing)
+
+**What does NOT belong here**:
+- Domain logic or domain-specific rendering (that's L2)
+- Data fetching or State Layer hooks (that's the Route's job)
+- Non-layout L3 components (`<Button>`, `<Card>`, `<Dialog>`)
+- Direct API calls
 
 #### State Layer: Zustand Stores, TanStack Query & Custom Hooks
 
@@ -270,8 +341,32 @@ They speak the language of the business: tasks, boards, columns, priorities - no
 buttons, inputs, or grids. They receive domain data as props and compose L3 components
 to render it.
 
+L2 naturally has **multiple levels of granularity**. This is not a strict sub-layer
+hierarchy, but a naming convention that helps reason about composition:
+
+```
+L2 Views      Large composite views that fill a page region
+              KanbanBoard, TaskListView, AuditLogPanel, LoginForm
+              Compose multiple L2 Widgets together
+                    │
+                    ▼
+L2 Widgets    Mid-size domain components that represent a single concept
+              TaskCard, KanbanColumn, UserRow, OnboardingStep
+              Compose L2 Atoms and L3 components
+                    │
+                    ▼
+L2 Atoms      Small domain-specific elements with semantic meaning
+              PriorityBadge, DueDateLabel, TagList, TaskStatusIcon
+              Thin wrappers around L3 that map domain values to visual variants
+```
+
+**Views** compose Widgets. **Widgets** compose Atoms and L3. **Atoms** are the
+thinnest domain wrappers - they translate a domain concept (like `Priority.High`)
+into an L3 variant (like `<Badge variant="danger">`). The atom IS the bridge between
+domain semantics and generic UI.
+
 **What belongs here**:
-- Components that represent domain concepts: `KanbanBoard`, `TaskCard`, `LoginForm`, `AuditLogTable`
+- Components that represent domain concepts at any granularity level
 - Domain-specific layout decisions (a task card shows title, priority badge, due date)
 - Event handlers that call domain actions (onComplete, onMove, onDelete)
 - Conditional rendering based on domain state (empty board, overdue task, locked account)
@@ -281,13 +376,26 @@ to render it.
 - Native HTML tags (`<div>`, `<span>`, `<button>`, `<input>`) - use L3 components instead
 - Direct API calls or store access (receive data via props or use State Layer hooks)
 - Generic/reusable presentational logic (that belongs in L3)
-- Route awareness (no `useParams`, `useNavigate` - that's L1)
+- Route awareness (no `useParams`, `useNavigate` - that's the Route's job)
+- Structural page layout (that's the Pages & Layouts layer)
 
 ```tsx
-// GOOD: L2 domain component using L3 components only
-function TaskCard({ task, onComplete, onDelete }: TaskCardProps) {
+// L2 Atom: translates domain value to L3 variant
+function PriorityBadge({ priority }: { priority: Priority }) {
   const { t } = useTranslation();
+  const variantMap: Record<Priority, BadgeVariant> = {
+    [Priority.Critical]: 'danger',
+    [Priority.High]: 'warning',
+    [Priority.Medium]: 'info',
+    [Priority.Low]: 'default',
+    [Priority.None]: 'secondary',
+  };
+  return <Badge variant={variantMap[priority]}>{t(`tasks.priority.${priority}`)}</Badge>;
+}
 
+// L2 Widget: composes L2 Atoms and L3 components
+function TaskCard({ task, onComplete }: TaskCardProps) {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
@@ -304,6 +412,24 @@ function TaskCard({ task, onComplete, onDelete }: TaskCardProps) {
         </Button>
       </CardFooter>
     </Card>
+  );
+}
+
+// L2 View: composes L2 Widgets into a full board
+function KanbanBoard({ board, tasks, isLoading }: KanbanBoardProps) {
+  if (isLoading) return <BoardSkeleton />;
+  if (!board) return <EmptyBoard />;
+
+  return (
+    <ScrollArea orientation="horizontal">
+      {board.columns.map(col => (
+        <KanbanColumn
+          key={col.id}
+          column={col}
+          tasks={tasks.filter(t => t.columnId === col.id)}
+        />
+      ))}
+    </ScrollArea>
   );
 }
 
@@ -378,11 +504,24 @@ function PriorityBadge({ priority }: { priority: Priority }) {
 client/
 ├── src/
 │   ├── app/                         # App shell, routing, providers
-│   │   ├── routes/                  # L1: Route/page components
-│   │   │   ├── auth/                #   Login, Register, ResetPassword pages
-│   │   │   ├── tasks/               #   Board, List pages
-│   │   │   ├── admin/               #   Admin panel pages
-│   │   │   └── onboarding/          #   Onboarding flow pages
+│   │   ├── routes/                  # Routes: URL mapping + data sourcing
+│   │   │   ├── auth/                #   Auth routes (login, register, reset)
+│   │   │   ├── tasks/               #   Task routes (board, list)
+│   │   │   ├── admin/               #   Admin routes (users, audit, health)
+│   │   │   └── onboarding/          #   Onboarding routes
+│   │   ├── pages/                   # Pages: compose Layouts + L2 components
+│   │   │   ├── TaskBoardPage.tsx     #   DashboardLayout + KanbanBoard
+│   │   │   ├── TaskListPage.tsx      #   DashboardLayout + TaskListView
+│   │   │   ├── LoginPage.tsx         #   AuthLayout + LoginForm
+│   │   │   ├── RegisterPage.tsx      #   AuthLayout + RegisterForm
+│   │   │   ├── AdminUsersPage.tsx    #   AdminLayout + UserManagement
+│   │   │   └── ...
+│   │   ├── layouts/                 # Layouts: structural shells
+│   │   │   ├── DashboardLayout.tsx   #   Sidebar + Header + Content
+│   │   │   ├── AuthLayout.tsx        #   Centered card
+│   │   │   ├── AdminLayout.tsx       #   Admin sidebar + Content
+│   │   │   ├── OnboardingLayout.tsx  #   Onboarding stepper shell
+│   │   │   └── PublicLayout.tsx      #   Landing, marketing pages
 │   │   └── providers/               # Global providers (QueryClient, Auth, Theme, i18n)
 │   │
 │   ├── domains/                     # L2 + State Layer, organized by domain
@@ -394,6 +533,9 @@ client/
 │   │   │   └── types/               # Domain types: User, Role, AuthState
 │   │   ├── tasks/
 │   │   │   ├── components/          # L2: KanbanBoard, TaskCard, TaskList, QuickAdd
+│   │   │   │   ├── views/           #   L2 Views: KanbanBoard, TaskListView
+│   │   │   │   ├── widgets/         #   L2 Widgets: TaskCard, KanbanColumn
+│   │   │   │   └── atoms/           #   L2 Atoms: PriorityBadge, DueDateLabel, TagList
 │   │   │   ├── hooks/               # State: useTasks, useBoard, useCompleteTask
 │   │   │   ├── stores/              # State: useTaskViewStore, useOfflineQueueStore
 │   │   │   ├── api/                 # State: API client functions for task endpoints
@@ -404,20 +546,22 @@ client/
 │   │   │   ├── stores/              # State: useAdminFilterStore
 │   │   │   ├── api/                 # State: API client functions for admin endpoints
 │   │   │   └── types/               # Domain types: AuditEntry, AdminUser
-│   │   └── onboarding/
-│   │       ├── components/          # L2: WelcomeScreen, OnboardingStep, Celebration
-│   │       ├── hooks/               # State: useOnboarding, useOnboardingProgress
-│   │       ├── stores/              # State: useOnboardingStore
-│   │       ├── api/                 # State: API client functions for onboarding
-│   │       └── types/               # Domain types: OnboardingStep, OnboardingProgress
+│   │   ├── onboarding/
+│   │   │   ├── components/          # L2: WelcomeScreen, OnboardingStep, Celebration
+│   │   │   ├── hooks/               # State: useOnboarding, useOnboardingProgress
+│   │   │   ├── stores/              # State: useOnboardingStore
+│   │   │   ├── api/                 # State: API client functions for onboarding
+│   │   │   └── types/               # Domain types: OnboardingStep, OnboardingProgress
+│   │   └── shared/                  # L2 components shared across domains
+│   │       └── components/          #   AppSidebar, AppHeader, UserMenu, NotificationBell
 │   │
 │   ├── ui/                          # L3: Design system (domain-agnostic)
 │   │   ├── primitives/              #   Radix-based primitives (Badge, Tooltip, etc.)
-│   │   ├── layout/                  #   Stack, Grid, Container, Separator
+│   │   ├── layout/                  #   Stack, Grid, Container, Separator, ScrollArea
 │   │   ├── feedback/                #   Toast, Skeleton, Spinner, EmptyState
 │   │   ├── forms/                   #   Input, Select, Checkbox, DatePicker, Field
 │   │   ├── data-display/            #   Card, Table, List, Avatar
-│   │   ├── navigation/              #   Tabs, Breadcrumb, Sidebar, NavLink
+│   │   ├── navigation/              #   Tabs, Breadcrumb, NavLink
 │   │   ├── overlay/                 #   Dialog, Sheet, Popover, DropdownMenu
 │   │   └── typography/              #   Heading, Text, Label, Code
 │   │
@@ -435,31 +579,43 @@ client/
 ### Layer Import Rules
 
 ```
-                    ┌──────────────┐
-                    │  L1 (Routes) │  Can import: State Layer, L2
-                    └──────┬───────┘  CANNOT import: L3, native HTML
+                    ┌────────────────┐
+                    │    Routes      │  Can import: Pages, State Layer
+                    └──────┬─────────┘  CANNOT: L2, L3, native HTML
                            │ passes data via props
+                    ┌──────▼─────────┐
+                    │ Pages/Layouts  │  Can import: Layouts, L2, L3 layout primitives
+                    └──────┬─────────┘  CAN use native HTML for structural wrappers
+                           │ fills layout slots with L2
                     ┌──────▼────────────────┐
                     │  State Layer           │  Can import: api/, types/, lib
                     │  (Stores + Queries     │  Zustand stores, TanStack hooks,
                     │   + Custom Hooks)      │  custom composed hooks
                     └──────┬────────────────┘
-                           │ consumed by L1 and L2
+                           │ consumed by Routes, Pages, and L2
                     ┌──────▼───────┐
                     │  L2 (Domain) │  Can import: L3, types/, State Layer hooks
-                    └──────┬───────┘  CANNOT import: L1, native HTML
+                    └──────┬───────┘  CANNOT: Routes, Pages, native HTML
                            │ composes
                     ┌──────▼───────┐
                     │  L3 (Design) │  Can import: Radix, Tailwind, React
-                    └──────────────┘  CANNOT import: L1, L2, domain types, State Layer
+                    └──────────────┘  CANNOT: Routes, Pages, L2, domain types, State Layer
 ```
 
 | Layer | Can Import | Cannot Import |
 |-------|-----------|---------------|
-| **L1** (Routes) | L2, State Layer hooks, lib, types | L3, native HTML tags, direct API calls (`fetch`/`axios`) |
-| **State Layer** (Stores/Queries/Hooks) | api/ functions, domain types, lib | L1, L2, L3 components |
-| **L2** (Domain UI) | L3 components, domain types, State Layer hooks, `useTranslation` | L1, native HTML tags (`<div>`, `<button>`, etc.), direct API calls |
-| **L3** (Design System) | Radix, Tailwind, React, generic TypeScript types | L1, L2, State Layer, domain types, `useTranslation` |
+| **Routes** | Pages, State Layer hooks | L2, L3, native HTML, direct API calls |
+| **Pages** | Layouts, L2, State Layer hooks | L3 (except layout primitives), direct API calls |
+| **Layouts** | L3 layout primitives, native HTML (structural only) | L2, State Layer, domain types |
+| **State Layer** | api/ functions, domain types, lib | Routes, Pages, L2, L3 components |
+| **L2** (Domain UI) | L3, domain types, State Layer hooks, `useTranslation` | Routes, Pages, native HTML, direct API calls |
+| **L3** (Design System) | Radix, Tailwind, React, generic TS types | Routes, Pages, L2, State Layer, domain types, `useTranslation` |
+
+**Subtle but important distinctions**:
+- **Pages CAN import L2** (to fill layout slots) but **Layouts CANNOT import L2** (layouts are generic shells with `children`/slot props)
+- **Pages CAN import State Layer hooks** when a page needs to combine data for multiple L2 components in different layout slots
+- **Layouts CAN use L3 layout primitives** (`ScrollArea`, `Separator`) and native HTML for structure, but NOT interactive L3 components (`Button`, `Dialog`)
+- **L2 Views/Widgets/Atoms** all share the same import rules - the granularity is organizational, not a permission boundary
 
 ### Backend Layer Rules
 
