@@ -5,8 +5,8 @@ using LemonDo.Domain.Tasks.ValueObjects;
 public sealed class TaskCard
 {
     public TaskId TaskId { get; }
-    public ColumnId ColumnId { get; internal set; }
-    public int Position { get; internal set; }
+    public ColumnId ColumnId { get; }
+    public int Position { get; }
 
     internal TaskCard(TaskId taskId, ColumnId columnId, int position)
     {

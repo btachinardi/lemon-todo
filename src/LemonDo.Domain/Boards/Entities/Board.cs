@@ -195,8 +195,8 @@ public sealed class Board : Entity<BoardId>
                 DomainError.Validation("position", "Position must be >= 0."));
 
         var fromColumnId = card.ColumnId;
-        card.ColumnId = toColumnId;
-        card.Position = position;
+        _cards.Remove(card);
+        _cards.Add(new TaskCard(taskId, toColumnId, position));
 
         RaiseDomainEvent(new CardMovedEvent(Id, taskId, fromColumnId, toColumnId, position));
         return Result<TaskStatus, DomainError>.Success(column.TargetStatus);
