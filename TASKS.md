@@ -27,7 +27,7 @@
 |---|------|--------|-------|
 | 0.1 | Create TASKS.md tracking document | DONE | This file |
 | 0.2 | Initialize git repository with gitflow | DONE | main + develop branches |
-| 0.3 | Create initial project structure | PENDING | Awaiting bootstrap |
+| 0.3 | Create initial project structure | DONE | .NET Aspire solution + React frontend bootstrapped in Phase 3 |
 
 ## Phase 1: Product Requirements
 
@@ -51,12 +51,12 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 3.1 | Initialize .NET Aspire solution | PENDING | AppHost, ServiceDefaults, API, Domain, Application, Infrastructure |
-| 3.2 | Initialize Vite + React frontend | PENDING | TypeScript, Tailwind 4, Shadcn/ui, React Router |
-| 3.3 | Configure test infrastructure | PENDING | xUnit, FsCheck, Vitest, fast-check |
-| 3.4 | Wire up Aspire ↔ React (AddJavaScriptApp) | PENDING | Dev proxy, CORS |
-| 3.5 | Health check endpoint + Scalar API docs | PENDING | /health, /scalar/v1 |
-| 3.6 | Verify full stack starts and serves | PENDING | `dotnet run` → API + React both reachable |
+| 3.1 | Initialize .NET Aspire solution | DONE | AppHost, ServiceDefaults, API, Domain, Application, Infrastructure. Uses `.slnx` (new .NET 10 XML format). Aspire 13.1.1 templates via NuGet (workload deprecated). |
+| 3.2 | Initialize Vite + React frontend | DONE | Vite 7.3.1, React 19.2, TypeScript 5.9, Tailwind 4.1.18, Shadcn/ui, React Router 7.13, TanStack Query 5.90, Zustand 5.0, i18next |
+| 3.3 | Configure test infrastructure | DONE | MSTest 4.0.1 + MTP (switched from xUnit v3 due to .NET 10 incompatibility), FsCheck 3.3.2, Vitest 4.0.18, fast-check 4.5.3. All tests pass. |
+| 3.4 | Wire up Aspire ↔ React (AddJavaScriptApp) | DONE | AppHost orchestrates API + client, Vite dev proxy for /api, PORT env var |
+| 3.5 | Health check endpoint + Scalar API docs | DONE | /health, /alive (ServiceDefaults), /scalar/v1, /openapi/v1.json |
+| 3.6 | Verify full stack builds and tests pass | DONE | 9/9 projects build (0 warnings), 3 backend + 1 frontend smoke tests pass |
 
 ---
 
@@ -212,13 +212,18 @@
 | 2026-02-14 | OTel Browser SDK over Sentry for frontend telemetry | Unified OTel pipeline (frontend + backend), Aspire-native, free; Sentry as future production add-on |
 | 2026-02-14 | Playwright 3-engine matrix for cross-browser testing | Chromium + Firefox + WebKit covers ~95% of browsers; BrowserStack for real devices in production |
 | 2026-02-14 | Playwright screenshots for visual regression baseline | Built-in `toHaveScreenshot()` in CP5; Percy/Chromatic for production cross-browser visual diffs |
+| 2026-02-14 | MSTest 4 + MTP over xUnit v3 | xUnit v3 templates default to net8.0 (don't auto-detect SDK), active .NET 10 bug (#3413 "catastrophic failure"). MSTest is first-party, auto-targets net10.0, guaranteed compatibility. |
+| 2026-02-14 | FsCheck core API (no runner package) | FsCheck 3.3.2 core package works standalone in any test framework via `Prop.ForAll`/`Check.Quick`. No need for framework-specific adapter. |
+| 2026-02-14 | .NET 10 uses .slnx format | `dotnet new sln` creates `.slnx` (XML-based) by default, not `.sln`. Lighter, cleaner format. |
+| 2026-02-14 | Aspire workload deprecated | Aspire is now distributed as NuGet packages + templates. `dotnet new install Aspire.ProjectTemplates` replaces `dotnet workload install aspire`. |
+| 2026-02-14 | `dotnet test --solution` syntax | .NET 10 changed `dotnet test` to require `--solution` flag for solution paths (no positional argument). |
 
 ---
 
 ## Progress Summary
 
 - **Planning**: DONE (Phase 0 + 1 + 2 complete)
-- **Bootstrap**: NOT STARTED (Phase 3)
+- **Bootstrap**: DONE (Phase 3 - solution, frontend, tests, Aspire integration)
 - **Checkpoint 1**: NOT STARTED (Core Task Management)
 - **Checkpoint 2**: NOT STARTED (Auth & Authorization)
 - **Checkpoint 3**: NOT STARTED (Rich UX & Polish)

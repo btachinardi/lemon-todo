@@ -170,15 +170,68 @@ See [../TASKS.md](../TASKS.md) for the complete checkpoint breakdown with every 
 
 ---
 
+## Phase 3: Codebase Bootstrap
+
+**Date: February 14, 2026**
+
+This phase brought our planning to life. We scaffolded the entire .NET Aspire solution, React frontend, test infrastructure, and wired everything together. The build is clean (9/9 projects, 0 warnings) and all smoke tests pass.
+
+### 3.1 .NET Aspire Solution
+
+We discovered several .NET 10 changes during bootstrapping:
+
+- **`.slnx` format**: `dotnet new sln` now creates `.slnx` (XML-based) by default, not the legacy `.sln`. Lighter and cleaner.
+- **Aspire workload deprecated**: Aspire is now distributed as NuGet packages. We install templates via `dotnet new install Aspire.ProjectTemplates` (v13.1.1).
+- **`dotnet test --solution` syntax**: .NET 10 requires the `--solution` flag for solution paths; positional arguments no longer work.
+
+The solution follows strict DDD layering: Domain ← Application ← Infrastructure ← Api ← AppHost. ServiceDefaults provides health checks (`/health`, `/alive`), OpenTelemetry, and resilience. Scalar serves API docs at `/scalar/v1`.
+
+### 3.2 React Frontend
+
+Vite 7 + React 19 + TypeScript 5.9 with Tailwind CSS 4 (CSS-first, `@tailwindcss/vite` plugin - no PostCSS). Shadcn/ui initialized with path aliases (`@/*` → `./src/*`). All state management libraries installed: TanStack Query 5, Zustand 5, react-i18next.
+
+Frontend folder structure follows our Architecture Tiers + Component Taxonomy from GUIDELINES.md: `app/` (routing, pages, layouts, providers), `domains/` (feature modules), `ui/` (design system), `lib/` (utilities).
+
+### 3.3 The MSTest Decision
+
+**This was our most important technical decision during bootstrap.**
+
+We initially chose xUnit v3, following community convention. But during setup, the xUnit v3 template defaulted to `net8.0` instead of auto-detecting our .NET 10 SDK. This caused immediate compatibility errors when adding project references.
+
+Rather than force-fixing the target framework, we stopped and asked: *"If we're fighting the tooling at bootstrap, did we pick the wrong tool?"*
+
+Research confirmed our instincts:
+- **xUnit v3 has an active .NET 10 bug** (GitHub issue #3413) - "catastrophic failure" in CI environments
+- **xUnit v3 templates don't auto-detect SDK version** - they hardcode `net8.0`
+- **MSTest is first-party** - maintained by Microsoft, ships with every .NET SDK, guaranteed same-day compatibility
+
+We switched to **MSTest 4.0.1 with Microsoft.Testing.Platform (MTP)**:
+- `dotnet new mstest` → auto-targeted `net10.0` with zero friction
+- All project references added without conflicts
+- MTP is the modern test runner replacing VSTest (configured via `global.json`)
+- Requires `<EnableMSTestRunner>true</EnableMSTestRunner>` + `<OutputType>Exe</OutputType>` in each test project
+
+**FsCheck 3.3.2** (property-based testing) works perfectly with MSTest via the core API - `Prop.ForAll` and `Check.Quick` in any `[TestMethod]`. No framework-specific adapter needed.
+
+**Lesson**: First-party tooling matters. When building on a new framework version, choose tools from the same vendor when possible. Community tools may lag behind.
+
+### 3.4 Aspire ↔ React Integration
+
+AppHost orchestrates both the API and React frontend via `AddJavaScriptApp`. Vite's dev server proxies `/api` requests to the API backend. Environment variables (`PORT`, `services__api__https__0`) enable Aspire to control port assignment.
+
+### 3.5 Verification
+
+- **Build**: 9/9 projects compile with 0 warnings, 0 errors
+- **Backend tests**: 3/3 pass (Domain, Application, Api smoke tests via MSTest + MTP)
+- **Frontend tests**: 1/1 pass (Vitest smoke test)
+
+---
+
 ## What's Next
-
-### Phase 3: Codebase Bootstrap
-
-*Coming next: Initialize the .NET Aspire solution with DDD project structure, scaffold the React frontend with Tailwind + Shadcn/ui, wire up test infrastructure (xUnit, FsCheck, Vitest, fast-check), connect Aspire ↔ React via AddJavaScriptApp, and verify health checks + Scalar API docs are serving.*
 
 ### Checkpoint 1: Core Task Management
 
-*Planned: Full-stack task CRUD in single-user mode. Backend: TaskItem/Board/Column entities with TDD, EF Core + SQLite, minimal API endpoints. Frontend: Design System setup, Domain Components (Atoms/Widgets/Views), TanStack Query hooks, Zustand stores, React Router. Integration tests for all endpoints. Working kanban board and list view.*
+*Next up: Full-stack task CRUD in single-user mode. Backend: TaskItem/Board/Column entities with TDD (MSTest + FsCheck), EF Core + SQLite, minimal API endpoints. Frontend: Design System setup, Domain Components (Atoms/Widgets/Views), TanStack Query hooks, Zustand stores, React Router. Integration tests for all endpoints. Working kanban board and list view.*
 
 ### Checkpoint 2: Authentication & Authorization
 

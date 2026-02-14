@@ -36,6 +36,9 @@ test-results/
 appsettings.Development.json
 appsettings.*.local.json
 
+# Local agent/config files
+*.local.*
+
 # IDE
 .idea/
 .vscode/
