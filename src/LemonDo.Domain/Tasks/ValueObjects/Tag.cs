@@ -13,6 +13,9 @@ public sealed class Tag : ValueObject
         Value = value;
     }
 
+    // EF Core constructor
+    private Tag() { Value = default!; }
+
     public static Result<Tag, DomainError> Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
