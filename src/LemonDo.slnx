@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="../tests/LemonDo.Api.Tests/LemonDo.Api.Tests.csproj" />
+  <Project Path="../tests/LemonDo.Application.Tests/LemonDo.Application.Tests.csproj" />
+  <Project Path="../tests/LemonDo.Domain.Tests/LemonDo.Domain.Tests.csproj" />
+  <Project Path="LemonDo.Api/LemonDo.Api.csproj" />
+  <Project Path="LemonDo.AppHost/LemonDo.AppHost.csproj" />
+  <Project Path="LemonDo.Application/LemonDo.Application.csproj" />
+  <Project Path="LemonDo.Domain/LemonDo.Domain.csproj" />
+  <Project Path="LemonDo.Infrastructure/LemonDo.Infrastructure.csproj" />
+  <Project Path="LemonDo.ServiceDefaults/LemonDo.ServiceDefaults.csproj" />
+</Solution>
