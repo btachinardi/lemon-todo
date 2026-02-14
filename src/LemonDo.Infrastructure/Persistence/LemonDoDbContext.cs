@@ -14,6 +14,16 @@ public sealed class LemonDoDbContext(DbContextOptions<LemonDoDbContext> options)
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LemonDoDbContext).Assembly);
     }
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        // SQLite doesn't natively support DateTimeOffset. Store as ISO 8601 strings
+        // which sort lexicographically correctly and support ORDER BY.
+        configurationBuilder.Properties<DateTimeOffset>()
+            .HaveConversion<string>();
+        configurationBuilder.Properties<DateTimeOffset?>()
+            .HaveConversion<string>();
+    }
+
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var entries = ChangeTracker.Entries()

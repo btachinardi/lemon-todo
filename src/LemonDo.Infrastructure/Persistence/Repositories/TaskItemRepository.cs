@@ -11,12 +11,15 @@ public sealed class TaskItemRepository(LemonDoDbContext context) : ITaskItemRepo
 {
     public async Task<TaskItem?> GetByIdAsync(TaskItemId id, CancellationToken ct = default)
     {
-        return await context.Tasks.FirstOrDefaultAsync(t => t.Id == id, ct);
+        return await context.Tasks
+            .Include(t => t.Tags)
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
     }
 
     public async Task<IReadOnlyList<TaskItem>> GetByColumnAsync(ColumnId columnId, CancellationToken ct = default)
     {
         return await context.Tasks
+            .Include(t => t.Tags)
             .Where(t => t.ColumnId == columnId && !t.IsDeleted)
             .OrderBy(t => t.Position)
             .ToListAsync(ct);
@@ -33,6 +36,7 @@ public sealed class TaskItemRepository(LemonDoDbContext context) : ITaskItemRepo
         CancellationToken ct = default)
     {
         var query = context.Tasks
+            .Include(t => t.Tags)
             .Where(t => t.OwnerId == ownerId && !t.IsDeleted);
 
         if (columnId is not null)
@@ -45,7 +49,7 @@ public sealed class TaskItemRepository(LemonDoDbContext context) : ITaskItemRepo
             query = query.Where(t => t.Status == status.Value);
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
-            query = query.Where(t => t.Title.Value.Contains(searchTerm));
+            query = query.Where(t => EF.Property<string>(t, "Title").Contains(searchTerm));
 
         var totalCount = await query.CountAsync(ct);
 

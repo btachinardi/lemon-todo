@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LemonDo.Infrastructure.Migrations
 {
     [DbContext(typeof(LemonDoDbContext))]
-    [Migration("20260214160730_InitialCreate")]
+    [Migration("20260214162002_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -25,7 +25,8 @@ namespace LemonDo.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
+                    b.Property<string>("CreatedAt")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
@@ -36,7 +37,8 @@ namespace LemonDo.Infrastructure.Migrations
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<string>("UpdatedAt")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -54,17 +56,18 @@ namespace LemonDo.Infrastructure.Migrations
                     b.Property<Guid?>("ColumnId")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset?>("CompletedAt")
+                    b.Property<string>("CompletedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
+                    b.Property<string>("CreatedAt")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .HasMaxLength(10000)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset?>("DueDate")
+                    b.Property<string>("DueDate")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsArchived")
@@ -94,7 +97,8 @@ namespace LemonDo.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<string>("UpdatedAt")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
