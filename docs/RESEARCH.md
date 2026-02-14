@@ -214,7 +214,7 @@
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| xUnit | Latest for .NET 10 | Unit + integration testing |
+| xUnit v3 | 3.x | Unit + integration testing |
 | FsCheck | 3.3.2 | Property-based testing |
 | FsCheck.Xunit | 3.3.2 | xUnit integration |
 | Microsoft.AspNetCore.Mvc.Testing | .NET 10 | Integration test host |
@@ -225,16 +225,16 @@
 | Tool | Version | Purpose |
 |------|---------|---------|
 | Vitest | 3.x (Vite 7 compatible) | Unit + component testing |
-| @testing-library/react | Latest | React component testing |
-| fast-check | Latest | Property-based testing (JS) |
-| MSW (Mock Service Worker) | Latest | API mocking in tests |
+| @testing-library/react | 16.x | React component testing |
+| fast-check | 4.x | Property-based testing (JS) |
+| MSW (Mock Service Worker) | 2.x | API mocking in tests |
 
 ### 3.3 E2E Testing
 
 | Tool | Version | Purpose |
 |------|---------|---------|
 | Playwright | 1.58.0 (.NET) | Cross-browser E2E testing |
-| @playwright/test | Latest (JS) | Frontend E2E via Node |
+| @playwright/test | 1.x | Frontend E2E via Node |
 
 ---
 
@@ -255,7 +255,7 @@
 
 ### 4.3 Terraform + Azure
 
-- **Provider**: `hashicorp/azurerm` (latest)
+- **Provider**: `hashicorp/azurerm` 4.x
 - **Target**: Azure Container Apps
 - **Resources**:
   - Container App Environment
@@ -292,15 +292,15 @@ These are the versions we will target for LemonDo MVP:
 
 ```
 # Backend
-dotnet: 10.0 LTS
+dotnet: 10.x (LTS)
 aspire: 13.x
 ef-core: 10.x
 identity: 10.x
-scalar: latest
-fscheck: 3.3.x
-xunit: latest
-serilog: latest
-opentelemetry-dotnet: latest
+scalar: 2.x
+fscheck: 3.x
+xunit: 3.x (v3)
+serilog: 4.x
+opentelemetry-dotnet: 1.x
 
 # Frontend
 node: 23.x
@@ -308,18 +308,24 @@ vite: 7.x
 react: 19.x
 typescript: 5.x
 tailwindcss: 4.x
-shadcn-ui: latest
+shadcn-ui: CLI-based (generates code, no runtime version)
+react-router: 7.x
 react-i18next: 16.x
 i18next: 25.x
 zustand: 5.x
 @tanstack/react-query: 5.x
-vite-plugin-pwa: latest
+vite-plugin-pwa: 1.x
+
+# Testing
 vitest: 3.x
-playwright: latest
+fast-check: 4.x
+@testing-library/react: 16.x
+msw: 2.x
+playwright: 1.x
 
 # Infrastructure
-docker: latest
+docker: 29.x
 terraform: 1.x
-azurerm-provider: latest
-github-actions: latest
+azurerm-provider: 4.x
+github-actions: N/A (platform, not versioned)
 ```
