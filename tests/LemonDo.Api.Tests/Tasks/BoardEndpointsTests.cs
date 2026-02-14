@@ -27,7 +27,7 @@ public sealed class BoardEndpointsTests
     }
 
     [TestMethod]
-    public async Task GetDefaultBoard_CreatesDefaultWith3Columns()
+    public async Task GetDefaultBoard_ReturnsSeededBoardWith3Columns()
     {
         var response = await _client.GetAsync("/api/boards/default");
 

@@ -8,7 +8,7 @@ public static class BoardDtoMapper
     {
         Id = board.Id.Value,
         Name = board.Name.Value,
-        Columns = board.Columns.Select(c => new ColumnDto
+        Columns = board.Columns.OrderBy(c => c.Position).Select(c => new ColumnDto
         {
             Id = c.Id.Value,
             Name = c.Name.Value,

@@ -1,5 +1,8 @@
 namespace LemonDo.Api.Tests.Infrastructure;
 
+using LemonDo.Domain.Boards.Entities;
+using LemonDo.Domain.Boards.Repositories;
+using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -42,10 +45,19 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
         var host = base.CreateHost(builder);
 
-        // Ensure database is created
+        // Ensure database is created and seed default board
         using var scope = host.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<LemonDoDbContext>();
         db.Database.EnsureCreated();
+
+        var boardRepo = scope.ServiceProvider.GetRequiredService<IBoardRepository>();
+        var existing = boardRepo.GetDefaultForUserAsync(UserId.Default).GetAwaiter().GetResult();
+        if (existing is null)
+        {
+            var result = Board.CreateDefault(UserId.Default);
+            boardRepo.AddAsync(result.Value).GetAwaiter().GetResult();
+            db.SaveChanges();
+        }
 
         return host;
     }
