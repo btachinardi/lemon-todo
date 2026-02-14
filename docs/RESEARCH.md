@@ -75,20 +75,34 @@
 - **Enterprise**: Scalar Registry for API governance, SDK generation
 - **Source**: [Scalar GitHub](https://github.com/scalar/scalar)
 
-### 1.6 FsCheck 3.3.2
+### 1.6 MSTest 4 + Microsoft.Testing.Platform (MTP)
+
+- **Version**: MSTest 4.0.1 (latest stable)
+- **Purpose**: First-party .NET testing framework by Microsoft
+- **Key Advantages**:
+  - Built-in `dotnet new mstest` template auto-targets the installed SDK (net10.0 with zero friction)
+  - Guaranteed same-day compatibility with every .NET release (first-party maintenance)
+  - Microsoft.Testing.Platform (MTP) replaces VSTest as the modern test runner
+  - `[TestClass]`, `[TestMethod]`, `[DataRow]` attributes for clear test structure
+  - Parallel test execution, test filtering, and rich IDE integration
+  - Requires `<EnableMSTestRunner>true</EnableMSTestRunner>` + `<OutputType>Exe</OutputType>` for MTP mode
+- **Why MSTest over xUnit v3**: xUnit v3 templates default to net8.0 (not auto-detecting SDK version), and have an active .NET 10 compatibility bug (GitHub issue #3413 - "catastrophic failure" in CI). MSTest is Microsoft-maintained with zero-friction .NET 10 support.
+- **Source**: [Microsoft Learn - MSTest](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-mstest-intro)
+
+### 1.7 FsCheck 3.3.2
 
 - **Version**: 3.3.2 (latest stable)
 - **Purpose**: Property-based testing for .NET
 - **Features**:
   - Random structured input generation
   - Automatic shrinking to minimal failing case
-  - Integration with xUnit (`FsCheck.Xunit`), NUnit, MSTest
+  - Core API works with any test framework (MSTest, xUnit, NUnit)
   - Custom generators and arbitraries
   - Stateful testing support
-- **Usage**: `[Property]` attribute for xUnit integration
+- **Usage**: Core `FsCheck` package with `Prop.ForAll` / `Check.Quick` in any `[TestMethod]`
 - **Source**: [FsCheck GitHub](https://github.com/fscheck/FsCheck)
 
-### 1.7 OpenTelemetry for .NET
+### 1.8 OpenTelemetry for .NET
 
 - **Integration**: Built into Aspire ServiceDefaults
 - **Pillars**: Logging, Tracing, Metrics via OpenTelemetry SDK
@@ -231,9 +245,8 @@
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| xUnit v3 | 3.x | Unit + integration testing |
-| FsCheck | 3.3.2 | Property-based testing |
-| FsCheck.Xunit | 3.3.2 | xUnit integration |
+| MSTest 4 + MTP | 4.0.1 | Unit + integration testing (first-party) |
+| FsCheck | 3.3.2 | Property-based testing (core API) |
 | Microsoft.AspNetCore.Mvc.Testing | .NET 10 | Integration test host |
 | Microsoft.EntityFrameworkCore.InMemory | .NET 10 | In-memory DB for tests |
 
@@ -241,7 +254,7 @@
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| Vitest | 3.x (Vite 7 compatible) | Unit + component testing |
+| Vitest | 4.x (Vite 7 compatible) | Unit + component testing |
 | @testing-library/react | 16.x | React component testing |
 | fast-check | 4.x | Property-based testing (JS) |
 | MSW (Mock Service Worker) | 2.x | API mocking in tests |
@@ -366,7 +379,7 @@ ef-core: 10.x
 identity: 10.x
 scalar: 2.x
 fscheck: 3.x
-xunit: 3.x (v3)
+mstest: 4.x (MTP runner)
 serilog: 4.x
 opentelemetry-dotnet: 1.x
 
@@ -388,7 +401,7 @@ vite-plugin-pwa: 1.x
 @opentelemetry/exporter-trace-otlp-http: 0.x (experimental, follows OTel JS contrib)
 
 # Testing
-vitest: 3.x
+vitest: 4.x
 fast-check: 4.x
 @testing-library/react: 16.x
 msw: 2.x

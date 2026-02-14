@@ -49,12 +49,12 @@ cd src/client && pnpm install && pnpm dev     # Frontend
 ### Running Tests
 
 ```bash
-dotnet test                                        # All backend tests
-cd src/client && pnpm test                         # Frontend tests
-cd tests/LemonDo.E2E.Tests && dotnet test          # E2E tests
+dotnet test --solution src/LemonDo.slnx            # All backend tests (MSTest + MTP)
+cd src/client && pnpm test                         # Frontend tests (Vitest)
+cd tests/LemonDo.E2E.Tests && dotnet test          # E2E tests (Playwright)
 
 # With coverage
-dotnet test --collect:"XPlat Code Coverage"
+dotnet test --solution src/LemonDo.slnx --collect:"XPlat Code Coverage"
 cd src/client && pnpm test:coverage
 ```
 
@@ -94,8 +94,8 @@ Highlights:
 | **Client State** | Zustand 5 | 5.x |
 | **i18n** | react-i18next | 16.x |
 | **PWA** | vite-plugin-pwa | 1.x |
-| **Backend Tests** | xUnit v3 + FsCheck | 3.x |
-| **Frontend Tests** | Vitest + fast-check | 3.x / 4.x |
+| **Backend Tests** | MSTest 4 + FsCheck | 4.x / 3.x |
+| **Frontend Tests** | Vitest + fast-check | 4.x / 4.x |
 | **E2E Tests** | Playwright | 1.x |
 | **Backend Observability** | OpenTelemetry + Serilog | 1.x / 4.x |
 | **Frontend Observability** | OTel Browser SDK | 2.x |
