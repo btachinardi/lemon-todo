@@ -400,9 +400,11 @@ See [GUIDELINES.md](./GUIDELINES.md) for:
 
 Beyond CP5, the roadmap is organized into capability tiers:
 
-#### Tier 1: AI-Powered Task Management
+#### Tier 1: AI & Agent Ecosystem
 
 - **AI Assistant** — Natural language chat interface for managing tasks ("create a high-priority task to review the Q1 report by Friday", "what's overdue this week?", "summarize my board status"). Built as a new bounded context with a clean adapter pattern — swap between Azure OpenAI, Anthropic, or local models without domain changes.
+- **MCP Server** — Expose LemonDo as a [Model Context Protocol](https://modelcontextprotocol.io) server. AI agents (Claude, Copilot, custom) can create/complete/move tasks, query board status, and manage projects through standardized tool definitions. Our use case layer maps naturally to MCP tools — each command/query becomes an MCP tool with typed parameters and responses. This is the critical bridge to a future where agents orchestrate work across systems.
+- **MCP Client** — LemonDo as an MCP client, connecting to external MCP servers for calendar, email, CRM, and code repository access. The AI assistant can pull context from a user's entire toolchain without custom integrations for each service.
 - **Smart Categorization** — Auto-suggest priority, tags, and columns based on task title content and historical patterns.
 - **Daily Digest** — AI-generated summary of what was accomplished, what's in progress, and what needs attention. Delivered via email or in-app notification.
 - **Natural Language Filters** — "Show me tasks Marcus created last week that are still in progress" → query builder.
@@ -451,6 +453,45 @@ Beyond CP5, the roadmap is organized into capability tiers:
 - **GDPR Compliance** — Right to erasure, data portability (full JSON export), consent management, Data Protection Officer workflow.
 - **SOC 2 Type II** — Our audit trail and encryption foundations make this achievable. Add formal policies, evidence collection, and annual audit.
 - **Data Residency** — Region-specific database deployments for organizations with data sovereignty requirements.
+
+#### Tier 7: Product & Growth
+
+This tier shifts focus from *what we build* to *how we grow*. Features here are about the business, not just the code.
+
+**Monetization & Conversion**:
+- **Freemium Model** — Free tier (1 user, 3 boards, 100 tasks), Pro tier (unlimited, integrations, themes), Team tier (collaboration, real-time, admin), Enterprise tier (HIPAA, SSO, data residency, custom fields).
+- **Conversion Journey** — Land on page → interactive demo → sign up free (no credit card) → guided onboarding → habit formation → hit a limit → contextual upgrade prompt → Pro. No friction walls — users feel the value before seeing the price.
+- **Upgrade Prompts at Natural Friction Points** — "You've used 3 of 3 boards. Upgrade to Pro for unlimited boards." Shown at the moment of need, not in a settings page.
+- **Self-Serve Billing Portal** — Stripe integration for subscription management, invoices, plan changes. No sales calls required for Pro/Team tiers.
+- **Revenue Metrics** — MRR, ARPU, conversion rate, LTV, churn rate. Dashboard for internal business health monitoring.
+
+**Landing Page & Marketing**:
+- **Landing Page** — Hero with clear value proposition, interactive live demo (try before signup), social proof (testimonials, company logos), comparison tables (vs Trello, Asana, Jira), pricing tiers with clear differentiators.
+- **Use Case Pages** — SEO-optimized pages: "LemonDo for Healthcare Teams", "LemonDo for Freelancers", "LemonDo for Software Teams." Show the user what the platform can do *for them*, not what they can do *with the platform*.
+- **Template Gallery** — Pre-built boards for specific workflows (Sprint Planning, Personal GTD, Client Onboarding, Content Calendar). Users start with a proven structure, not a blank board. Community-contributed templates with ratings.
+- **Success Stories** — Case studies with real metrics: "How Team X reduced task completion time by 40%." Video testimonials, before/after screenshots.
+- **Content Marketing** — Blog with productivity tips, workflow guides, and thought leadership. SEO funnel: search → blog → signup → onboarding.
+
+**Retention & Customer Success**:
+- **Onboarding Optimization** — Track drop-off at every onboarding step. A/B test variations. Measure time-to-first-completed-task (our activation metric).
+- **Churn Prevention** — Identify at-risk users via usage signals (7+ days inactive, declining task creation, never completed a task). Automated re-engagement: email sequences, in-app prompts, "We miss you" notifications.
+- **Automated Customer Success** — Health score per user/team based on WATC (Weekly Active Task Completers), feature adoption depth, and engagement trends. Surface at-risk accounts to customer success team before they churn.
+- **NPS / CSAT Surveys** — In-app micro-surveys at strategic moments (after completing 10th task, after first week, monthly). Track satisfaction trends, route detractors to support.
+- **Lifecycle Emails** — Welcome sequence, feature discovery drips ("Did you know you can..."), milestone celebrations ("You completed 100 tasks!"), dormancy re-engagement.
+
+#### Tier 8: UX Excellence
+
+Features focused on *how it feels* to use LemonDo, not just what it does.
+
+- **Command Palette** — Cmd+K to search everything: tasks, boards, actions, settings. Power users never touch the mouse. Fuzzy search with recent items and contextual suggestions.
+- **Keyboard Shortcuts** — Full keyboard navigation for every action. `N` for new task, `E` to edit, `D` to mark done, arrow keys to navigate board. Discoverable via `?` overlay.
+- **Undo Everywhere** — Every destructive action gets a 5-second undo toast, not a confirmation dialog. Delete a task? Undo. Move a column? Undo. Archive a board? Undo. Faster and less disruptive than "Are you sure?" modals.
+- **Batch Operations** — Multi-select tasks (Shift+click, Cmd+click), bulk move between columns, bulk tag, bulk delete, bulk change priority. Essential for power users managing dozens of tasks.
+- **Progressive Disclosure** — New users see simplified UI (single board, basic task cards). Power features (filters, custom fields, keyboard shortcuts) reveal progressively as users demonstrate readiness. No overwhelming first-day experience.
+- **Micro-Interactions** — Confetti on task completion (our P0 celebration feature), smooth drag physics with haptic-like feedback, satisfying checkbox animation, subtle board column count badges, progress ring on boards showing completion percentage.
+- **Smart Defaults** — Pre-fill priority based on keywords ("urgent" → Critical, "meeting" → adds due date), auto-suggest tags from recent usage, remember last-used column for quick-add.
+- **Contextual Empty States** — Not just "No tasks yet" but specific, actionable prompts: "Create your first task" with a single CTA, "No results for this filter" with a "Clear filters" link, "This column is empty — drag tasks here or create one" with inline quick-add.
+- **Session Analytics** — PostHog for heatmaps, session replays, and funnel analysis. Understand how users *actually* use the product, not how we *assume* they do. Feed insights back into UX improvements.
 
 ---
 
