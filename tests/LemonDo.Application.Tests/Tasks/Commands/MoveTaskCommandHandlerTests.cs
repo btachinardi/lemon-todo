@@ -34,7 +34,9 @@ public sealed class MoveTaskCommandHandlerTests
         _boardRepository.GetDefaultForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(_board);
 
-        _handler = new MoveTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork, NullLogger<MoveTaskCommandHandler>.Instance, Metrics);
+        var currentUser = Substitute.For<ICurrentUserService>();
+        currentUser.UserId.Returns(UserId.Default);
+        _handler = new MoveTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork, currentUser, NullLogger<MoveTaskCommandHandler>.Instance, Metrics);
     }
 
     [TestMethod]

@@ -33,7 +33,9 @@ public sealed class DeleteTaskCommandHandlerTests
         _boardRepository.GetDefaultForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(_board);
 
-        _handler = new DeleteTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork, Substitute.For<ILogger<DeleteTaskCommandHandler>>(), Metrics);
+        var currentUser = Substitute.For<ICurrentUserService>();
+        currentUser.UserId.Returns(UserId.Default);
+        _handler = new DeleteTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork, currentUser, Substitute.For<ILogger<DeleteTaskCommandHandler>>(), Metrics);
     }
 
     [TestMethod]

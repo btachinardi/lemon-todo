@@ -22,7 +22,9 @@ public sealed class ListTasksQueryHandlerTests
     public void Setup()
     {
         _repository = Substitute.For<ITaskRepository>();
-        _handler = new ListTasksQueryHandler(_repository, NullLogger<ListTasksQueryHandler>.Instance);
+        var currentUser = Substitute.For<ICurrentUserService>();
+        currentUser.UserId.Returns(UserId.Default);
+        _handler = new ListTasksQueryHandler(_repository, currentUser, NullLogger<ListTasksQueryHandler>.Instance);
     }
 
     [TestMethod]
