@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using LemonDo.Api.Contracts.Auth;
 using LemonDo.Api.Tests.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Testing;
 
 [TestClass]
 public sealed class AuthEndpointTests
@@ -37,9 +38,11 @@ public sealed class AuthEndpointTests
         var auth = await response.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(auth);
         Assert.IsNotNull(auth.AccessToken);
-        Assert.IsNotNull(auth.RefreshToken);
         Assert.AreEqual("new@lemondo.dev", auth.User.Email);
         Assert.AreEqual("New User", auth.User.DisplayName);
+
+        // Refresh token should be in HttpOnly cookie, NOT in JSON body
+        AssertRefreshTokenCookie(response);
     }
 
     [TestMethod]
@@ -79,8 +82,10 @@ public sealed class AuthEndpointTests
         var auth = await response.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(auth);
         Assert.IsNotNull(auth.AccessToken);
-        Assert.IsNotNull(auth.RefreshToken);
         Assert.AreEqual(CustomWebApplicationFactory.TestUserEmail, auth.User.Email);
+
+        // Refresh token should be in HttpOnly cookie, NOT in JSON body
+        AssertRefreshTokenCookie(response);
     }
 
     [TestMethod]
@@ -124,29 +129,40 @@ public sealed class AuthEndpointTests
     }
 
     [TestMethod]
-    public async Task Should_RefreshToken_When_ValidRefreshToken()
+    public async Task Should_RefreshToken_When_ValidCookie()
     {
-        // Login to get tokens
+        // Login to get refresh token cookie
         var loginResponse = await _anonymousClient.PostAsJsonAsync("/api/auth/login",
             new LoginRequest(CustomWebApplicationFactory.TestUserEmail, CustomWebApplicationFactory.TestUserPassword));
         var auth = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(auth);
 
-        // Refresh
-        var refreshResponse = await _anonymousClient.PostAsJsonAsync("/api/auth/refresh",
-            new RefreshRequest(auth.RefreshToken));
+        // Extract the refresh cookie from the login response
+        var refreshCookie = ExtractRefreshTokenCookie(loginResponse);
+        Assert.IsNotNull(refreshCookie, "Login should set refresh_token cookie");
+
+        // Send refresh request with cookie
+        var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "/api/auth/refresh");
+        refreshRequest.Headers.Add("Cookie", refreshCookie);
+
+        var refreshResponse = await _anonymousClient.SendAsync(refreshRequest);
 
         Assert.AreEqual(HttpStatusCode.OK, refreshResponse.StatusCode);
         var newAuth = await refreshResponse.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(newAuth);
         Assert.AreNotEqual(auth.AccessToken, newAuth.AccessToken);
+        AssertRefreshTokenCookie(refreshResponse);
     }
 
     [TestMethod]
-    public async Task Should_ReturnUnauthorized_When_RefreshWithInvalidToken()
+    public async Task Should_ReturnUnauthorized_When_RefreshWithNoCookie()
     {
-        var response = await _anonymousClient.PostAsJsonAsync("/api/auth/refresh",
-            new RefreshRequest("invalid-token"));
+        // Use a fresh client with no cookie jar to avoid inheriting cookies from other tests
+        using var freshClient = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            HandleCookies = false,
+        });
+        var response = await freshClient.PostAsync("/api/auth/refresh", null);
 
         Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -168,26 +184,58 @@ public sealed class AuthEndpointTests
     [TestMethod]
     public async Task Should_InvalidateRefreshToken_When_Logout()
     {
-        // Login to get tokens
+        // Login to get tokens + cookie
         var loginResponse = await _anonymousClient.PostAsJsonAsync("/api/auth/login",
             new LoginRequest(CustomWebApplicationFactory.TestUserEmail, CustomWebApplicationFactory.TestUserPassword));
         var auth = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(auth);
+        var refreshCookie = ExtractRefreshTokenCookie(loginResponse);
+        Assert.IsNotNull(refreshCookie);
 
-        // Logout with the refresh token
-        var logoutClient = _factory.CreateClient();
-        logoutClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", auth.AccessToken);
+        // Logout with the refresh token cookie
+        var logoutRequest = new HttpRequestMessage(HttpMethod.Post, "/api/auth/logout");
+        logoutRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
+        logoutRequest.Headers.Add("Cookie", refreshCookie);
 
-        var logoutResponse = await logoutClient.PostAsJsonAsync("/api/auth/logout",
-            new RefreshRequest(auth.RefreshToken));
+        var logoutResponse = await _anonymousClient.SendAsync(logoutRequest);
         Assert.AreEqual(HttpStatusCode.OK, logoutResponse.StatusCode);
 
-        // Refresh should now fail
-        var refreshResponse = await _anonymousClient.PostAsJsonAsync("/api/auth/refresh",
-            new RefreshRequest(auth.RefreshToken));
-        Assert.AreEqual(HttpStatusCode.Unauthorized, refreshResponse.StatusCode);
+        // Refresh should now fail with the old cookie
+        var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "/api/auth/refresh");
+        refreshRequest.Headers.Add("Cookie", refreshCookie);
 
-        logoutClient.Dispose();
+        var refreshResponse = await _anonymousClient.SendAsync(refreshRequest);
+        Assert.AreEqual(HttpStatusCode.Unauthorized, refreshResponse.StatusCode);
+    }
+
+    /// <summary>Asserts that the response contains a Set-Cookie header for refresh_token with correct flags.</summary>
+    private static void AssertRefreshTokenCookie(HttpResponseMessage response)
+    {
+        Assert.IsTrue(response.Headers.TryGetValues("Set-Cookie", out var cookies),
+            "Response should have Set-Cookie header");
+
+        var cookieValues = cookies.ToList();
+        var refreshCookie = cookieValues.FirstOrDefault(c => c.StartsWith("refresh_token="));
+        Assert.IsNotNull(refreshCookie, "Set-Cookie should contain refresh_token");
+        Assert.IsTrue(refreshCookie.Contains("httponly", StringComparison.OrdinalIgnoreCase),
+            "refresh_token cookie should be HttpOnly");
+        Assert.IsTrue(refreshCookie.Contains("samesite=strict", StringComparison.OrdinalIgnoreCase),
+            "refresh_token cookie should be SameSite=Strict");
+        Assert.IsTrue(refreshCookie.Contains("path=/api/auth", StringComparison.OrdinalIgnoreCase),
+            "refresh_token cookie should be scoped to /api/auth");
+    }
+
+    /// <summary>Extracts the refresh_token cookie value from Set-Cookie for use in subsequent requests.</summary>
+    private static string? ExtractRefreshTokenCookie(HttpResponseMessage response)
+    {
+        if (!response.Headers.TryGetValues("Set-Cookie", out var cookies))
+            return null;
+
+        var setCookie = cookies.FirstOrDefault(c => c.StartsWith("refresh_token="));
+        if (setCookie is null) return null;
+
+        // Extract "refresh_token=value" (before the first semicolon)
+        var semiIndex = setCookie.IndexOf(';');
+        return semiIndex > 0 ? setCookie[..semiIndex] : setCookie;
     }
 }

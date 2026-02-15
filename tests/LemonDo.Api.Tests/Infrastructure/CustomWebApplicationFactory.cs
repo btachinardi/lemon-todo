@@ -23,20 +23,21 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
     public const string TestUserPassword = "TestPass123!";
     public const string TestUserDisplayName = "Test User";
 
-    private static readonly Dictionary<string, string?> TestJwtSettings = new()
+    private static readonly Dictionary<string, string?> TestSettings = new()
     {
         ["Jwt:Issuer"] = "LemonDo",
         ["Jwt:Audience"] = "LemonDo",
         ["Jwt:SecretKey"] = "test-secret-key-at-least-32-characters-long!!",
         ["Jwt:AccessTokenExpirationMinutes"] = "60",
         ["Jwt:RefreshTokenExpirationDays"] = "7",
+        ["RateLimiting:Auth:PermitLimit"] = "10000",
     };
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureAppConfiguration((_, config) =>
         {
-            config.AddInMemoryCollection(TestJwtSettings);
+            config.AddInMemoryCollection(TestSettings);
         });
 
         builder.ConfigureServices(services =>
@@ -54,6 +55,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.AddDbContext<LemonDoDbContext>(options =>
                 options.UseSqlite(_connection)
                     .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
+
         });
     }
 
