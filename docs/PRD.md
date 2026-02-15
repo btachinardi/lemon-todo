@@ -1,342 +1,257 @@
 # LemonDo - Product Requirements Document
 
-> **Version**: 1.0 (Initial)
 > **Date**: 2026-02-13
-> **Status**: Draft
-> **Author**: Bruno (Product Owner / Lead Engineer)
+> **Status**: Active
+> **Previous Version**: [PRD.draft.md](./PRD.draft.md) (Initial Draft)
+> **Informed By**: [SCENARIOS.md](./SCENARIOS.md) (User Storyboards)
 
 ---
 
-## 1. Product Vision
+## Review Summary
 
-**LemonDo** is a task management platform that combines the simplicity of a to-do list with the power of a Kanban board. It is designed for individuals and small teams who need a secure, compliant, and delightful way to organize their work.
+After creating detailed user scenarios and personas (SCENARIOS.md), several insights emerged that refine our initial PRD:
 
-### 1.1 Mission Statement
+### Key Insights from Scenario Analysis
 
-Empower users to capture, organize, and complete their work with zero friction, while maintaining enterprise-grade security and compliance standards.
+1. **Quick-add is the killer feature**: Sarah's workflow shows that the #1 interaction is rapidly capturing tasks. The task creation UX must be lightning-fast (< 2 taps/clicks to add a task).
 
-### 1.2 Target Audience
+2. **Mobile-first is not optional**: Sarah uses her phone 60% of the time. Kanban drag-and-drop on mobile must be native-feeling (long-press + drag), not a desktop afterthought.
 
-- **Primary**: Knowledge workers, freelancers, and small team leads who need a personal/team task management tool
-- **Secondary**: Organizations in regulated industries (healthcare, finance) that require HIPAA-compliant task management
-- **Tertiary**: Product managers and team leads who need visibility into team progress
+3. **Onboarding must be emotionally rewarding**: The create-then-complete loop in onboarding needs micro-celebrations (animations, feedback) to establish positive association.
 
-### 1.3 Value Proposition
+4. **PII redaction is the default, not the exception**: Diana's admin workflow shows that revealing PII should require explicit action. Default to redacted everywhere.
 
-LemonDo is the only task management tool that combines consumer-grade UX with enterprise-grade compliance. Users get a beautiful, fast, mobile-first experience while administrators get full auditability and HIPAA-compliant data handling.
+5. **Offline-first is table stakes for mobile**: Sarah's flight scenario proves PWA offline must work for core operations (view, create, complete tasks).
 
----
-
-## 2. Functional Requirements
-
-### FR-001: User Authentication
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-001.1 | Email/password registration with email verification | P0 |
-| FR-001.2 | Email/password login with JWT token management | P0 |
-| FR-001.3 | Social OAuth login (Google, Microsoft, GitHub) | P1 |
-| FR-001.4 | Password reset via email link | P0 |
-| FR-001.5 | Session management with refresh tokens | P0 |
-| FR-001.6 | Multi-factor authentication (TOTP) | P1 |
-| FR-001.7 | Account lockout after failed attempts | P0 |
-| FR-001.8 | "Remember me" functionality | P2 |
-
-### FR-002: Role-Based Access Control (RBAC)
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-002.1 | Predefined roles: User, Admin, SystemAdmin | P0 |
-| FR-002.2 | Role assignment by SystemAdmin | P0 |
-| FR-002.3 | Permission-based endpoint authorization | P0 |
-| FR-002.4 | Role hierarchy (SystemAdmin > Admin > User) | P0 |
-| FR-002.5 | Custom permission sets per role | P1 |
-| FR-002.6 | Role-based UI element visibility | P0 |
-
-### FR-003: Task Management
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-003.1 | Create task with title, description, priority, due date | P0 |
-| FR-003.2 | Edit task properties | P0 |
-| FR-003.3 | Delete task (soft delete with audit trail) | P0 |
-| FR-003.4 | Mark task as complete/incomplete | P0 |
-| FR-003.5 | Assign priority levels (None, Low, Medium, High, Critical) | P0 |
-| FR-003.6 | Set due dates with reminder notifications | P1 |
-| FR-003.7 | Add tags/labels to tasks | P1 |
-| FR-003.8 | Task search and filtering | P1 |
-| FR-003.9 | Bulk operations (complete, delete, move) | P2 |
-| FR-003.10 | Task archiving | P1 |
-
-### FR-004: Kanban Board
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-004.1 | Default columns: To Do, In Progress, Done | P0 |
-| FR-004.2 | Drag-and-drop task movement between columns | P0 |
-| FR-004.3 | Custom column creation/editing/deletion | P1 |
-| FR-004.4 | Column reordering | P1 |
-| FR-004.5 | WIP (Work In Progress) limits per column | P2 |
-| FR-004.6 | Swimlanes by priority or tag | P2 |
-
-### FR-005: List View
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-005.1 | Sortable table/list of all tasks | P0 |
-| FR-005.2 | Sort by title, priority, due date, status, created date | P0 |
-| FR-005.3 | Inline editing of task properties | P1 |
-| FR-005.4 | Grouping by status, priority, or due date | P1 |
-| FR-005.5 | Pagination or infinite scroll | P0 |
-
-### FR-006: System Administration
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-006.1 | User management (view, deactivate, role assignment) | P0 |
-| FR-006.2 | Complete audit log of all system actions | P0 |
-| FR-006.3 | Audit log search and filtering | P1 |
-| FR-006.4 | System health dashboard | P1 |
-| FR-006.5 | User activity reports | P1 |
-| FR-006.6 | Data export capabilities | P2 |
-
-### FR-007: HIPAA Compliance
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-007.1 | PII/PHI data encryption at rest | P0 |
-| FR-007.2 | PII/PHI redaction in system logs | P0 |
-| FR-007.3 | PII/PHI redaction in admin views (masked with reveal) | P0 |
-| FR-007.4 | Comprehensive audit trail for data access | P0 |
-| FR-007.5 | Data retention policies | P1 |
-| FR-007.6 | Right to erasure (data deletion) | P1 |
-| FR-007.7 | Access control audit reports | P1 |
-| FR-007.8 | BAA (Business Associate Agreement) support structure | P2 |
-
-### FR-008: Onboarding System
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-008.1 | Welcome screen after first registration | P0 |
-| FR-008.2 | Guided tour: create first task | P0 |
-| FR-008.3 | Guided tour: complete first task | P0 |
-| FR-008.4 | Guided tour: explore Kanban board | P1 |
-| FR-008.5 | Progress indicators during onboarding | P0 |
-| FR-008.6 | Skip option for experienced users | P0 |
-| FR-008.7 | Onboarding completion celebration | P1 |
-| FR-008.8 | Re-trigger onboarding from settings | P2 |
-
-### FR-009: Communication & Churn Prevention
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-009.1 | Welcome email after registration | P0 |
-| FR-009.2 | Inactivity reminder emails (3, 7, 14 days) | P1 |
-| FR-009.3 | Weekly task summary email (opt-in) | P2 |
-| FR-009.4 | Achievement/milestone notifications | P2 |
-| FR-009.5 | In-app notification center | P1 |
-
-### FR-010: Product Analytics
-
-| ID | Requirement | Priority |
-|----|-------------|----------|
-| FR-010.1 | Registration funnel tracking | P0 |
-| FR-010.2 | Onboarding completion rates | P0 |
-| FR-010.3 | Feature adoption tracking | P1 |
-| FR-010.4 | Task completion rates and velocity | P1 |
-| FR-010.5 | User retention cohort analysis | P1 |
-| FR-010.6 | Session duration and frequency metrics | P2 |
-| FR-010.7 | Conversion funnel from signup to active user | P0 |
+6. **Analytics must be privacy-first**: HIPAA requires all analytics events to hash or exclude PII. Our analytics architecture must be designed with this constraint from day one.
 
 ---
 
-## 3. Non-Functional Requirements
+## 1. Revised Functional Requirements
 
-### NFR-001: Performance
+### FR-001: User Authentication (Unchanged)
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-001.1 | API response time (p95) | < 200ms |
-| NFR-001.2 | Frontend First Contentful Paint | < 1.5s |
-| NFR-001.3 | Frontend Time to Interactive | < 3.0s |
-| NFR-001.4 | Lighthouse Performance score | > 90 |
-| NFR-001.5 | API throughput | > 1000 req/s |
+No changes from initial PRD. The scenario analysis confirms all requirements.
 
-### NFR-002: Responsive Design
+### FR-002: RBAC (Minor Addition)
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-002.1 | Mobile viewport (320px - 768px) | Full functionality |
-| NFR-002.2 | Tablet viewport (768px - 1024px) | Full functionality |
-| NFR-002.3 | Desktop viewport (1024px+) | Full functionality |
-| NFR-002.4 | Touch-friendly tap targets | >= 44px |
-| NFR-002.5 | Kanban horizontal scroll on mobile | Native gesture support |
+**Added**:
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-002.7 | PII reveal action requires SystemAdmin role and creates audit event | P0 |
 
-### NFR-003: Progressive Web App
+**Rationale**: Scenario S05 (Diana) shows that PII reveal is a privileged action that must be tracked.
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-003.1 | Installable on mobile/desktop | PWA manifest |
-| NFR-003.2 | Offline task viewing | Service worker cache |
-| NFR-003.3 | Background sync for offline changes | Workbox |
-| NFR-003.4 | Push notification support | Web Push API |
+### FR-003: Task Management (Refined)
 
-### NFR-004: API Documentation
+**Added/Modified**:
+| ID | Requirement | Priority | Change |
+|----|-------------|----------|--------|
+| FR-003.11 | Quick-add mode: single input field, Enter to create | P0 | NEW - Scenario S02 |
+| FR-003.12 | Full-form mode: all fields visible for detailed tasks | P0 | NEW - Scenario S04 |
+| FR-003.1 | Create task - minimum required: title only | P0 | MODIFIED - was title + description |
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-004.1 | OpenAPI 3.1 specification | Auto-generated |
-| NFR-004.2 | Scalar API reference UI | /scalar endpoint |
-| NFR-004.3 | Interactive request testing | Built-in |
-| NFR-004.4 | Authentication flow documentation | Included |
+**Rationale**: Sarah needs quick-add (title only, instant). Marcus needs full-form (all fields). Both must be first-class.
 
-### NFR-005: Observability
+### FR-004: Kanban Board (Refined)
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-005.1 | Structured logging (backend) | Serilog + OTLP |
-| NFR-005.2 | Distributed tracing | OpenTelemetry |
-| NFR-005.3 | Metrics collection | Prometheus-compatible |
-| NFR-005.4 | Frontend error tracking | OpenTelemetry browser |
-| NFR-005.5 | Aspire Dashboard integration | Built-in |
-| NFR-005.6 | Health check endpoints | /health, /ready |
+**Added**:
+| ID | Requirement | Priority | Change |
+|----|-------------|----------|--------|
+| FR-004.7 | Mobile: long-press to pick up, drag to column | P0 | NEW |
+| FR-004.8 | Drop zone visual indicators during drag | P0 | NEW |
+| FR-004.9 | Card count per column visible in header | P0 | NEW |
 
-### NFR-006: CI/CD
+**Rationale**: Scenario S04 (Marcus) specifically describes needing visual feedback during drag operations.
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-006.1 | Automated build on push | GitHub Actions |
-| NFR-006.2 | Automated test suite execution | All test types |
-| NFR-006.3 | Docker image building | Multi-stage builds |
-| NFR-006.4 | Deployment to staging on PR merge | Automated |
-| NFR-006.5 | Production deployment on release tag | Manual trigger |
+### FR-005: List View (Unchanged)
 
-### NFR-007: UI/UX
+No changes needed.
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-007.1 | Light and dark theme | System preference detection |
-| NFR-007.2 | Consistent design system | Shadcn/ui + Radix |
-| NFR-007.3 | WCAG 2.1 AA accessibility | Minimum standard |
-| NFR-007.4 | Smooth animations and transitions | 60fps |
-| NFR-007.5 | Loading states and skeletons | All async operations |
-| NFR-007.6 | Error states with recovery actions | All failure points |
+### FR-006: System Administration (Refined)
 
-### NFR-008: Internationalization
+**Added**:
+| ID | Requirement | Priority | Change |
+|----|-------------|----------|--------|
+| FR-006.7 | PII default-redacted in all admin views | P0 | NEW |
+| FR-006.8 | "Reveal" button per field with confirmation dialog | P0 | NEW |
+| FR-006.9 | PII reveal logged as audit event | P0 | NEW |
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-008.1 | Frontend i18n with react-i18next | All user-facing strings |
-| NFR-008.2 | Backend i18n for API messages | All error/validation messages |
-| NFR-008.3 | Initial languages: English, Portuguese, Spanish | MVP |
-| NFR-008.4 | RTL layout support | Infrastructure ready |
-| NFR-008.5 | Date/number/currency localization | Locale-aware |
+**Rationale**: Scenario S05 (Diana) establishes that PII must be hidden by default even for admins.
 
-### NFR-009: Containerization & Deployment
+### FR-007: HIPAA Compliance (Refined)
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-009.1 | Docker multi-stage builds | API + Frontend |
-| NFR-009.2 | Docker Compose for local dev | Full stack |
-| NFR-009.3 | Terraform Azure configuration | Container Apps |
-| NFR-009.4 | Aspire orchestration | Local + cloud |
-| NFR-009.5 | Environment-based configuration | Dev, Staging, Prod |
+**Added**:
+| ID | Requirement | Priority | Change |
+|----|-------------|----------|--------|
+| FR-007.9 | Analytics events must hash all PII | P0 | NEW |
+| FR-007.10 | No PII in structured log messages | P0 | NEW |
+| FR-007.11 | PII reveal audit trail with IP, timestamp, admin ID | P0 | NEW |
 
-### NFR-010: Security
+### FR-008: Onboarding System (Refined)
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-010.1 | OWASP Top 10 compliance | All categories |
-| NFR-010.2 | HTTPS everywhere | Enforced |
-| NFR-010.3 | CORS properly configured | Origin whitelist |
-| NFR-010.4 | Rate limiting | Per-endpoint |
-| NFR-010.5 | Input validation | All endpoints |
-| NFR-010.6 | SQL injection prevention | Parameterized queries |
-| NFR-010.7 | XSS prevention | Content Security Policy |
-| NFR-010.8 | CSRF protection | Anti-forgery tokens |
+**Modified**:
+| ID | Requirement | Priority | Change |
+|----|-------------|----------|--------|
+| FR-008.2 | Guided tour: create first task via quick-add | P0 | MODIFIED - specify quick-add |
+| FR-008.7 | Micro-celebration on task completion (animation + sound option) | P0 | UPGRADED from P1 |
+| FR-008.9 | Onboarding uses contextual hints, not modal overlays | P0 | NEW |
+
+**Rationale**: Scenario S01 shows the emotional arc: capture -> complete -> celebrate. Modal overlays feel heavy on mobile.
+
+### FR-009: Communication & Churn Prevention (Refined)
+
+**Added**:
+| ID | Requirement | Priority | Change |
+|----|-------------|----------|--------|
+| FR-009.6 | Deep links in emails open directly to user's board | P0 | NEW |
+| FR-009.7 | "Welcome back!" toast on re-engagement | P1 | NEW |
+| FR-009.8 | Emails show top 3 pending tasks (no PII) | P1 | NEW |
+
+**Rationale**: Scenario S08 shows deep links and contextual email content drive re-engagement.
+
+### FR-010: Product Analytics (Refined)
+
+**Added**:
+| ID | Requirement | Priority | Change |
+|----|-------------|----------|--------|
+| FR-010.8 | All events follow consistent schema (see SCENARIOS.md section 7) | P0 | NEW |
+| FR-010.9 | Events include device context (type, locale, theme) | P1 | NEW |
+| FR-010.10 | Offline events queued and synced | P1 | NEW |
 
 ---
 
-## 4. Technical Architecture Overview
+## 2. Revised Non-Functional Requirements
 
-### 4.1 Backend Stack
+### NFR-002: Responsive Design (Refined)
 
-- **.NET 10 LTS** with ASP.NET Core 10
-- **.NET Aspire 13** for orchestration and observability
-- **Entity Framework Core 10** with SQLite
-- **ASP.NET Core Identity** for authentication
-- **Scalar** for API documentation
-- **OpenTelemetry** for instrumentation
-- **Serilog** for structured logging
-- **FsCheck** for property-based testing
-- **xUnit** for unit/integration testing
+**Added**:
+| ID | Requirement | Target | Change |
+|----|-------------|--------|--------|
+| NFR-002.6 | Quick-add accessible via floating action button on mobile | Always visible | NEW |
+| NFR-002.7 | Kanban columns scroll horizontally on mobile with snap | Native gesture | NEW |
 
-### 4.2 Frontend Stack
+### NFR-003: PWA (Elevated)
 
-- **Vite 7** for build tooling
-- **React 19** with TypeScript
-- **Tailwind CSS** for styling
-- **Shadcn/ui** with Radix primitives
-- **react-i18next** for internationalization
-- **vite-plugin-pwa** for PWA capabilities
-- **Vitest** for unit testing
-- **Playwright** for E2E testing
+**Modified**:
+| ID | Requirement | Target | Change |
+|----|-------------|--------|--------|
+| NFR-003.2 | Offline task viewing AND creation AND completion | Full offline CRUD | UPGRADED |
+| NFR-003.5 | Offline change indicator on affected tasks | Visual sync status | NEW |
+| NFR-003.6 | Automatic sync on reconnection with conflict resolution | Last-write-wins | NEW |
 
-### 4.3 Infrastructure
+**Rationale**: Scenario S06 (airplane) shows offline must support full task lifecycle, not just viewing.
 
-- **Docker** for containerization
-- **GitHub Actions** for CI/CD
-- **Terraform** for Azure IaC
-- **Azure Container Apps** for hosting
+### NFR-011: Micro-Interactions & UX Polish (New Section)
 
-### 4.4 Architecture Pattern
+| ID | Requirement | Target |
+|----|-------------|--------|
+| NFR-011.1 | Task creation animation (slide-in) | < 300ms |
+| NFR-011.2 | Task completion animation (strikethrough + fade) | < 500ms |
+| NFR-011.3 | Drag-and-drop with ghost element and drop shadow | Real-time |
+| NFR-011.4 | Theme switch transition (no white flash) | Instant |
+| NFR-011.5 | Loading skeletons for all async content | Immediate |
+| NFR-011.6 | Empty states with helpful illustrations/CTAs | All empty views |
+| NFR-011.7 | Toast notifications for async operations | Non-blocking |
 
-Domain-Driven Design (DDD) with:
-- Use cases (application layer)
-- Rich domain entities and value objects
-- Repository pattern
-- CQRS-light (commands and queries separated)
-- Event-driven audit trail
+**Rationale**: Multiple scenarios emphasize that UX polish (animations, celebrations, feedback) is core to the product, not decoration.
 
 ---
 
-## 5. Success Metrics
+## 3. Updated Architecture Decisions
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Registration completion rate | > 80% | Analytics funnel |
-| Onboarding completion rate | > 60% | Analytics funnel |
-| Day-1 retention | > 40% | Cohort analysis |
-| Day-7 retention | > 25% | Cohort analysis |
-| Task completion rate | > 50% of created tasks | Feature analytics |
-| Lighthouse score | > 90 all categories | Automated CI check |
-| Test coverage (backend domain) | > 90% | CI coverage report |
-| Test coverage (frontend) | > 80% | CI coverage report |
-| API p95 latency | < 200ms | APM monitoring |
-| Zero critical security findings | 0 | Security scans |
+### 3.1 Task Creation Strategy
+
+Based on scenarios, we need two creation paths:
+
+```
+Quick-Add Path (Sarah):
+  Input field -> Enter -> Task created (title only)
+  - Always visible on board/list views
+  - Mobile: floating action button opens quick-add
+  - Keyboard shortcut: "n" opens quick-add on desktop
+
+Full-Form Path (Marcus):
+  "+" button -> Modal/Panel with all fields -> Save
+  - Title, description (markdown), priority, due date, tags
+  - Keyboard shortcut: "N" (shift+n) opens full form
+```
+
+### 3.2 Analytics Architecture
+
+Privacy-first analytics (HIPAA):
+- Frontend: Custom analytics service wrapping events
+- Backend: Domain events published to analytics processor
+- Storage: Separate analytics database (no PII)
+- All user identifiers are hashed (SHA-256)
+- All task identifiers are hashed
+- No task content (titles, descriptions) in analytics
+
+### 3.3 Offline Strategy
+
+```
+Service Worker Cache:
+  - App shell (HTML, CSS, JS) -> Cache-first
+  - API responses -> Network-first with cache fallback
+  - Task data -> IndexedDB for offline storage
+
+Sync Strategy:
+  - Offline operations queued in IndexedDB
+  - On reconnection: replay queue in order
+  - Conflict resolution: server timestamp wins
+  - Visual indicator: "syncing..." -> "synced"
+```
+
+### 3.4 PII Handling Strategy
+
+```
+At Rest:
+  - Sensitive fields encrypted in database (AES-256)
+  - Encryption key in environment variable / Azure Key Vault
+
+In Transit:
+  - HTTPS only
+  - No PII in URL parameters
+
+In Logs:
+  - Structured logging with PII redaction middleware
+  - Email: s***@example.com
+  - Names: S*** L***
+  - Custom Serilog destructuring policy
+
+In Admin Views:
+  - Default: masked (s***@example.com)
+  - Reveal: explicit action -> audit log entry
+  - Auto-hide after 30 seconds
+
+In Analytics:
+  - User ID: SHA-256 hash
+  - No task content
+  - No email addresses
+  - Only behavioral data + hashed identifiers
+```
 
 ---
 
-## 6. Out of Scope (MVP)
+## 4. Updated Success Criteria
 
-- Real-time collaboration (multi-user editing)
-- File attachments on tasks
-- Calendar view
-- Recurring tasks
-- Time tracking
-- Third-party integrations (Slack, Jira, etc.)
-- Native mobile apps (iOS/Android)
-- Team workspaces with shared boards
-- Billing and subscription management
+Based on scenario analysis, we refine our success metrics:
+
+| Metric | Original Target | Revised Target | Rationale |
+|--------|----------------|----------------|-----------|
+| Time to first task created | Not defined | < 60 seconds from signup | S01: onboarding speed |
+| Quick-add usage | Not defined | > 70% of tasks via quick-add | S02: quick capture dominance |
+| Mobile session share | Not defined | > 40% of sessions | S02, S06: mobile-first thesis |
+| Offline operations per week | Not defined | Measured (baseline) | S06: offline usage tracking |
+| PII reveal frequency | Not defined | < 10% of admin sessions | S05: minimal PII exposure |
 
 ---
 
-## 7. Risks and Mitigations
+## 5. Unchanged from Initial PRD
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| HIPAA compliance complexity | High | Medium | Consult compliance checklist, encrypt all PII at rest |
-| SQLite scaling limits | Medium | Low | Abstract repository, easy to swap to PostgreSQL |
-| Aspire maturity gaps | Medium | Low | Fallback to standard Docker Compose |
-| OAuth provider changes | Low | Low | Abstract behind provider interface |
-| Scope creep | High | High | Strict MVP scope, defer to "Out of Scope" |
+The following sections carry over without modification:
+- Section 5: Success Metrics (original targets retained, new ones added above)
+- Section 6: Out of Scope
+- Section 7: Risks and Mitigations
+
+Refer to [PRD.draft.md](./PRD.draft.md) for these sections.
