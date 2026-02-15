@@ -6,7 +6,6 @@ import {
   moveTask,
   deleteTask,
   archiveTask,
-  completeTask,
 } from '../helpers/api.helpers';
 
 test.beforeEach(async () => {
@@ -163,7 +162,6 @@ test.describe('Orphaned Cards', () => {
     const boardBefore = await getDefaultBoard();
     expect(boardBefore.cards).toHaveLength(2);
 
-    await completeTask(t2.id);
     await archiveTask(t2.id);
 
     const boardAfter = await getDefaultBoard();
@@ -180,7 +178,6 @@ test.describe('Orphaned Cards', () => {
     const t5 = await createTask({ title: 'Will delete too' });
 
     await deleteTask(t2.id);
-    await completeTask(t3.id);
     await archiveTask(t3.id);
     await deleteTask(t5.id);
 

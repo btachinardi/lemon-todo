@@ -12,7 +12,7 @@ using LemonDo.Domain.Tasks.ValueObjects;
 /// <remarks>
 /// <para>All mutation methods enforce a soft-delete guard: deleted tasks reject edits.</para>
 /// <para>Status transitions are managed via <see cref="SetStatus"/>, which also maintains
-/// <see cref="CompletedAt"/> and resets <see cref="IsArchived"/> when uncompleting.</para>
+/// <see cref="CompletedAt"/>. <see cref="IsArchived"/> is independent of status.</para>
 /// </remarks>
 public sealed class Task : Entity<TaskId>
 {
@@ -78,7 +78,7 @@ public sealed class Task : Entity<TaskId>
     /// </summary>
     /// <remarks>
     /// Side effects: sets <see cref="CompletedAt"/> when transitioning to Done;
-    /// clears <see cref="CompletedAt"/> and resets <see cref="IsArchived"/> when leaving Done.
+    /// clears <see cref="CompletedAt"/> when leaving Done.
     /// </remarks>
     public Result<DomainError> SetStatus(TaskStatus newStatus)
     {
@@ -97,7 +97,6 @@ public sealed class Task : Entity<TaskId>
         else if (newStatus != TaskStatus.Done && oldStatus == TaskStatus.Done)
         {
             CompletedAt = null;
-            IsArchived = false;
         }
 
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -210,17 +209,13 @@ public sealed class Task : Entity<TaskId>
     }
 
     /// <summary>
-    /// Archives a completed task. Only tasks with <see cref="TaskStatus.Done"/> status can be archived.
+    /// Archives a task, hiding it from active views. Can be called regardless of status.
     /// </summary>
     public Result<DomainError> Archive()
     {
         if (IsDeleted)
             return Result<DomainError>.Failure(
                 DomainError.BusinessRule("task.deleted", "Cannot edit a deleted task."));
-
-        if (Status != TaskStatus.Done)
-            return Result<DomainError>.Failure(
-                DomainError.BusinessRule("task.not_completed", "Cannot archive a non-completed task."));
 
         IsArchived = true;
         UpdatedAt = DateTimeOffset.UtcNow;

@@ -270,16 +270,15 @@ public sealed class TaskTests
     }
 
     [TestMethod]
-    public void Should_ClearIsArchived_When_SetStatusFromDone()
+    public void Should_PreserveIsArchived_When_SetStatusChanges()
     {
         var task = CreateValidTask();
-        task.SetStatus(TaskStatus.Done);
         task.Archive();
         Assert.IsTrue(task.IsArchived);
 
-        task.SetStatus(TaskStatus.Todo);
+        task.SetStatus(TaskStatus.InProgress);
 
-        Assert.IsFalse(task.IsArchived);
+        Assert.IsTrue(task.IsArchived); // Archive state is independent of lifecycle
     }
 
     [TestMethod]
@@ -331,32 +330,44 @@ public sealed class TaskTests
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(task.IsArchived);
-        Assert.AreEqual(TaskStatus.Done, task.Status); // Status stays Done
+        Assert.AreEqual(TaskStatus.Done, task.Status);
     }
 
     [TestMethod]
-    public void Should_FailArchive_When_NotDone()
+    public void Should_Archive_When_Todo()
     {
         var task = CreateValidTask();
 
         var result = task.Archive();
 
-        Assert.IsTrue(result.IsFailure);
-        Assert.AreEqual("task.not_completed", result.Error.Code);
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsTrue(task.IsArchived);
+        Assert.AreEqual(TaskStatus.Todo, task.Status); // Status unchanged
+    }
+
+    [TestMethod]
+    public void Should_Archive_When_InProgress()
+    {
+        var task = CreateValidTask();
+        task.SetStatus(TaskStatus.InProgress);
+
+        var result = task.Archive();
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsTrue(task.IsArchived);
+        Assert.AreEqual(TaskStatus.InProgress, task.Status); // Status unchanged
     }
 
     [TestMethod]
     public void Should_Unarchive_When_Archived()
     {
         var task = CreateValidTask();
-        task.SetStatus(TaskStatus.Done);
         task.Archive();
 
         var result = task.Unarchive();
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsFalse(task.IsArchived);
-        Assert.AreEqual(TaskStatus.Done, task.Status); // Status stays Done
     }
 
     // --- Delete ---
