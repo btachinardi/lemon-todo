@@ -70,22 +70,22 @@
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | | **Backend** | | |
-| CP1.1 | TaskItem entity + value objects (TDD) | PENDING | TaskTitle, Priority, TaskStatus, Tag, DueDate |
-| CP1.2 | Board + Column entities (TDD) | PENDING | Default board with Todo/InProgress/Done columns |
-| CP1.3 | Task use cases (TDD) | PENDING | Create, Update, Complete, Delete, Move, List, GetById |
-| CP1.4 | EF Core configuration + SQLite | PENDING | Entity configs, migrations, seed data |
-| CP1.5 | Task API endpoints | PENDING | CRUD + move + complete, Scalar docs |
-| CP1.6 | API integration tests | PENDING | All endpoints, happy + error paths |
+| CP1.1 | TaskItem entity + value objects (TDD) | DONE | TaskTitle, Priority, TaskStatus, Tag, DueDate. 80+ unit + property tests. |
+| CP1.2 | Board + Column entities (TDD) | DONE | Default board with Todo/InProgress/Done columns. OwnsMany for columns. |
+| CP1.3 | Task use cases (TDD) | DONE | 10 commands + 4 queries. NSubstitute mocks. 130 tests total. |
+| CP1.4 | EF Core configuration + SQLite | DONE | Entity configs, OwnsMany tags, DateTimeOffset→string convention, seed data. DesignTimeDbContextFactory for migrations. |
+| CP1.5 | Task API endpoints | DONE | 12 task + 6 board routes. ResultExtensions for error mapping (400/404/422). ErrorHandlingMiddleware. |
+| CP1.6 | API integration tests | DONE | 13 task + 6 board tests. In-memory SQLite via WebApplicationFactory. ClassLevel parallelism. |
 | | **Frontend** | | |
-| CP1.7 | Design System setup (Shadcn/ui) | PENDING | Button, Card, Badge, Input, Dialog, Toast, layout primitives |
-| CP1.8 | Layouts + Pages | PENDING | DashboardLayout, TaskBoardPage, TaskListPage |
-| CP1.9 | Domain Atoms | PENDING | PriorityBadge, TaskStatusChip, DueDateLabel, TagList |
-| CP1.10 | Domain Widgets | PENDING | TaskCard, KanbanColumn, QuickAddForm |
-| CP1.11 | Domain Views | PENDING | KanbanBoard, TaskListView |
-| CP1.12 | State: TanStack Query hooks | PENDING | useTasksQuery, useBoardQuery, mutations |
-| CP1.13 | State: Zustand stores | PENDING | useTaskViewStore (kanban/list toggle, filters) |
-| CP1.14 | Routing setup (React Router) | PENDING | Board route, list route, 404 |
-| CP1.15 | Frontend component tests | PENDING | Vitest + Testing Library |
+| CP1.7 | Design System setup (Shadcn/ui) | DONE | 12 components: button, card, badge, input, textarea, select, dialog, sonner, scroll-area, separator, skeleton, dropdown-menu. ESLint override for ui/ dir. |
+| CP1.8 | Layouts + Pages | DONE | DashboardLayout, TaskBoardPage, TaskListPage, NotFoundPage |
+| CP1.9 | Domain Atoms | DONE | PriorityBadge, TaskStatusChip, DueDateLabel, TagList |
+| CP1.10 | Domain Widgets | DONE | TaskCard, KanbanColumn, QuickAddForm |
+| CP1.11 | Domain Views | DONE | KanbanBoard, TaskListView |
+| CP1.12 | State: TanStack Query hooks | DONE | useTasksQuery, useBoardQuery, useTaskQuery + 8 mutation hooks |
+| CP1.13 | State: Zustand stores | DONE | useTaskViewStore (kanban/list toggle, filters, persisted) |
+| CP1.14 | Routing setup (React Router) | DONE | Board route (/), list route (/list), 404 |
+| CP1.15 | Frontend component tests | DONE | 49 tests: 4 atom + 3 widget + 2 view test suites. fast-check property tests for PriorityBadge and TagList. |
 | | **Deliverable** | | `dotnet run --project src/LemonDo.AppHost` → full working app |
 
 ---
@@ -217,6 +217,21 @@
 | 2026-02-14 | .NET 10 uses .slnx format | `dotnet new sln` creates `.slnx` (XML-based) by default, not `.sln`. Lighter, cleaner format. |
 | 2026-02-14 | Aspire workload deprecated | Aspire is now distributed as NuGet packages + templates. `dotnet new install Aspire.ProjectTemplates` replaces `dotnet workload install aspire`. |
 | 2026-02-14 | `dotnet test --solution` syntax | .NET 10 changed `dotnet test` to require `--solution` flag for solution paths (no positional argument). |
+| 2026-02-14 | OwnsMany for Tags (not JSON column) | Tags mapped to separate TaskItemTags table via EF Core OwnsMany for queryability. |
+| 2026-02-14 | DateTimeOffset→string for SQLite | SQLite doesn't support DateTimeOffset in ORDER BY. Used ConfigureConventions to convert all DateTimeOffset to string globally. |
+| 2026-02-14 | ClassLevel test parallelism for integration tests | MethodLevel caused race conditions on shared in-memory SQLite DB. ClassLevel isolates test classes. |
+| 2026-02-14 | DesignTimeDbContextFactory for EF migrations | EF tools can't resolve DbContext without DI. Factory provides standalone context creation. |
+| 2026-02-14 | Sonner directly over Shadcn Toaster wrapper | Shadcn Toaster requires next-themes ThemeProvider. Direct sonner import avoids unnecessary provider for CP1. |
+| 2026-02-14 | erasableSyntaxOnly in tsconfig | Vite + TypeScript 5.9 enables erasableSyntaxOnly which disallows class parameter properties with `readonly`. Use explicit field declarations instead. |
+| 2026-02-14 | Split Task Management into Task + Board bounded contexts | DDD review found tight coupling: Tasks stored ColumnId/Position (board concerns), status changes required Board aggregate. Separate contexts with conformist relationship gives clearer boundaries. |
+| 2026-02-14 | BoardTask → Task rename | Tasks exist independently of boards. Use qualified names (`using TaskEntity = ...`) for System.Threading.Tasks.Task collisions. |
+| 2026-02-14 | TaskCard value object on Board aggregate | Board owns spatial placement (TaskId + ColumnId + Position). Tasks don't need to know about columns. |
+| 2026-02-14 | Application-layer cross-context coordination | CreateTask/MoveCard/Complete/Uncomplete handlers coordinate between Task and Board aggregates. No domain-level coupling. |
+| 2026-02-15 | Sparse decimal ranks over dense integer positions | Dense integers caused position collisions on reorder (no reindexing). Sparse ranks (1000, 2000...) with midpoint insertion update only the moved card. Decimal avoids float precision drift. |
+| 2026-02-15 | Neighbor-based move API over index-based | Frontend sends previousTaskId/nextTaskId instead of position index. Backend computes rank from neighbors (two O(1) lookups). Intent-based contract survives backend strategy changes. Frontend stays dumb. |
+| 2026-02-15 | Board.RemoveCard on Delete only, not Archive | Delete is destructive — remove the card. Archive is reversible — preserve the card's column/rank so unarchive restores placement. Filter archived/deleted cards at the query level (board query handlers cross-reference active task IDs). |
+| 2026-02-15 | Column.NextRank per-column monotonic counter | Ranks are column-scoped. Each column tracks its own NextRank (starts 1000, +1000 per placement). Avoids scanning cards for max rank. MoveCard bumps target column's NextRank when computed rank exceeds it. |
+| 2026-02-15 | Archive decoupled from task status | Archive is a visibility flag orthogonal to lifecycle. Any task (Todo, InProgress, Done) can be archived. Status changes never affect IsArchived. Only explicit Unarchive() clears it. |
 
 ---
 
@@ -224,7 +239,10 @@
 
 - **Planning**: DONE (Phase 0 + 1 + 2 complete)
 - **Bootstrap**: DONE (Phase 3 - solution, frontend, tests, Aspire integration)
-- **Checkpoint 1**: NOT STARTED (Core Task Management)
+- **Checkpoint 1**: DONE (Core Task Management - 193 backend + 53 frontend + 33 E2E = 279 tests, 0 warnings)
+  - Domain Redesign: Bounded context split (Task + Board) complete
+  - Bug Fix: Sparse rank ordering replaces dense integer positions
+  - Domain Fix: Archive decoupled from status (any task can be archived)
 - **Checkpoint 2**: NOT STARTED (Auth & Authorization)
 - **Checkpoint 3**: NOT STARTED (Rich UX & Polish)
 - **Checkpoint 4**: NOT STARTED (Production Hardening)
@@ -249,3 +267,33 @@
 | a9ebce9 | test: add MSTest 4 + MTP test infrastructure with smoke tests | Phase 3 |
 | 310782b | docs: update documentation for Phase 3 bootstrap completion | Phase 3 |
 | 5f3b3c8 | merge: Phase 3 codebase bootstrap | Phase 3 |
+| 3058446 | feat(domain): add common base types (Entity, ValueObject, Result, DomainEvent) | CP1 |
+| 0ee06a4 | feat(tasks): add TaskItem entity with value objects and domain events | CP1 |
+| 26b88bf | feat(tasks): add Board and Column entities with domain events | CP1 |
+| 644bbf6 | feat(tasks): add task use cases (commands, queries, handlers) | CP1 |
+| 42f629b | feat(infra): add EF Core configuration, SQLite, and initial migration | CP1 |
+| 1200e66 | feat(api): add task and board minimal API endpoints | CP1 |
+| 29dcd4f | test(api): add integration tests for task and board endpoints | CP1 |
+| 87ddca2 | feat(ui): fix Shadcn alias and install design system components | CP1 |
+| d9c3f84 | feat(tasks): add domain types, API client, and task components | CP1 |
+| 5a556f9 | feat(tasks): add state management, routing, pages, and layouts | CP1 |
+| 45644af | test(tasks): add frontend component tests | CP1 |
+| b5e2dc8 | docs: update documentation for Checkpoint 1 completion | CP1 |
+| 3713234 | fix(tasks): auto-assign new tasks to default board's first column | CP1 |
+| cf78627 | refactor(domain): rename TaskItem to BoardTask | CP1 |
+| e5903d8 | fix(domain): enforce column-status invariant with single source of truth | CP1 |
+| 45386f3 | refactor(domain): split Task and Board into separate bounded contexts | CP1 |
+| 1fe92ce | refactor(domain): make TaskCard immutable with remove+add pattern | CP1 |
+| bfad540 | fix(cqrs): remove side effects from GetDefaultBoardQuery, seed board on startup | CP1 |
+| a36c1d6 | feat(events): add domain event dispatch infrastructure in SaveChangesAsync | CP1 |
+| ef42df8 | fix(ui): UX review fixes — nav, semantic colors, a11y, empty/error states | CP1 |
+| 818c018 | docs(csharp): add XML documentation to public-facing domain, application, and infrastructure types | CP1 |
+| 2ea3bfd | fix(kanban): persist card moves across columns on drag-and-drop | CP1 |
+| abee14d | chore(deps): add @dnd-kit drag-and-drop packages | CP1 |
+| d5ba47b | feat(ui): add TaskCheckbox atom and SortableTaskCard wrapper | CP1 |
+| cffa65c | feat(kanban): integrate drag-and-drop into board columns and task cards | CP1 |
+| eb5d758 | style(ui): polish branding, layout, and design system theme | CP1 |
+| 3f84f80 | docs(typescript): add JSDoc to frontend types, API clients, hooks, and components | CP1 |
+| 44c96b9 | fix(kanban): replace dense integer positions with sparse decimal ranks | CP1 |
+| faabd82 | test(e2e): add card ordering and orphaned card E2E tests | CP1 |
+| 4b9f7c6 | fix(domain): allow archiving tasks regardless of status | CP1 |

@@ -71,5 +71,10 @@ docker-compose.override.yml
 logs/
 *.log
 
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
 # Build artifacts
 artifacts/

@@ -1,14 +1,19 @@
+import { RouterProvider } from 'react-router';
+import { ErrorBoundaryProvider } from './app/providers/ErrorBoundaryProvider';
+import { QueryProvider } from './app/providers/QueryProvider';
+import { router } from './app/routes/router';
+import { OfflineBanner } from './ui/feedback/OfflineBanner';
+
+/** Root component that wires up error handling, query caching, and client-side routing. */
 function App() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold">LemonDo</h1>
-        <p className="mt-2 text-lg text-gray-500">
-          Task management, simplified.
-        </p>
-      </div>
-    </div>
-  )
+    <ErrorBoundaryProvider>
+      <OfflineBanner />
+      <QueryProvider>
+        <RouterProvider router={router} />
+      </QueryProvider>
+    </ErrorBoundaryProvider>
+  );
 }
 
-export default App
+export default App;

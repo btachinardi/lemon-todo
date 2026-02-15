@@ -13,6 +13,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <UserSecretsId>6c6b0099-bea4-4f0d-b6c0-185b001cff1b</UserSecretsId>
   </PropertyGroup>
 

@@ -1,10 +1,2 @@
-﻿namespace LemonDo.Api.Tests;
-
-[TestClass]
-public sealed class Test1
-{
-    [TestMethod]
-    public void TestMethod1()
-    {
-    }
-}
+// This file intentionally left empty - placeholder removed.
+// Integration tests are in Tasks/ and Boards/ directories.
