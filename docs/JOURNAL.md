@@ -516,11 +516,45 @@ POST /api/tasks/{id}/move
 
 ---
 
+## Domain Fix: Archive Decoupled from Status
+
+**Date: February 15, 2026**
+
+### The Problem
+
+During E2E test authoring for card ordering, we discovered that `Task.Archive()` required the task to be in `Done` status. This forced a `completeTask()` → `archiveTask()` sequence in tests, and more importantly, it was a design flaw: archiving is a visibility/organizational concept, not a lifecycle one.
+
+A user should be able to archive any task regardless of its status — a stale Todo task, an abandoned InProgress task, or a completed Done task. Requiring completion first is an unnecessary constraint that doesn't serve the user's intent.
+
+### The Fix
+
+1. **Removed the `Status == Done` guard from `Task.Archive()`** — any non-deleted task can now be archived.
+2. **Removed `IsArchived = false` from `SetStatus()`** — previously, transitioning away from Done reset the archive flag. Since archiving is now status-independent, only the explicit `Unarchive()` method clears it.
+
+### Design Principle Reinforced
+
+Archive is orthogonal to lifecycle. Two independent axes:
+- **Status axis**: Todo → InProgress → Done (lifecycle)
+- **Visibility axis**: Active ↔ Archived (organizational)
+
+These axes should never be coupled. A task can be archived at any point on the status axis, and status changes should never affect the visibility axis.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| **Backend Tests** | 193 passed, 0 failed |
+| **Frontend Tests** | 53 passed, 0 failed |
+| **E2E Tests** | 33 passed, 0 failed |
+| **Total** | 279 tests, all green |
+
+---
+
 ## What's Next
 
 ### Checkpoint 1 Complete
 
-The bounded context split is complete. Task and Board are now separate contexts with clear boundaries. All 242 tests pass with zero build warnings. Next step: merge to develop and begin CP2.
+The bounded context split is complete. Task and Board are now separate contexts with clear boundaries. All 279 tests pass with zero build warnings. Next step: merge to develop and begin CP2.
 
 ### Checkpoint 2: Authentication & Authorization
 

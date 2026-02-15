@@ -231,6 +231,7 @@
 | 2026-02-15 | Neighbor-based move API over index-based | Frontend sends previousTaskId/nextTaskId instead of position index. Backend computes rank from neighbors (two O(1) lookups). Intent-based contract survives backend strategy changes. Frontend stays dumb. |
 | 2026-02-15 | Board.RemoveCard on Delete only, not Archive | Delete is destructive — remove the card. Archive is reversible — preserve the card's column/rank so unarchive restores placement. Filter archived/deleted cards at the query level (board query handlers cross-reference active task IDs). |
 | 2026-02-15 | Column.NextRank per-column monotonic counter | Ranks are column-scoped. Each column tracks its own NextRank (starts 1000, +1000 per placement). Avoids scanning cards for max rank. MoveCard bumps target column's NextRank when computed rank exceeds it. |
+| 2026-02-15 | Archive decoupled from task status | Archive is a visibility flag orthogonal to lifecycle. Any task (Todo, InProgress, Done) can be archived. Status changes never affect IsArchived. Only explicit Unarchive() clears it. |
 
 ---
 
@@ -238,8 +239,10 @@
 
 - **Planning**: DONE (Phase 0 + 1 + 2 complete)
 - **Bootstrap**: DONE (Phase 3 - solution, frontend, tests, Aspire integration)
-- **Checkpoint 1**: DONE (Core Task Management - 174 backend + 48 frontend + 20 E2E = 242 tests, 0 warnings)
+- **Checkpoint 1**: DONE (Core Task Management - 193 backend + 53 frontend + 33 E2E = 279 tests, 0 warnings)
   - Domain Redesign: Bounded context split (Task + Board) complete
+  - Bug Fix: Sparse rank ordering replaces dense integer positions
+  - Domain Fix: Archive decoupled from status (any task can be archived)
 - **Checkpoint 2**: NOT STARTED (Auth & Authorization)
 - **Checkpoint 3**: NOT STARTED (Rich UX & Polish)
 - **Checkpoint 4**: NOT STARTED (Production Hardening)
@@ -275,3 +278,22 @@
 | d9c3f84 | feat(tasks): add domain types, API client, and task components | CP1 |
 | 5a556f9 | feat(tasks): add state management, routing, pages, and layouts | CP1 |
 | 45644af | test(tasks): add frontend component tests | CP1 |
+| b5e2dc8 | docs: update documentation for Checkpoint 1 completion | CP1 |
+| 3713234 | fix(tasks): auto-assign new tasks to default board's first column | CP1 |
+| cf78627 | refactor(domain): rename TaskItem to BoardTask | CP1 |
+| e5903d8 | fix(domain): enforce column-status invariant with single source of truth | CP1 |
+| 45386f3 | refactor(domain): split Task and Board into separate bounded contexts | CP1 |
+| 1fe92ce | refactor(domain): make TaskCard immutable with remove+add pattern | CP1 |
+| bfad540 | fix(cqrs): remove side effects from GetDefaultBoardQuery, seed board on startup | CP1 |
+| a36c1d6 | feat(events): add domain event dispatch infrastructure in SaveChangesAsync | CP1 |
+| ef42df8 | fix(ui): UX review fixes — nav, semantic colors, a11y, empty/error states | CP1 |
+| 818c018 | docs(csharp): add XML documentation to public-facing domain, application, and infrastructure types | CP1 |
+| 2ea3bfd | fix(kanban): persist card moves across columns on drag-and-drop | CP1 |
+| abee14d | chore(deps): add @dnd-kit drag-and-drop packages | CP1 |
+| d5ba47b | feat(ui): add TaskCheckbox atom and SortableTaskCard wrapper | CP1 |
+| cffa65c | feat(kanban): integrate drag-and-drop into board columns and task cards | CP1 |
+| eb5d758 | style(ui): polish branding, layout, and design system theme | CP1 |
+| 3f84f80 | docs(typescript): add JSDoc to frontend types, API clients, hooks, and components | CP1 |
+| 44c96b9 | fix(kanban): replace dense integer positions with sparse decimal ranks | CP1 |
+| faabd82 | test(e2e): add card ordering and orphaned card E2E tests | CP1 |
+| 4b9f7c6 | fix(domain): allow archiving tasks regardless of status | CP1 |

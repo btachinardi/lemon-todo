@@ -190,7 +190,7 @@ public interface IUserRepository
 
 1. **Task owns its lifecycle and status** — A Task manages its own status through `SetStatus()`, `Complete()`, and `Uncomplete()`. Status transitions are self-contained within the Task aggregate.
 2. **Task knows nothing about boards** — The Task entity has no concept of columns, positions, or spatial placement. It is a pure domain entity focused on task metadata and lifecycle.
-3. **Archive is a visibility flag, NOT a lifecycle status** — `IsArchived` is a boolean orthogonal to status. A task stays `Done` when archived.
+3. **Archive is a visibility flag, NOT a lifecycle status** — `IsArchived` is a boolean orthogonal to status. Any task can be archived regardless of its current status (Todo, InProgress, Done).
 4. **Status and CompletedAt are always consistent** — `SetStatus()` is the single method that manages CompletedAt transitions. `Complete()` and `Uncomplete()` are convenience wrappers around `SetStatus()`.
 
 ### 3.2 Entities
@@ -228,20 +228,19 @@ Task
 │   ├── SetDueDate(dueDate) -> TaskDueDateChangedEvent
 │   ├── AddTag(tag) -> TaskTagAddedEvent
 │   ├── RemoveTag(tag) -> TaskTagRemovedEvent
-│   ├── Archive() -> TaskArchivedEvent (requires Status == Done)
+│   ├── Archive() -> TaskArchivedEvent (any status)
 │   ├── Unarchive() -> TaskUnarchivedEvent
 │   └── Delete() -> TaskDeletedEvent (soft delete)
 │
 └── Invariants:
     ├── Title must be 1-500 characters
     ├── Description must be 0-10000 characters
-    ├── Cannot archive a non-completed task (Status must be Done)
+    ├── Cannot archive a deleted task
     ├── Cannot edit a deleted task
     ├── Tags are unique per task (no duplicates)
     ├── OwnerId cannot change after creation
     ├── CompletedAt is set when status transitions to Done
-    ├── CompletedAt is cleared when status transitions away from Done
-    └── IsArchived is cleared when status transitions away from Done
+    └── CompletedAt is cleared when status transitions away from Done
 ```
 
 ### 3.3 Value Objects
@@ -341,10 +340,10 @@ Board
 │   ├── GetInitialColumn() -> Column (first Todo column by position)
 │   ├── GetDoneColumn() -> Column (first Done column by position)
 │   ├── FindColumnById(columnId) -> Column? (lookup for validation)
-│   ├── PlaceTask(taskId, columnId, position) -> TaskStatus (returns column's TargetStatus)
-│   │       + CardPlacedEvent
-│   ├── MoveCard(taskId, toColumnId, position) -> TaskStatus (returns column's TargetStatus)
-│   │       + CardMovedEvent
+│   ├── PlaceTask(taskId, columnId) -> TaskStatus (returns column's TargetStatus)
+│   │       + CardPlacedEvent (rank auto-assigned from Column.NextRank)
+│   ├── MoveCard(taskId, toColumnId, previousTaskId?, nextTaskId?) -> TaskStatus
+│   │       + CardMovedEvent (rank computed from neighbor ranks)
 │   ├── RemoveCard(taskId) -> CardRemovedEvent
 │   ├── FindCardByTaskId(taskId) -> TaskCard?
 │   ├── GetCardCountInColumn(columnId) -> int
@@ -373,6 +372,7 @@ Column
 ├── TargetStatus: TaskStatus (the status tasks get when placed here)
 ├── Position: int
 ├── MaxTasks: int? (null = unlimited)
+├── NextRank: decimal (monotonic counter, starts at 1000, incremented by 1000 per placement)
 │
 └── Invariants:
     ├── Name must be 1-50 characters
@@ -387,12 +387,12 @@ Column
 TaskCard
 ├── TaskId: TaskId (references Task context)
 ├── ColumnId: ColumnId (references Column on this board)
-├── Position: int (sort order within column)
+├── Rank: decimal (sparse sort key within column, e.g. 1000, 2000, 1500)
 │
 └── Invariants:
     ├── TaskId must be non-empty
     ├── ColumnId must reference a column on the owning board
-    └── Position must be >= 0
+    └── Rank must be > 0
 ```
 
 ### 4.3 Value Objects
@@ -402,7 +402,7 @@ BoardId         -> Guid wrapper
 ColumnId        -> Guid wrapper
 BoardName       -> Non-empty string, 1-100 chars
 ColumnName      -> Non-empty string, 1-50 chars
-TaskCard        -> TaskId + ColumnId + Position (placement of a task on the board)
+TaskCard        -> TaskId + ColumnId + Rank (placement of a task on the board)
 ```
 
 ### 4.4 Domain Events
@@ -413,8 +413,8 @@ ColumnAddedEvent            { BoardId, ColumnId, ColumnName }
 ColumnRemovedEvent          { BoardId, ColumnId }
 ColumnReorderedEvent        { BoardId, ColumnId, OldPosition, NewPosition }
 ColumnRenamedEvent          { BoardId, ColumnId, Name }
-CardPlacedEvent             { BoardId, TaskId, ColumnId, Position }
-CardMovedEvent              { BoardId, TaskId, FromColumnId, ToColumnId, NewPosition }
+CardPlacedEvent             { BoardId, TaskId, ColumnId, Rank }
+CardMovedEvent              { BoardId, TaskId, FromColumnId, ToColumnId, NewRank }
 CardRemovedEvent            { BoardId, TaskId }
 ```
 
@@ -422,8 +422,8 @@ CardRemovedEvent            { BoardId, TaskId }
 
 ```
 Commands:
-├── MoveCardCommand              { TaskId, ColumnId, Position }
-│       → Moves card on board, gets target status, calls task.SetStatus(targetStatus)
+├── MoveCardCommand              { TaskId, ColumnId, PreviousTaskId?, NextTaskId? }
+│       → Moves card on board (rank from neighbors), gets target status, calls task.SetStatus(targetStatus)
 ├── AddColumnCommand             { BoardId, Name, TargetStatus, Position? }
 ├── RemoveColumnCommand          { BoardId, ColumnId }
 ├── ReorderColumnCommand         { BoardId, ColumnId, NewPosition }
@@ -452,10 +452,10 @@ The Task and Board contexts are coordinated at the application layer (command ha
 
 | Operation | Task Context | Board Context |
 |-----------|-------------|---------------|
-| **Create Task** | `Task.Create()` (status = Todo) | `board.PlaceTask(taskId, initialColumn, position)` |
-| **Move Card** | `task.SetStatus(targetStatus)` | `board.MoveCard(taskId, toColumnId, position)` returns `targetStatus` |
-| **Complete Task** | `task.Complete()` | `board.MoveCard(taskId, doneColumn, position)` |
-| **Uncomplete Task** | `task.Uncomplete()` | `board.MoveCard(taskId, todoColumn, position)` |
+| **Create Task** | `Task.Create()` (status = Todo) | `board.PlaceTask(taskId, initialColumn)` (rank auto-assigned) |
+| **Move Card** | `task.SetStatus(targetStatus)` | `board.MoveCard(taskId, toColumnId, previousTaskId?, nextTaskId?)` returns `targetStatus` |
+| **Complete Task** | `task.Complete()` | `board.MoveCard(taskId, doneColumn, null, null)` |
+| **Uncomplete Task** | `task.Uncomplete()` | `board.MoveCard(taskId, todoColumn, null, null)` |
 | **Delete Task** | `task.Delete()` | `board.RemoveCard(taskId)` |
 
 ---
@@ -672,10 +672,11 @@ ValueObject         -> Base class with structural equality
      |             +-----------+    |    |  Column   |
      |             | TaskId   |----+    +-----------+
      |             | ColumnId |-------->| Id        |
-     |             | Position  |         | Name      |
+     |             | Rank     |         | Name      |
      |             +-----------+         | TargetSt. |
      |                  |                | Pos       |
      |                  |                | MaxTasks  |
+     |                  |                | NextRank  |
      |             +--------+            +-----------+
      |             | Board  |                 |
      |             +--------+                 |
@@ -755,7 +756,7 @@ GET    /api/boards                     List user's boards
 POST   /api/boards                     Create board
 GET    /api/boards/{id}                Get board with columns and cards
 GET    /api/boards/default             Get default board (includes cards)
-POST   /api/boards/{id}/cards/move     Move card to column/position (also syncs task status)
+POST   /api/boards/{id}/cards/move     Move card between neighbors (also syncs task status)
 POST   /api/boards/{id}/columns        Add column
 PUT    /api/boards/{id}/columns/{colId} Rename column
 DELETE /api/boards/{id}/columns/{colId} Remove column
