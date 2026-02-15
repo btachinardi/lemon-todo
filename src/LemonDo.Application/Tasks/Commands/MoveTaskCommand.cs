@@ -10,11 +10,11 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
-public sealed record MoveTaskCommand(Guid TaskId, Guid ColumnId, int Position);
+public sealed record MoveTaskCommand(Guid TaskId, Guid ColumnId, Guid? PreviousTaskId, Guid? NextTaskId);
 
 /// <summary>
-/// Moves a task card to a different column/position on the board, then syncs the task's status
-/// to match the target column's <see cref="LemonDo.Domain.Boards.Entities.Column.TargetStatus"/>.
+/// Moves a task card to a different column/position on the board using neighbor-based ranking,
+/// then syncs the task's status to match the target column's <see cref="LemonDo.Domain.Boards.Entities.Column.TargetStatus"/>.
 /// </summary>
 public sealed class MoveTaskCommandHandler(
     ITaskRepository taskRepository,
@@ -34,8 +34,10 @@ public sealed class MoveTaskCommandHandler(
                 DomainError.NotFound("Board", "default"));
 
         var targetColumnId = ColumnId.From(command.ColumnId);
+        var previousTaskId = command.PreviousTaskId is not null ? TaskId.From(command.PreviousTaskId.Value) : null;
+        var nextTaskId = command.NextTaskId is not null ? TaskId.From(command.NextTaskId.Value) : null;
 
-        var moveResult = board.MoveCard(task.Id, targetColumnId, command.Position);
+        var moveResult = board.MoveCard(task.Id, targetColumnId, previousTaskId, nextTaskId);
         if (moveResult.IsFailure)
             return Result<DomainError>.Failure(moveResult.Error);
 

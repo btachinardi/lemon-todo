@@ -50,6 +50,16 @@ public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
         return new PagedResult<TaskEntity>(items, totalCount, page, pageSize);
     }
 
+    public async System.Threading.Tasks.Task<HashSet<TaskId>> GetActiveTaskIdsAsync(UserId ownerId, CancellationToken ct = default)
+    {
+        var ids = await context.Tasks
+            .Where(t => t.OwnerId == ownerId && !t.IsDeleted && !t.IsArchived)
+            .Select(t => t.Id)
+            .ToListAsync(ct);
+
+        return ids.ToHashSet();
+    }
+
     public async System.Threading.Tasks.Task AddAsync(TaskEntity task, CancellationToken ct = default)
     {
         await context.Tasks.AddAsync(task, ct);

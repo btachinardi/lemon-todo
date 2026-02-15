@@ -180,10 +180,11 @@ public sealed class Board : Entity<BoardId>
     // --- Card Management ---
 
     /// <summary>
-    /// Places a task card onto this board. Fails if the task is already on the board.
+    /// Places a task card onto this board at the end of the specified column.
+    /// Rank is auto-assigned from the column's <see cref="Column.NextRank"/> counter.
     /// </summary>
     /// <returns>The column's <see cref="Column.TargetStatus"/> so the caller can sync the Task aggregate's status.</returns>
-    public Result<TaskStatus, DomainError> PlaceTask(TaskId taskId, ColumnId columnId, int position)
+    public Result<TaskStatus, DomainError> PlaceTask(TaskId taskId, ColumnId columnId)
     {
         var column = _columns.Find(c => c.Id == columnId);
         if (column is null)
@@ -194,20 +195,24 @@ public sealed class Board : Entity<BoardId>
             return Result<TaskStatus, DomainError>.Failure(
                 DomainError.BusinessRule("board.task_already_placed", "Task is already on this board."));
 
-        if (position < 0)
-            return Result<TaskStatus, DomainError>.Failure(
-                DomainError.Validation("position", "Position must be >= 0."));
+        var rank = column.NextRank;
+        column.NextRank += 1000m;
 
-        _cards.Add(new TaskCard(taskId, columnId, position));
-        RaiseDomainEvent(new CardPlacedEvent(Id, taskId, columnId, position));
+        _cards.Add(new TaskCard(taskId, columnId, rank));
+        RaiseDomainEvent(new CardPlacedEvent(Id, taskId, columnId, rank));
         return Result<TaskStatus, DomainError>.Success(column.TargetStatus);
     }
 
     /// <summary>
-    /// Moves an existing card to a different column and/or position. Uses immutable remove-and-add.
+    /// Moves an existing card to a different column and/or position using neighbor-based ranking.
+    /// The new rank is computed from the ranks of the previous and next cards at the drop target.
     /// </summary>
     /// <returns>The target column's <see cref="Column.TargetStatus"/> so the caller can sync the Task aggregate's status.</returns>
-    public Result<TaskStatus, DomainError> MoveCard(TaskId taskId, ColumnId toColumnId, int position)
+    public Result<TaskStatus, DomainError> MoveCard(
+        TaskId taskId,
+        ColumnId toColumnId,
+        TaskId? previousTaskId,
+        TaskId? nextTaskId)
     {
         var column = _columns.Find(c => c.Id == toColumnId);
         if (column is null)
@@ -219,15 +224,54 @@ public sealed class Board : Entity<BoardId>
             return Result<TaskStatus, DomainError>.Failure(
                 new DomainError("board.card_not_found", "Task is not on this board."));
 
-        if (position < 0)
+        // Validate neighbor references
+        if (previousTaskId is not null && _cards.Find(c => c.TaskId == previousTaskId) is null)
             return Result<TaskStatus, DomainError>.Failure(
-                DomainError.Validation("position", "Position must be >= 0."));
+                new DomainError("board.card_not_found", "Previous task is not on this board."));
+
+        if (nextTaskId is not null && _cards.Find(c => c.TaskId == nextTaskId) is null)
+            return Result<TaskStatus, DomainError>.Failure(
+                new DomainError("board.card_not_found", "Next task is not on this board."));
+
+        // Compute rank from neighbors
+        var previousRank = previousTaskId is not null
+            ? _cards.Find(c => c.TaskId == previousTaskId)!.Rank
+            : (decimal?)null;
+
+        var nextRank = nextTaskId is not null
+            ? _cards.Find(c => c.TaskId == nextTaskId)!.Rank
+            : (decimal?)null;
+
+        decimal newRank;
+        if (previousRank is null && nextRank is null)
+        {
+            // Empty column or end of column — use column's NextRank
+            newRank = column.NextRank;
+            column.NextRank += 1000m;
+        }
+        else if (previousRank is null)
+        {
+            // Top of column — half of the first card's rank
+            newRank = nextRank!.Value / 2m;
+        }
+        else if (nextRank is null)
+        {
+            // Bottom of column — previous + 1000
+            newRank = previousRank.Value + 1000m;
+            if (newRank >= column.NextRank)
+                column.NextRank = newRank + 1000m;
+        }
+        else
+        {
+            // Between two cards — midpoint
+            newRank = (previousRank.Value + nextRank.Value) / 2m;
+        }
 
         var fromColumnId = card.ColumnId;
         _cards.Remove(card);
-        _cards.Add(new TaskCard(taskId, toColumnId, position));
+        _cards.Add(new TaskCard(taskId, toColumnId, newRank));
 
-        RaiseDomainEvent(new CardMovedEvent(Id, taskId, fromColumnId, toColumnId, position));
+        RaiseDomainEvent(new CardMovedEvent(Id, taskId, fromColumnId, toColumnId, newRank));
         return Result<TaskStatus, DomainError>.Success(column.TargetStatus);
     }
 

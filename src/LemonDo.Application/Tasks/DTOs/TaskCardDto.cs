@@ -4,5 +4,5 @@ public sealed record TaskCardDto
 {
     public required Guid TaskId { get; init; }
     public required Guid ColumnId { get; init; }
-    public required int Position { get; init; }
+    public required decimal Rank { get; init; }
 }

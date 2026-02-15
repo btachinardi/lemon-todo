@@ -38,9 +38,8 @@ public sealed class UncompleteTaskCommandHandler(
                 DomainError.NotFound("Board", "default"));
 
         var todoColumn = board.GetInitialColumn();
-        var position = board.GetCardCountInColumn(todoColumn.Id);
 
-        var moveResult = board.MoveCard(task.Id, todoColumn.Id, position);
+        var moveResult = board.MoveCard(task.Id, todoColumn.Id, previousTaskId: null, nextTaskId: null);
         if (moveResult.IsFailure)
             return Result<DomainError>.Failure(moveResult.Error);
 

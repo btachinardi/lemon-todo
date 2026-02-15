@@ -38,9 +38,8 @@ public sealed class CompleteTaskCommandHandler(
                 DomainError.NotFound("Board", "default"));
 
         var doneColumn = board.GetDoneColumn();
-        var position = board.GetCardCountInColumn(doneColumn.Id);
 
-        var moveResult = board.MoveCard(task.Id, doneColumn.Id, position);
+        var moveResult = board.MoveCard(task.Id, doneColumn.Id, previousTaskId: null, nextTaskId: null);
         if (moveResult.IsFailure)
             return Result<DomainError>.Failure(moveResult.Error);
 

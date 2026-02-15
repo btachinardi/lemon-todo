@@ -12,12 +12,12 @@ using NSubstitute;
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
 [TestClass]
-public sealed class CompleteTaskCommandHandlerTests
+public sealed class DeleteTaskCommandHandlerTests
 {
     private ITaskRepository _taskRepository = null!;
     private IBoardRepository _boardRepository = null!;
     private IUnitOfWork _unitOfWork = null!;
-    private CompleteTaskCommandHandler _handler = null!;
+    private DeleteTaskCommandHandler _handler = null!;
     private Board _board = null!;
 
     [TestInitialize]
@@ -31,24 +31,24 @@ public sealed class CompleteTaskCommandHandlerTests
         _boardRepository.GetDefaultForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(_board);
 
-        _handler = new CompleteTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork);
+        _handler = new DeleteTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork);
     }
 
     [TestMethod]
-    public async Task Should_CompleteTask_When_TaskExists()
+    public async Task Should_DeleteTask_And_RemoveBoardCard()
     {
-        var task = TaskEntity.Create(UserId.Default, TaskTitle.Create("Test").Value).Value;
-        var initialColumn = _board.GetInitialColumn();
-        _board.PlaceTask(task.Id, initialColumn.Id);
-
+        var task = TaskEntity.Create(UserId.Default, TaskTitle.Create("To delete").Value).Value;
+        var columnId = _board.GetInitialColumn().Id;
+        _board.PlaceTask(task.Id, columnId);
         _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
-        var result = await _handler.HandleAsync(new CompleteTaskCommand(task.Id.Value));
+        var result = await _handler.HandleAsync(new DeleteTaskCommand(task.Id.Value));
 
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual(TaskStatus.Done, task.Status);
-        Assert.IsNotNull(task.CompletedAt);
+        Assert.IsTrue(task.IsDeleted, "Task should be soft-deleted");
+        Assert.IsNull(_board.FindCardByTaskId(task.Id), "Board card should be removed");
+        await _boardRepository.Received(1).UpdateAsync(Arg.Any<Board>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -58,27 +58,9 @@ public sealed class CompleteTaskCommandHandlerTests
         _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
             .Returns((TaskEntity?)null);
 
-        var result = await _handler.HandleAsync(new CompleteTaskCommand(Guid.NewGuid()));
+        var result = await _handler.HandleAsync(new DeleteTaskCommand(Guid.NewGuid()));
 
         Assert.IsTrue(result.IsFailure);
         Assert.Contains("not_found", result.Error.Code);
-    }
-
-    [TestMethod]
-    public async Task Should_MoveCardToDoneColumn_When_Completed()
-    {
-        var task = TaskEntity.Create(UserId.Default, TaskTitle.Create("Test").Value).Value;
-        var initialColumn = _board.GetInitialColumn();
-        _board.PlaceTask(task.Id, initialColumn.Id);
-
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
-            .Returns(task);
-
-        var result = await _handler.HandleAsync(new CompleteTaskCommand(task.Id.Value));
-
-        Assert.IsTrue(result.IsSuccess);
-        var card = _board.FindCardByTaskId(task.Id);
-        Assert.IsNotNull(card);
-        Assert.AreEqual(_board.GetDoneColumn().Id, card.ColumnId);
     }
 }

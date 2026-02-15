@@ -40,8 +40,7 @@ public sealed class BulkCompleteTasksCommandHandler(
             if (completeResult.IsFailure)
                 return completeResult;
 
-            var position = board.GetCardCountInColumn(doneColumn.Id);
-            var moveResult = board.MoveCard(task.Id, doneColumn.Id, position);
+            var moveResult = board.MoveCard(task.Id, doneColumn.Id, previousTaskId: null, nextTaskId: null);
             if (moveResult.IsFailure)
                 return Result<DomainError>.Failure(moveResult.Error);
 

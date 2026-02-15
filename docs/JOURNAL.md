@@ -405,6 +405,117 @@ The KanbanBoard view was rewritten to use `board.cards` for task-to-column mappi
 
 ---
 
+## Bug Fix: Card Ordering System Redesign
+
+**Date: February 15, 2026**
+
+### The Problem
+
+After completing the bounded context split, manual testing revealed two interrelated bugs in the kanban board:
+
+1. **Position drift**: Dragging a task card to reorder within the same column sometimes placed it one position lower than expected. The issue was intermittent and worsened after multiple consecutive moves.
+
+2. **Orphaned cards**: The GET `/api/boards/default` endpoint returned 17 card items while only 5 tasks existed on the board.
+
+### Investigation
+
+We traced the full execution path: frontend drag handler → API → domain `Board.MoveCard()` → EF Core persistence → query/DTO response → frontend sort.
+
+**Root cause of position drift** (`Board.MoveCard()` in `Board.cs:210-232`): The frontend sent the visual array index (0, 1, 2...) as the position. The backend stored it verbatim on the new `TaskCard` without reindexing other cards in the column. After multiple moves, position collisions accumulated — two cards with position=1 produced an unstable sort, making cards appear in the wrong order on the next load.
+
+Example: Column has A(pos=0), B(pos=1), C(pos=2). Drag C between A and B → frontend sends position=1 → DB state becomes A(pos=0), B(pos=1), C(pos=1). On reload, B and C are non-deterministically ordered.
+
+**Root cause of orphaned cards** (`DeleteTaskCommandHandler` in `DeleteTaskCommand.cs:14-30` and `ArchiveTaskCommandHandler` in `ArchiveTaskCommand.cs:12-30`): Neither handler called `Board.RemoveCard()`. When tasks were soft-deleted or archived, their `TaskCard` entries remained on the board. Over time, 12 deleted tasks left orphaned cards, inflating the count from 5 to 17. The frontend filtered them out visually (cards for non-existent tasks got dropped in the render loop), but the stale data was still returned by the API.
+
+### Solutions Considered
+
+#### For the ordering problem
+
+We evaluated four strategies to replace the broken dense-integer positioning:
+
+**1. Sparse numeric ranks** — Store ranks as 1000, 2000, 3000. Insert between A and B by computing `(rankA + rankB) / 2`. Only the moved row is updated. Rebalance a local window when gaps become too small. Use DECIMAL, not float (precision drift). *Simple, well-understood, good default.*
+
+**2. Fractional indexing / LexoRank-style strings** — Use lexicographically sortable base-36/base-62 strings. Insert between "a0" and "a8" → "a4". Mostly O(1) writes, avoids float precision entirely, better for high-frequency reorders. Occasional compaction needed. *Scales better but adds string complexity.*
+
+**3. Linked list pointers (prev_id, next_id)** — Each card stores references to its neighbors. A move updates old neighbors + new neighbors + moved card (handful of rows, never whole-list). *Reads and pagination are more complex; harder to query efficiently for sorted lists.*
+
+**4. CRDT sequence identifiers** — Logoot/LSEQ/RGA variants for concurrent collaborative editing. *Massive overkill for a single-user todo app.*
+
+**Decision**: Sparse numeric ranks with `decimal`. It's the simplest strategy that eliminates the bug class, it only updates one row per move, and decimal arithmetic avoids float precision drift. Rebalancing is a rare local operation. LexoRank was tempting but adds unnecessary complexity for our scale.
+
+#### For the API contract
+
+The next question was how the frontend communicates the desired position to the backend. Three options:
+
+**Option A: Frontend sends array index** (current approach) — The frontend sends `position: 2` meaning "put this at index 2 in the column." The backend must load all cards in the column, sort them by rank, find the neighbors at that index, and compute the midpoint rank. *Frontend stays simple but backend does an extra read-to-sort on every move.*
+
+**Option B: Frontend sends the rank directly** — The frontend knows the ranks of neighboring cards (from the board DTO) and computes the midpoint itself. The backend just stores it. *Leaks the ranking system into the frontend. If we change strategies, the frontend must change too.*
+
+**Option C: Frontend sends neighbor card IDs** — The frontend sends `previousTaskId` and `nextTaskId` — the cards directly above and below the drop target. The backend looks up those two cards' ranks (O(1) each) and computes the midpoint. Null values handle edge cases: `previous=null` means top of column; `next=null` means bottom; both null means only card. *Frontend stays dumb, backend avoids read-to-sort, API contract is explicit about intent.*
+
+**Decision**: Option C — neighbor-based API. This is the cleanest separation of concerns:
+- The frontend already knows which cards are above and below from its visual state (the `columnItems` array). Extracting neighbor IDs at the drop index is trivial.
+- The backend doesn't need to load and sort all column cards — just two O(1) lookups by TaskId.
+- The API contract is unambiguous: "place this card between these two cards" has exactly one correct interpretation, unlike "position 2" which is meaningless when positions are corrupted.
+- If we later switch from sparse numeric to LexoRank or any other strategy, only the backend rank-computation changes. The API contract and frontend are unaffected.
+
+### The Final Design
+
+**API contract change**:
+```
+// Before
+POST /api/tasks/{id}/move
+{ "columnId": "...", "position": 2 }
+
+// After
+POST /api/tasks/{id}/move
+{ "columnId": "...", "previousTaskId": "..." | null, "nextTaskId": "..." | null }
+```
+
+**Domain changes**:
+- `TaskCard.Position` (int) → `TaskCard.Rank` (decimal)
+- `Column.NextRank` (decimal) — per-column monotonic counter starting at 1000, incremented by 1000 on each placement. Each column independently tracks its highest rank, avoiding cross-column interference and eliminating the need to scan all column cards to find the max rank.
+- `Board.PlaceTask()` assigns the target column's `NextRank` to the new card and bumps the counter. New cards always land at a rank higher than any existing card in that column.
+- `Board.MoveCard()` takes `previousTaskId` / `nextTaskId`, looks up their ranks, computes midpoint. When placing at the bottom of a column (`nextTaskId=null`), computes `previousRank + 1000` and bumps that column's `NextRank` past the new rank.
+- New `Board.RebalanceColumnRanks()` for when gaps become too small (rare)
+
+**Orphan cleanup** (asymmetric by intent):
+- `DeleteTaskCommandHandler` calls `Board.RemoveCard()` — deletion is destructive, no undelete flow exists
+- `ArchiveTaskCommandHandler` does NOT touch the board card — archive is reversible, and unarchiving should restore the card to its original column and rank without data loss
+- Board query handlers (`GetDefaultBoardQueryHandler`, `GetBoardQueryHandler`) inject `ITaskRepository` to fetch active task IDs, then the DTO mapper filters out cards for archived/deleted tasks. This resolves the 17-card symptom at the read layer while preserving archived card placement in the database
+
+**Frontend changes** (minimal):
+- `handleDragEnd` extracts `previousTaskId` / `nextTaskId` from the `columnItems` array at the drop index
+- `MoveTaskRequest` sends neighbor IDs instead of position integer
+- Sort by `rank` (number) instead of `position` — functionally identical, just a field rename
+
+### Key Files Changed
+
+| Area | Files | Change |
+|------|-------|--------|
+| Domain | `TaskCard.cs`, `Board.cs`, `Column.cs` | Rank replaces Position, per-column NextRank counter, neighbor-based rank computation |
+| Application | `MoveTaskCommand.cs` | Accept previousTaskId/nextTaskId, pass to domain |
+| Application | `DeleteTaskCommand.cs` | Add Board.RemoveCard() cleanup on delete |
+| Application | `GetDefaultBoardQuery.cs`, `GetBoardQuery.cs` | Filter cards for archived/deleted tasks |
+| Application | `CreateTaskCommand.cs` | PlaceTask with auto-rank |
+| Application | `BoardDtoMapper.cs`, `BoardDto.cs` | Map Rank to DTO |
+| Infrastructure | `BoardConfiguration.cs` | Column type decimal for Rank |
+| Infrastructure | New migration | Position→Rank schema change |
+| API | `TaskEndpoints.cs`, `MoveTaskRequest` | New request shape |
+| Frontend | `board.types.ts`, `api.types.ts` | Rank field, neighbor-based move request |
+| Frontend | `KanbanBoard.tsx` | Extract neighbors, sort by rank |
+| Frontend | `factories.ts` | Update test factories |
+
+### Lessons Learned
+
+1. **Dense integer positions are a trap.** They work fine for append-only lists but break silently under reordering because every move theoretically requires reindexing all subsequent items. In practice, that reindexing gets skipped (as it did here), and position collisions accumulate until the sort becomes non-deterministic.
+
+2. **The API contract should express intent, not implementation.** "Place between these two cards" is intent. "Set position to 2" is an implementation detail that assumes dense integers. Intent-based APIs survive backend strategy changes.
+
+3. **Aggregate cleanup must be coordinated across contexts.** When Task and Board were split into separate bounded contexts, the Delete/Archive handlers only updated the Task aggregate. The Board aggregate's cards were left behind. Cross-context operations (even destructive ones) need explicit coordination at the application layer.
+
+---
+
 ## What's Next
 
 ### Checkpoint 1 Complete

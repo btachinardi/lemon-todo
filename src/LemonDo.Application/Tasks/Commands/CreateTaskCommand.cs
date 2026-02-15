@@ -69,9 +69,8 @@ public sealed class CreateTaskCommandHandler(
                 DomainError.NotFound("Board", "default"));
 
         var initialColumn = board.GetInitialColumn();
-        var position = board.GetCardCountInColumn(initialColumn.Id);
 
-        var placeResult = board.PlaceTask(task.Id, initialColumn.Id, position);
+        var placeResult = board.PlaceTask(task.Id, initialColumn.Id);
         if (placeResult.IsFailure)
             return Result<TaskDto, DomainError>.Failure(placeResult.Error);
 

@@ -31,10 +31,10 @@ function buildColumnItems(board: Board): ColumnItems {
       items[card.columnId].push(card.taskId);
     }
   }
-  // Sort within each column by card position
+  // Sort within each column by card rank
   const cardMap = new Map((board.cards ?? []).map((c) => [c.taskId, c]));
   for (const colId of Object.keys(items)) {
-    items[colId].sort((a, b) => (cardMap.get(a)?.position ?? 0) - (cardMap.get(b)?.position ?? 0));
+    items[colId].sort((a, b) => (cardMap.get(a)?.rank ?? 0) - (cardMap.get(b)?.rank ?? 0));
   }
   return items;
 }
@@ -52,8 +52,8 @@ interface KanbanBoardProps {
   tasks: Task[];
   onCompleteTask?: (id: string) => void;
   onSelectTask?: (id: string) => void;
-  /** Called when a card is dropped at a new position. */
-  onMoveTask?: (taskId: string, columnId: string, position: number) => void;
+  /** Called when a card is dropped at a new position. Passes neighbor IDs for rank computation. */
+  onMoveTask?: (taskId: string, columnId: string, previousTaskId: string | null, nextTaskId: string | null) => void;
   togglingTaskId?: string | null;
   className?: string;
 }
@@ -146,9 +146,12 @@ export function KanbanBoard({
 
       if (originCol !== currentCol) {
         // Cross-column move — handleDragOver already updated local state,
-        // now persist via the callback.
-        const newPosition = (columnItems[currentCol] ?? []).indexOf(activeTaskId);
-        onMoveTask?.(activeTaskId, currentCol, Math.max(0, newPosition));
+        // now persist via the callback with neighbor IDs.
+        const items = columnItems[currentCol] ?? [];
+        const idx = items.indexOf(activeTaskId);
+        const previousTaskId = idx > 0 ? items[idx - 1] : null;
+        const nextTaskId = idx < items.length - 1 ? items[idx + 1] : null;
+        onMoveTask?.(activeTaskId, currentCol, previousTaskId, nextTaskId);
       } else {
         // Same-column reorder
         const overId = over.id as string;
@@ -159,7 +162,10 @@ export function KanbanBoard({
         if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
           const reordered = arrayMove(items, oldIndex, newIndex);
           setColumnItems((prev) => ({ ...prev, [currentCol]: reordered }));
-          onMoveTask?.(activeTaskId, currentCol, reordered.indexOf(activeTaskId));
+          const finalIdx = reordered.indexOf(activeTaskId);
+          const previousTaskId = finalIdx > 0 ? reordered[finalIdx - 1] : null;
+          const nextTaskId = finalIdx < reordered.length - 1 ? reordered[finalIdx + 1] : null;
+          onMoveTask?.(activeTaskId, currentCol, previousTaskId, nextTaskId);
         }
       }
     },

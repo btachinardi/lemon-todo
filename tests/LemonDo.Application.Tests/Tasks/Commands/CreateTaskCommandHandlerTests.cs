@@ -65,14 +65,16 @@ public sealed class CreateTaskCommandHandlerTests
     }
 
     [TestMethod]
-    public async Task Should_SetPositionToEndOfColumn_When_ColumnHasExistingTasks()
+    public async Task Should_PlaceAtEndOfColumn_When_ColumnHasExistingTasks()
     {
         // Arrange: place 3 tasks on the board's initial column
         var initialColumn = _board.GetInitialColumn();
+        var existingTaskIds = new List<TaskId>();
         for (var i = 0; i < 3; i++)
         {
             var t = TaskEntity.Create(UserId.Default, TaskTitle.Create($"Task {i}").Value).Value;
-            _board.PlaceTask(t.Id, initialColumn.Id, i);
+            _board.PlaceTask(t.Id, initialColumn.Id);
+            existingTaskIds.Add(t.Id);
         }
 
         var command = new CreateTaskCommand("New task", null);
@@ -82,6 +84,15 @@ public sealed class CreateTaskCommandHandlerTests
         Assert.IsTrue(result.IsSuccess);
         // The board should now have 4 cards (3 pre-placed + 1 new)
         Assert.HasCount(4, _board.Cards);
+
+        // The new card's rank must be higher than all existing cards
+        var existingMaxRank = existingTaskIds
+            .Select(id => _board.FindCardByTaskId(id)!.Rank)
+            .Max();
+        var newTaskId = TaskId.From(result.Value.Id);
+        var newCardRank = _board.FindCardByTaskId(newTaskId)!.Rank;
+        Assert.IsTrue(newCardRank > existingMaxRank,
+            $"New card rank ({newCardRank}) should be > existing max ({existingMaxRank})");
     }
 
     [TestMethod]

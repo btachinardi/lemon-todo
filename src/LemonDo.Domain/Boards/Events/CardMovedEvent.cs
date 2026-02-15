@@ -9,4 +9,4 @@ public sealed record CardMovedEvent(
     TaskId TaskId,
     ColumnId FromColumnId,
     ColumnId ToColumnId,
-    int NewPosition) : DomainEvent;
+    decimal NewRank) : DomainEvent;

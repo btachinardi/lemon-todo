@@ -143,9 +143,9 @@ public static class TaskEndpoints
         MoveTaskRequest request,
         CancellationToken ct)
     {
-        var command = new MoveTaskCommand(id, request.ColumnId, request.Position);
+        var command = new MoveTaskCommand(id, request.ColumnId, request.PreviousTaskId, request.NextTaskId);
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult(() => Results.Ok(new { Id = id, request.ColumnId, request.Position }));
+        return result.ToHttpResult(() => Results.Ok(new { Id = id, request.ColumnId }));
     }
 
     private static async Task<IResult> AddTag(

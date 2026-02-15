@@ -3,20 +3,20 @@ namespace LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Tasks.ValueObjects;
 
 /// <summary>
-/// Represents a task's spatial placement on a board: which column it's in and its position within that column.
+/// Represents a task's spatial placement on a board: which column it's in and its rank within that column.
 /// Immutable — moving a card creates a new instance (remove + add pattern).
 /// </summary>
 public sealed class TaskCard
 {
     public TaskId TaskId { get; }
     public ColumnId ColumnId { get; }
-    public int Position { get; }
+    public decimal Rank { get; }
 
-    internal TaskCard(TaskId taskId, ColumnId columnId, int position)
+    internal TaskCard(TaskId taskId, ColumnId columnId, decimal rank)
     {
         TaskId = taskId;
         ColumnId = columnId;
-        Position = position;
+        Rank = rank;
     }
 
     // EF Core constructor

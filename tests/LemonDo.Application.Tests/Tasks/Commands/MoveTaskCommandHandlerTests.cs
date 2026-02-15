@@ -40,14 +40,15 @@ public sealed class MoveTaskCommandHandlerTests
     {
         var task = TaskEntity.Create(UserId.Default, TaskTitle.Create("Test").Value).Value;
         var initialColumn = _board.GetInitialColumn();
-        _board.PlaceTask(task.Id, initialColumn.Id, 0);
+        _board.PlaceTask(task.Id, initialColumn.Id);
 
         var doneColumn = _board.GetDoneColumn();
         _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(
-            new MoveTaskCommand(task.Id.Value, doneColumn.Id.Value, 0));
+            new MoveTaskCommand(task.Id.Value, doneColumn.Id.Value,
+                PreviousTaskId: null, NextTaskId: null));
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(TaskStatus.Done, task.Status);
@@ -62,17 +63,45 @@ public sealed class MoveTaskCommandHandlerTests
     {
         var task = TaskEntity.Create(UserId.Default, TaskTitle.Create("Test").Value).Value;
         var initialColumn = _board.GetInitialColumn();
-        _board.PlaceTask(task.Id, initialColumn.Id, 0);
+        _board.PlaceTask(task.Id, initialColumn.Id);
 
         var inProgressColumn = _board.Columns.First(c => c.TargetStatus == TaskStatus.InProgress);
         _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(
-            new MoveTaskCommand(task.Id.Value, inProgressColumn.Id.Value, 0));
+            new MoveTaskCommand(task.Id.Value, inProgressColumn.Id.Value,
+                PreviousTaskId: null, NextTaskId: null));
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(TaskStatus.InProgress, task.Status);
+    }
+
+    [TestMethod]
+    public async Task Should_ComputeRankBetweenNeighbors_When_MovedBetweenCards()
+    {
+        var taskA = TaskEntity.Create(UserId.Default, TaskTitle.Create("A").Value).Value;
+        var taskB = TaskEntity.Create(UserId.Default, TaskTitle.Create("B").Value).Value;
+        var taskC = TaskEntity.Create(UserId.Default, TaskTitle.Create("C").Value).Value;
+        var columnId = _board.GetInitialColumn().Id;
+        _board.PlaceTask(taskA.Id, columnId);
+        _board.PlaceTask(taskB.Id, columnId);
+        _board.PlaceTask(taskC.Id, columnId);
+
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+            .Returns(taskC);
+
+        // Move C between A and B (same column reorder)
+        var result = await _handler.HandleAsync(
+            new MoveTaskCommand(taskC.Id.Value, columnId.Value,
+                PreviousTaskId: taskA.Id.Value, NextTaskId: taskB.Id.Value));
+
+        Assert.IsTrue(result.IsSuccess);
+        var rankA = _board.FindCardByTaskId(taskA.Id)!.Rank;
+        var rankC = _board.FindCardByTaskId(taskC.Id)!.Rank;
+        var rankB = _board.FindCardByTaskId(taskB.Id)!.Rank;
+        Assert.IsTrue(rankC > rankA, "C should be ranked after A");
+        Assert.IsTrue(rankC < rankB, "C should be ranked before B");
     }
 
     [TestMethod]
@@ -81,7 +110,9 @@ public sealed class MoveTaskCommandHandlerTests
         _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
             .Returns((TaskEntity?)null);
 
-        var result = await _handler.HandleAsync(new MoveTaskCommand(Guid.NewGuid(), Guid.NewGuid(), 0));
+        var result = await _handler.HandleAsync(
+            new MoveTaskCommand(Guid.NewGuid(), Guid.NewGuid(),
+                PreviousTaskId: null, NextTaskId: null));
 
         Assert.IsTrue(result.IsFailure);
         Assert.Contains("not_found", result.Error.Code);
@@ -92,31 +123,16 @@ public sealed class MoveTaskCommandHandlerTests
     {
         var task = TaskEntity.Create(UserId.Default, TaskTitle.Create("Test").Value).Value;
         var initialColumn = _board.GetInitialColumn();
-        _board.PlaceTask(task.Id, initialColumn.Id, 0);
+        _board.PlaceTask(task.Id, initialColumn.Id);
 
         _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(
-            new MoveTaskCommand(task.Id.Value, Guid.NewGuid(), 0));
+            new MoveTaskCommand(task.Id.Value, Guid.NewGuid(),
+                PreviousTaskId: null, NextTaskId: null));
 
         Assert.IsTrue(result.IsFailure);
         Assert.AreEqual("board.column_not_found", result.Error.Code);
-    }
-
-    [TestMethod]
-    public async Task Should_Fail_When_NegativePosition()
-    {
-        var task = TaskEntity.Create(UserId.Default, TaskTitle.Create("Test").Value).Value;
-        var initialColumn = _board.GetInitialColumn();
-        _board.PlaceTask(task.Id, initialColumn.Id, 0);
-
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
-            .Returns(task);
-
-        var result = await _handler.HandleAsync(
-            new MoveTaskCommand(task.Id.Value, initialColumn.Id.Value, -1));
-
-        Assert.IsTrue(result.IsFailure);
     }
 }

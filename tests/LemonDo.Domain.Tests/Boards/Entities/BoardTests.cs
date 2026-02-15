@@ -436,9 +436,9 @@ public sealed class BoardTests
     {
         var board = Board.CreateDefault(DefaultOwner).Value;
         var taskId = TaskId.New();
-        var columnId = board.Columns[0].Id; // To Do column
+        var columnId = board.Columns[0].Id;
 
-        var result = board.PlaceTask(taskId, columnId, 0);
+        var result = board.PlaceTask(taskId, columnId);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(TaskStatus.Todo, result.Value);
@@ -446,12 +446,58 @@ public sealed class BoardTests
     }
 
     [TestMethod]
-    public void Should_FailPlaceTask_When_InvalidColumn()
+    public void Should_AssignRankFromColumnNextRank_When_TaskPlaced()
     {
         var board = Board.CreateDefault(DefaultOwner).Value;
         var taskId = TaskId.New();
+        var columnId = board.Columns[0].Id;
 
-        var result = board.PlaceTask(taskId, ColumnId.New(), 0);
+        board.PlaceTask(taskId, columnId);
+
+        var card = board.FindCardByTaskId(taskId);
+        Assert.IsNotNull(card);
+        Assert.AreEqual(1000m, card.Rank);
+    }
+
+    [TestMethod]
+    public void Should_IncrementColumnNextRank_When_TaskPlaced()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var columnId = board.Columns[0].Id;
+
+        board.PlaceTask(TaskId.New(), columnId);
+
+        var column = board.FindColumnById(columnId)!;
+        Assert.AreEqual(2000m, column.NextRank);
+    }
+
+    [TestMethod]
+    public void Should_AssignMonotonicallyIncreasingRanks_When_MultiplePlaced()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var columnId = board.Columns[0].Id;
+        var taskId1 = TaskId.New();
+        var taskId2 = TaskId.New();
+        var taskId3 = TaskId.New();
+
+        board.PlaceTask(taskId1, columnId);
+        board.PlaceTask(taskId2, columnId);
+        board.PlaceTask(taskId3, columnId);
+
+        var rank1 = board.FindCardByTaskId(taskId1)!.Rank;
+        var rank2 = board.FindCardByTaskId(taskId2)!.Rank;
+        var rank3 = board.FindCardByTaskId(taskId3)!.Rank;
+
+        Assert.IsTrue(rank1 < rank2, $"rank1 ({rank1}) should be less than rank2 ({rank2})");
+        Assert.IsTrue(rank2 < rank3, $"rank2 ({rank2}) should be less than rank3 ({rank3})");
+    }
+
+    [TestMethod]
+    public void Should_FailPlaceTask_When_InvalidColumn()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+
+        var result = board.PlaceTask(TaskId.New(), ColumnId.New());
 
         Assert.IsTrue(result.IsFailure);
         Assert.AreEqual("board.column_not_found", result.Error.Code);
@@ -463,9 +509,9 @@ public sealed class BoardTests
         var board = Board.CreateDefault(DefaultOwner).Value;
         var taskId = TaskId.New();
         var columnId = board.Columns[0].Id;
-        board.PlaceTask(taskId, columnId, 0);
+        board.PlaceTask(taskId, columnId);
 
-        var result = board.PlaceTask(taskId, columnId, 1);
+        var result = board.PlaceTask(taskId, columnId);
 
         Assert.IsTrue(result.IsFailure);
         Assert.AreEqual("board.task_already_placed", result.Error.Code);
@@ -479,34 +525,151 @@ public sealed class BoardTests
         var taskId = TaskId.New();
         var columnId = board.Columns[0].Id;
 
-        board.PlaceTask(taskId, columnId, 0);
+        board.PlaceTask(taskId, columnId);
 
         var evt = board.DomainEvents.OfType<CardPlacedEvent>().SingleOrDefault();
         Assert.IsNotNull(evt);
         Assert.AreEqual(board.Id, evt.BoardId);
         Assert.AreEqual(taskId, evt.TaskId);
         Assert.AreEqual(columnId, evt.ColumnId);
-        Assert.AreEqual(0, evt.Position);
+        Assert.AreEqual(1000m, evt.Rank);
     }
 
-    // --- Card Management: MoveCard ---
+    // --- Card Management: MoveCard (neighbor-based rank) ---
 
     [TestMethod]
-    public void Should_MoveCard_When_ValidColumn()
+    public void Should_MoveCardToEmptyColumn_When_BothNeighborsNull()
     {
         var board = Board.CreateDefault(DefaultOwner).Value;
         var taskId = TaskId.New();
         var todoColumnId = board.Columns[0].Id;
         var doneColumnId = board.Columns[2].Id;
-        board.PlaceTask(taskId, todoColumnId, 0);
+        board.PlaceTask(taskId, todoColumnId);
 
-        var result = board.MoveCard(taskId, doneColumnId, 0);
+        // Move to empty Done column — no neighbors
+        var result = board.MoveCard(taskId, doneColumnId, previousTaskId: null, nextTaskId: null);
 
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(TaskStatus.Done, result.Value);
         var card = board.FindCardByTaskId(taskId);
         Assert.IsNotNull(card);
         Assert.AreEqual(doneColumnId, card.ColumnId);
+        Assert.IsTrue(card.Rank > 0, "Card in empty column should have a positive rank");
+    }
+
+    [TestMethod]
+    public void Should_MoveCardBetweenTwoCards_When_BothNeighborsProvided()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var columnId = board.Columns[0].Id;
+        var taskA = TaskId.New();
+        var taskB = TaskId.New();
+        var taskC = TaskId.New();
+        board.PlaceTask(taskA, columnId);
+        board.PlaceTask(taskB, columnId);
+        board.PlaceTask(taskC, columnId);
+        var rankA = board.FindCardByTaskId(taskA)!.Rank;
+        var rankB = board.FindCardByTaskId(taskB)!.Rank;
+
+        // Move C between A and B (same column)
+        var result = board.MoveCard(taskC, columnId, previousTaskId: taskA, nextTaskId: taskB);
+
+        Assert.IsTrue(result.IsSuccess);
+        var movedRank = board.FindCardByTaskId(taskC)!.Rank;
+        Assert.IsTrue(movedRank > rankA, $"Rank ({movedRank}) should be > rankA ({rankA})");
+        Assert.IsTrue(movedRank < rankB, $"Rank ({movedRank}) should be < rankB ({rankB})");
+    }
+
+    [TestMethod]
+    public void Should_MoveCardToTopOfColumn_When_PreviousIsNull()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var columnId = board.Columns[0].Id;
+        var taskA = TaskId.New();
+        var taskB = TaskId.New();
+        board.PlaceTask(taskA, columnId);
+        board.PlaceTask(taskB, columnId);
+        var rankA = board.FindCardByTaskId(taskA)!.Rank;
+
+        // Move B to top — before A
+        var result = board.MoveCard(taskB, columnId, previousTaskId: null, nextTaskId: taskA);
+
+        Assert.IsTrue(result.IsSuccess);
+        var movedRank = board.FindCardByTaskId(taskB)!.Rank;
+        Assert.IsTrue(movedRank < rankA, $"Rank ({movedRank}) should be < rankA ({rankA})");
+        Assert.IsTrue(movedRank > 0, "Rank at top should still be positive");
+    }
+
+    [TestMethod]
+    public void Should_MoveCardToBottomOfColumn_When_NextIsNull()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var columnId = board.Columns[0].Id;
+        var taskA = TaskId.New();
+        var taskB = TaskId.New();
+        var taskC = TaskId.New();
+        board.PlaceTask(taskA, columnId);
+        board.PlaceTask(taskB, columnId);
+        board.PlaceTask(taskC, columnId);
+        var rankC = board.FindCardByTaskId(taskC)!.Rank;
+
+        // Move A to bottom — after C
+        var result = board.MoveCard(taskA, columnId, previousTaskId: taskC, nextTaskId: null);
+
+        Assert.IsTrue(result.IsSuccess);
+        var movedRank = board.FindCardByTaskId(taskA)!.Rank;
+        Assert.IsTrue(movedRank > rankC, $"Rank ({movedRank}) should be > rankC ({rankC})");
+    }
+
+    [TestMethod]
+    public void Should_BumpColumnNextRank_When_MoveProducesRankExceedingIt()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var todoColumnId = board.Columns[0].Id;
+        var doneColumnId = board.Columns[2].Id;
+        var taskA = TaskId.New();
+        board.PlaceTask(taskA, todoColumnId);
+
+        // Done column NextRank starts at 1000. Move A to bottom of Done (empty)
+        board.MoveCard(taskA, doneColumnId, previousTaskId: null, nextTaskId: null);
+
+        var doneColumn = board.FindColumnById(doneColumnId)!;
+        var movedRank = board.FindCardByTaskId(taskA)!.Rank;
+        Assert.IsTrue(doneColumn.NextRank > movedRank,
+            $"Column NextRank ({doneColumn.NextRank}) should be > moved card rank ({movedRank})");
+    }
+
+    [TestMethod]
+    public void Should_ProduceUniqueRanks_When_MultipleMovesInSameColumn()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var columnId = board.Columns[0].Id;
+        var taskA = TaskId.New();
+        var taskB = TaskId.New();
+        var taskC = TaskId.New();
+        board.PlaceTask(taskA, columnId);
+        board.PlaceTask(taskB, columnId);
+        board.PlaceTask(taskC, columnId);
+
+        // Move C between A and B
+        board.MoveCard(taskC, columnId, previousTaskId: taskA, nextTaskId: taskB);
+        // Move B to top
+        board.MoveCard(taskB, columnId, previousTaskId: null, nextTaskId: taskC);
+
+        var rankA = board.FindCardByTaskId(taskA)!.Rank;
+        var rankB = board.FindCardByTaskId(taskB)!.Rank;
+        var rankC = board.FindCardByTaskId(taskC)!.Rank;
+
+        // All three ranks must be distinct
+        Assert.AreNotEqual(rankA, rankB, "A and B should have different ranks");
+        Assert.AreNotEqual(rankB, rankC, "B and C should have different ranks");
+        Assert.AreNotEqual(rankA, rankC, "A and C should have different ranks");
+
+        // Order should be B, A, C:
+        // After move 1 (C between A,B): A(1000), C(1500), B(2000)
+        // After move 2 (B before C):    B(750),  A(1000), C(1500)
+        Assert.IsTrue(rankB < rankA, $"B ({rankB}) should be before A ({rankA})");
+        Assert.IsTrue(rankA < rankC, $"A ({rankA}) should be before C ({rankC})");
     }
 
     [TestMethod]
@@ -515,7 +678,7 @@ public sealed class BoardTests
         var board = Board.CreateDefault(DefaultOwner).Value;
         var columnId = board.Columns[0].Id;
 
-        var result = board.MoveCard(TaskId.New(), columnId, 0);
+        var result = board.MoveCard(TaskId.New(), columnId, previousTaskId: null, nextTaskId: null);
 
         Assert.IsTrue(result.IsFailure);
         Assert.AreEqual("board.card_not_found", result.Error.Code);
@@ -526,12 +689,38 @@ public sealed class BoardTests
     {
         var board = Board.CreateDefault(DefaultOwner).Value;
         var taskId = TaskId.New();
-        board.PlaceTask(taskId, board.Columns[0].Id, 0);
+        board.PlaceTask(taskId, board.Columns[0].Id);
 
-        var result = board.MoveCard(taskId, ColumnId.New(), 0);
+        var result = board.MoveCard(taskId, ColumnId.New(), previousTaskId: null, nextTaskId: null);
 
         Assert.IsTrue(result.IsFailure);
         Assert.AreEqual("board.column_not_found", result.Error.Code);
+    }
+
+    [TestMethod]
+    public void Should_FailMoveCard_When_PreviousTaskNotOnBoard()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var taskId = TaskId.New();
+        var columnId = board.Columns[0].Id;
+        board.PlaceTask(taskId, columnId);
+
+        var result = board.MoveCard(taskId, columnId, previousTaskId: TaskId.New(), nextTaskId: null);
+
+        Assert.IsTrue(result.IsFailure);
+    }
+
+    [TestMethod]
+    public void Should_FailMoveCard_When_NextTaskNotOnBoard()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var taskId = TaskId.New();
+        var columnId = board.Columns[0].Id;
+        board.PlaceTask(taskId, columnId);
+
+        var result = board.MoveCard(taskId, columnId, previousTaskId: null, nextTaskId: TaskId.New());
+
+        Assert.IsTrue(result.IsFailure);
     }
 
     [TestMethod]
@@ -541,10 +730,10 @@ public sealed class BoardTests
         var taskId = TaskId.New();
         var fromColumnId = board.Columns[0].Id;
         var toColumnId = board.Columns[1].Id;
-        board.PlaceTask(taskId, fromColumnId, 0);
+        board.PlaceTask(taskId, fromColumnId);
         board.ClearDomainEvents();
 
-        board.MoveCard(taskId, toColumnId, 2);
+        board.MoveCard(taskId, toColumnId, previousTaskId: null, nextTaskId: null);
 
         var evt = board.DomainEvents.OfType<CardMovedEvent>().SingleOrDefault();
         Assert.IsNotNull(evt);
@@ -552,7 +741,7 @@ public sealed class BoardTests
         Assert.AreEqual(taskId, evt.TaskId);
         Assert.AreEqual(fromColumnId, evt.FromColumnId);
         Assert.AreEqual(toColumnId, evt.ToColumnId);
-        Assert.AreEqual(2, evt.NewPosition);
+        Assert.IsTrue(evt.NewRank > 0, "Event should carry the computed rank");
     }
 
     // --- Card Management: RemoveCard ---
@@ -562,7 +751,7 @@ public sealed class BoardTests
     {
         var board = Board.CreateDefault(DefaultOwner).Value;
         var taskId = TaskId.New();
-        board.PlaceTask(taskId, board.Columns[0].Id, 0);
+        board.PlaceTask(taskId, board.Columns[0].Id);
 
         var result = board.RemoveCard(taskId);
 
@@ -588,9 +777,9 @@ public sealed class BoardTests
     {
         var board = Board.CreateDefault(DefaultOwner).Value;
         var columnId = board.Columns[0].Id;
-        board.PlaceTask(TaskId.New(), columnId, 0);
-        board.PlaceTask(TaskId.New(), columnId, 1);
-        board.PlaceTask(TaskId.New(), board.Columns[1].Id, 0);
+        board.PlaceTask(TaskId.New(), columnId);
+        board.PlaceTask(TaskId.New(), columnId);
+        board.PlaceTask(TaskId.New(), board.Columns[1].Id);
 
         var count = board.GetCardCountInColumn(columnId);
 

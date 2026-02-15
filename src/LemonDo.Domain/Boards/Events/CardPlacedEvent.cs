@@ -8,4 +8,4 @@ public sealed record CardPlacedEvent(
     BoardId BoardId,
     TaskId TaskId,
     ColumnId ColumnId,
-    int Position) : DomainEvent;
+    decimal Rank) : DomainEvent;

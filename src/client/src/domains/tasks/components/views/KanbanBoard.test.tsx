@@ -85,13 +85,39 @@ describe('KanbanBoard', () => {
     const task2 = createTask({ title: 'Task in Done' });
 
     board.cards = [
-      createTaskCard({ taskId: task1.id, columnId: todoColumnId, position: 0 }),
-      createTaskCard({ taskId: task2.id, columnId: doneColumnId, position: 0 }),
+      createTaskCard({ taskId: task1.id, columnId: todoColumnId, rank: 1000 }),
+      createTaskCard({ taskId: task2.id, columnId: doneColumnId, rank: 1000 }),
     ];
 
     render(<KanbanBoard board={board} tasks={[task1, task2]} />);
     expect(screen.getByText('Task in Todo')).toBeInTheDocument();
     expect(screen.getByText('Task in Done')).toBeInTheDocument();
+  });
+
+  it('sorts tasks within columns by rank', () => {
+    const board = createBoard();
+    const todoColumnId = board.columns[0].id;
+
+    const task1 = createTask({ title: 'Third (rank 3000)' });
+    const task2 = createTask({ title: 'First (rank 1000)' });
+    const task3 = createTask({ title: 'Second (rank 2000)' });
+
+    board.cards = [
+      createTaskCard({ taskId: task1.id, columnId: todoColumnId, rank: 3000 }),
+      createTaskCard({ taskId: task2.id, columnId: todoColumnId, rank: 1000 }),
+      createTaskCard({ taskId: task3.id, columnId: todoColumnId, rank: 2000 }),
+    ];
+
+    render(<KanbanBoard board={board} tasks={[task1, task2, task3]} />);
+
+    // Cards should appear in rank order: First, Second, Third
+    // Each TaskCard has aria-label="Task: {title}"
+    const cards = screen.getAllByRole('button', { name: /^Task:/ });
+    const labels = cards.map((el) => el.getAttribute('aria-label'));
+
+    expect(labels[0]).toContain('First');
+    expect(labels[1]).toContain('Second');
+    expect(labels[2]).toContain('Third');
   });
 
   it('sorts columns by position', () => {
@@ -123,14 +149,14 @@ describe('KanbanBoard drag-and-drop', () => {
     dndHandlers = {};
   });
 
-  it('should call onMoveTask when a card is dragged to a different column', () => {
+  it('should call onMoveTask with neighbor IDs when card is dragged to a different column', () => {
     const onMoveTask = vi.fn();
     const board = createBoard();
     const todoCol = board.columns[0];
     const inProgressCol = board.columns[1];
 
     const task = createTask({ title: 'Drag me' });
-    board.cards = [createTaskCard({ taskId: task.id, columnId: todoCol.id, position: 0 })];
+    board.cards = [createTaskCard({ taskId: task.id, columnId: todoCol.id, rank: 1000 })];
 
     render(<KanbanBoard board={board} tasks={[task]} onMoveTask={onMoveTask} />);
 
@@ -149,12 +175,17 @@ describe('KanbanBoard drag-and-drop', () => {
       dndHandlers.onDragEnd?.(makeDndEvent(task.id, inProgressCol.id));
     });
 
-    // onMoveTask MUST be called with the target column
+    // onMoveTask MUST be called with the target column and neighbor IDs
     expect(onMoveTask).toHaveBeenCalledTimes(1);
-    expect(onMoveTask).toHaveBeenCalledWith(task.id, inProgressCol.id, expect.any(Number));
+    expect(onMoveTask).toHaveBeenCalledWith(
+      task.id,
+      inProgressCol.id,
+      null, // previousTaskId — empty column, no card above
+      null, // nextTaskId — empty column, no card below
+    );
   });
 
-  it('should call onMoveTask with correct column when dropping onto a task in another column', () => {
+  it('should call onMoveTask with correct neighbors when dropping onto a task in another column', () => {
     const onMoveTask = vi.fn();
     const board = createBoard();
     const todoCol = board.columns[0];
@@ -163,8 +194,8 @@ describe('KanbanBoard drag-and-drop', () => {
     const taskA = createTask({ title: 'Task A' });
     const taskB = createTask({ title: 'Task B' });
     board.cards = [
-      createTaskCard({ taskId: taskA.id, columnId: todoCol.id, position: 0 }),
-      createTaskCard({ taskId: taskB.id, columnId: inProgressCol.id, position: 0 }),
+      createTaskCard({ taskId: taskA.id, columnId: todoCol.id, rank: 1000 }),
+      createTaskCard({ taskId: taskB.id, columnId: inProgressCol.id, rank: 1000 }),
     ];
 
     render(<KanbanBoard board={board} tasks={[taskA, taskB]} onMoveTask={onMoveTask} />);
@@ -181,6 +212,84 @@ describe('KanbanBoard drag-and-drop', () => {
     });
 
     expect(onMoveTask).toHaveBeenCalledTimes(1);
-    expect(onMoveTask).toHaveBeenCalledWith(taskA.id, inProgressCol.id, expect.any(Number));
+    // Task A was placed after Task B (the only card in InProgress)
+    expect(onMoveTask).toHaveBeenCalledWith(
+      taskA.id,
+      inProgressCol.id,
+      taskB.id, // previousTaskId — Task B is above
+      null,     // nextTaskId — nothing below
+    );
+  });
+
+  it('should send correct neighbor IDs for same-column reorder', () => {
+    const onMoveTask = vi.fn();
+    const board = createBoard();
+    const todoCol = board.columns[0];
+
+    const taskA = createTask({ title: 'Task A' });
+    const taskB = createTask({ title: 'Task B' });
+    const taskC = createTask({ title: 'Task C' });
+    board.cards = [
+      createTaskCard({ taskId: taskA.id, columnId: todoCol.id, rank: 1000 }),
+      createTaskCard({ taskId: taskB.id, columnId: todoCol.id, rank: 2000 }),
+      createTaskCard({ taskId: taskC.id, columnId: todoCol.id, rank: 3000 }),
+    ];
+
+    render(
+      <KanbanBoard board={board} tasks={[taskA, taskB, taskC]} onMoveTask={onMoveTask} />,
+    );
+
+    // Drag C to position between A and B (same column)
+    act(() => {
+      dndHandlers.onDragStart?.(makeDndEvent(taskC.id));
+    });
+    act(() => {
+      dndHandlers.onDragEnd?.(makeDndEvent(taskC.id, taskA.id));
+    });
+
+    expect(onMoveTask).toHaveBeenCalledTimes(1);
+    // C dropped onto A's position → arrayMove puts C at index 0 (top)
+    // Order becomes [C, A, B] so C has no previous, next is A
+    expect(onMoveTask).toHaveBeenCalledWith(
+      taskC.id,
+      todoCol.id,
+      null,      // previousTaskId — C is now at top
+      taskA.id,  // nextTaskId — A is next after C
+    );
+  });
+
+  it('should send previousTaskId=null when dragged to top of column', () => {
+    const onMoveTask = vi.fn();
+    const board = createBoard();
+    const todoCol = board.columns[0];
+
+    const taskA = createTask({ title: 'Task A' });
+    const taskB = createTask({ title: 'Task B' });
+    board.cards = [
+      createTaskCard({ taskId: taskA.id, columnId: todoCol.id, rank: 1000 }),
+      createTaskCard({ taskId: taskB.id, columnId: todoCol.id, rank: 2000 }),
+    ];
+
+    render(
+      <KanbanBoard board={board} tasks={[taskA, taskB]} onMoveTask={onMoveTask} />,
+    );
+
+    // Drag B above A (to the top)
+    act(() => {
+      dndHandlers.onDragStart?.(makeDndEvent(taskB.id));
+    });
+    act(() => {
+      // Drop onto position 0 (where A was) — arrayMove puts B before A
+      dndHandlers.onDragEnd?.(makeDndEvent(taskB.id, taskA.id));
+    });
+
+    expect(onMoveTask).toHaveBeenCalledTimes(1);
+    // B is now at index 0: previousTaskId=null, nextTaskId=A
+    expect(onMoveTask).toHaveBeenCalledWith(
+      taskB.id,
+      todoCol.id,
+      null,      // previousTaskId — top of column
+      taskA.id,  // nextTaskId
+    );
   });
 });

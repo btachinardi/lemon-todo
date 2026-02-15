@@ -52,6 +52,9 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
 
             columnBuilder.Property(c => c.Position);
             columnBuilder.Property(c => c.MaxTasks);
+            columnBuilder.Property(c => c.NextRank)
+                .HasColumnType("TEXT")
+                .HasDefaultValue(1000m);
 
             columnBuilder.WithOwner().HasForeignKey("BoardId");
 
@@ -76,7 +79,8 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
                 .HasConversion(id => id.Value, guid => ColumnId.From(guid))
                 .IsRequired();
 
-            cardBuilder.Property(c => c.Position);
+            cardBuilder.Property(c => c.Rank)
+                .HasColumnType("TEXT");
 
             cardBuilder.HasKey("BoardId", nameof(TaskCard.TaskId));
         });

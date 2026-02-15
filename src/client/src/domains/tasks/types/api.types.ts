@@ -27,8 +27,10 @@ export interface UpdateTaskRequest {
 /** Payload for `POST /api/tasks/:id/move`. Relocates a card on the board. */
 export interface MoveTaskRequest {
   columnId: string;
-  /** Zero-based target position within the destination column. */
-  position: number;
+  /** ID of the card directly above the drop target, or `null` at the top. */
+  previousTaskId: string | null;
+  /** ID of the card directly below the drop target, or `null` at the bottom. */
+  nextTaskId: string | null;
 }
 
 /** Payload for `POST /api/tasks/:id/tags`. */

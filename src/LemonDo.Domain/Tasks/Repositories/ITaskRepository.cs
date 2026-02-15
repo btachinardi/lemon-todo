@@ -30,6 +30,12 @@ public interface ITaskRepository
         int pageSize = 50,
         CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns the IDs of all tasks that are neither deleted nor archived for the given user.
+    /// Used by board queries to filter out cards for inactive tasks.
+    /// </summary>
+    System.Threading.Tasks.Task<HashSet<TaskId>> GetActiveTaskIdsAsync(UserId ownerId, CancellationToken ct = default);
+
     System.Threading.Tasks.Task AddAsync(TaskEntity task, CancellationToken ct = default);
     System.Threading.Tasks.Task UpdateAsync(TaskEntity task, CancellationToken ct = default);
 }

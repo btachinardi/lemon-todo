@@ -35,7 +35,7 @@ export function createTaskCard(overrides: Partial<TaskCard> = {}): TaskCard {
   return {
     taskId: nextId(),
     columnId: nextId(),
-    position: 0,
+    rank: 1000,
     ...overrides,
   };
 }

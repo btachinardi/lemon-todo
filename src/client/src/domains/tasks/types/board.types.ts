@@ -23,8 +23,8 @@ export interface Column {
 export interface TaskCard {
   taskId: string;
   columnId: string;
-  /** Zero-based display order within the column (top to bottom). */
-  position: number;
+  /** Sparse numeric rank for ordering within the column (lower = higher). */
+  rank: number;
 }
 
 /**

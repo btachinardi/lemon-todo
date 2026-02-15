@@ -89,9 +89,9 @@ export function TaskBoardPage() {
         board={board}
         tasks={tasks}
         onCompleteTask={handleToggleComplete}
-        onMoveTask={(taskId, columnId, position) =>
+        onMoveTask={(taskId, columnId, previousTaskId, nextTaskId) =>
           moveTask.mutate(
-            { id: taskId, request: { columnId, position } },
+            { id: taskId, request: { columnId, previousTaskId, nextTaskId } },
             { onError: () => toast.error('Could not move task. Try again.') },
           )
         }
