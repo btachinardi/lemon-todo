@@ -885,6 +885,31 @@ The flakiness stemmed from **shared auth state across tests**:
 
 ---
 
+## Release: v0.2.0 — Authentication & Authorization
+
+**Date: February 15, 2026**
+
+Tagged and released v0.2.0, covering Checkpoint 2 (Authentication & Authorization).
+
+### What Shipped
+
+- **ASP.NET Core Identity + JWT** — Register, Login, Logout, Refresh, GetCurrentUser
+- **Cookie-based refresh tokens** — HttpOnly, SameSite=Strict, path-scoped, with background cleanup
+- **User-scoped data isolation** — `ICurrentUserService` throughout all handlers
+- **Security hardening** — SecurityHeadersMiddleware, account lockout, PII masking, CORS
+- **Frontend auth** — Login/Register pages, Zustand auth store (memory-only), protected routes, user menu
+- **Identity domain** — User entity, DisplayName and Email value objects
+- **388 tests** — 262 backend + 84 frontend + 42 E2E, 100% passing
+
+### Key Architecture Decisions
+
+- HttpOnly cookie refresh tokens over localStorage (eliminates XSS risk)
+- Memory-only access tokens in Zustand (no persist middleware for React 19 compatibility)
+- `ValueObject<T>` base class + `IReconstructable` interface (reduced boilerplate across 11 VOs)
+- Unique users per E2E describe block (eliminates flaky tests from shared state)
+
+---
+
 ## What's Next
 
 ### Checkpoint 3: Rich UX & Polish
