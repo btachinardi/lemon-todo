@@ -7,7 +7,8 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// Maps <see cref="Result{TValue, TError}"/> to minimal API <see cref="IResult"/> responses.
 /// Error classification: codes ending in <c>.not_found</c> → 404,
-/// <c>.validation</c> → 400, all others → 422.
+/// <c>.validation</c> → 400, <c>.unauthorized</c> → 401, <c>.conflict</c> → 409,
+/// <c>.rate_limited</c> → 429, all others → 422.
 /// </summary>
 public static class ResultExtensions
 {
@@ -84,6 +85,15 @@ public static class ResultExtensions
 
         if (error.Code.EndsWith(".validation"))
             return (400, "validation_error");
+
+        if (error.Code.EndsWith(".unauthorized"))
+            return (401, "unauthorized");
+
+        if (error.Code.EndsWith(".conflict"))
+            return (409, "conflict");
+
+        if (error.Code.EndsWith(".rate_limited"))
+            return (429, "rate_limited");
 
         // Business rule violations → 422
         return (422, "business_rule_violation");

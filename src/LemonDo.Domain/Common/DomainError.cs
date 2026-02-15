@@ -5,7 +5,8 @@ namespace LemonDo.Domain.Common;
 /// </summary>
 /// <remarks>
 /// Error codes follow a dotted convention that determines HTTP status mapping in the API layer:
-/// codes ending in <c>.not_found</c> map to 404, <c>.validation</c> to 400, and all others to 422.
+/// codes ending in <c>.not_found</c> map to 404, <c>.validation</c> to 400, <c>.unauthorized</c> to 401,
+/// <c>.conflict</c> to 409, <c>.rate_limited</c> to 429, and all others to 422.
 /// Use the factory methods below or the constructor directly for custom codes.
 /// </remarks>
 public sealed record DomainError(string Code, string Message)
@@ -27,4 +28,22 @@ public sealed record DomainError(string Code, string Message)
     /// </summary>
     public static DomainError BusinessRule(string code, string message) =>
         new(code, message);
+
+    /// <summary>
+    /// Creates an unauthorized error. The resulting code is <c>{entity}.unauthorized</c>.
+    /// </summary>
+    public static DomainError Unauthorized(string entity, string message) =>
+        new($"{entity}.unauthorized", message);
+
+    /// <summary>
+    /// Creates a conflict error. The resulting code is <c>{entity}.conflict</c>.
+    /// </summary>
+    public static DomainError Conflict(string entity, string message) =>
+        new($"{entity}.conflict", message);
+
+    /// <summary>
+    /// Creates a rate-limited error. The resulting code is <c>{entity}.rate_limited</c>.
+    /// </summary>
+    public static DomainError RateLimited(string entity, string message) =>
+        new($"{entity}.rate_limited", message);
 }

@@ -14,10 +14,10 @@ public sealed class TaskEndpointsTests
     private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = TestJsonOptions.Default;
 
     [ClassInitialize]
-    public static void ClassInit(TestContext _)
+    public static async Task ClassInit(TestContext _)
     {
         _factory = new CustomWebApplicationFactory();
-        _client = _factory.CreateClient();
+        _client = await _factory.CreateAuthenticatedClientAsync();
     }
 
     [ClassCleanup]

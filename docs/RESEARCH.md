@@ -50,6 +50,10 @@
 - **Account Lockout**: Configurable lockout on failed attempts
 - **Social OAuth**: Google, Microsoft, GitHub, Facebook providers
 - **Source**: [Microsoft Learn - ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity)
+- **CP2 Usage**: `Microsoft.AspNetCore.Identity.EntityFrameworkCore` in Infrastructure, `Microsoft.AspNetCore.Authentication.JwtBearer` in Api
+- **CP2 Architecture**: `ApplicationUser : IdentityUser<Guid>` in Infrastructure (EF-aware), `User` entity in Domain (pure). Deferred JWT bearer options via `AddOptions<JwtBearerOptions>().Configure<IOptions<JwtSettings>>()` for test compatibility.
+- **CP2 Gotcha**: Eager JWT config read in `Program.cs` runs before test factory config overrides → use deferred options pattern
+- **CP2 Security Hardening**: Refresh tokens moved from JSON response body to HttpOnly cookies (`SameSite=Strict`, `Path=/api/auth`, `Secure` in production). Access tokens returned in JSON body only, stored in JS memory (Zustand, no persistence). Silent refresh on page load via cookie. Background `RefreshTokenCleanupService` (hosted service, 6h interval) prevents unbounded table growth.
 
 ### 1.4 Entity Framework Core 10
 
@@ -191,6 +195,7 @@
 - **v5 Changes**:
   - Removed default equality function customization from `create` (use `createWithEqualityFn` for custom equality like `shallow`)
   - `persist` middleware requires explicit state hydration pattern
+- **CP2 Update**: Auth store no longer uses `persist` middleware. Tokens stored in memory only (HttpOnly cookie for refresh, JS variable for access). This eliminated the Zustand 5 + React 19 `useSyncExternalStore` hydration race condition entirely.
 - **Why Zustand over Redux/Context**:
   - No provider wrapper needed (simpler component tree)
   - Stores are independent - no single global store monolith
@@ -405,7 +410,7 @@ vitest: 4.x
 fast-check: 4.x
 @testing-library/react: 16.x
 msw: 2.x
-playwright: 1.x
+playwright: 1.x (E2E with cookie-based auth, unique users per describe block)
 
 # Infrastructure
 docker: 29.x

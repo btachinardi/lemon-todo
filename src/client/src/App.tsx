@@ -1,4 +1,5 @@
 import { RouterProvider } from 'react-router';
+import { AuthHydrationProvider } from './app/providers/AuthHydrationProvider';
 import { ErrorBoundaryProvider } from './app/providers/ErrorBoundaryProvider';
 import { QueryProvider } from './app/providers/QueryProvider';
 import { router } from './app/routes/router';
@@ -9,9 +10,11 @@ function App() {
   return (
     <ErrorBoundaryProvider>
       <OfflineBanner />
-      <QueryProvider>
-        <RouterProvider router={router} />
-      </QueryProvider>
+      <AuthHydrationProvider>
+        <QueryProvider>
+          <RouterProvider router={router} />
+        </QueryProvider>
+      </AuthHydrationProvider>
     </ErrorBoundaryProvider>
   );
 }

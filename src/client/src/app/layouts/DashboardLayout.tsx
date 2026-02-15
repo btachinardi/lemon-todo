@@ -3,6 +3,7 @@ import { NavLink } from 'react-router';
 import { KanbanIcon, ListIcon } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
+import { UserMenu } from '@/domains/auth/components/UserMenu';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -52,6 +53,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               List
             </NavLink>
           </nav>
+          <UserMenu />
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1">{children}</main>

@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-15
+
+Checkpoint 2: Authentication & Authorization — secure multi-user support with JWT tokens, cookie-based refresh, and user-scoped data isolation.
+
+### Added
+
+- **User authentication** with ASP.NET Core Identity and JWT tokens
+  - Register, Login, Logout, Refresh, and GetCurrentUser endpoints
+  - Access tokens (15min) + refresh tokens (7 days) with secure hashing
+  - JTI claim for token uniqueness
+- **User-scoped data** via `ICurrentUserService` — each user sees only their own tasks and boards
+  - Default board auto-created on registration
+  - Role seeding (User, Admin) on startup
+- **Cookie-based refresh tokens** — HttpOnly, SameSite=Strict, path-scoped cookies for secure token refresh
+  - Silent refresh on page load via `AuthHydrationProvider`
+  - `RefreshTokenCleanupService` background job (6-hour interval)
+- **Security hardening**
+  - `SecurityHeadersMiddleware` — X-Content-Type-Options, X-Frame-Options, CSP, Referrer-Policy
+  - Account lockout after 5 failed login attempts (15min lockout)
+  - PII masking in structured logs
+  - CORS configured with `AllowCredentials()` for cookie-based auth
+- **Frontend auth system**
+  - Login and Register pages with form validation and error handling
+  - Zustand auth store (memory-only, no persist) for React 19 compatibility
+  - `AuthHydrationProvider` for safe store rehydration
+  - Protected routes with automatic redirect to `/login`
+  - JWT bearer token injection in API client with 401 handling
+  - User menu dropdown with display name and sign out
+- **Identity domain model** — User entity, DisplayName and Email value objects with validation
+- **388 tests** across all layers
+  - 26 new API auth tests (registration, login, token refresh, role assignment, data isolation)
+  - 5 new E2E auth tests with cookie-based `loginViaApi` helper
+  - Identity domain unit tests (User entity, DisplayName, Email value objects)
+  - Token refresh and security header tests
+
+### Changed
+
+- `LemonDoDbContext` now extends `IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>` instead of `DbContext`
+- All task/board endpoints now require authentication (`RequireAuthorization()`)
+- Application command/query handlers inject `ICurrentUserService` instead of using `UserId.Default`
+- Value objects refactored to `ValueObject<T>` base class with `IReconstructable<TSelf, TValue>` interface
+- E2E tests use unique users per test and serial execution for SQLite concurrency safety
+
 ## [0.1.0] - 2026-02-15
 
 Checkpoint 1: Core Task Management — a full-stack task management application with DDD architecture, kanban board, and list view in single-user mode.
@@ -68,5 +111,6 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/user/lemon-todo/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/user/lemon-todo/releases/tag/v0.1.0
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/btachinardi/lemon-todo/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/btachinardi/lemon-todo/releases/tag/v0.1.0

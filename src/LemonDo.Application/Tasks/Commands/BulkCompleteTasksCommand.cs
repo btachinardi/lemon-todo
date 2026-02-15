@@ -21,6 +21,7 @@ public sealed class BulkCompleteTasksCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork,
+    ICurrentUserService currentUser,
     ILogger<BulkCompleteTasksCommandHandler> logger)
 {
     /// <inheritdoc/>
@@ -28,7 +29,7 @@ public sealed class BulkCompleteTasksCommandHandler(
     {
         logger.LogInformation("Bulk completing {TaskCount} tasks", command.TaskIds.Count);
 
-        var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
+        var board = await boardRepository.GetDefaultForUserAsync(currentUser.UserId, ct);
         if (board is null)
         {
             var error = DomainError.NotFound("Board", "default");

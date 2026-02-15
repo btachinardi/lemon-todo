@@ -6,21 +6,12 @@ using LemonDo.Domain.Common;
 /// Validated tag label. Must be non-empty and at most <see cref="MaxLength"/> characters.
 /// Values are trimmed and normalized to lowercase on creation.
 /// </summary>
-public sealed class Tag : ValueObject
+public sealed class Tag : ValueObject<string>, IReconstructable<Tag, string>
 {
     /// <summary>Maximum allowed length for a tag: 50 characters.</summary>
     public const int MaxLength = 50;
 
-    /// <summary>The underlying validated tag string, trimmed and normalized to lowercase.</summary>
-    public string Value { get; }
-
-    private Tag(string value)
-    {
-        Value = value;
-    }
-
-    // EF Core constructor
-    private Tag() { Value = default!; }
+    private Tag(string value) : base(value) { }
 
     /// <summary>
     /// Creates a <see cref="Tag"/> from a string. Trims whitespace, converts to lowercase, and validates length.
@@ -41,12 +32,6 @@ public sealed class Tag : ValueObject
         return Result<Tag, DomainError>.Success(new Tag(normalized));
     }
 
-    /// <inheritdoc />
-    protected override IEnumerable<object?> GetEqualityComponents()
-    {
-        yield return Value;
-    }
-
-    /// <inheritdoc />
-    public override string ToString() => Value;
+    /// <summary>Reconstructs a <see cref="Tag"/> from a persistence value.</summary>
+    public static Tag Reconstruct(string value) => new(value);
 }

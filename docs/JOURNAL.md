@@ -592,13 +592,325 @@ See [CHANGELOG.md](../CHANGELOG.md) for the full list. Highlights:
 
 ---
 
+## CP2 Prep: ValueObject\<T\> Base Class Refactor
+
+**Date: February 15, 2026**
+
+### The Problem
+
+Every value object in the codebase repeated the same boilerplate: a `Value` property, `GetEqualityComponents()` yielding that value, and a `ToString()` override. That's ~5 lines of ceremony per VO across 11 files. Worse, every EF Core configuration repeated a verbose `HasConversion(vo => vo.Value, value => SomeVO.SomeMethod(value))` call, and each VO used a *different* reconstruction method (`From()`, `Create().Value`, `new()`) — an inconsistency smell.
+
+### The Solution: Three New Abstractions
+
+**1. `ValueObject<T>` base class** (`Domain/Common/ValueObjectOfT.cs`): Extends the existing `ValueObject` with a generic `Value` property, single-value equality, and `ToString()`. Single-value VOs (all 11 of ours) inherit from this instead of raw `ValueObject`.
+
+**2. `IReconstructable<TSelf, TValue>` interface** (`Domain/Common/IReconstructable.cs`): A static abstract interface that standardizes how VOs are materialized from trusted persistence values. Every VO implements `static TSelf Reconstruct(TValue value) => new(value)`. This is *not* validation — it bypasses `Create()` entirely, because values coming from the database are already trusted.
+
+**3. `ValueObjectPropertyExtensions`** (`Infrastructure/Persistence/Extensions/`): Three extension methods on EF Core's `PropertyBuilder<TVO>`:
+- `IsValueObject()` — for `Guid`-backed VOs (just conversion)
+- `IsValueObject(maxLength)` — for required `string`-backed VOs (conversion + max length + IsRequired)
+- `IsNullableValueObject(maxLength)` — for nullable `string`-backed VOs (null-safe conversion + max length)
+
+### Design Decision: No Static Interface for Create()
+
+We deliberately did **not** create an `ICreatable<TSelf, TInput>` interface to standardize the `Create()` factory pattern. The reason: `Create()` methods are inherently non-uniform:
+
+- **ID types** (TaskId, BoardId, etc.) have no `Create()` at all — they use `New()` / `From()`
+- **String VOs** return `Result<TSelf, DomainError>` but differ in parameters and normalization logic (Tag lowercases, Email validates format + lowercases, DisplayName enforces min length, TaskDescription allows null/empty)
+
+A shared interface would either be too generic to enforce anything useful or too restrictive to accommodate the variations. `Reconstruct` works precisely because reconstruction is *always* the same shape: trusted value in, VO out, no validation. `Create` is the opposite — it's where each VO's unique domain rules live.
+
+### Gotcha: CS8927 — Static Abstract Members in Expression Trees
+
+EF Core's `HasConversion` takes expression trees, but C# prohibits calling static abstract interface members inside expression trees (CS8927). The fix: capture `TVO.Reconstruct` as a `Func<>` delegate first, then use the delegate in the lambda. The expression tree sees a captured variable invocation (legal) instead of a static virtual dispatch (illegal).
+
+```csharp
+// Won't compile — CS8927
+builder.HasConversion(vo => vo.Value, value => TVO.Reconstruct(value));
+
+// Works — delegate capture
+Func<Guid, TVO> reconstruct = TVO.Reconstruct;
+builder.HasConversion(vo => vo.Value, value => reconstruct(value));
+```
+
+### Impact
+
+- **11 value objects** lost ~5 lines of boilerplate each (55 lines removed)
+- **2 EF configurations** replaced verbose conversion calls with one-liner extensions
+- **0 test changes** — public API (`.Value`, `.Create()`, `.From()`) unchanged
+- **246 backend + 80 frontend tests** still pass
+
+---
+
+## Checkpoint 2: Authentication & Authorization
+
+**Date**: 2026-02-15
+
+### What Was Built
+
+Full authentication system across backend, frontend, and E2E tests:
+
+**Backend (Phases 1-5)**:
+- Domain Identity entities: `User`, `Email` VO, `DisplayName` VO in `Domain/Identity/`
+- Infrastructure: `ApplicationUser : IdentityUser<Guid>`, `IdentityDbContext`, `RefreshToken` entity
+- 5 auth endpoints: `POST /api/auth/register|login|refresh|logout`, `GET /api/auth/me`
+- `JwtTokenService` for access + refresh token generation with `jti` uniqueness claim
+- `ICurrentUserService` abstraction replacing ~10 `UserId.Default` references
+- `RequireAuthorization()` on all task/board endpoints
+- Role seeding (User, Admin) + auto-assign "User" on registration
+- Default board auto-created per user on registration
+
+**Frontend (Phases 6-10)**:
+- Auth pages: `LoginPage`, `RegisterPage` with `AuthLayout`
+- Zustand auth store (memory-only, no persistence) + `AuthHydrationProvider` (silent refresh via HttpOnly cookie)
+- Protected routes: `ProtectedRoute`, `LoginRoute`, `RegisterRoute`
+- Bearer token injection from Zustand memory in `api-client.ts` with 401 → token refresh → retry
+- `credentials: 'include'` on all fetch calls for cookie transmission
+- `UserMenu` dropdown in `DashboardLayout` header
+
+**E2E (Phase 11)**:
+- `auth.helpers.ts`: `getAuthToken()`, `loginViaApi(page)` for Playwright (cookie injection + silent refresh)
+- `api.helpers.ts`: all API calls include Bearer token
+- 5 new auth E2E tests + 37 existing tests adapted
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Custom auth endpoints (not `MapIdentityApi`) | Full control over JWT response shape, refresh flow |
+| Memory-only auth store (no persist) | HttpOnly cookie handles session persistence; Zustand persist removed entirely, eliminating React 19 hydration race |
+| `AuthHydrationProvider` wrapping router | Silent refresh via HttpOnly cookie on mount, restores in-memory access token before children render |
+| Deferred JWT bearer options | `AddOptions<JwtBearerOptions>().Configure<IOptions<JwtSettings>>()` avoids eager config read that breaks test factory overrides |
+| `jti` claim on access tokens | Prevents identical tokens when issued within the same second |
+| `loginViaApi` for E2E | Calls login API, injects HttpOnly cookie via Playwright `addCookies`, silent refresh restores session |
+
+### Gotchas & Lessons
+
+1. **Zustand 5 + React 19 infinite loop**: Object-returning selectors like `useStore(s => ({ a: s.a }))` create new references every call → "getSnapshot should be cached" → infinite re-render. Fix: split into separate primitive selectors or use `useShallow`.
+
+2. **Zustand persist hydration race** (resolved by removal): Persist auto-hydration changes store mid-render, violating React 19's stricter `useSyncExternalStore` contract. Originally fixed with `skipHydration: true` + manual `await rehydrate()`. Later eliminated entirely by removing persist middleware — auth tokens now use HttpOnly cookies + memory-only Zustand store.
+
+3. **JWT bearer eager config**: `builder.Configuration.Get<JwtSettings>()` in Program.cs runs before `CustomWebApplicationFactory.ConfigureAppConfiguration` overrides. Token signed with test key, validated with dev key → 401. Fix: deferred options pattern.
+
+4. **`WebApplicationFactory.WithWebHostBuilder()`** returns base `WebApplicationFactory<Program>`, not `CustomWebApplicationFactory`. Instance methods aren't accessible. Fix: extension methods on `WebApplicationFactory<Program>`.
+
+5. **TestServer HttpClient maintains a cookie jar**: `CreateClient()` enables `UseCookies = true` by default. Login responses set cookies, and subsequent requests from the same client include them. Tests needing a pristine "no cookie" client must use `HandleCookies = false`.
+
+### Verification
+
+| Check             | Result |
+|-------------------|--------|
+| Backend Build     | 9/9 projects, 0 warnings, 0 errors |
+| Frontend Build    | Succeeds |
+| Backend Tests     | 246 passed, 0 failed |
+| Frontend Tests    | 80 passed, 0 failed |
+| Frontend Lint     | Clean |
+| E2E Tests         | 42 passed, 0 failed |
+| **Total Tests**   | **368** |
+
+---
+
+## CP2 Security Hardening: HttpOnly Cookies & Medium Fixes
+
+**Date**: 2026-02-15
+
+### The Problem
+
+After completing CP2's initial auth implementation, a security review identified several concerns:
+
+1. **Refresh tokens stored in localStorage** — vulnerable to XSS. Any injected script can read localStorage and exfiltrate tokens. This was the most critical issue.
+2. **PII in logs** — email addresses logged in plain text during login/register attempts.
+3. **No CORS configuration** — required for production deployments and cookie-based auth.
+4. **No HTTPS enforcement** — required for the `Secure` cookie flag.
+5. **No security response headers** — missing standard protections (X-Frame-Options, CSP, etc.).
+6. **No refresh token cleanup** — revoked/expired tokens accumulate forever in the database.
+
+### The Architecture: Memory-Only Access Token + HttpOnly Refresh Cookie
+
+We adopted a split-token architecture that eliminates localStorage entirely:
+
+**Access token** — kept in JavaScript memory (Zustand store, NOT persisted). Lost on page refresh. Sent as `Authorization: Bearer` header on API calls. Short-lived (15 min).
+
+**Refresh token** — set as an HttpOnly cookie by the server. Never accessible to JavaScript. Scoped to `Path=/api/auth` so it's only sent on auth endpoints. `SameSite=Strict` prevents CSRF. `Secure` flag enforced in production.
+
+**Session restoration on page refresh**: `AuthHydrationProvider` makes a silent `POST /api/auth/refresh` on mount. The browser automatically sends the HttpOnly cookie. If successful, the server returns a new access token in the response body, which gets stored in Zustand memory. If the cookie is expired/invalid, the user lands on the login page.
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| HttpOnly cookie for refresh token (not localStorage) | XSS can't read HttpOnly cookies; eliminates the most dangerous token theft vector |
+| SameSite=Strict (not Lax) | Cookie only sent on same-site requests; no CSRF protection needed |
+| Path=/api/auth (not /) | Cookie not sent on `/api/tasks`, `/api/boards`, etc.; minimizes exposure surface |
+| No CSRF tokens | SameSite=Strict + path-scoped cookie makes traditional CSRF impossible |
+| Memory-only access token (not sessionStorage) | sessionStorage is also readable by XSS; pure JS variable is the only storage invisible to injected scripts |
+| Silent refresh on page load | Restores session without user interaction; feels like "staying logged in" despite memory-only tokens |
+| Removed Zustand persist entirely | No localStorage usage at all for auth — eliminates the attack surface completely |
+| Email masking in logs (`u***@example.com`) | Prevents PII exposure in log aggregators, satisfies GDPR/HIPAA log requirements |
+| Background cleanup service (6h interval) | Prevents unbounded RefreshTokens table growth from accumulated expired/revoked tokens |
+
+### What Was Deferred
+
+- **Token family detection**: Would detect refresh token reuse (stolen token scenario). Requires a `FamilyId` column on RefreshToken and more complex revocation logic. Deferred because it needs a DB migration and the current single-device-per-user model limits the attack surface.
+- **HaveIBeenPwned password check**: Would reject passwords found in known breaches. Deferred because it requires an external API dependency and needs graceful degradation when the API is unavailable.
+
+### Implementation Details
+
+**Middleware pipeline order** (matters for security):
+```
+SecurityHeaders → CorrelationId → ErrorHandling → HSTS/HTTPS → CORS → RateLimiter → Auth → Authorization → Endpoints
+```
+
+**Security headers added**:
+- `X-Content-Type-Options: nosniff` — prevents MIME-type sniffing
+- `X-Frame-Options: DENY` — prevents clickjacking
+- `Referrer-Policy: strict-origin-when-cross-origin` — limits referer leakage
+- `X-XSS-Protection: 0` — disables browser's broken XSS filter (CSP is better)
+- `Content-Security-Policy` — restricts script/style/image sources to `'self'`
+
+**E2E test adaptation**: `loginViaStorage()` was renamed to `loginViaApi()`. Instead of injecting localStorage, it now calls the login API, extracts the `Set-Cookie` header, injects the refresh cookie via Playwright's `context.addCookies()`, and navigates to `/` where `AuthHydrationProvider` performs a silent refresh to restore the in-memory access token.
+
+### Verification
+
+| Check             | Result |
+|-------------------|--------|
+| Backend Build     | 9/9 projects, 0 warnings, 0 errors |
+| Frontend Build    | 1947 modules, 585 KB JS + 53 KB CSS |
+| Backend Tests     | 262 passed, 0 failed |
+| Frontend Tests    | 84 passed, 0 failed |
+| Frontend Lint     | Clean |
+
+### Lessons Learned
+
+1. **localStorage is not a secure token store.** Any XSS vulnerability (a single unescaped user input, a compromised npm package) can read localStorage. HttpOnly cookies are the only browser storage mechanism that JavaScript categorically cannot access.
+
+2. **SameSite=Strict + path scoping makes CSRF tokens unnecessary.** The cookie is only sent on same-site navigation to `/api/auth/*` paths. Cross-origin requests and even same-origin requests to other paths never include it. This is a simpler security model than managing CSRF tokens.
+
+3. **Memory-only state simplifies the frontend.** Removing Zustand's `persist` middleware eliminated the `skipHydration` workaround, the `_hydrated` flag, and the Zustand 5 + React 19 rehydration race condition. The new `AuthHydrationProvider` is simpler: one `fetch` call, one `setAuth` call, done.
+
+4. **TestServer HttpClient maintains a cookie jar.** `WebApplicationFactory.CreateClient()` creates an `HttpClient` with `UseCookies = true` by default. Login responses set cookies, and subsequent requests from the same client include them. Tests that need a "no cookie" baseline must use `HandleCookies = false`.
+
+---
+
+## CP2 Security Hardening: E2E Test Stabilization
+
+**Date**: 2026-02-15
+
+### The Problem
+
+After switching to cookie-based auth, E2E tests became flaky. Tests failed randomly (1-2 per run, non-deterministic) with 30-second timeouts waiting for the "View switcher" nav element:
+
+```
+Error: locator.waitFor: Test timeout of 30000ms exceeded.
+- waiting for getByRole('navigation', { name: 'View switcher' }) to be visible
+```
+
+Manual testing showed the app worked perfectly — the issue was in the **test architecture**, not the application.
+
+### Root Cause Analysis
+
+The flakiness stemmed from **shared auth state across tests**:
+
+1. **Every test called `loginViaApi(page)`** — 42 tests = 42 login calls
+2. **Refresh token rotation on every silent refresh** — old token revoked, new token issued
+3. **Shared `cachedToken` and `cachedCookie` across tests** — tests reused the same credentials
+4. **Parallel-like execution** (workers: 1, but describe blocks interleaved) — one test's login invalidated another test's cookie mid-flight
+5. **Cleanup via `deleteAllTasks()`** — didn't address auth state pollution
+
+**Silent failure modes**:
+- If `Set-Cookie` header extraction returned empty string (instead of throwing), cookie injection silently failed
+- AuthHydrationProvider's refresh got 401, app stayed on login page, test timed out
+- The unnecessary `/login` pre-navigation added complexity with no benefit
+
+### The Solution: Unique Users + Serial Execution
+
+**Architecture change**: Each `test.describe` block gets a **fresh user account** (unique email via timestamp + counter). No cleanup needed — users never see each other's data.
+
+**Execution model**: `test.describe.serial` with shared page/context. Login once in `beforeAll`, tests within the block run sequentially and accumulate state.
+
+**Changes**:
+
+1. **`helpers/auth.helpers.ts`** — Complete rewrite:
+   - `loginViaApi(page)` registers a unique user per call (no shared state)
+   - `createTestUser()` for API-only describe blocks (no browser needed)
+   - `extractRefreshToken()` throws immediately if Set-Cookie is missing (fail-fast)
+   - `waitForResponse` verifies the silent refresh succeeded before proceeding
+   - Removed `/login` pre-navigation — cookie injection works at context level
+
+2. **`helpers/api.helpers.ts`** — Removed `deleteAllTasks()` (no longer needed)
+
+3. **Centralized config** — `e2e.config.json` for ports/DB name, `e2e.config.ts` loader
+
+4. **Pre-test cleanup** — `scripts/cleanup.mjs` kills stale processes + deletes DB files
+
+5. **All 6 test spec files** — Restructured:
+   - `test.describe.serial` instead of parallel `test.describe`
+   - Login once in `beforeAll` (42 logins → 8 logins)
+   - Removed all `beforeEach(deleteAllTasks)` cleanup
+   - Tests build on prior tests within the same block (sequential by design)
+
+### Results
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Test stability | 1-2 random failures per run | 3/3 consecutive green runs |
+| Test duration | 60-90 seconds | 20-21 seconds |
+| Total logins | 42 (one per test) | 8 (one per describe block) |
+| Cleanup overhead | `deleteAllTasks()` every test | Zero (users auto-isolated) |
+
+**Performance improvement**: 3x faster, 100% stable.
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Unique user per describe block (not per test) | True data isolation without manual cleanup; each user starts with an empty board |
+| Serial execution within describe blocks | Tests share page/context, accumulate state; mimics real user flows |
+| Timestamp + counter for unique emails | Guarantees uniqueness even if tests run at the same millisecond |
+| `createTestUser()` for API-only blocks | No browser overhead for pure API tests (Card Ordering, Orphaned Cards) |
+| `waitForResponse` verification | Catches silent refresh failures immediately instead of timing out later on nav element |
+| Removed `deleteAllTasks()` entirely | Cleanup was treating symptom (shared data) not cause (shared users); unique users eliminate the need |
+
+### Lessons Learned
+
+1. **Flaky tests indicate architecture problems, not test problems.** The app worked perfectly. The issue was that tests shared auth state (tokens, cookies) across concurrent executions. The fix wasn't "retry until it works" — it was restructuring test isolation.
+
+2. **Unique data partitions > manual cleanup.** Creating a fresh user per describe block (30 ms overhead) is simpler and more reliable than deleting all tasks between tests (N×DELETE API calls + race conditions).
+
+3. **Serial execution for stateful flows.** Task lifecycle tests build on each other (create → complete → uncomplete). Fighting this with cleanup is swimming upstream. Embracing it with `.serial` makes tests read like user stories.
+
+4. **Fail-fast assertions prevent silent failures.** The original `extractRefreshToken()` silently returned `''` if the header was missing. Tests timed out 30 seconds later when auth failed. Throwing immediately surfaces the root cause in stack traces.
+
+5. **Test architecture should match production architecture.** The new E2E auth flow (register → inject cookie → silent refresh → verify response → wait for UI) exactly mirrors production. The old flow (navigate to /login → inject → navigate to /) had no real-world equivalent.
+
+---
+
+## Release: v0.2.0 — Authentication & Authorization
+
+**Date: February 15, 2026**
+
+Tagged and released v0.2.0, covering Checkpoint 2 (Authentication & Authorization).
+
+### What Shipped
+
+- **ASP.NET Core Identity + JWT** — Register, Login, Logout, Refresh, GetCurrentUser
+- **Cookie-based refresh tokens** — HttpOnly, SameSite=Strict, path-scoped, with background cleanup
+- **User-scoped data isolation** — `ICurrentUserService` throughout all handlers
+- **Security hardening** — SecurityHeadersMiddleware, account lockout, PII masking, CORS
+- **Frontend auth** — Login/Register pages, Zustand auth store (memory-only), protected routes, user menu
+- **Identity domain** — User entity, DisplayName and Email value objects
+- **388 tests** — 262 backend + 84 frontend + 42 E2E, 100% passing
+
+### Key Architecture Decisions
+
+- HttpOnly cookie refresh tokens over localStorage (eliminates XSS risk)
+- Memory-only access tokens in Zustand (no persist middleware for React 19 compatibility)
+- `ValueObject<T>` base class + `IReconstructable` interface (reduced boilerplate across 11 VOs)
+- Unique users per E2E describe block (eliminates flaky tests from shared state)
+
+---
+
 ## What's Next
-
-### Checkpoint 2: Authentication & Authorization
-
-### Checkpoint 2: Authentication & Authorization
-
-*Planned: ASP.NET Core Identity with JWT tokens, register/login/logout endpoints, user-scoped task queries, React auth pages with route guards and redirects, token refresh handling.*
 
 ### Checkpoint 3: Rich UX & Polish
 
@@ -606,7 +918,7 @@ See [CHANGELOG.md](../CHANGELOG.md) for the full list. Highlights:
 
 ### Checkpoint 4: Production Hardening
 
-*Planned: OpenTelemetry + Serilog observability, PII redaction in admin views, audit trail, admin panel, SystemAdmin role, i18n (en + pt-BR), rate limiting, data encryption at rest.*
+*Planned: OpenTelemetry + Serilog observability, PII redaction in admin views, audit trail, admin panel, SystemAdmin role, i18n (en + pt-BR), data encryption at rest.*
 
 ### Checkpoint 5: Advanced & Delight
 

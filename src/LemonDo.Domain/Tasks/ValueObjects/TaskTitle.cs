@@ -5,18 +5,12 @@ using LemonDo.Domain.Common;
 /// <summary>
 /// Validated task title. Must be non-empty and at most <see cref="MaxLength"/> characters (trimmed).
 /// </summary>
-public sealed class TaskTitle : ValueObject
+public sealed class TaskTitle : ValueObject<string>, IReconstructable<TaskTitle, string>
 {
     /// <summary>Maximum allowed length for a task title: 500 characters.</summary>
     public const int MaxLength = 500;
 
-    /// <summary>The underlying validated task title string, trimmed.</summary>
-    public string Value { get; }
-
-    private TaskTitle(string value)
-    {
-        Value = value;
-    }
+    private TaskTitle(string value) : base(value) { }
 
     /// <summary>
     /// Creates a <see cref="TaskTitle"/> from a string. Trims whitespace and validates length.
@@ -37,12 +31,6 @@ public sealed class TaskTitle : ValueObject
         return Result<TaskTitle, DomainError>.Success(new TaskTitle(trimmed));
     }
 
-    /// <inheritdoc />
-    protected override IEnumerable<object?> GetEqualityComponents()
-    {
-        yield return Value;
-    }
-
-    /// <inheritdoc />
-    public override string ToString() => Value;
+    /// <summary>Reconstructs a <see cref="TaskTitle"/> from a persistence value.</summary>
+    public static TaskTitle Reconstruct(string value) => new(value);
 }

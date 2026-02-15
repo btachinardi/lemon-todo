@@ -23,6 +23,7 @@ public sealed class MoveTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork,
+    ICurrentUserService currentUser,
     ILogger<MoveTaskCommandHandler> logger,
     ApplicationMetrics metrics)
 {
@@ -43,7 +44,7 @@ public sealed class MoveTaskCommandHandler(
             return Result<DomainError>.Failure(error);
         }
 
-        var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
+        var board = await boardRepository.GetDefaultForUserAsync(currentUser.UserId, ct);
         if (board is null)
             return Result<DomainError>.Failure(
                 DomainError.NotFound("Board", "default"));

@@ -26,7 +26,7 @@ public sealed class DomainEventDispatcherTests
             });
         });
 
-        using var client = factory.CreateClient();
+        using var client = await factory.CreateAuthenticatedClientAsync();
 
         var response = await client.PostAsJsonAsync("/api/tasks",
             new { Title = "Event dispatch test" });
@@ -41,7 +41,7 @@ public sealed class DomainEventDispatcherTests
     public async Task Should_NotThrow_When_NoHandlersRegistered()
     {
         using var factory = new CustomWebApplicationFactory();
-        using var client = factory.CreateClient();
+        using var client = await factory.CreateAuthenticatedClientAsync();
 
         var response = await client.PostAsJsonAsync("/api/tasks",
             new { Title = "No handler test" });

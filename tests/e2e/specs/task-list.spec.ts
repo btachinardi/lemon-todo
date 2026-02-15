@@ -1,18 +1,28 @@
-import { test, expect } from '@playwright/test';
-import { createTask, completeTask, deleteAllTasks } from '../helpers/api.helpers';
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { createTask, completeTask } from '../helpers/api.helpers';
+import { loginViaApi } from '../helpers/auth.helpers';
 
-test.beforeEach(async () => {
-  await deleteAllTasks();
-});
+let context: BrowserContext;
+let page: Page;
 
-test.describe('Task List', () => {
-  test('empty state on fresh DB', async ({ page }) => {
+test.describe.serial('Task List', () => {
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    await loginViaApi(page);
+  });
+
+  test.afterAll(async () => {
+    await context.close();
+  });
+
+  test('empty state on fresh DB', async () => {
     await page.goto('/list');
     await expect(page.getByText('No tasks yet')).toBeVisible();
     await expect(page.getByText('Add a task above to get started.')).toBeVisible();
   });
 
-  test('tasks display with status chip in list', async ({ page }) => {
+  test('tasks display with status chip in list', async () => {
     await createTask({ title: 'List task' });
 
     await page.goto('/list');
@@ -20,7 +30,7 @@ test.describe('Task List', () => {
     await expect(page.getByText('To Do')).toBeVisible();
   });
 
-  test('priority badge visible for non-None priorities', async ({ page }) => {
+  test('priority badge visible for non-None priorities', async () => {
     await createTask({ title: 'High prio', priority: 'High' });
 
     await page.goto('/list');
@@ -28,7 +38,7 @@ test.describe('Task List', () => {
     await expect(page.getByText('High', { exact: true })).toBeVisible();
   });
 
-  test('completed tasks show line-through styling', async ({ page }) => {
+  test('completed tasks show line-through styling', async () => {
     const task = await createTask({ title: 'Done task' });
     await completeTask(task.id);
 
