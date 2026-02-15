@@ -232,6 +232,7 @@
 | 2026-02-15 | Board.RemoveCard on Delete only, not Archive | Delete is destructive — remove the card. Archive is reversible — preserve the card's column/rank so unarchive restores placement. Filter archived/deleted cards at the query level (board query handlers cross-reference active task IDs). |
 | 2026-02-15 | Column.NextRank per-column monotonic counter | Ranks are column-scoped. Each column tracks its own NextRank (starts 1000, +1000 per placement). Avoids scanning cards for max rank. MoveCard bumps target column's NextRank when computed rank exceeds it. |
 | 2026-02-15 | Archive decoupled from task status | Archive is a visibility flag orthogonal to lifecycle. Any task (Todo, InProgress, Done) can be archived. Status changes never affect IsArchived. Only explicit Unarchive() clears it. |
+| 2026-02-15 | v0.1.0 release via gitflow | Pre-1.0 SemVer for initial development. Centralized .NET versioning via `src/Directory.Build.props`. Annotated tag for GitHub release recognition. CHANGELOG.md in Keep a Changelog format. |
 
 ---
 
@@ -239,10 +240,11 @@
 
 - **Planning**: DONE (Phase 0 + 1 + 2 complete)
 - **Bootstrap**: DONE (Phase 3 - solution, frontend, tests, Aspire integration)
-- **Checkpoint 1**: DONE (Core Task Management - 193 backend + 53 frontend + 33 E2E = 279 tests, 0 warnings)
+- **Checkpoint 1**: DONE — Released as **v0.1.0** (Core Task Management - 242+ tests, 0 warnings)
   - Domain Redesign: Bounded context split (Task + Board) complete
   - Bug Fix: Sparse rank ordering replaces dense integer positions
   - Domain Fix: Archive decoupled from status (any task can be archived)
+  - Release: v0.1.0 tagged on main via gitflow
 - **Checkpoint 2**: NOT STARTED (Auth & Authorization)
 - **Checkpoint 3**: NOT STARTED (Rich UX & Polish)
 - **Checkpoint 4**: NOT STARTED (Production Hardening)

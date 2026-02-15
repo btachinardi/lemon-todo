@@ -70,7 +70,7 @@ export class ApiRequestError extends Error {
  * does not match the RFC 7807 shape, a fallback error is constructed
  * from the HTTP status line.
  */
-async function throwApiError(response: Response): never {
+async function throwApiError(response: Response): Promise<never> {
   const body: unknown = await response.json().catch(() => undefined);
 
   const apiError: ApiError = isApiError(body)
@@ -113,7 +113,7 @@ async function handleVoidResponse(response: Response): Promise<void> {
  */
 export const apiClient = {
   /** Sends a GET request. Query params with `undefined`/`null`/empty values are omitted. */
-  async get<T, P extends { [K in keyof P]: ParamValue } = Record<string, ParamValue>>(url: string, params?: P): Promise<T> {
+  async get<T>(url: string, params?: Record<string, ParamValue>): Promise<T> {
     const searchParams = new URLSearchParams();
     if (params) {
       for (const [key, value] of Object.entries(params)) {

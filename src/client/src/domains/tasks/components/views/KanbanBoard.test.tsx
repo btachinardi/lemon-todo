@@ -70,6 +70,7 @@ function makeDndEvent(activeId: string, overId?: string | null) {
     over: overId != null
       ? { id: overId, data: { current: {} }, rect: mockRect, disabled: false }
       : null,
+    collisions: [],
     delta: { x: 0, y: 0 },
     activatorEvent: new Event('pointerdown'),
   };
