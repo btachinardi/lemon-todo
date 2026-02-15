@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { deleteAllTasks } from '../helpers/api.helpers';
-import { loginViaStorage } from '../helpers/auth.helpers';
+import { loginViaApi } from '../helpers/auth.helpers';
 
 test.beforeEach(async () => {
   await deleteAllTasks();
@@ -8,7 +8,7 @@ test.beforeEach(async () => {
 
 test.describe('Task Lifecycle', () => {
   test('create task via form click -> appears on board, input clears', async ({ page }) => {
-    await loginViaStorage(page);
+    await loginViaApi(page);
     await page.goto('/');
 
     const input = page.getByLabel('New task title');
@@ -20,7 +20,7 @@ test.describe('Task Lifecycle', () => {
   });
 
   test('create task via Enter key -> appears on board', async ({ page }) => {
-    await loginViaStorage(page);
+    await loginViaApi(page);
     await page.goto('/');
 
     const input = page.getByLabel('New task title');
@@ -31,13 +31,13 @@ test.describe('Task Lifecycle', () => {
   });
 
   test('empty title -> Add button disabled', async ({ page }) => {
-    await loginViaStorage(page);
+    await loginViaApi(page);
     await page.goto('/');
     await expect(page.getByRole('button', { name: /add/i })).toBeDisabled();
   });
 
   test('complete task -> button changes to Mark as incomplete', async ({ page }) => {
-    await loginViaStorage(page);
+    await loginViaApi(page);
     await page.goto('/');
 
     // Create a task first
@@ -52,7 +52,7 @@ test.describe('Task Lifecycle', () => {
   });
 
   test('uncomplete task -> button changes back to Mark as complete', async ({ page }) => {
-    await loginViaStorage(page);
+    await loginViaApi(page);
     await page.goto('/');
 
     // Create and complete a task
@@ -70,7 +70,7 @@ test.describe('Task Lifecycle', () => {
   });
 
   test('create + complete task in list view', async ({ page }) => {
-    await loginViaStorage(page);
+    await loginViaApi(page);
     await page.goto('/list');
 
     // Create a task

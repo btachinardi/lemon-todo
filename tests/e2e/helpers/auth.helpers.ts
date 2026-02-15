@@ -10,11 +10,11 @@ export const E2E_USER = {
 
 interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   user: { id: string; email: string; displayName: string };
 }
 
 let cachedToken: string | null = null;
+let cachedCookie: string | null = null;
 
 /** Registers the E2E test user (idempotent — ignores 409 Conflict). */
 async function ensureRegistered(): Promise<void> {
@@ -44,6 +44,15 @@ export async function getAuthToken(): Promise<string> {
 
   if (!res.ok) throw new Error(`Login failed: ${res.status} ${await res.text()}`);
 
+  // Extract refresh token cookie from Set-Cookie header
+  const setCookieHeader = res.headers.get('set-cookie');
+  if (setCookieHeader) {
+    const match = setCookieHeader.match(/refresh_token=([^;]+)/);
+    if (match) {
+      cachedCookie = match[1];
+    }
+  }
+
   const data = (await res.json()) as AuthResponse;
   cachedToken = data.accessToken;
   return cachedToken;
@@ -52,16 +61,18 @@ export async function getAuthToken(): Promise<string> {
 /** Resets the cached token so the next call to getAuthToken() re-authenticates. */
 export function clearCachedToken(): void {
   cachedToken = null;
+  cachedCookie = null;
 }
 
 /**
- * Injects the auth store into the page's localStorage so the React app
- * considers the user authenticated without going through the login form.
+ * Logs in via the API and injects the refresh cookie + access token into the page context.
+ * The refresh cookie is set on the browser context so the React app can perform
+ * silent refresh on page load via AuthHydrationProvider.
  */
-export async function loginViaStorage(page: Page): Promise<void> {
+export async function loginViaApi(page: Page): Promise<void> {
   const token = await getAuthToken();
 
-  // Login again to get full user profile for the store
+  // Login again to get fresh tokens (cookie may have been consumed by previous refresh)
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -69,19 +80,37 @@ export async function loginViaStorage(page: Page): Promise<void> {
   });
   const data = (await res.json()) as AuthResponse;
 
-  const authState = {
-    state: {
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken,
-      user: data.user,
-      isAuthenticated: true,
-    },
-    version: 0,
-  };
+  // Extract refresh cookie from login response
+  const setCookieHeader = res.headers.get('set-cookie');
+  let refreshTokenValue = '';
+  if (setCookieHeader) {
+    const match = setCookieHeader.match(/refresh_token=([^;]+)/);
+    if (match) {
+      refreshTokenValue = match[1];
+    }
+  }
 
-  // Navigate to a blank page first to set localStorage on the correct origin
+  // Navigate to login page first (establishes the origin context)
   await page.goto('/login');
-  await page.evaluate((state) => {
-    localStorage.setItem('lemondo-auth', JSON.stringify(state));
-  }, authState);
+
+  // Inject the refresh token cookie into the browser context
+  if (refreshTokenValue) {
+    const context = page.context();
+    await context.addCookies([
+      {
+        name: 'refresh_token',
+        value: refreshTokenValue,
+        domain: 'localhost',
+        path: '/api/auth',
+        httpOnly: true,
+        sameSite: 'Strict',
+      },
+    ]);
+  }
+
+  // Navigate to the app — AuthHydrationProvider will do a silent refresh
+  // which will set the access token in memory from the cookie
+  await page.goto('/');
+  // Wait for the hydration to complete (the app renders content)
+  await page.waitForURL(/^(?!.*\/login).*$/);
 }
