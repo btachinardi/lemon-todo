@@ -7,8 +7,10 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Command to remove a tag from an existing task.</summary>
 public sealed record RemoveTagFromTaskCommand(Guid TaskId, string Tag);
 
+/// <summary>Validates the tag and delegates to <see cref="LemonDo.Domain.Tasks.Entities.Task.RemoveTag"/>.</summary>
 public sealed class RemoveTagFromTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<DomainError>> HandleAsync(RemoveTagFromTaskCommand command, CancellationToken ct = default)

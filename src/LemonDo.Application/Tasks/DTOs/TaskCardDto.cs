@@ -1,5 +1,6 @@
 namespace LemonDo.Application.Tasks.DTOs;
 
+/// <summary>Read model for a task's spatial placement on a board (column + rank).</summary>
 public sealed record TaskCardDto
 {
     public required Guid TaskId { get; init; }

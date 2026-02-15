@@ -1,5 +1,6 @@
 namespace LemonDo.Application.Tasks.DTOs;
 
+/// <summary>Read model for a board column, including its target status mapping.</summary>
 public sealed record ColumnDto
 {
     public required Guid Id { get; init; }

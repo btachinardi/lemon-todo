@@ -6,6 +6,7 @@ using LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Identity.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
+/// <summary>EF Core implementation of <see cref="IBoardRepository"/>. Eagerly loads columns and cards.</summary>
 public sealed class BoardRepository(LemonDoDbContext context) : IBoardRepository
 {
     public async Task<Board?> GetByIdAsync(BoardId id, CancellationToken ct = default)

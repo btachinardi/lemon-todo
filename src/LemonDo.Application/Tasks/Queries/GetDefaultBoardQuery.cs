@@ -6,8 +6,10 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 
+/// <summary>Query to retrieve the current user's default board.</summary>
 public sealed record GetDefaultBoardQuery;
 
+/// <summary>Loads the default board with columns and cards, filtering out cards for deleted/archived tasks.</summary>
 public sealed class GetDefaultBoardQueryHandler(IBoardRepository boardRepository, ITaskRepository taskRepository)
 {
     public async Task<Result<BoardDto, DomainError>> HandleAsync(CancellationToken ct = default)

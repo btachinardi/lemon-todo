@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>EF Core implementation of <see cref="ITaskRepository"/>. Eagerly loads tags.</summary>
 public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
 {
     public async System.Threading.Tasks.Task<TaskEntity?> GetByIdAsync(TaskId id, CancellationToken ct = default)

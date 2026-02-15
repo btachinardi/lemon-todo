@@ -9,6 +9,7 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Command to revert a completed task back to Todo and move its card to the initial column.</summary>
 public sealed record UncompleteTaskCommand(Guid TaskId);
 
 /// <summary>

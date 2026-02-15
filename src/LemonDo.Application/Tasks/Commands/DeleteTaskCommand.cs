@@ -9,8 +9,10 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Command to soft-delete a task and remove its card from the board.</summary>
 public sealed record DeleteTaskCommand(Guid TaskId);
 
+/// <summary>Soft-deletes the task and removes its board card in a single unit of work.</summary>
 public sealed class DeleteTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,

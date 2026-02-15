@@ -8,8 +8,10 @@ using LemonDo.Domain.Tasks.Repositories;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Query to retrieve a paginated, filtered list of tasks.</summary>
 public sealed record ListTasksQuery(TaskListFilter Filter);
 
+/// <summary>Returns a paginated result of task DTOs matching the filter criteria.</summary>
 public sealed class ListTasksQueryHandler(ITaskRepository repository)
 {
     public async Task<PagedResult<TaskDto>> HandleAsync(ListTasksQuery query, CancellationToken ct = default)

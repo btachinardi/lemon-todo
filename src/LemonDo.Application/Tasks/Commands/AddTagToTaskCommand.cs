@@ -7,8 +7,10 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Command to add a tag to an existing task.</summary>
 public sealed record AddTagToTaskCommand(Guid TaskId, string Tag);
 
+/// <summary>Validates the tag and delegates to <see cref="LemonDo.Domain.Tasks.Entities.Task.AddTag"/>.</summary>
 public sealed class AddTagToTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<DomainError>> HandleAsync(AddTagToTaskCommand command, CancellationToken ct = default)

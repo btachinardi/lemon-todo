@@ -7,6 +7,7 @@ using LemonDo.Domain.Tasks.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+/// <summary>EF Core configuration for the <see cref="Board"/> aggregate, including owned <c>Columns</c> and <c>TaskCards</c> tables.</summary>
 public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
 {
     public void Configure(EntityTypeBuilder<Board> builder)

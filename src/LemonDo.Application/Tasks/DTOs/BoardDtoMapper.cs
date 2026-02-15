@@ -3,6 +3,10 @@ namespace LemonDo.Application.Tasks.DTOs;
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Tasks.ValueObjects;
 
+/// <summary>
+/// Maps <see cref="Board"/> aggregates to <see cref="BoardDto"/> read models.
+/// Optionally filters cards to only include active (non-deleted, non-archived) tasks.
+/// </summary>
 public static class BoardDtoMapper
 {
     public static BoardDto ToDto(Board board, HashSet<TaskId>? activeTaskIds = null) => new()

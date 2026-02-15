@@ -5,8 +5,10 @@ using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Common;
 
+/// <summary>Command to remove a column from a board.</summary>
 public sealed record RemoveColumnCommand(Guid BoardId, Guid ColumnId);
 
+/// <summary>Removes the column via <see cref="LemonDo.Domain.Boards.Entities.Board.RemoveColumn"/>. Enforces minimum column invariants.</summary>
 public sealed class RemoveColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<DomainError>> HandleAsync(RemoveColumnCommand command, CancellationToken ct = default)

@@ -9,6 +9,7 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Command to complete multiple tasks at once, moving all their cards to Done.</summary>
 public sealed record BulkCompleteTasksCommand(IReadOnlyList<Guid> TaskIds);
 
 /// <summary>

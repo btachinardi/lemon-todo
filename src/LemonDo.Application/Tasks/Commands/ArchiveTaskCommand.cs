@@ -7,8 +7,10 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Command to archive a task, hiding it from active views.</summary>
 public sealed record ArchiveTaskCommand(Guid TaskId);
 
+/// <summary>Archives the task via <see cref="LemonDo.Domain.Tasks.Entities.Task.Archive"/>.</summary>
 public sealed class ArchiveTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<DomainError>> HandleAsync(ArchiveTaskCommand command, CancellationToken ct = default)

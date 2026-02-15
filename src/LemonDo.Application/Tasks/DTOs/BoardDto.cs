@@ -1,5 +1,6 @@
 namespace LemonDo.Application.Tasks.DTOs;
 
+/// <summary>Read model for a board, including its columns and active task cards.</summary>
 public sealed record BoardDto
 {
     public required Guid Id { get; init; }

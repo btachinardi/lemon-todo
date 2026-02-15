@@ -7,8 +7,10 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 
+/// <summary>Query to retrieve a board by its ID.</summary>
 public sealed record GetBoardQuery(Guid BoardId);
 
+/// <summary>Loads the board with columns and cards, filtering out cards for deleted/archived tasks.</summary>
 public sealed class GetBoardQueryHandler(IBoardRepository boardRepository, ITaskRepository taskRepository)
 {
     public async Task<Result<BoardDto, DomainError>> HandleAsync(GetBoardQuery query, CancellationToken ct = default)

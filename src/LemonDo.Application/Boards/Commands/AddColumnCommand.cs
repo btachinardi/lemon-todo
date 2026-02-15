@@ -7,8 +7,10 @@ using LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.ValueObjects;
 
+/// <summary>Command to add a new column to a board with a target status mapping.</summary>
 public sealed record AddColumnCommand(Guid BoardId, string Name, string TargetStatus, int? Position = null);
 
+/// <summary>Validates the column name and status, then delegates to <see cref="LemonDo.Domain.Boards.Entities.Board.AddColumn"/>.</summary>
 public sealed class AddColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<ColumnDto, DomainError>> HandleAsync(AddColumnCommand command, CancellationToken ct = default)

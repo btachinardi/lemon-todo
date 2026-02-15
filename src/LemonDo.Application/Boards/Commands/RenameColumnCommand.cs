@@ -6,8 +6,10 @@ using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Common;
 
+/// <summary>Command to rename a column on a board.</summary>
 public sealed record RenameColumnCommand(Guid BoardId, Guid ColumnId, string Name);
 
+/// <summary>Validates the new name and delegates to <see cref="LemonDo.Domain.Boards.Entities.Board.RenameColumn"/>.</summary>
 public sealed class RenameColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<ColumnDto, DomainError>> HandleAsync(RenameColumnCommand command, CancellationToken ct = default)

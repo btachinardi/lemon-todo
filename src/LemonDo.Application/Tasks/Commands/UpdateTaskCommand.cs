@@ -8,6 +8,7 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Command to partially update a task's scalar fields (title, description, priority, due date).</summary>
 public sealed record UpdateTaskCommand(
     Guid TaskId,
     string? Title = null,
@@ -16,6 +17,7 @@ public sealed record UpdateTaskCommand(
     DateTimeOffset? DueDate = null,
     bool ClearDueDate = false);
 
+/// <summary>Applies partial updates to a task. Only non-null fields are changed.</summary>
 public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<TaskDto, DomainError>> HandleAsync(UpdateTaskCommand command, CancellationToken ct = default)

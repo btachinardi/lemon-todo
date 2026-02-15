@@ -10,6 +10,7 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Command to create a new task with optional description, priority, due date, and tags.</summary>
 public sealed record CreateTaskCommand(
     string Title,
     string? Description,

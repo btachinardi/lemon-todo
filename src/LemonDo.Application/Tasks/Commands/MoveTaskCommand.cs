@@ -10,6 +10,7 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Command to move a task card to a column at a position between two neighbor cards.</summary>
 public sealed record MoveTaskCommand(Guid TaskId, Guid ColumnId, Guid? PreviousTaskId, Guid? NextTaskId);
 
 /// <summary>

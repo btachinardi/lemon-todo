@@ -9,6 +9,7 @@ using LemonDo.Domain.Tasks.ValueObjects;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>Command to mark a task as done and move its card to the Done column.</summary>
 public sealed record CompleteTaskCommand(Guid TaskId);
 
 /// <summary>

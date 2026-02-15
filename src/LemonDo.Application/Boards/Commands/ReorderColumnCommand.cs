@@ -6,8 +6,10 @@ using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Common;
 
+/// <summary>Command to change a column's position on a board.</summary>
 public sealed record ReorderColumnCommand(Guid BoardId, Guid ColumnId, int NewPosition);
 
+/// <summary>Moves the column to the new position via <see cref="LemonDo.Domain.Boards.Entities.Board.ReorderColumn"/>.</summary>
 public sealed class ReorderColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork)
 {
     public async Task<Result<ColumnDto, DomainError>> HandleAsync(ReorderColumnCommand command, CancellationToken ct = default)

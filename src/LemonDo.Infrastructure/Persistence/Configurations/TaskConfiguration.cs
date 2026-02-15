@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
+/// <summary>EF Core configuration for the Task aggregate, including the owned <c>TaskTags</c> table.</summary>
 public sealed class TaskConfiguration : IEntityTypeConfiguration<TaskEntity>
 {
     public void Configure(EntityTypeBuilder<TaskEntity> builder)

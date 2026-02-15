@@ -1,5 +1,6 @@
 namespace LemonDo.Application.Tasks.DTOs;
 
+/// <summary>Read model for a task, flattening value objects to primitive types for API responses.</summary>
 public sealed record TaskDto
 {
     public required Guid Id { get; init; }
