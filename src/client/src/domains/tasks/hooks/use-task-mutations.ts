@@ -4,12 +4,17 @@ import type { CreateTaskRequest, MoveTaskRequest, UpdateTaskRequest } from '../t
 import { boardKeys } from './use-board-query';
 import { taskKeys } from './use-tasks-query';
 
-/** Invalidate both task and board queries (board.cards changes with task mutations). */
+/**
+ * Invalidates both task and board query caches.
+ * Required because board cards change when task lifecycle mutations fire
+ * (e.g. completing a task moves its card to the Done column).
+ */
 function invalidateTaskAndBoard(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: taskKeys.all });
   queryClient.invalidateQueries({ queryKey: boardKeys.all });
 }
 
+/** Creates a new task and places it on the default board. */
 export function useCreateTask() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -18,6 +23,7 @@ export function useCreateTask() {
   });
 }
 
+/** Partial-updates a task. Only invalidates task cache (no board impact). */
 export function useUpdateTask() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -29,6 +35,7 @@ export function useUpdateTask() {
   });
 }
 
+/** Transitions a task to `Done`. Invalidates both task and board caches. */
 export function useCompleteTask() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -37,6 +44,7 @@ export function useCompleteTask() {
   });
 }
 
+/** Reverts a completed task to its previous status. */
 export function useUncompleteTask() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -45,6 +53,7 @@ export function useUncompleteTask() {
   });
 }
 
+/** Soft-deletes a task and removes its board card. */
 export function useDeleteTask() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -53,6 +62,7 @@ export function useDeleteTask() {
   });
 }
 
+/** Moves a task card to a different column/position on the board. */
 export function useMoveTask() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -62,6 +72,7 @@ export function useMoveTask() {
   });
 }
 
+/** Adds a tag to a task. Only invalidates task cache. */
 export function useAddTag() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -73,6 +84,7 @@ export function useAddTag() {
   });
 }
 
+/** Removes a tag from a task. Only invalidates task cache. */
 export function useRemoveTag() {
   const queryClient = useQueryClient();
   return useMutation({

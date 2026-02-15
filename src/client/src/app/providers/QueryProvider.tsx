@@ -5,6 +5,10 @@ interface QueryProviderProps {
   children: ReactNode;
 }
 
+/**
+ * App-level TanStack Query provider. Configures 1-minute stale time,
+ * single retry, and disables refetch-on-window-focus.
+ */
 export function QueryProvider({ children }: QueryProviderProps) {
   const [queryClient] = useState(
     () =>

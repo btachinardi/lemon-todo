@@ -12,7 +12,14 @@ import type { Task } from '../types/task.types';
 
 const BASE = '/api/tasks';
 
+/**
+ * Client for the tasks REST API (`/api/tasks`).
+ * Each method maps 1:1 to a backend endpoint.
+ *
+ * @throws {@link import("@/lib/api-client").ApiRequestError} on non-2xx responses.
+ */
 export const tasksApi = {
+  /** Paginated, filterable task list. */
   list(params?: ListTasksParams): Promise<PagedResult<Task>> {
     return apiClient.get<PagedResult<Task>>(BASE, params as Record<string, string | number | undefined>);
   },
@@ -29,22 +36,30 @@ export const tasksApi = {
     return apiClient.put<Task>(`${BASE}/${id}`, request);
   },
 
+  /** Soft-deletes a task (sets `isDeleted` flag). */
   delete(id: string): Promise<void> {
     return apiClient.delete(`${BASE}/${id}`);
   },
 
+  /** Transitions task status to `Done` and sets `completedAt`. */
   complete(id: string): Promise<void> {
     return apiClient.post(`${BASE}/${id}/complete`);
   },
 
+  /** Reverts a completed task back to its previous status. */
   uncomplete(id: string): Promise<void> {
     return apiClient.post(`${BASE}/${id}/uncomplete`);
   },
 
+  /** Sets `isArchived` flag -- hides the task from default views. */
   archive(id: string): Promise<void> {
     return apiClient.post(`${BASE}/${id}/archive`);
   },
 
+  /**
+   * Relocates a task card on the board. Also triggers a status transition
+   * if the target column maps to a different {@link TaskStatus}.
+   */
   move(id: string, request: MoveTaskRequest): Promise<void> {
     return apiClient.post(`${BASE}/${id}/move`, request);
   },

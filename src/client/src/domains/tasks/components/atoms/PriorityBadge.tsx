@@ -15,6 +15,7 @@ interface PriorityBadgeProps {
   className?: string;
 }
 
+/** Colored badge indicating task priority. Renders nothing for `Priority.None`. */
 export function PriorityBadge({ priority, className }: PriorityBadgeProps) {
   if (priority === Priority.None) return null;
 

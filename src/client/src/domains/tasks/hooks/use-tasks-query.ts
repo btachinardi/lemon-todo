@@ -2,6 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { tasksApi } from '../api/tasks.api';
 import type { ListTasksParams } from '../types/api.types';
 
+/**
+ * TanStack Query key factory for task queries.
+ * Follows the hierarchical key pattern so invalidating `taskKeys.all`
+ * clears every task-related cache entry.
+ */
 export const taskKeys = {
   all: ['tasks'] as const,
   lists: () => [...taskKeys.all, 'list'] as const,
@@ -10,6 +15,7 @@ export const taskKeys = {
   detail: (id: string) => [...taskKeys.details(), id] as const,
 };
 
+/** Fetches a paginated, filterable list of tasks. */
 export function useTasksQuery(params?: ListTasksParams) {
   return useQuery({
     queryKey: taskKeys.list(params),
@@ -17,6 +23,7 @@ export function useTasksQuery(params?: ListTasksParams) {
   });
 }
 
+/** Fetches a single task by ID. Disabled when `id` is falsy. */
 export function useTaskQuery(id: string) {
   return useQuery({
     queryKey: taskKeys.detail(id),

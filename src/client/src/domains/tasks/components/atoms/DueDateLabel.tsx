@@ -2,10 +2,16 @@ import { cn } from '@/lib/utils';
 import { AlertTriangleIcon, CalendarIcon } from 'lucide-react';
 
 interface DueDateLabelProps {
+  /** ISO 8601 date string or null. */
   dueDate: string | null;
   className?: string;
 }
 
+/**
+ * Displays a human-friendly due date with contextual styling.
+ * Shows "Today", "Tomorrow", or "Overdue: ..." with a warning icon.
+ * Renders nothing when `dueDate` is null.
+ */
 export function DueDateLabel({ dueDate, className }: DueDateLabelProps) {
   if (!dueDate) return null;
 

@@ -4,9 +4,11 @@ import { cn } from '@/lib/utils';
 interface TagListProps {
   tags: string[];
   className?: string;
+  /** When provided, each tag shows an "x" button that calls back with the tag value. */
   onRemove?: (tag: string) => void;
 }
 
+/** Horizontal list of tag badges. Renders nothing when `tags` is empty. */
 export function TagList({ tags, className, onRemove }: TagListProps) {
   if (tags.length === 0) return null;
 

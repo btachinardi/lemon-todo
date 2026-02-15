@@ -13,6 +13,7 @@ interface TaskStatusChipProps {
   className?: string;
 }
 
+/** Colored badge displaying the current task lifecycle status. */
 export function TaskStatusChip({ status, className }: TaskStatusChipProps) {
   const config = statusConfig[status];
 

@@ -21,6 +21,11 @@ function TestProviders({ children }: { children: React.ReactNode }) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 
+/**
+ * Test-only render helper that wraps the component under test with
+ * a fresh {@link QueryClient} (retries disabled, zero GC time).
+ * Drop-in replacement for `@testing-library/react`'s `render`.
+ */
 export function renderWithProviders(ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>) {
   return render(ui, { wrapper: TestProviders, ...options });
 }

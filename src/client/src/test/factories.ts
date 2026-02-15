@@ -8,6 +8,10 @@ function nextId(): string {
   return `00000000-0000-0000-0000-${String(counter).padStart(12, '0')}`;
 }
 
+/**
+ * Creates a test {@link Task} with sensible defaults.
+ * Override any field via the `overrides` parameter.
+ */
 export function createTask(overrides: Partial<Task> = {}): Task {
   return {
     id: nextId(),
@@ -26,6 +30,7 @@ export function createTask(overrides: Partial<Task> = {}): Task {
   };
 }
 
+/** Creates a test {@link TaskCard} placement. */
 export function createTaskCard(overrides: Partial<TaskCard> = {}): TaskCard {
   return {
     taskId: nextId(),
@@ -35,6 +40,7 @@ export function createTaskCard(overrides: Partial<TaskCard> = {}): TaskCard {
   };
 }
 
+/** Creates a test {@link Column} with a default `Todo` target status. */
 export function createColumn(overrides: Partial<Column> = {}): Column {
   return {
     id: nextId(),
@@ -46,6 +52,10 @@ export function createColumn(overrides: Partial<Column> = {}): Column {
   };
 }
 
+/**
+ * Creates a test {@link Board} pre-populated with three columns
+ * (To Do, In Progress, Done) and an empty cards array.
+ */
 export function createBoard(overrides: Partial<Board> = {}): Board {
   return {
     id: nextId(),

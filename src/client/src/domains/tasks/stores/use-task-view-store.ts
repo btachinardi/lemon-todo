@@ -3,6 +3,10 @@ import { persist } from 'zustand/middleware';
 
 type ViewMode = 'kanban' | 'list';
 
+/**
+ * Client-only UI state for the task views toolbar.
+ * `viewMode` is persisted to localStorage; filters reset on page reload.
+ */
 interface TaskViewState {
   viewMode: ViewMode;
   searchTerm: string;
@@ -12,6 +16,7 @@ interface TaskViewState {
   setSearchTerm: (term: string) => void;
   setFilterPriority: (priority: string | undefined) => void;
   setFilterStatus: (status: string | undefined) => void;
+  /** Clears search term and all active filters. */
   resetFilters: () => void;
 }
 
