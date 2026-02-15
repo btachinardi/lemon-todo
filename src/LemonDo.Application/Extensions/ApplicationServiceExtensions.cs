@@ -2,6 +2,7 @@ namespace LemonDo.Application.Extensions;
 
 using LemonDo.Application.Boards.Commands;
 using LemonDo.Application.Common;
+using LemonDo.Application.Identity.Commands;
 using LemonDo.Application.Tasks.Commands;
 using LemonDo.Application.Tasks.Queries;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +33,12 @@ public static class ApplicationServiceExtensions
         services.AddScoped<RenameColumnCommandHandler>();
         services.AddScoped<RemoveColumnCommandHandler>();
         services.AddScoped<ReorderColumnCommandHandler>();
+
+        // Identity command handlers
+        services.AddScoped<RegisterUserCommandHandler>();
+        services.AddScoped<LoginUserCommandHandler>();
+        services.AddScoped<RefreshTokenCommandHandler>();
+        services.AddScoped<RevokeRefreshTokenCommandHandler>();
 
         // Task query handlers
         services.AddScoped<GetTaskByIdQueryHandler>();
