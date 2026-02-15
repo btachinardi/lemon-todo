@@ -4,6 +4,8 @@ import { KanbanIcon, ListIcon } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
 import { UserMenu } from '@/domains/auth/components/UserMenu';
+import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
+import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -11,11 +13,14 @@ interface DashboardLayoutProps {
 
 /** App shell with branded header, pill-shaped view switcher, and toast container. */
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const theme = useThemeStore((s) => s.theme);
+  const resolvedTheme = resolveTheme(theme);
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <h1 className="font-mono text-lg font-light tracking-normal">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:h-16 sm:px-6">
+          <h1 className="font-mono text-base font-light tracking-normal sm:text-lg">
             <span className="text-foreground">LEMON</span>
             <span className="text-primary">DO</span>
           </h1>
@@ -28,7 +33,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               end
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-semibold transition-all duration-300',
+                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
                   isActive
                     ? 'bg-primary text-primary-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
@@ -36,13 +41,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               }
             >
               <KanbanIcon className="size-3.5" />
-              Board
+              <span className="hidden sm:inline">Board</span>
             </NavLink>
             <NavLink
               to="/list"
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-semibold transition-all duration-300',
+                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
                   isActive
                     ? 'bg-primary text-primary-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
@@ -50,10 +55,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               }
             >
               <ListIcon className="size-3.5" />
-              List
+              <span className="hidden sm:inline">List</span>
             </NavLink>
           </nav>
-          <UserMenu />
+          <div className="flex items-center gap-1">
+            <ThemeToggle
+              theme={theme}
+              onToggle={() => {
+                const themes: Array<typeof theme> = ['light', 'dark', 'system'];
+                const idx = themes.indexOf(theme);
+                const next = themes[(idx + 1) % themes.length];
+                useThemeStore.getState().setTheme(next);
+              }}
+            />
+            <UserMenu />
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1">{children}</main>
@@ -62,7 +78,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           v{__APP_VERSION__}
         </span>
       </footer>
-      <Toaster theme="dark" />
+      <Toaster theme={resolvedTheme} />
     </div>
   );
 }

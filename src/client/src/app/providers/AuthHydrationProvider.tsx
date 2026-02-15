@@ -17,12 +17,14 @@ export function AuthHydrationProvider({ children }: AuthHydrationProviderProps) 
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
     const silentRefresh = async () => {
       try {
         const response = await fetch('/api/auth/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
+          signal: controller.signal,
         });
 
         if (response.ok) {
@@ -32,13 +34,17 @@ export function AuthHydrationProvider({ children }: AuthHydrationProviderProps) 
           };
           useAuthStore.getState().setAuth(data.accessToken, data.user);
         }
-      } catch {
-        // No valid session — stay unauthenticated
+      } catch (error: unknown) {
+        // AbortError is expected on cleanup; all others mean no valid session
+        if (error instanceof DOMException && error.name === 'AbortError') return;
       } finally {
-        setReady(true);
+        if (!controller.signal.aborted) {
+          setReady(true);
+        }
       }
     };
     silentRefresh();
+    return () => controller.abort();
   }, []);
 
   if (!ready) {
