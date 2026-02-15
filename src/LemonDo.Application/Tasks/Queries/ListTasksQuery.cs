@@ -25,6 +25,7 @@ public sealed class ListTasksQueryHandler(ITaskRepository repository, ICurrentUs
             filter.Priority,
             filter.Status,
             filter.SearchTerm,
+            filter.Tag,
             filter.Page,
             filter.PageSize,
             ct);
