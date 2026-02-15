@@ -910,11 +910,83 @@ Tagged and released v0.2.0, covering Checkpoint 2 (Authentication & Authorizatio
 
 ---
 
+## Checkpoint 3: Rich UX & Polish
+
+**Date: February 15, 2026**
+
+All 10 CP3 items implemented across 10 atomic commits (1 backend + 9 frontend), adding 65 new frontend tests for a total of 149.
+
+### 3.1 What Was Built
+
+**Drag-and-Drop (CP3.1)**: @dnd-kit integration on the kanban board. Cross-column moves trigger `MoveCard` API (neighbor-based rank computation from CP1). Within-column reorder updates card rank without status change. Touch and keyboard accessible.
+
+**Task Detail Sheet (CP3.3)**: Slide-over panel (`Sheet` from Shadcn/ui) for viewing and editing task details. Inline editing for title (blur-to-save), description (textarea), due date (Calendar popover), priority (select), and tags. `TaskDetailSheetProvider` context lets any component open the sheet by task ID. 12 tests covering loading, error, and edit states.
+
+**Filters & Search (CP3.4)**: Two-layer approach — backend query parameters (`status`, `priority`, `search`, `tags`, `includeArchived`) added to `GET /api/tasks` for efficient server-side filtering, plus a client-side `filterTasks()` utility (12 tests) for instant local filtering. `FilterBar` widget provides search input, status/priority dropdowns, and tag toggles.
+
+**Dark/Light Theme (CP3.5)**: `ThemeProvider` reads system preference via `prefers-color-scheme` media query, applies `dark` class to `<html>`. `ThemeToggle` button cycles through light/dark/system modes. Zustand store with `persist` middleware saves preference to localStorage (separate from auth store which deliberately avoids persistence). 8 tests for the store, 5 for the toggle.
+
+**Responsive Design (CP3.6)**: `useMediaQuery` hook (3 tests) for breakpoint detection. Kanban columns use horizontal snap-scroll on mobile. List view adapts to compact layout. DashboardLayout adjusts header and navigation for small screens.
+
+**Loading Skeletons (CP3.7)**: `BoardSkeleton` mimics 3-column kanban with pulsing card placeholders. `ListSkeleton` mimics grouped task list. Both used by routes during `isLoading` state.
+
+**Empty States (CP3.8)**: `EmptyBoard` shows a friendly illustration with "Create your first task" CTA when the board has no tasks. `EmptySearchResults` appears when filters return nothing, with a "Clear filters" action.
+
+**Toast Notifications (CP3.9)**: All CRUD mutation hooks (`useCreateTask`, `useCompleteTask`, `useMoveTask`, etc.) now show success/error toasts via sonner. `toast-helpers.ts` provides consistent formatting.
+
+**Error Boundaries (CP3.10)**: `RouteErrorBoundary` component configured as `errorElement` on every route. Catches render errors, displays a recovery UI with "Try Again" (re-renders) and "Go Home" (navigates to `/`) buttons. 4 tests.
+
+### 3.2 New Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `date-fns` | 4.1.0 | Date formatting and manipulation (tree-shakeable, functional) |
+| `react-day-picker` | 9.13.2 | Calendar widget backing Shadcn Calendar component |
+
+Note: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` were already added in CP1.
+
+### 3.3 New Shadcn/ui Components
+
+| Component | Used By |
+|-----------|---------|
+| `Sheet` | TaskDetailSheet (slide-over panel) |
+| `Calendar` | Due date picker in TaskDetailSheet |
+| `Popover` | Calendar trigger in TaskDetailSheet |
+| `Label` | Form labels in TaskDetailSheet |
+
+### 3.4 Key Decisions
+
+**Sheet over Dialog for task details**: A slide-over sheet keeps the board or list visible in the background, providing spatial context. Modals feel heavier and block the underlying view. On mobile, sheets support swipe-to-dismiss gestures naturally.
+
+**Client-side + server-side filtering**: Filters are applied client-side for instant response (no network round-trip). Backend query parameters were also added so that when the dataset grows beyond what fits in a single page, server-side filtering is already wired up. This dual approach means the UX is fast today and the architecture is ready for pagination.
+
+**Separate Zustand store for theme**: The auth store deliberately avoids `persist` middleware (security decision from CP2). Theme preference is non-sensitive UI state that should survive page refresh. A separate `useThemeStore` with its own persist configuration keeps the two concerns isolated.
+
+**Per-route error boundaries**: A single global error boundary would unmount the entire app on any error. Per-route boundaries (using React Router's `errorElement`) contain failures to the affected route while leaving navigation and other routes functional.
+
+**date-fns over dayjs/moment**: Tree-shakeable (only import what you use), pure functional API (no global mutation), excellent TypeScript support. At our usage level (formatting + relative dates), the bundle impact is minimal.
+
+### 3.5 Architecture Patterns
+
+**TaskDetailSheetProvider**: Uses React Context to provide `openSheet(taskId)` / `closeSheet()` to any descendant component. The provider sits at the page level, above the views but below the layout. This avoids prop-drilling the sheet state through the component tree.
+
+**Filter state in Zustand**: `useTaskViewStore` was extended with filter fields (`searchQuery`, `statusFilter`, `priorityFilter`, `tagFilter`). The FilterBar reads and writes to this store. Views subscribe to the filter state and apply `filterTasks()` to the query results. This keeps filter state persistent across view switches (board ↔ list).
+
+**Skeleton composition**: Skeletons mirror the exact layout of their loaded counterparts (same grid columns, card heights, spacing). This prevents layout shift when data arrives. Each skeleton is a separate component, not a loading prop on the real component — keeping the loaded component clean.
+
+### 3.6 Verification
+
+| Check | Result |
+|---|---|
+| **Backend Build** | 9/9 projects, 0 warnings, 0 errors (3.08s) |
+| **Frontend Build** | 2906 modules, 691 KB JS + 66 KB CSS (8.25s) |
+| **Backend Tests** | 262 passed, 0 failed, 0 skipped (4.06s) |
+| **Frontend Tests** | 149 passed, 0 failed (25 test files, 28.19s) |
+| **Frontend Lint** | Clean, no issues |
+
+---
+
 ## What's Next
-
-### Checkpoint 3: Rich UX & Polish
-
-*Planned: Kanban drag-and-drop, quick-add, task detail editing, filters/search, dark/light theme, responsive design, loading skeletons, empty states, toast notifications, error boundaries.*
 
 ### Checkpoint 4: Production Hardening
 
