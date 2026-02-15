@@ -5,8 +5,10 @@ using LemonDo.Api.Extensions;
 using LemonDo.Application.Boards.Commands;
 using LemonDo.Application.Tasks.Queries;
 
+/// <summary>Minimal API endpoint definitions for the <c>/api/boards</c> route group.</summary>
 public static class BoardEndpoints
 {
+    /// <summary>Maps board query and column management endpoints under <c>/api/boards</c>.</summary>
     public static RouteGroupBuilder MapBoardEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/boards").WithTags("Boards");

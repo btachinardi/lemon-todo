@@ -5,8 +5,10 @@ using LemonDo.Application.Tasks.Commands;
 using LemonDo.Application.Tasks.Queries;
 using Microsoft.Extensions.DependencyInjection;
 
+/// <summary>DI registration for the Application layer (command and query handlers).</summary>
 public static class ApplicationServiceExtensions
 {
+    /// <summary>Registers all command and query handlers as scoped services.</summary>
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         // Task command handlers

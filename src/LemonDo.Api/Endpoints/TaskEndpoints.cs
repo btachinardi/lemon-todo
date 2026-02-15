@@ -7,8 +7,10 @@ using LemonDo.Application.Tasks.Commands;
 using LemonDo.Application.Tasks.Queries;
 using LemonDo.Domain.Tasks.ValueObjects;
 
+/// <summary>Minimal API endpoint definitions for the <c>/api/tasks</c> route group.</summary>
 public static class TaskEndpoints
 {
+    /// <summary>Maps all task CRUD, lifecycle, and tag endpoints under <c>/api/tasks</c>.</summary>
     public static RouteGroupBuilder MapTaskEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/tasks").WithTags("Tasks");

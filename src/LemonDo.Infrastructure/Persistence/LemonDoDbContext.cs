@@ -30,11 +30,13 @@ public sealed class LemonDoDbContext : DbContext, IUnitOfWork
     public DbSet<TaskEntity> Tasks => Set<TaskEntity>();
     public DbSet<Board> Boards => Set<Board>();
 
+    /// <summary>Applies all EF Core entity configurations from this assembly.</summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LemonDoDbContext).Assembly);
     }
 
+    /// <summary>Configures <see cref="DateTimeOffset"/> to be stored as ISO 8601 strings for SQLite compatibility.</summary>
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         // SQLite doesn't natively support DateTimeOffset. Store as ISO 8601 strings

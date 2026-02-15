@@ -12,13 +12,24 @@ public sealed class Result<TValue, TError>
     private readonly TValue? _value;
     private readonly TError? _error;
 
+    /// <summary>Indicates whether the result represents a success.</summary>
     public bool IsSuccess { get; }
+
+    /// <summary>Indicates whether the result represents a failure.</summary>
     public bool IsFailure => !IsSuccess;
 
+    /// <summary>
+    /// The success value. Only valid when <see cref="IsSuccess"/> is <c>true</c>.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Accessed on a failed result.</exception>
     public TValue Value => IsSuccess
         ? _value!
         : throw new InvalidOperationException("Cannot access Value on a failed Result.");
 
+    /// <summary>
+    /// The failure error. Only valid when <see cref="IsFailure"/> is <c>true</c>.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Accessed on a successful result.</exception>
     public TError Error => IsFailure
         ? _error!
         : throw new InvalidOperationException("Cannot access Error on a successful Result.");
@@ -37,7 +48,10 @@ public sealed class Result<TValue, TError>
         _error = error;
     }
 
+    /// <summary>Creates a successful result wrapping <paramref name="value"/>.</summary>
     public static Result<TValue, TError> Success(TValue value) => new(value);
+
+    /// <summary>Creates a failed result wrapping <paramref name="error"/>.</summary>
     public static Result<TValue, TError> Failure(TError error) => new(error, false);
 
     /// <summary>
@@ -58,9 +72,16 @@ public sealed class Result<TError>
 {
     private readonly TError? _error;
 
+    /// <summary>Indicates whether the result represents a success.</summary>
     public bool IsSuccess { get; }
+
+    /// <summary>Indicates whether the result represents a failure.</summary>
     public bool IsFailure => !IsSuccess;
 
+    /// <summary>
+    /// The failure error. Only valid when <see cref="IsFailure"/> is <c>true</c>.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Accessed on a successful result.</exception>
     public TError Error => IsFailure
         ? _error!
         : throw new InvalidOperationException("Cannot access Error on a successful Result.");
@@ -77,6 +98,9 @@ public sealed class Result<TError>
         _error = error;
     }
 
+    /// <summary>Creates a successful unit result.</summary>
     public static Result<TError> Success() => new();
+
+    /// <summary>Creates a failed unit result wrapping <paramref name="error"/>.</summary>
     public static Result<TError> Failure(TError error) => new(error);
 }

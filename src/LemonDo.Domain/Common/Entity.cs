@@ -6,13 +6,21 @@ namespace LemonDo.Domain.Common;
 /// </summary>
 public abstract class Entity<TId> : IEquatable<Entity<TId>>, IHasDomainEvents where TId : notnull
 {
+    /// <summary>The unique identifier for this entity.</summary>
     public TId Id { get; }
+
+    /// <summary>When the entity was first persisted (UTC).</summary>
     public DateTimeOffset CreatedAt { get; protected set; }
+
+    /// <summary>When the entity was last modified (UTC).</summary>
     public DateTimeOffset UpdatedAt { get; protected set; }
 
     private readonly List<DomainEvent> _domainEvents = [];
+
+    /// <inheritdoc />
     public IReadOnlyList<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
+    /// <summary>Initializes a new entity with the given <paramref name="id"/> and timestamps set to now.</summary>
     protected Entity(TId id)
     {
         Id = id;
@@ -20,11 +28,13 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>, IHasDomainEvents wh
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>Adds a domain event to be dispatched after the unit of work commits.</summary>
     protected void RaiseDomainEvent(DomainEvent domainEvent)
     {
         _domainEvents.Add(domainEvent);
     }
 
+    /// <inheritdoc />
     public void ClearDomainEvents()
     {
         _domainEvents.Clear();

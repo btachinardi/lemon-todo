@@ -6,6 +6,7 @@ namespace LemonDo.Domain.Common;
 /// </summary>
 public abstract class ValueObject : IEquatable<ValueObject>
 {
+    /// <summary>Returns the values that define structural equality for this value object.</summary>
     protected abstract IEnumerable<object?> GetEqualityComponents();
 
     public override bool Equals(object? obj)

@@ -10,8 +10,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+/// <summary>DI registration for the Infrastructure layer (DbContext, repositories, event dispatcher).</summary>
 public static class InfrastructureServiceExtensions
 {
+    /// <summary>Registers <see cref="LemonDoDbContext"/>, repositories, and the domain event dispatcher.</summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<LemonDoDbContext>(options =>

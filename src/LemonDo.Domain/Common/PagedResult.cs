@@ -3,6 +3,7 @@ namespace LemonDo.Domain.Common;
 /// <summary>
 /// Represents a paginated result set.
 /// </summary>
+/// <typeparam name="T">The type of items in the result set.</typeparam>
 public sealed record PagedResult<T>(
     IReadOnlyList<T> Items,
     int TotalCount,

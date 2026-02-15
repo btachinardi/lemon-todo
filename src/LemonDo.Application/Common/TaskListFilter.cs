@@ -2,6 +2,7 @@ namespace LemonDo.Application.Common;
 
 using LemonDo.Domain.Tasks.ValueObjects;
 
+/// <summary>Filter criteria for the task list query. All fields are optional and combined with AND logic.</summary>
 public sealed record TaskListFilter
 {
     public Priority? Priority { get; init; }
