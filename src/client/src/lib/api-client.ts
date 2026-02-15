@@ -7,6 +7,21 @@ type ParamValue = string | number | boolean | null | undefined;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 /**
+ * Returns the stored access token from localStorage (Zustand persist).
+ * Reads directly from localStorage to avoid circular imports with the store module.
+ */
+function getAccessToken(): string | null {
+  try {
+    const raw = localStorage.getItem('lemondo-auth');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { state?: { accessToken?: string } };
+    return parsed?.state?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Creates an AbortSignal that automatically aborts after the given timeout.
  * Uses the native `AbortSignal.timeout()` API available in modern browsers.
  */
@@ -17,6 +32,21 @@ function createTimeoutSignal(ms: number = REQUEST_TIMEOUT_MS): AbortSignal {
 /** Generates a short unique ID for request correlation. */
 function generateCorrelationId(): string {
   return crypto.randomUUID().replace(/-/g, '');
+}
+
+/** Builds common request headers including auth bearer token when available. */
+function buildHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Correlation-Id': generateCorrelationId(),
+  };
+
+  const token = getAccessToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
 }
 
 /**
@@ -84,9 +114,23 @@ async function throwApiError(response: Response): Promise<never> {
   throw new ApiRequestError(response.status, apiError);
 }
 
+/**
+ * Clears auth state from localStorage and redirects to login on 401.
+ * Skips redirect for auth endpoints (login/register) to let their error handling work.
+ */
+function handleUnauthorized(response: Response): void {
+  if (response.status === 401 && !response.url.includes('/api/auth/')) {
+    try {
+      localStorage.removeItem('lemondo-auth');
+    } catch { /* ignore */ }
+    window.location.href = '/login';
+  }
+}
+
 /** Handles responses that return a JSON body (non-204). */
 async function handleJsonResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    handleUnauthorized(response);
     await throwApiError(response);
   }
 
@@ -96,6 +140,7 @@ async function handleJsonResponse<T>(response: Response): Promise<T> {
 /** Handles responses with no body (204 No Content, or any void endpoint). */
 async function handleVoidResponse(response: Response): Promise<void> {
   if (!response.ok) {
+    handleUnauthorized(response);
     await throwApiError(response);
   }
 }
@@ -126,10 +171,7 @@ export const apiClient = {
     const fullUrl = queryString ? `${url}?${queryString}` : url;
 
     const response = await fetch(fullUrl, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Correlation-Id': generateCorrelationId(),
-      },
+      headers: buildHeaders(),
       signal: createTimeoutSignal(),
     });
     return handleJsonResponse<T>(response);
@@ -139,10 +181,7 @@ export const apiClient = {
   async post<T>(url: string, body?: unknown): Promise<T> {
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Correlation-Id': generateCorrelationId(),
-      },
+      headers: buildHeaders(),
       signal: createTimeoutSignal(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
@@ -153,10 +192,7 @@ export const apiClient = {
   async postVoid(url: string, body?: unknown): Promise<void> {
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Correlation-Id': generateCorrelationId(),
-      },
+      headers: buildHeaders(),
       signal: createTimeoutSignal(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
@@ -167,10 +203,7 @@ export const apiClient = {
   async put<T>(url: string, body?: unknown): Promise<T> {
     const response = await fetch(url, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Correlation-Id': generateCorrelationId(),
-      },
+      headers: buildHeaders(),
       signal: createTimeoutSignal(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
@@ -181,10 +214,7 @@ export const apiClient = {
   async delete<T>(url: string): Promise<T> {
     const response = await fetch(url, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Correlation-Id': generateCorrelationId(),
-      },
+      headers: buildHeaders(),
       signal: createTimeoutSignal(),
     });
     return handleJsonResponse<T>(response);
@@ -194,10 +224,7 @@ export const apiClient = {
   async deleteVoid(url: string): Promise<void> {
     const response = await fetch(url, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Correlation-Id': generateCorrelationId(),
-      },
+      headers: buildHeaders(),
       signal: createTimeoutSignal(),
     });
     return handleVoidResponse(response);

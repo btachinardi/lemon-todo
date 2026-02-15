@@ -1,3 +1,5 @@
+import { getAuthToken } from './auth.helpers';
+
 const API_BASE = 'http://localhost:5155/api';
 
 interface CreateTaskRequest {
@@ -29,10 +31,19 @@ interface BoardResponse {
   cards: CardResponse[];
 }
 
+/** Builds request headers with auth token. */
+async function authHeaders(): Promise<Record<string, string>> {
+  const token = await getAuthToken();
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  };
+}
+
 export async function createTask(request: CreateTaskRequest): Promise<TaskResponse> {
   const res = await fetch(`${API_BASE}/tasks`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await authHeaders(),
     body: JSON.stringify(request),
   });
   if (!res.ok) throw new Error(`Create task failed: ${res.status} ${await res.text()}`);
@@ -40,28 +51,41 @@ export async function createTask(request: CreateTaskRequest): Promise<TaskRespon
 }
 
 export async function completeTask(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/tasks/${id}/complete`, { method: 'POST' });
+  const res = await fetch(`${API_BASE}/tasks/${id}/complete`, {
+    method: 'POST',
+    headers: await authHeaders(),
+  });
   if (!res.ok) throw new Error(`Complete task failed: ${res.status}`);
 }
 
 export async function uncompleteTask(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/tasks/${id}/uncomplete`, { method: 'POST' });
+  const res = await fetch(`${API_BASE}/tasks/${id}/uncomplete`, {
+    method: 'POST',
+    headers: await authHeaders(),
+  });
   if (!res.ok) throw new Error(`Uncomplete task failed: ${res.status}`);
 }
 
 export async function getDefaultBoard(): Promise<BoardResponse> {
-  const res = await fetch(`${API_BASE}/boards/default`);
+  const res = await fetch(`${API_BASE}/boards/default`, {
+    headers: await authHeaders(),
+  });
   if (!res.ok) throw new Error(`Get default board failed: ${res.status}`);
   return res.json();
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/tasks/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_BASE}/tasks/${id}`, {
+    method: 'DELETE',
+    headers: await authHeaders(),
+  });
   if (!res.ok) throw new Error(`Delete task failed: ${res.status}`);
 }
 
 export async function listTasks(): Promise<{ items: TaskResponse[] }> {
-  const res = await fetch(`${API_BASE}/tasks`);
+  const res = await fetch(`${API_BASE}/tasks`, {
+    headers: await authHeaders(),
+  });
   if (!res.ok) throw new Error(`List tasks failed: ${res.status}`);
   return res.json();
 }
@@ -74,14 +98,17 @@ export async function moveTask(
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/tasks/${id}/move`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await authHeaders(),
     body: JSON.stringify({ columnId, previousTaskId, nextTaskId }),
   });
   if (!res.ok) throw new Error(`Move task failed: ${res.status} ${await res.text()}`);
 }
 
 export async function archiveTask(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/tasks/${id}/archive`, { method: 'POST' });
+  const res = await fetch(`${API_BASE}/tasks/${id}/archive`, {
+    method: 'POST',
+    headers: await authHeaders(),
+  });
   if (!res.ok) throw new Error(`Archive task failed: ${res.status}`);
 }
 

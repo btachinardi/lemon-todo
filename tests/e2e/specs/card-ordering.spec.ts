@@ -7,6 +7,7 @@ import {
   deleteTask,
   archiveTask,
 } from '../helpers/api.helpers';
+import { loginViaStorage } from '../helpers/auth.helpers';
 
 test.beforeEach(async () => {
   await deleteAllTasks();
@@ -200,6 +201,7 @@ test.describe('Card Ordering (UI)', () => {
     const todoCol = board.columns.find((c) => c.targetStatus === 'Todo')!;
     await moveTask(t3.id, todoCol.id, t1.id, t2.id);
 
+    await loginViaStorage(page);
     await page.goto('/');
     await expect(page.getByText('Alpha task')).toBeVisible();
     await expect(page.getByText('Gamma task')).toBeVisible();
@@ -220,6 +222,7 @@ test.describe('Card Ordering (UI)', () => {
     const t1 = await createTask({ title: 'Stays on board' });
     const t2 = await createTask({ title: 'Gets deleted' });
 
+    await loginViaStorage(page);
     await page.goto('/');
     await expect(page.getByText('Gets deleted')).toBeVisible();
 
@@ -232,6 +235,7 @@ test.describe('Card Ordering (UI)', () => {
   });
 
   test('UI-created tasks maintain order after reload', async ({ page }) => {
+    await loginViaStorage(page);
     await page.goto('/');
 
     // Create tasks through the quick-add form
@@ -270,6 +274,7 @@ test.describe('Card Ordering (UI)', () => {
     await createTask({ title: 'Task Epsilon' });
 
     // Load page and capture order
+    await loginViaStorage(page);
     await page.goto('/');
     const cards = page.locator('[role="button"][aria-label^="Task:"]');
     await expect(cards).toHaveCount(5);
@@ -299,6 +304,7 @@ test.describe('Card Ordering (UI)', () => {
     await moveTask(t3.id, todoCol.id, null, t1.id);
 
     // Load the page and verify initial order: Third, First, Second
+    await loginViaStorage(page);
     await page.goto('/');
     const cards = page.locator('[role="button"][aria-label^="Task:"]');
     await expect(cards).toHaveCount(3);
@@ -359,6 +365,7 @@ test.describe('Card Ordering (UI)', () => {
 
     await moveTask(t1.id, inProgressCol.id, null, null);
 
+    await loginViaStorage(page);
     await page.goto('/');
 
     // The task should appear under the "In Progress" column heading
@@ -366,7 +373,7 @@ test.describe('Card Ordering (UI)', () => {
     const inProgressHeading = page.getByRole('heading', { name: 'In Progress' });
     await expect(inProgressHeading).toBeVisible();
     // Navigate from the h3 heading up to the column root div, then find the task within it
-    const inProgressColumn = page.locator('div.shrink-0', { has: inProgressHeading });
+    const inProgressColumn = page.locator('div.rounded-xl', { has: inProgressHeading });
     await expect(inProgressColumn.getByText('Moving task')).toBeVisible();
   });
 });
