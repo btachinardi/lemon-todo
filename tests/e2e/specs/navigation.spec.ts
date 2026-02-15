@@ -1,4 +1,5 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { createTask } from '../helpers/api.helpers';
 import { loginViaApi } from '../helpers/auth.helpers';
 
 let context: BrowserContext;
@@ -9,6 +10,8 @@ test.describe.serial('Navigation', () => {
     context = await browser.newContext();
     page = await context.newPage();
     await loginViaApi(page);
+    // Seed a task so the board renders columns instead of EmptyBoard
+    await createTask({ title: 'Nav seed task' });
   });
 
   test.afterAll(async () => {
@@ -38,6 +41,7 @@ test.describe.serial('Navigation', () => {
     await page.goto('/some-nonexistent-route');
     await page.getByRole('link', { name: /go home/i }).click();
     await expect(page).toHaveURL('/');
+    // Seeded task ensures columns render (not EmptyBoard)
     await expect(page.getByRole('heading', { name: 'To Do' })).toBeVisible();
   });
 

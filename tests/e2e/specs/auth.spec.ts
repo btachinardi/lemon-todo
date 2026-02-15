@@ -17,8 +17,8 @@ test.describe('Authentication', () => {
     await page.getByLabel('Password').fill('TestPass123!');
     await page.getByRole('button', { name: 'Create account' }).click();
 
-    // Should redirect to the board
-    await expect(page.getByRole('heading', { name: 'To Do' })).toBeVisible({ timeout: 10000 });
+    // Should redirect to the board (empty board shows EmptyBoard, not columns)
+    await expect(page.getByLabel('New task title')).toBeVisible({ timeout: 10000 });
     await expect(page).toHaveURL('/');
   });
 
@@ -38,7 +38,7 @@ test.describe('Authentication', () => {
     await page.getByLabel('Password').fill('TestPass123!');
     await page.getByRole('button', { name: 'Sign in' }).click();
 
-    await expect(page.getByRole('heading', { name: 'To Do' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByLabel('New task title')).toBeVisible({ timeout: 10000 });
   });
 
   test('login with wrong password shows error', async ({ page }) => {

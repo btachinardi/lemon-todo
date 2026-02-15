@@ -16,10 +16,10 @@ test.describe.serial('Task Board', () => {
     await context.close();
   });
 
-  test('empty columns show "No tasks" text', async () => {
+  test('empty board shows empty state', async () => {
     await page.goto('/');
-    const noTasksLabels = page.getByText('No tasks');
-    await expect(noTasksLabels).toHaveCount(3);
+    await expect(page.getByText('Your board is empty')).toBeVisible();
+    await expect(page.getByText('Add a task above to get started.')).toBeVisible();
   });
 
   test('quick-add form visible with input and button', async () => {
