@@ -68,5 +68,5 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/user/lemon-todo/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/user/lemon-todo/releases/tag/v0.1.0
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/btachinardi/lemon-todo/releases/tag/v0.1.0
