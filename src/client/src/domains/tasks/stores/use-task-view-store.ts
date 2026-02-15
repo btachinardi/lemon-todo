@@ -1,18 +1,24 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { GroupBy } from '../types/grouping.types';
 
 type ViewMode = 'kanban' | 'list';
 
 /**
  * Client-only UI state for the task views toolbar.
- * `viewMode` is persisted to localStorage; filters reset on page reload.
+ * `viewMode`, `groupBy`, and `splitCompleted` are persisted to localStorage;
+ * filters reset on page reload.
  */
 interface TaskViewState {
   viewMode: ViewMode;
+  groupBy: GroupBy;
+  splitCompleted: boolean;
   searchTerm: string;
   filterPriority: string | undefined;
   filterStatus: string | undefined;
   setViewMode: (mode: ViewMode) => void;
+  setGroupBy: (groupBy: GroupBy) => void;
+  setSplitCompleted: (split: boolean) => void;
   setSearchTerm: (term: string) => void;
   setFilterPriority: (priority: string | undefined) => void;
   setFilterStatus: (status: string | undefined) => void;
@@ -25,10 +31,14 @@ export const useTaskViewStore = create<TaskViewState>()(
   persist(
     (set) => ({
       viewMode: 'kanban',
+      groupBy: 'none' as GroupBy,
+      splitCompleted: false,
       searchTerm: '',
       filterPriority: undefined,
       filterStatus: undefined,
       setViewMode: (viewMode) => set({ viewMode }),
+      setGroupBy: (groupBy) => set({ groupBy }),
+      setSplitCompleted: (splitCompleted) => set({ splitCompleted }),
       setSearchTerm: (searchTerm) => set({ searchTerm }),
       setFilterPriority: (filterPriority) => set({ filterPriority }),
       setFilterStatus: (filterStatus) => set({ filterStatus }),
@@ -37,7 +47,11 @@ export const useTaskViewStore = create<TaskViewState>()(
     }),
     {
       name: 'lemondo-task-view',
-      partialize: (state) => ({ viewMode: state.viewMode }),
+      partialize: (state) => ({
+        viewMode: state.viewMode,
+        groupBy: state.groupBy,
+        splitCompleted: state.splitCompleted,
+      }),
     },
   ),
 );

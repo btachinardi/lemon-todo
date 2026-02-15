@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AlertCircleIcon } from 'lucide-react';
 import { toastApiError } from '@/lib/toast-helpers';
 import { Button } from '@/ui/button';
 import { Skeleton } from '@/ui/skeleton';
 import { TaskListView } from '@/domains/tasks/components/views/TaskListView';
+import { ListViewToolbar } from '@/domains/tasks/components/widgets/ListViewToolbar';
 import { QuickAddForm } from '@/domains/tasks/components/widgets/QuickAddForm';
 import { useTasksQuery } from '@/domains/tasks/hooks/use-tasks-query';
 import { useCompleteTask, useCreateTask, useUncompleteTask } from '@/domains/tasks/hooks/use-task-mutations';
+import { useTaskViewStore } from '@/domains/tasks/stores/use-task-view-store';
 import { TaskStatus } from '@/domains/tasks/types/task.types';
+import { GroupBy } from '@/domains/tasks/types/grouping.types';
+import { groupTasksByDate } from '@/domains/tasks/utils/group-tasks';
 
-/** Flat list page with quick-add form and toggle-complete support. */
+/** List page with grouping toolbar, quick-add form, and toggle-complete support. */
 export function TaskListPage() {
   const tasksQuery = useTasksQuery();
   const createTask = useCreateTask();
@@ -17,8 +21,19 @@ export function TaskListPage() {
   const uncompleteTask = useUncompleteTask();
   const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
 
+  const groupBy = useTaskViewStore((s) => s.groupBy);
+  const splitCompleted = useTaskViewStore((s) => s.splitCompleted);
+  const setGroupBy = useTaskViewStore((s) => s.setGroupBy);
+  const setSplitCompleted = useTaskViewStore((s) => s.setSplitCompleted);
+
+  const tasks = useMemo(() => tasksQuery.data?.items ?? [], [tasksQuery.data?.items]);
+  const groups = useMemo(
+    () => groupTasksByDate(tasks, groupBy, splitCompleted),
+    [tasks, groupBy, splitCompleted],
+  );
+
   const handleToggleComplete = (id: string) => {
-    const task = tasksQuery.data?.items.find((t) => t.id === id);
+    const task = tasks.find((t) => t.id === id);
     if (!task) return;
 
     setTogglingTaskId(id);
@@ -56,24 +71,31 @@ export function TaskListPage() {
     );
   }
 
-  const tasks = tasksQuery.data?.items ?? [];
-
   return (
     <div className="flex flex-col">
       <div className="border-b border-border/50 px-6 py-4">
-        <div className="mx-auto max-w-4xl">
-          <QuickAddForm
-            onSubmit={(request) =>
-              createTask.mutate(request, {
-                onError: (error: Error) => toastApiError(error, 'Could not save task. Try again.'),
-              })
-            }
-            isLoading={createTask.isPending}
+        <div className="mx-auto flex max-w-4xl items-center gap-4">
+          <div className="flex-1">
+            <QuickAddForm
+              onSubmit={(request) =>
+                createTask.mutate(request, {
+                  onError: (error: Error) => toastApiError(error, 'Could not save task. Try again.'),
+                })
+              }
+              isLoading={createTask.isPending}
+            />
+          </div>
+          <ListViewToolbar
+            groupBy={groupBy}
+            splitCompleted={splitCompleted}
+            onGroupByChange={setGroupBy}
+            onSplitCompletedChange={setSplitCompleted}
           />
         </div>
       </div>
       <TaskListView
-        tasks={tasks}
+        groups={groups}
+        showGroupHeaders={groupBy !== GroupBy.None}
         onCompleteTask={handleToggleComplete}
         togglingTaskId={togglingTaskId}
       />
