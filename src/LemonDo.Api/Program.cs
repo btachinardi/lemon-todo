@@ -9,13 +9,16 @@ using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Infrastructure.Extensions;
+using LemonDo.Infrastructure.Identity;
 using LemonDo.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,8 +30,6 @@ builder.Services.AddHealthChecks()
     .AddDbContextCheck<LemonDoDbContext>("database", tags: ["ready"]);
 
 // JWT Authentication
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
-builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
@@ -55,7 +56,35 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
     });
 builder.Services.AddAuthorization();
 
+// CORS — allow frontend origin with credentials for cookie-based auth
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("https://localhost:5173", "http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// Rate limiting
+var authRateLimit = builder.Configuration.GetValue("RateLimiting:Auth:PermitLimit", 20);
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("auth", limiter =>
+    {
+        limiter.PermitLimit = authRateLimit;
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.QueueLimit = 0;
+    });
+});
+
 var app = builder.Build();
+
+// Validate JWT settings eagerly at startup (triggers IValidateOptions)
+_ = app.Services.GetRequiredService<IOptions<JwtSettings>>().Value;
 
 // Auto-migrate on startup and seed default board
 var startupLogger = app.Services.GetRequiredService<ILoggerFactory>()
@@ -109,9 +138,27 @@ catch (Exception ex)
     throw;
 }
 
+// Middleware pipeline order:
+// 1. Security headers (early — adds headers on every response)
+// 2. Correlation ID (request tracing)
+// 3. Error handling (catches exceptions from downstream)
+// 4. HSTS + HTTPS redirect (non-dev only)
+// 5. CORS (credentials support for cookies)
+// 6. Rate limiter (auth endpoint protection)
+// 7. Authentication (JWT validation)
+// 8. Authorization (route protection)
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
+
+app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

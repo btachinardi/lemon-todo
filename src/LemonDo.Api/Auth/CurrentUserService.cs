@@ -15,7 +15,8 @@ public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor)
             var claim = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
             return claim is not null && Guid.TryParse(claim, out var guid)
                 ? new UserId(guid)
-                : UserId.Default;
+                : throw new InvalidOperationException(
+                    "No authenticated user. Ensure this service is only used behind RequireAuthorization().");
         }
     }
 

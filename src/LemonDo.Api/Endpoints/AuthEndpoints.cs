@@ -1,29 +1,24 @@
 namespace LemonDo.Api.Endpoints;
 
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using LemonDo.Api.Auth;
 using LemonDo.Api.Contracts.Auth;
-using LemonDo.Domain.Boards.Entities;
-using LemonDo.Domain.Boards.Repositories;
-using LemonDo.Domain.Identity.ValueObjects;
+using LemonDo.Api.Extensions;
+using LemonDo.Application.Identity;
+using LemonDo.Application.Identity.Commands;
 using LemonDo.Infrastructure.Identity;
-using LemonDo.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 /// <summary>Minimal API endpoint definitions for authentication under <c>/api/auth</c>.</summary>
 public static class AuthEndpoints
 {
-    private static readonly string LogCategory = "LemonDo.Api.Auth";
+    private const string RefreshTokenCookieName = "refresh_token";
 
     /// <summary>Maps all authentication endpoints under <c>/api/auth</c>.</summary>
     public static RouteGroupBuilder MapAuthEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/auth").WithTags("Auth");
+        var group = app.MapGroup("/api/auth")
+            .WithTags("Auth")
+            .RequireRateLimiting("auth");
 
         group.MapPost("/register", Register).AllowAnonymous();
         group.MapPost("/login", Login).AllowAnonymous();
@@ -36,161 +31,67 @@ public static class AuthEndpoints
 
     private static async Task<IResult> Register(
         RegisterRequest request,
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole<Guid>> roleManager,
-        JwtTokenService tokenService,
-        IBoardRepository boardRepository,
-        LemonDoDbContext dbContext,
+        RegisterUserCommandHandler handler,
+        HttpContext httpContext,
         IOptions<JwtSettings> jwtSettings,
-        ILoggerFactory loggerFactory)
+        CancellationToken ct)
     {
-        var logger = loggerFactory.CreateLogger(LogCategory);
-        logger.LogInformation("Registering user {Email}", request.Email);
+        var command = new RegisterUserCommand(request.Email, request.Password, request.DisplayName);
+        var result = await handler.HandleAsync(command, ct);
 
-        var user = new ApplicationUser
-        {
-            UserName = request.Email,
-            Email = request.Email,
-            DisplayName = request.DisplayName,
-        };
-
-        var result = await userManager.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
-        {
-            var errors = result.Errors.Select(e => e.Description).ToList();
-            logger.LogWarning("Registration failed for {Email}: {Errors}", request.Email, string.Join(", ", errors));
-
-            if (result.Errors.Any(e => e.Code == "DuplicateEmail" || e.Code == "DuplicateUserName"))
-                return Results.Conflict(new { type = "auth.duplicate_email", title = "Email already registered.", status = 409 });
-
-            return Results.BadRequest(new { type = "auth.validation", title = "Registration failed.", status = 400, errors });
-        }
-
-        // Assign "User" role
-        if (await roleManager.RoleExistsAsync("User"))
-            await userManager.AddToRoleAsync(user, "User");
-
-        // Create default board for new user
-        var userId = new UserId(user.Id);
-        var boardResult = Board.CreateDefault(userId);
-        if (boardResult.IsSuccess)
-        {
-            await boardRepository.AddAsync(boardResult.Value);
-            await dbContext.SaveChangesAsync();
-        }
-
-        var roles = await userManager.GetRolesAsync(user);
-        var accessToken = tokenService.GenerateAccessToken(user, roles);
-        var refreshToken = JwtTokenService.GenerateRefreshToken();
-
-        await StoreRefreshTokenAsync(dbContext, user.Id, refreshToken, jwtSettings.Value.RefreshTokenExpirationDays);
-
-        logger.LogInformation("User {UserId} registered successfully", user.Id);
-
-        return Results.Ok(new AuthResponse(
-            accessToken,
-            refreshToken,
-            new UserResponse(user.Id, user.Email!, user.DisplayName)));
+        return result.ToHttpResult(
+            auth => SetCookieAndReturnResponse(httpContext, auth, jwtSettings.Value),
+            httpContext: httpContext);
     }
 
     private static async Task<IResult> Login(
         LoginRequest request,
-        UserManager<ApplicationUser> userManager,
-        JwtTokenService tokenService,
-        LemonDoDbContext dbContext,
+        LoginUserCommandHandler handler,
+        HttpContext httpContext,
         IOptions<JwtSettings> jwtSettings,
-        ILoggerFactory loggerFactory)
+        CancellationToken ct)
     {
-        var logger = loggerFactory.CreateLogger(LogCategory);
-        logger.LogInformation("Login attempt for {Email}", request.Email);
+        var command = new LoginUserCommand(request.Email, request.Password);
+        var result = await handler.HandleAsync(command, ct);
 
-        var user = await userManager.FindByEmailAsync(request.Email);
-        if (user is null || !await userManager.CheckPasswordAsync(user, request.Password))
-        {
-            logger.LogWarning("Login failed for {Email}: invalid credentials", request.Email);
-            return Results.Unauthorized();
-        }
-
-        var roles = await userManager.GetRolesAsync(user);
-        var accessToken = tokenService.GenerateAccessToken(user, roles);
-        var refreshToken = JwtTokenService.GenerateRefreshToken();
-
-        await StoreRefreshTokenAsync(dbContext, user.Id, refreshToken, jwtSettings.Value.RefreshTokenExpirationDays);
-
-        logger.LogInformation("User {UserId} logged in successfully", user.Id);
-
-        return Results.Ok(new AuthResponse(
-            accessToken,
-            refreshToken,
-            new UserResponse(user.Id, user.Email!, user.DisplayName)));
+        return result.ToHttpResult(
+            auth => SetCookieAndReturnResponse(httpContext, auth, jwtSettings.Value),
+            httpContext: httpContext);
     }
 
     private static async Task<IResult> Refresh(
-        RefreshRequest request,
-        UserManager<ApplicationUser> userManager,
-        JwtTokenService tokenService,
-        LemonDoDbContext dbContext,
+        RefreshTokenCommandHandler handler,
+        HttpContext httpContext,
         IOptions<JwtSettings> jwtSettings,
-        ILoggerFactory loggerFactory)
+        CancellationToken ct)
     {
-        var logger = loggerFactory.CreateLogger(LogCategory);
-
-        var tokenHash = HashToken(request.RefreshToken);
-        var storedToken = await dbContext.RefreshTokens
-            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
-
-        if (storedToken is null || !storedToken.IsActive)
-        {
-            logger.LogWarning("Refresh token invalid or expired");
-            return Results.Unauthorized();
-        }
-
-        // Revoke old token
-        storedToken.RevokedAt = DateTimeOffset.UtcNow;
-
-        var user = await userManager.FindByIdAsync(storedToken.UserId.ToString());
-        if (user is null)
+        var refreshToken = httpContext.Request.Cookies[RefreshTokenCookieName];
+        if (string.IsNullOrEmpty(refreshToken))
             return Results.Unauthorized();
 
-        var roles = await userManager.GetRolesAsync(user);
-        var newAccessToken = tokenService.GenerateAccessToken(user, roles);
-        var newRefreshToken = JwtTokenService.GenerateRefreshToken();
+        var command = new RefreshTokenCommand(refreshToken);
+        var result = await handler.HandleAsync(command, ct);
 
-        await StoreRefreshTokenAsync(dbContext, user.Id, newRefreshToken, jwtSettings.Value.RefreshTokenExpirationDays);
-
-        logger.LogInformation("Token refreshed for user {UserId}", user.Id);
-
-        return Results.Ok(new AuthResponse(
-            newAccessToken,
-            newRefreshToken,
-            new UserResponse(user.Id, user.Email!, user.DisplayName)));
+        return result.ToHttpResult(
+            auth => SetCookieAndReturnResponse(httpContext, auth, jwtSettings.Value),
+            httpContext: httpContext);
     }
 
     private static async Task<IResult> Logout(
-        [FromBody] RefreshRequest? request,
         ClaimsPrincipal user,
-        LemonDoDbContext dbContext,
-        ILoggerFactory loggerFactory)
+        RevokeRefreshTokenCommandHandler handler,
+        HttpContext httpContext,
+        CancellationToken ct)
     {
-        var logger = loggerFactory.CreateLogger(LogCategory);
+        var refreshToken = httpContext.Request.Cookies[RefreshTokenCookieName];
+        var command = new RevokeRefreshTokenCommand(refreshToken);
+        var result = await handler.HandleAsync(command, ct);
 
-        if (request?.RefreshToken is not null)
-        {
-            var tokenHash = HashToken(request.RefreshToken);
-            var storedToken = await dbContext.RefreshTokens
-                .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
+        ClearRefreshTokenCookie(httpContext);
 
-            if (storedToken is not null)
-            {
-                storedToken.RevokedAt = DateTimeOffset.UtcNow;
-                await dbContext.SaveChangesAsync();
-            }
-        }
-
-        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        logger.LogInformation("User {UserId} logged out", userId);
-
-        return Results.Ok(new { message = "Logged out successfully." });
+        return result.ToHttpResult(
+            () => Results.Ok(new { message = "Logged out successfully." }),
+            httpContext: httpContext);
     }
 
     private static IResult GetMe(ClaimsPrincipal user)
@@ -205,24 +106,41 @@ public static class AuthEndpoints
         return Results.Ok(new UserResponse(Guid.Parse(userId), email ?? "", displayName ?? ""));
     }
 
-    private static async Task StoreRefreshTokenAsync(LemonDoDbContext dbContext, Guid userId, string refreshToken, int expirationDays)
+    private static IResult SetCookieAndReturnResponse(HttpContext httpContext, AuthResult auth, JwtSettings jwt)
     {
-        var token = new RefreshToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            TokenHash = HashToken(refreshToken),
-            ExpiresAt = DateTimeOffset.UtcNow.AddDays(expirationDays),
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
+        SetRefreshTokenCookie(httpContext, auth.RefreshToken, jwt.RefreshTokenExpirationDays);
 
-        dbContext.RefreshTokens.Add(token);
-        await dbContext.SaveChangesAsync();
+        return Results.Ok(new AuthResponse(
+            auth.AccessToken,
+            new UserResponse(auth.UserId, auth.Email, auth.DisplayName)));
     }
 
-    private static string HashToken(string token)
+    private static void SetRefreshTokenCookie(HttpContext httpContext, string token, int expirationDays)
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
-        return Convert.ToBase64String(bytes);
+        httpContext.Response.Cookies.Append(RefreshTokenCookieName, token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !IsDevEnvironment(httpContext),
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/auth",
+            MaxAge = TimeSpan.FromDays(expirationDays),
+        });
+    }
+
+    private static void ClearRefreshTokenCookie(HttpContext httpContext)
+    {
+        httpContext.Response.Cookies.Delete(RefreshTokenCookieName, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !IsDevEnvironment(httpContext),
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/auth",
+        });
+    }
+
+    private static bool IsDevEnvironment(HttpContext httpContext)
+    {
+        var env = httpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+        return env.IsDevelopment();
     }
 }
