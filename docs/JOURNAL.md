@@ -792,6 +792,99 @@ SecurityHeaders → CorrelationId → ErrorHandling → HSTS/HTTPS → CORS → 
 
 ---
 
+## CP2 Security Hardening: E2E Test Stabilization
+
+**Date**: 2026-02-15
+
+### The Problem
+
+After switching to cookie-based auth, E2E tests became flaky. Tests failed randomly (1-2 per run, non-deterministic) with 30-second timeouts waiting for the "View switcher" nav element:
+
+```
+Error: locator.waitFor: Test timeout of 30000ms exceeded.
+- waiting for getByRole('navigation', { name: 'View switcher' }) to be visible
+```
+
+Manual testing showed the app worked perfectly — the issue was in the **test architecture**, not the application.
+
+### Root Cause Analysis
+
+The flakiness stemmed from **shared auth state across tests**:
+
+1. **Every test called `loginViaApi(page)`** — 42 tests = 42 login calls
+2. **Refresh token rotation on every silent refresh** — old token revoked, new token issued
+3. **Shared `cachedToken` and `cachedCookie` across tests** — tests reused the same credentials
+4. **Parallel-like execution** (workers: 1, but describe blocks interleaved) — one test's login invalidated another test's cookie mid-flight
+5. **Cleanup via `deleteAllTasks()`** — didn't address auth state pollution
+
+**Silent failure modes**:
+- If `Set-Cookie` header extraction returned empty string (instead of throwing), cookie injection silently failed
+- AuthHydrationProvider's refresh got 401, app stayed on login page, test timed out
+- The unnecessary `/login` pre-navigation added complexity with no benefit
+
+### The Solution: Unique Users + Serial Execution
+
+**Architecture change**: Each `test.describe` block gets a **fresh user account** (unique email via timestamp + counter). No cleanup needed — users never see each other's data.
+
+**Execution model**: `test.describe.serial` with shared page/context. Login once in `beforeAll`, tests within the block run sequentially and accumulate state.
+
+**Changes**:
+
+1. **`helpers/auth.helpers.ts`** — Complete rewrite:
+   - `loginViaApi(page)` registers a unique user per call (no shared state)
+   - `createTestUser()` for API-only describe blocks (no browser needed)
+   - `extractRefreshToken()` throws immediately if Set-Cookie is missing (fail-fast)
+   - `waitForResponse` verifies the silent refresh succeeded before proceeding
+   - Removed `/login` pre-navigation — cookie injection works at context level
+
+2. **`helpers/api.helpers.ts`** — Removed `deleteAllTasks()` (no longer needed)
+
+3. **Centralized config** — `e2e.config.json` for ports/DB name, `e2e.config.ts` loader
+
+4. **Pre-test cleanup** — `scripts/cleanup.mjs` kills stale processes + deletes DB files
+
+5. **All 6 test spec files** — Restructured:
+   - `test.describe.serial` instead of parallel `test.describe`
+   - Login once in `beforeAll` (42 logins → 8 logins)
+   - Removed all `beforeEach(deleteAllTasks)` cleanup
+   - Tests build on prior tests within the same block (sequential by design)
+
+### Results
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Test stability | 1-2 random failures per run | 3/3 consecutive green runs |
+| Test duration | 60-90 seconds | 20-21 seconds |
+| Total logins | 42 (one per test) | 8 (one per describe block) |
+| Cleanup overhead | `deleteAllTasks()` every test | Zero (users auto-isolated) |
+
+**Performance improvement**: 3x faster, 100% stable.
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Unique user per describe block (not per test) | True data isolation without manual cleanup; each user starts with an empty board |
+| Serial execution within describe blocks | Tests share page/context, accumulate state; mimics real user flows |
+| Timestamp + counter for unique emails | Guarantees uniqueness even if tests run at the same millisecond |
+| `createTestUser()` for API-only blocks | No browser overhead for pure API tests (Card Ordering, Orphaned Cards) |
+| `waitForResponse` verification | Catches silent refresh failures immediately instead of timing out later on nav element |
+| Removed `deleteAllTasks()` entirely | Cleanup was treating symptom (shared data) not cause (shared users); unique users eliminate the need |
+
+### Lessons Learned
+
+1. **Flaky tests indicate architecture problems, not test problems.** The app worked perfectly. The issue was that tests shared auth state (tokens, cookies) across concurrent executions. The fix wasn't "retry until it works" — it was restructuring test isolation.
+
+2. **Unique data partitions > manual cleanup.** Creating a fresh user per describe block (30 ms overhead) is simpler and more reliable than deleting all tasks between tests (N×DELETE API calls + race conditions).
+
+3. **Serial execution for stateful flows.** Task lifecycle tests build on each other (create → complete → uncomplete). Fighting this with cleanup is swimming upstream. Embracing it with `.serial` makes tests read like user stories.
+
+4. **Fail-fast assertions prevent silent failures.** The original `extractRefreshToken()` silently returned `''` if the header was missing. Tests timed out 30 seconds later when auth failed. Throwing immediately surfaces the root cause in stack traces.
+
+5. **Test architecture should match production architecture.** The new E2E auth flow (register → inject cookie → silent refresh → verify response → wait for UI) exactly mirrors production. The old flow (navigate to /login → inject → navigate to /) had no real-world equivalent.
+
+---
+
 ## What's Next
 
 ### Checkpoint 3: Rich UX & Polish

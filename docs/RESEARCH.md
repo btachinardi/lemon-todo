@@ -410,7 +410,7 @@ vitest: 4.x
 fast-check: 4.x
 @testing-library/react: 16.x
 msw: 2.x
-playwright: 1.x
+playwright: 1.x (E2E with cookie-based auth, unique users per describe block)
 
 # Infrastructure
 docker: 29.x

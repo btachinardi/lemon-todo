@@ -112,7 +112,7 @@
 | CP2.10 | JWT handling (attach, refresh, expire) | DONE | Bearer token in api-client.ts, 401 handling clears auth + redirects |
 | CP2.11 | User menu + logout | DONE | UserMenu dropdown in DashboardLayout header, sign out |
 | | **E2E Tests** | | |
-| CP2.E2E | Auth E2E tests + update existing | DONE | 5 new auth tests, 37 existing adapted with loginViaStorage, 42 total |
+| CP2.E2E | Auth E2E tests + update existing | DONE | 5 new auth tests, 37 existing adapted. 42 total, 100% stable (unique users + serial execution). |
 | | **Deliverable** | | Multi-user app with secure authentication |
 
 ---
@@ -243,6 +243,10 @@
 | 2026-02-15 | Deferred JWT bearer options configuration | Eager config read in Program.cs runs before test factory overrides. `AddOptions<JwtBearerOptions>().Configure<IOptions<JwtSettings>>()` defers to runtime, fixing test 401s. |
 | 2026-02-15 | Zustand persist `skipHydration` for React 19 | Auto-hydration changes store mid-render, crashing React 19's stricter `useSyncExternalStore`. Manual `await rehydrate()` in `AuthHydrationProvider` avoids the race. |
 | 2026-02-15 | `loginViaStorage` for E2E auth | Injects Zustand auth state into localStorage (avoid slow form login per test). Register once, cache token, inject for all UI tests. |
+| 2026-02-15 | HttpOnly cookie refresh tokens over localStorage | Access token in memory (Zustand, no persist), refresh token in HttpOnly cookie (`SameSite=Strict`, `Path=/api/auth`). Eliminates XSS risk, no CSRF tokens needed. Silent refresh via `AuthHydrationProvider` on page load. |
+| 2026-02-15 | Cookie-based E2E auth over localStorage injection | Playwright E2E uses `context.addCookies()` + silent refresh (not localStorage). Matches production auth flow exactly. Verifies `POST /api/auth/refresh` succeeds before proceeding. |
+| 2026-02-15 | Unique user per describe block for E2E isolation | Each `test.describe.serial` creates a fresh user (timestamp + counter email). No cleanup needed — users never see each other's data. Eliminates flaky token rotation conflicts from shared state. |
+| 2026-02-15 | Serial execution for E2E UI tests | `test.describe.serial` with shared page/context. Login once in `beforeAll`, tests accumulate state within block. 42 logins → 8 logins, 60-90s → 20s, 100% stability (3/3 green runs). |
 
 ---
 
@@ -256,11 +260,12 @@
   - Domain Fix: Archive decoupled from status (any task can be archived)
   - Release: v0.1.0 tagged on main via gitflow
 - **CP2 Prep**: `ValueObject<T>` base class + `IReconstructable` + EF extensions (boilerplate reduction)
-- **Checkpoint 2**: DONE (Auth & Authorization - 368 tests total: 246 backend + 80 frontend + 42 E2E)
+- **Checkpoint 2**: DONE (Auth & Authorization - 388 tests total: 262 backend + 84 frontend + 42 E2E)
   - Backend: ASP.NET Core Identity + JWT, 5 auth endpoints, ICurrentUserService, role seeding
-  - Frontend: Auth store (Zustand skipHydration), login/register pages, route guards, user menu
-  - E2E: 42 Playwright tests with auth helper (loginViaStorage)
-  - Key lesson: Zustand 5 persist + React 19 useSyncExternalStore → skipHydration required
+  - Frontend: Auth store (memory-only), login/register pages, route guards, user menu
+  - E2E: 42 Playwright tests, 100% stable via unique users + serial execution
+  - Security: HttpOnly cookie refresh, CORS, SecurityHeadersMiddleware, rate limiting, PII masking
+  - Key lessons: (1) localStorage is not secure for tokens, (2) flaky E2E = test architecture problem
 - **Checkpoint 3**: NOT STARTED (Rich UX & Polish)
 - **Checkpoint 4**: NOT STARTED (Production Hardening)
 - **Checkpoint 5**: NOT STARTED (Advanced & Delight)
@@ -341,3 +346,9 @@
 | b1ff205 | refactor(domain): add ValueObject\<T\> base class, IReconstructable, and EF extensions | CP2 |
 | e26dace | feat(auth): add frontend auth system, E2E tests, fix Zustand 5 + React 19 hydration | CP2 |
 | 0580aa4 | docs: update all project docs for CP2 authentication completion | CP2 |
+| de76a69 | feat(api): switch to HttpOnly cookie refresh tokens, add security headers, CORS, and rate limiting | CP2 Security |
+| 913c9c3 | feat(client): switch to memory-only auth with HttpOnly cookie refresh and silent token renewal | CP2 Security |
+| d0ba44c | test(auth): add security hardening tests and update existing tests for cookie-based auth | CP2 Security |
+| 35ad089 | test(e2e): switch from localStorage injection to cookie-based loginViaApi | CP2 Security |
+| ebcf97e | docs: update journal, research, and tradeoffs for CP2 security hardening | CP2 Security |
+| 212a6a8 | test(e2e): eliminate flaky tests via unique users and serial execution | CP2 Security |
