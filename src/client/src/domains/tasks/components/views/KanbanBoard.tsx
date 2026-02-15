@@ -145,12 +145,21 @@ export function KanbanBoard({
       if (!currentCol) return;
 
       if (originCol !== currentCol) {
-        // Cross-column move — handleDragOver already updated local state,
-        // now persist via the callback with neighbor IDs.
-        const items = columnItems[currentCol] ?? [];
-        const idx = items.indexOf(activeTaskId);
-        const previousTaskId = idx > 0 ? items[idx - 1] : null;
-        const nextTaskId = idx < items.length - 1 ? items[idx + 1] : null;
+        // Cross-column move — handleDragOver placed the card at the initial
+        // crossing point. Use over.id to determine the actual drop position.
+        const overId = over.id as string;
+        let items = columnItems[currentCol] ?? [];
+        const oldIndex = items.indexOf(activeTaskId);
+        const newIndex = items.indexOf(overId);
+
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+          items = arrayMove(items, oldIndex, newIndex);
+          setColumnItems((prev) => ({ ...prev, [currentCol]: items }));
+        }
+
+        const finalIdx = items.indexOf(activeTaskId);
+        const previousTaskId = finalIdx > 0 ? items[finalIdx - 1] : null;
+        const nextTaskId = finalIdx < items.length - 1 ? items[finalIdx + 1] : null;
         onMoveTask?.(activeTaskId, currentCol, previousTaskId, nextTaskId);
       } else {
         // Same-column reorder

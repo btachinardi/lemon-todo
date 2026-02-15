@@ -488,8 +488,8 @@ public sealed class BoardTests
         var rank2 = board.FindCardByTaskId(taskId2)!.Rank;
         var rank3 = board.FindCardByTaskId(taskId3)!.Rank;
 
-        Assert.IsTrue(rank1 < rank2, $"rank1 ({rank1}) should be less than rank2 ({rank2})");
-        Assert.IsTrue(rank2 < rank3, $"rank2 ({rank2}) should be less than rank3 ({rank3})");
+        Assert.IsLessThan(rank2, rank1, $"rank1 ({rank1}) should be less than rank2 ({rank2})");
+        Assert.IsLessThan(rank3, rank2, $"rank2 ({rank2}) should be less than rank3 ({rank3})");
     }
 
     [TestMethod]
@@ -554,7 +554,7 @@ public sealed class BoardTests
         var card = board.FindCardByTaskId(taskId);
         Assert.IsNotNull(card);
         Assert.AreEqual(doneColumnId, card.ColumnId);
-        Assert.IsTrue(card.Rank > 0, "Card in empty column should have a positive rank");
+        Assert.IsGreaterThan(0, card.Rank, "Card in empty column should have a positive rank");
     }
 
     [TestMethod]
@@ -576,8 +576,8 @@ public sealed class BoardTests
 
         Assert.IsTrue(result.IsSuccess);
         var movedRank = board.FindCardByTaskId(taskC)!.Rank;
-        Assert.IsTrue(movedRank > rankA, $"Rank ({movedRank}) should be > rankA ({rankA})");
-        Assert.IsTrue(movedRank < rankB, $"Rank ({movedRank}) should be < rankB ({rankB})");
+        Assert.IsGreaterThan(rankA, movedRank, $"Rank ({movedRank}) should be > rankA ({rankA})");
+        Assert.IsLessThan(rankB, movedRank, $"Rank ({movedRank}) should be < rankB ({rankB})");
     }
 
     [TestMethod]
@@ -596,8 +596,8 @@ public sealed class BoardTests
 
         Assert.IsTrue(result.IsSuccess);
         var movedRank = board.FindCardByTaskId(taskB)!.Rank;
-        Assert.IsTrue(movedRank < rankA, $"Rank ({movedRank}) should be < rankA ({rankA})");
-        Assert.IsTrue(movedRank > 0, "Rank at top should still be positive");
+        Assert.IsLessThan(rankA, movedRank, $"Rank ({movedRank}) should be < rankA ({rankA})");
+        Assert.IsGreaterThan(0, movedRank, "Rank at top should still be positive");
     }
 
     [TestMethod]
@@ -618,7 +618,7 @@ public sealed class BoardTests
 
         Assert.IsTrue(result.IsSuccess);
         var movedRank = board.FindCardByTaskId(taskA)!.Rank;
-        Assert.IsTrue(movedRank > rankC, $"Rank ({movedRank}) should be > rankC ({rankC})");
+        Assert.IsGreaterThan(rankC, movedRank, $"Rank ({movedRank}) should be > rankC ({rankC})");
     }
 
     [TestMethod]
@@ -635,7 +635,7 @@ public sealed class BoardTests
 
         var doneColumn = board.FindColumnById(doneColumnId)!;
         var movedRank = board.FindCardByTaskId(taskA)!.Rank;
-        Assert.IsTrue(doneColumn.NextRank > movedRank,
+        Assert.IsGreaterThan(movedRank, doneColumn.NextRank,
             $"Column NextRank ({doneColumn.NextRank}) should be > moved card rank ({movedRank})");
     }
 
@@ -668,8 +668,88 @@ public sealed class BoardTests
         // Order should be B, A, C:
         // After move 1 (C between A,B): A(1000), C(1500), B(2000)
         // After move 2 (B before C):    B(750),  A(1000), C(1500)
-        Assert.IsTrue(rankB < rankA, $"B ({rankB}) should be before A ({rankA})");
-        Assert.IsTrue(rankA < rankC, $"A ({rankA}) should be before C ({rankC})");
+        Assert.IsLessThan(rankA, rankB, $"B ({rankB}) should be before A ({rankA})");
+        Assert.IsLessThan(rankC, rankA, $"A ({rankA}) should be before C ({rankC})");
+    }
+
+    // --- Cross-Column MoveCard (non-empty target) ---
+
+    [TestMethod]
+    public void Should_MoveCardBetweenTwoCards_When_CrossColumn()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var todoColumnId = board.Columns[0].Id;
+        var inProgressColumnId = board.Columns[1].Id;
+
+        // Place A in Todo, P and Q in InProgress
+        var taskA = TaskId.New();
+        var taskP = TaskId.New();
+        var taskQ = TaskId.New();
+        board.PlaceTask(taskA, todoColumnId);
+        board.PlaceTask(taskP, inProgressColumnId);
+        board.PlaceTask(taskQ, inProgressColumnId);
+
+        var rankP = board.FindCardByTaskId(taskP)!.Rank;
+        var rankQ = board.FindCardByTaskId(taskQ)!.Rank;
+
+        // Move A from Todo to between P and Q in InProgress
+        var result = board.MoveCard(taskA, inProgressColumnId, previousTaskId: taskP, nextTaskId: taskQ);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(TaskStatus.InProgress, result.Value);
+        var movedCard = board.FindCardByTaskId(taskA)!;
+        Assert.AreEqual(inProgressColumnId, movedCard.ColumnId);
+        Assert.IsGreaterThan(rankP, movedCard.Rank, $"Rank ({movedCard.Rank}) should be > rankP ({rankP})");
+        Assert.IsLessThan(rankQ, movedCard.Rank, $"Rank ({movedCard.Rank}) should be < rankQ ({rankQ})");
+    }
+
+    [TestMethod]
+    public void Should_MoveCardToTopOfNonEmptyColumn_When_CrossColumn()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var todoColumnId = board.Columns[0].Id;
+        var inProgressColumnId = board.Columns[1].Id;
+
+        var taskA = TaskId.New();
+        var taskP = TaskId.New();
+        board.PlaceTask(taskA, todoColumnId);
+        board.PlaceTask(taskP, inProgressColumnId);
+
+        var rankP = board.FindCardByTaskId(taskP)!.Rank;
+
+        // Move A to top of InProgress (before P)
+        var result = board.MoveCard(taskA, inProgressColumnId, previousTaskId: null, nextTaskId: taskP);
+
+        Assert.IsTrue(result.IsSuccess);
+        var movedCard = board.FindCardByTaskId(taskA)!;
+        Assert.AreEqual(inProgressColumnId, movedCard.ColumnId);
+        Assert.IsLessThan(rankP, movedCard.Rank, $"Rank ({movedCard.Rank}) should be < rankP ({rankP})");
+        Assert.IsGreaterThan(0, movedCard.Rank, "Rank at top should still be positive");
+    }
+
+    [TestMethod]
+    public void Should_MoveCardToBottomOfNonEmptyColumn_When_CrossColumn()
+    {
+        var board = Board.CreateDefault(DefaultOwner).Value;
+        var todoColumnId = board.Columns[0].Id;
+        var inProgressColumnId = board.Columns[1].Id;
+
+        var taskA = TaskId.New();
+        var taskP = TaskId.New();
+        var taskQ = TaskId.New();
+        board.PlaceTask(taskA, todoColumnId);
+        board.PlaceTask(taskP, inProgressColumnId);
+        board.PlaceTask(taskQ, inProgressColumnId);
+
+        var rankQ = board.FindCardByTaskId(taskQ)!.Rank;
+
+        // Move A to bottom of InProgress (after Q)
+        var result = board.MoveCard(taskA, inProgressColumnId, previousTaskId: taskQ, nextTaskId: null);
+
+        Assert.IsTrue(result.IsSuccess);
+        var movedCard = board.FindCardByTaskId(taskA)!;
+        Assert.AreEqual(inProgressColumnId, movedCard.ColumnId);
+        Assert.IsGreaterThan(rankQ, movedCard.Rank, $"Rank ({movedCard.Rank}) should be > rankQ ({rankQ})");
     }
 
     [TestMethod]
@@ -741,7 +821,7 @@ public sealed class BoardTests
         Assert.AreEqual(taskId, evt.TaskId);
         Assert.AreEqual(fromColumnId, evt.FromColumnId);
         Assert.AreEqual(toColumnId, evt.ToColumnId);
-        Assert.IsTrue(evt.NewRank > 0, "Event should carry the computed rank");
+        Assert.IsGreaterThan(0, evt.NewRank, "Event should carry the computed rank");
     }
 
     // --- Card Management: RemoveCard ---

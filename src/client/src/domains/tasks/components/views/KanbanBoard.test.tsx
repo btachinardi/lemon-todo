@@ -220,12 +220,12 @@ describe('KanbanBoard drag-and-drop', () => {
     });
 
     expect(onMoveTask).toHaveBeenCalledTimes(1);
-    // Task A was placed after Task B (the only card in InProgress)
+    // Dropping on Task B places A at B's index (before B), consistent with arrayMove
     expect(onMoveTask).toHaveBeenCalledWith(
       taskA.id,
       inProgressCol.id,
-      taskB.id, // previousTaskId — Task B is above
-      null,     // nextTaskId — nothing below
+      null,     // previousTaskId — A is at top (B's position)
+      taskB.id, // nextTaskId — B shifted down
     );
   });
 
@@ -263,6 +263,98 @@ describe('KanbanBoard drag-and-drop', () => {
       todoCol.id,
       null,      // previousTaskId — C is now at top
       taskA.id,  // nextTaskId — A is next after C
+    );
+  });
+
+  it('should use drop target position when cross-column drop differs from initial hover', () => {
+    const onMoveTask = vi.fn();
+    const board = createBoard();
+    const todoCol = board.columns[0];
+    const inProgressCol = board.columns[1];
+
+    const taskA = createTask({ title: 'Task A' });
+    const taskP = createTask({ title: 'Task P', status: TaskStatus.InProgress });
+    const taskQ = createTask({ title: 'Task Q', status: TaskStatus.InProgress });
+    const taskR = createTask({ title: 'Task R', status: TaskStatus.InProgress });
+    board.cards = [
+      createTaskCard({ taskId: taskA.id, columnId: todoCol.id, rank: 1000 }),
+      createTaskCard({ taskId: taskP.id, columnId: inProgressCol.id, rank: 1000 }),
+      createTaskCard({ taskId: taskQ.id, columnId: inProgressCol.id, rank: 2000 }),
+      createTaskCard({ taskId: taskR.id, columnId: inProgressCol.id, rank: 3000 }),
+    ];
+
+    render(
+      <KanbanBoard
+        board={board}
+        tasks={[taskA, taskP, taskQ, taskR]}
+        onMoveTask={onMoveTask}
+      />,
+    );
+
+    // 1. Start dragging Task A from Todo
+    act(() => {
+      dndHandlers.onDragStart?.(makeDndEvent(taskA.id));
+    });
+
+    // 2. Drag over Task P (enters InProgress column — handleDragOver inserts A after P)
+    act(() => {
+      dndHandlers.onDragOver?.(makeDndEvent(taskA.id, taskP.id));
+    });
+
+    // 3. Drop on Task R (user dragged further down — actual drop target is R, not P)
+    act(() => {
+      dndHandlers.onDragEnd?.(makeDndEvent(taskA.id, taskR.id));
+    });
+
+    // A should land at R's position (after Q, before R or after R depending on arrayMove)
+    // The key assertion: neighbors should be relative to R's position, NOT P's position
+    expect(onMoveTask).toHaveBeenCalledTimes(1);
+    const [, columnId, previousTaskId] = onMoveTask.mock.calls[0];
+    expect(columnId).toBe(inProgressCol.id);
+    // A was dropped on R → arrayMove moves A from index 1 (after P) to index 3 (R's position)
+    // Final order: [P, Q, R, A] → previous=R, next=null
+    expect(previousTaskId).toBe(taskR.id);
+  });
+
+  it('should compute correct neighbors when cross-column drop lands at top of non-empty column', () => {
+    const onMoveTask = vi.fn();
+    const board = createBoard();
+    const todoCol = board.columns[0];
+    const inProgressCol = board.columns[1];
+
+    const taskA = createTask({ title: 'Task A' });
+    const taskP = createTask({ title: 'Task P', status: TaskStatus.InProgress });
+    const taskQ = createTask({ title: 'Task Q', status: TaskStatus.InProgress });
+    board.cards = [
+      createTaskCard({ taskId: taskA.id, columnId: todoCol.id, rank: 1000 }),
+      createTaskCard({ taskId: taskP.id, columnId: inProgressCol.id, rank: 1000 }),
+      createTaskCard({ taskId: taskQ.id, columnId: inProgressCol.id, rank: 2000 }),
+    ];
+
+    render(
+      <KanbanBoard board={board} tasks={[taskA, taskP, taskQ]} onMoveTask={onMoveTask} />,
+    );
+
+    // Drag A into InProgress via Q (enters near bottom), then drop on P (top)
+    act(() => {
+      dndHandlers.onDragStart?.(makeDndEvent(taskA.id));
+    });
+    act(() => {
+      dndHandlers.onDragOver?.(makeDndEvent(taskA.id, taskQ.id));
+    });
+    act(() => {
+      dndHandlers.onDragEnd?.(makeDndEvent(taskA.id, taskP.id));
+    });
+
+    expect(onMoveTask).toHaveBeenCalledTimes(1);
+    // A entered after Q → columnItems: [P, Q, A]
+    // Drop on P → arrayMove from index 2 to index 0 → [A, P, Q]
+    // Neighbors: previous=null, next=P
+    expect(onMoveTask).toHaveBeenCalledWith(
+      taskA.id,
+      inProgressCol.id,
+      null,      // previousTaskId — top of column
+      taskP.id,  // nextTaskId
     );
   });
 
