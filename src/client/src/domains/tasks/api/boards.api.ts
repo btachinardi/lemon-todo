@@ -14,6 +14,7 @@ export const boardsApi = {
     return apiClient.get<Board>(`${BASE}/default`);
   },
 
+  /** Fetches a board by ID, including its columns and card placements. */
   getById(id: string): Promise<Board> {
     return apiClient.get<Board>(`${BASE}/${id}`);
   },
@@ -23,12 +24,14 @@ export const boardsApi = {
     return apiClient.post<Column>(`${BASE}/${boardId}/columns`, { name, position });
   },
 
+  /** Updates a column's display name. */
   renameColumn(boardId: string, columnId: string, name: string): Promise<Column> {
     return apiClient.put<Column>(`${BASE}/${boardId}/columns/${columnId}`, { name });
   },
 
+  /** Deletes a column. Fails if the column still contains cards. */
   removeColumn(boardId: string, columnId: string): Promise<void> {
-    return apiClient.delete(`${BASE}/${boardId}/columns/${columnId}`);
+    return apiClient.deleteVoid(`${BASE}/${boardId}/columns/${columnId}`);
   },
 
   /** Moves a column to a new position; other columns reorder to fill the gap. */

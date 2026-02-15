@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import type {
+  DndContextProps,
+  DragStartEvent,
+  DragOverEvent,
+  DragEndEvent,
+  DragCancelEvent,
+} from '@dnd-kit/core';
 import { KanbanBoard } from './KanbanBoard';
 import { createBoard, createTask, createTaskCard } from '@/test/factories';
 import { TaskStatus } from '../../types/task.types';
@@ -9,19 +17,19 @@ import { TaskStatus } from '../../types/task.types';
  * because the mock DndContext re-captures props each time.
  */
 let dndHandlers: {
-  onDragStart?: (event: any) => void;
-  onDragOver?: (event: any) => void;
-  onDragEnd?: (event: any) => void;
-  onDragCancel?: () => void;
+  onDragStart?: (event: DragStartEvent) => void;
+  onDragOver?: (event: DragOverEvent) => void;
+  onDragEnd?: (event: DragEndEvent) => void;
+  onDragCancel?: (event: DragCancelEvent) => void;
 };
 
 // Mock @dnd-kit/core — capture DndContext handlers so we can invoke them directly
 vi.mock('@dnd-kit/core', () => ({
-  DndContext: ({ children, onDragStart, onDragOver, onDragEnd, onDragCancel }: any) => {
+  DndContext: ({ children, onDragStart, onDragOver, onDragEnd, onDragCancel }: DndContextProps) => {
     dndHandlers = { onDragStart, onDragOver, onDragEnd, onDragCancel };
     return <>{children}</>;
   },
-  DragOverlay: ({ children }: any) => <>{children}</>,
+  DragOverlay: ({ children }: { children?: ReactNode }) => <>{children}</>,
   closestCorners: vi.fn(),
   PointerSensor: class {},
   useSensor: () => ({}),
@@ -31,7 +39,7 @@ vi.mock('@dnd-kit/core', () => ({
 
 // Mock @dnd-kit/sortable — provide inert implementations
 vi.mock('@dnd-kit/sortable', () => ({
-  SortableContext: ({ children }: any) => <>{children}</>,
+  SortableContext: ({ children }: { children: ReactNode }) => <>{children}</>,
   verticalListSortingStrategy: {},
   useSortable: () => ({
     attributes: { role: 'button', tabIndex: 0 },
@@ -41,7 +49,7 @@ vi.mock('@dnd-kit/sortable', () => ({
     transition: null,
     isDragging: false,
   }),
-  arrayMove: (arr: any[], from: number, to: number) => {
+  arrayMove: <T,>(arr: T[], from: number, to: number): T[] => {
     const result = [...arr];
     const [item] = result.splice(from, 1);
     result.splice(to, 0, item);

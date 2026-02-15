@@ -21,9 +21,10 @@ const BASE = '/api/tasks';
 export const tasksApi = {
   /** Paginated, filterable task list. */
   list(params?: ListTasksParams): Promise<PagedResult<Task>> {
-    return apiClient.get<PagedResult<Task>>(BASE, params as Record<string, string | number | undefined>);
+    return apiClient.get<PagedResult<Task>>(BASE, params);
   },
 
+  /** Fetches a single task by ID. Returns 404 if the task is deleted. */
   getById(id: string): Promise<Task> {
     return apiClient.get<Task>(`${BASE}/${id}`);
   },
@@ -38,22 +39,22 @@ export const tasksApi = {
 
   /** Soft-deletes a task (sets `isDeleted` flag). */
   delete(id: string): Promise<void> {
-    return apiClient.delete(`${BASE}/${id}`);
+    return apiClient.deleteVoid(`${BASE}/${id}`);
   },
 
   /** Transitions task status to `Done` and sets `completedAt`. */
   complete(id: string): Promise<void> {
-    return apiClient.post(`${BASE}/${id}/complete`);
+    return apiClient.postVoid(`${BASE}/${id}/complete`);
   },
 
   /** Reverts a completed task back to its previous status. */
   uncomplete(id: string): Promise<void> {
-    return apiClient.post(`${BASE}/${id}/uncomplete`);
+    return apiClient.postVoid(`${BASE}/${id}/uncomplete`);
   },
 
   /** Sets `isArchived` flag -- hides the task from default views. */
   archive(id: string): Promise<void> {
-    return apiClient.post(`${BASE}/${id}/archive`);
+    return apiClient.postVoid(`${BASE}/${id}/archive`);
   },
 
   /**
@@ -61,18 +62,21 @@ export const tasksApi = {
    * if the target column maps to a different {@link TaskStatus}.
    */
   move(id: string, request: MoveTaskRequest): Promise<void> {
-    return apiClient.post(`${BASE}/${id}/move`, request);
+    return apiClient.postVoid(`${BASE}/${id}/move`, request);
   },
 
+  /** Appends a tag to a task. Silently succeeds if the tag already exists. */
   addTag(id: string, request: AddTagRequest): Promise<void> {
-    return apiClient.post(`${BASE}/${id}/tags`, request);
+    return apiClient.postVoid(`${BASE}/${id}/tags`, request);
   },
 
+  /** Removes a tag from a task. The tag value is URI-encoded for safe transport. */
   removeTag(id: string, tag: string): Promise<void> {
-    return apiClient.delete(`${BASE}/${id}/tags/${encodeURIComponent(tag)}`);
+    return apiClient.deleteVoid(`${BASE}/${id}/tags/${encodeURIComponent(tag)}`);
   },
 
+  /** Marks multiple tasks as complete in a single request. */
   bulkComplete(request: BulkCompleteRequest): Promise<void> {
-    return apiClient.post(`${BASE}/bulk/complete`, request);
+    return apiClient.postVoid(`${BASE}/bulk/complete`, request);
   },
 };
