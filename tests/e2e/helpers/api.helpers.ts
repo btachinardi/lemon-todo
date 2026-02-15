@@ -16,10 +16,17 @@ interface TaskResponse {
   tags: string[];
 }
 
+interface CardResponse {
+  taskId: string;
+  columnId: string;
+  rank: number;
+}
+
 interface BoardResponse {
   id: string;
   name: string;
   columns: { id: string; name: string; targetStatus: string; position: number; maxTasks: number | null }[];
+  cards: CardResponse[];
 }
 
 export async function createTask(request: CreateTaskRequest): Promise<TaskResponse> {
@@ -57,6 +64,25 @@ export async function listTasks(): Promise<{ items: TaskResponse[] }> {
   const res = await fetch(`${API_BASE}/tasks`);
   if (!res.ok) throw new Error(`List tasks failed: ${res.status}`);
   return res.json();
+}
+
+export async function moveTask(
+  id: string,
+  columnId: string,
+  previousTaskId: string | null,
+  nextTaskId: string | null,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/tasks/${id}/move`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ columnId, previousTaskId, nextTaskId }),
+  });
+  if (!res.ok) throw new Error(`Move task failed: ${res.status} ${await res.text()}`);
+}
+
+export async function archiveTask(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/tasks/${id}/archive`, { method: 'POST' });
+  if (!res.ok) throw new Error(`Archive task failed: ${res.status}`);
 }
 
 /** Delete all tasks to reset state between tests. */
