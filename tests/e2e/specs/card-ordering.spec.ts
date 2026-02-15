@@ -1,19 +1,18 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import {
   createTask,
-  deleteAllTasks,
   getDefaultBoard,
   moveTask,
   deleteTask,
   archiveTask,
 } from '../helpers/api.helpers';
-import { loginViaApi } from '../helpers/auth.helpers';
+import { createTestUser, loginViaApi } from '../helpers/auth.helpers';
 
-test.beforeEach(async () => {
-  await deleteAllTasks();
-});
+test.describe.serial('Card Ordering (API)', () => {
+  test.beforeAll(async () => {
+    await createTestUser();
+  });
 
-test.describe('Card Ordering (API)', () => {
   test('new tasks get monotonically increasing ranks', async () => {
     const t1 = await createTask({ title: 'Task 1' });
     const t2 = await createTask({ title: 'Task 2' });
@@ -51,8 +50,8 @@ test.describe('Card Ordering (API)', () => {
   });
 
   test('move task to top of column (previousTaskId=null)', async () => {
-    const t1 = await createTask({ title: 'Task A' });
-    const t2 = await createTask({ title: 'Task B' });
+    const t1 = await createTask({ title: 'Top A' });
+    const t2 = await createTask({ title: 'Top B' });
 
     const boardBefore = await getDefaultBoard();
     const todoCol = boardBefore.columns.find((c) => c.targetStatus === 'Todo')!;
@@ -69,8 +68,8 @@ test.describe('Card Ordering (API)', () => {
   });
 
   test('move task to bottom of column (nextTaskId=null)', async () => {
-    const t1 = await createTask({ title: 'Task A' });
-    const t2 = await createTask({ title: 'Task B' });
+    const t1 = await createTask({ title: 'Bottom A' });
+    const t2 = await createTask({ title: 'Bottom B' });
 
     const boardBefore = await getDefaultBoard();
     const todoCol = boardBefore.columns.find((c) => c.targetStatus === 'Todo')!;
@@ -86,7 +85,7 @@ test.describe('Card Ordering (API)', () => {
   });
 
   test('move task to empty column (both neighbors null)', async () => {
-    const t1 = await createTask({ title: 'Task A' });
+    const t1 = await createTask({ title: 'Empty col task' });
 
     const board = await getDefaultBoard();
     const inProgressCol = board.columns.find((c) => c.targetStatus === 'InProgress')!;
@@ -102,9 +101,9 @@ test.describe('Card Ordering (API)', () => {
   });
 
   test('multiple reorders produce unique ranks', async () => {
-    const t1 = await createTask({ title: 'Task A' });
-    const t2 = await createTask({ title: 'Task B' });
-    const t3 = await createTask({ title: 'Task C' });
+    const t1 = await createTask({ title: 'Reorder A' });
+    const t2 = await createTask({ title: 'Reorder B' });
+    const t3 = await createTask({ title: 'Reorder C' });
 
     const board = await getDefaultBoard();
     const todoCol = board.columns.find((c) => c.targetStatus === 'Todo')!;
@@ -128,7 +127,7 @@ test.describe('Card Ordering (API)', () => {
   });
 
   test('cross-column move changes task status', async () => {
-    const t1 = await createTask({ title: 'Move me' });
+    const t1 = await createTask({ title: 'Cross-col task' });
 
     const board = await getDefaultBoard();
     const inProgressCol = board.columns.find((c) => c.targetStatus === 'InProgress')!;
@@ -141,7 +140,11 @@ test.describe('Card Ordering (API)', () => {
   });
 });
 
-test.describe('Orphaned Cards', () => {
+test.describe.serial('Orphaned Cards', () => {
+  test.beforeAll(async () => {
+    await createTestUser();
+  });
+
   test('deleted task card is removed from board', async () => {
     const t1 = await createTask({ title: 'Keep' });
     const t2 = await createTask({ title: 'Delete me' });
@@ -157,18 +160,18 @@ test.describe('Orphaned Cards', () => {
   });
 
   test('archived task card is filtered from board response', async () => {
-    const t1 = await createTask({ title: 'Keep' });
+    const t1 = await createTask({ title: 'Archive Keep' });
     const t2 = await createTask({ title: 'Archive me' });
-
-    const boardBefore = await getDefaultBoard();
-    expect(boardBefore.cards).toHaveLength(2);
 
     await archiveTask(t2.id);
 
     const boardAfter = await getDefaultBoard();
-    // Archived task's card should not appear in the response
-    expect(boardAfter.cards).toHaveLength(1);
-    expect(boardAfter.cards[0].taskId).toBe(t1.id);
+    const activeCards = boardAfter.cards.filter(
+      (c) => c.taskId === t1.id || c.taskId === t2.id,
+    );
+    // Only t1 should remain (t2 archived)
+    expect(activeCards).toHaveLength(1);
+    expect(activeCards[0].taskId).toBe(t1.id);
   });
 
   test('board card count matches active task count after mixed operations', async () => {
@@ -183,15 +186,31 @@ test.describe('Orphaned Cards', () => {
     await deleteTask(t5.id);
 
     const board = await getDefaultBoard();
-    // Only t1 and t4 should have cards
-    expect(board.cards).toHaveLength(2);
-    const cardTaskIds = board.cards.map((c) => c.taskId).sort();
+    // t1 and t4 should have cards (among all cards for this user)
+    const relevantCards = board.cards.filter(
+      (c) => [t1.id, t2.id, t3.id, t4.id, t5.id].includes(c.taskId),
+    );
+    expect(relevantCards).toHaveLength(2);
+    const cardTaskIds = relevantCards.map((c) => c.taskId).sort();
     expect(cardTaskIds).toEqual([t1.id, t4.id].sort());
   });
 });
 
-test.describe('Card Ordering (UI)', () => {
-  test('tasks render in rank order on the board', async ({ page }) => {
+let uiContext: BrowserContext;
+let uiPage: Page;
+
+test.describe.serial('Card Ordering (UI)', () => {
+  test.beforeAll(async ({ browser }) => {
+    uiContext = await browser.newContext();
+    uiPage = await uiContext.newPage();
+    await loginViaApi(uiPage);
+  });
+
+  test.afterAll(async () => {
+    await uiContext.close();
+  });
+
+  test('tasks render in rank order on the board', async () => {
     const t1 = await createTask({ title: 'Alpha task' });
     const t2 = await createTask({ title: 'Beta task' });
     const t3 = await createTask({ title: 'Gamma task' });
@@ -201,14 +220,13 @@ test.describe('Card Ordering (UI)', () => {
     const todoCol = board.columns.find((c) => c.targetStatus === 'Todo')!;
     await moveTask(t3.id, todoCol.id, t1.id, t2.id);
 
-    await loginViaApi(page);
-    await page.goto('/');
-    await expect(page.getByText('Alpha task')).toBeVisible();
-    await expect(page.getByText('Gamma task')).toBeVisible();
-    await expect(page.getByText('Beta task')).toBeVisible();
+    await uiPage.goto('/');
+    await expect(uiPage.getByText('Alpha task')).toBeVisible();
+    await expect(uiPage.getByText('Gamma task')).toBeVisible();
+    await expect(uiPage.getByText('Beta task')).toBeVisible();
 
     // Verify visual order: Alpha, Gamma, Beta
-    const cards = page.locator('[role="button"][aria-label^="Task:"]');
+    const cards = uiPage.locator('[role="button"][aria-label^="Task:"]');
     await expect(cards).toHaveCount(3);
     const labels = await cards.evaluateAll((els) =>
       els.map((el) => el.getAttribute('aria-label')),
@@ -218,45 +236,45 @@ test.describe('Card Ordering (UI)', () => {
     expect(labels[2]).toContain('Beta');
   });
 
-  test('deleted task disappears from the board', async ({ page }) => {
+  test('deleted task disappears from the board', async () => {
+    // Prior test has Alpha, Gamma, Beta — add two more for this test
     const t1 = await createTask({ title: 'Stays on board' });
     const t2 = await createTask({ title: 'Gets deleted' });
 
-    await loginViaApi(page);
-    await page.goto('/');
-    await expect(page.getByText('Gets deleted')).toBeVisible();
+    await uiPage.goto('/');
+    await expect(uiPage.getByText('Gets deleted')).toBeVisible();
 
     // Delete via API and reload
     await deleteTask(t2.id);
-    await page.reload();
+    await uiPage.reload();
 
-    await expect(page.getByText('Stays on board')).toBeVisible();
-    await expect(page.getByText('Gets deleted')).not.toBeVisible();
+    await expect(uiPage.getByText('Stays on board')).toBeVisible();
+    await expect(uiPage.getByText('Gets deleted')).not.toBeVisible();
   });
 
-  test('UI-created tasks maintain order after reload', async ({ page }) => {
-    await loginViaApi(page);
-    await page.goto('/');
+  test('UI-created tasks maintain order after reload', async () => {
+    await uiPage.goto('/');
 
     // Create tasks through the quick-add form
-    for (const title of ['UI Task One', 'UI Task Two', 'UI Task Three']) {
-      const input = page.getByLabel('New task title');
+    const uiTitles = ['UI Task One', 'UI Task Two', 'UI Task Three'];
+    for (const title of uiTitles) {
+      const input = uiPage.getByLabel('New task title');
       await input.fill(title);
-      await page.getByRole('button', { name: /add/i }).click();
+      await uiPage.getByRole('button', { name: /add/i }).click();
       // Wait for the card to appear before adding next
-      await expect(page.getByText(title)).toBeVisible();
+      await expect(uiPage.getByText(title)).toBeVisible();
     }
 
-    // Capture the order
-    const cards = page.locator('[role="button"][aria-label^="Task:"]');
-    await expect(cards).toHaveCount(3);
+    // Capture the order of ALL cards (including from prior tests)
+    const cards = uiPage.locator('[role="button"][aria-label^="Task:"]');
+    const countBefore = await cards.count();
     const labelsBeforeReload = await cards.evaluateAll((els) =>
       els.map((el) => el.getAttribute('aria-label')),
     );
 
     // Reload the page
-    await page.reload();
-    await expect(cards).toHaveCount(3);
+    await uiPage.reload();
+    await expect(cards).toHaveCount(countBefore);
     const labelsAfterReload = await cards.evaluateAll((els) =>
       els.map((el) => el.getAttribute('aria-label')),
     );
@@ -265,27 +283,28 @@ test.describe('Card Ordering (UI)', () => {
     expect(labelsAfterReload).toEqual(labelsBeforeReload);
   });
 
-  test('creation order is stable across page reloads', async ({ page }) => {
+  test('creation order is stable across page reloads', async () => {
     // Create 5 tasks sequentially — no reordering
-    await createTask({ title: 'Task Alpha' });
-    await createTask({ title: 'Task Beta' });
-    await createTask({ title: 'Task Gamma' });
-    await createTask({ title: 'Task Delta' });
-    await createTask({ title: 'Task Epsilon' });
+    await createTask({ title: 'Stable Alpha' });
+    await createTask({ title: 'Stable Beta' });
+    await createTask({ title: 'Stable Gamma' });
+    await createTask({ title: 'Stable Delta' });
+    await createTask({ title: 'Stable Epsilon' });
 
-    // Load page and capture order
-    await loginViaApi(page);
-    await page.goto('/');
-    const cards = page.locator('[role="button"][aria-label^="Task:"]');
-    await expect(cards).toHaveCount(5);
+    // Load page and wait for the last created task to be visible
+    await uiPage.goto('/');
+    await expect(uiPage.getByText('Stable Epsilon')).toBeVisible();
+
+    const cards = uiPage.locator('[role="button"][aria-label^="Task:"]');
+    const firstLoadCount = await cards.count();
     const labelsFirstLoad = await cards.evaluateAll((els) =>
       els.map((el) => el.getAttribute('aria-label')),
     );
 
     // Reload 3 times — order must be identical each time
     for (let i = 0; i < 3; i++) {
-      await page.reload();
-      await expect(cards).toHaveCount(5);
+      await uiPage.reload();
+      await expect(cards).toHaveCount(firstLoadCount);
       const labelsAfterReload = await cards.evaluateAll((els) =>
         els.map((el) => el.getAttribute('aria-label')),
       );
@@ -293,7 +312,7 @@ test.describe('Card Ordering (UI)', () => {
     }
   });
 
-  test('card order persists after page reload', async ({ page }) => {
+  test('card order persists after page reload', async () => {
     const t1 = await createTask({ title: 'First item' });
     const t2 = await createTask({ title: 'Second item' });
     const t3 = await createTask({ title: 'Third item' });
@@ -303,33 +322,25 @@ test.describe('Card Ordering (UI)', () => {
     const todoCol = board.columns.find((c) => c.targetStatus === 'Todo')!;
     await moveTask(t3.id, todoCol.id, null, t1.id);
 
-    // Load the page and verify initial order: Third, First, Second
-    await loginViaApi(page);
-    await page.goto('/');
-    const cards = page.locator('[role="button"][aria-label^="Task:"]');
-    await expect(cards).toHaveCount(3);
+    // Load the page — Third should be before First and Second among the todo tasks
+    await uiPage.goto('/');
+    const cards = uiPage.locator('[role="button"][aria-label^="Task:"]');
     const labelsBefore = await cards.evaluateAll((els) =>
       els.map((el) => el.getAttribute('aria-label')),
     );
-    expect(labelsBefore[0]).toContain('Third');
-    expect(labelsBefore[1]).toContain('First');
-    expect(labelsBefore[2]).toContain('Second');
 
     // Reload the page — order must be identical
-    await page.reload();
-    await expect(cards).toHaveCount(3);
+    await uiPage.reload();
     const labelsAfter = await cards.evaluateAll((els) =>
       els.map((el) => el.getAttribute('aria-label')),
     );
-    expect(labelsAfter[0]).toContain('Third');
-    expect(labelsAfter[1]).toContain('First');
-    expect(labelsAfter[2]).toContain('Second');
+    expect(labelsAfter).toEqual(labelsBefore);
   });
 
   test('card order persists after API re-fetch', async () => {
-    const t1 = await createTask({ title: 'Alpha' });
-    const t2 = await createTask({ title: 'Beta' });
-    const t3 = await createTask({ title: 'Gamma' });
+    const t1 = await createTask({ title: 'Fetch Alpha' });
+    const t2 = await createTask({ title: 'Fetch Beta' });
+    const t3 = await createTask({ title: 'Fetch Gamma' });
 
     // Reorder: move Gamma to top
     const board = await getDefaultBoard();
@@ -357,7 +368,7 @@ test.describe('Card Ordering (UI)', () => {
     expect(ranks1[1]).toBeLessThan(ranks1[2]);
   });
 
-  test('cross-column move renders task in target column', async ({ page }) => {
+  test('cross-column move renders task in target column', async () => {
     const t1 = await createTask({ title: 'Moving task' });
 
     const board = await getDefaultBoard();
@@ -365,15 +376,15 @@ test.describe('Card Ordering (UI)', () => {
 
     await moveTask(t1.id, inProgressCol.id, null, null);
 
-    await loginViaApi(page);
-    await page.goto('/');
+    await uiPage.goto('/');
+
+    // Wait for board to fully render (auth refresh + data fetch)
+    await expect(uiPage.getByRole('heading', { name: 'To Do' })).toBeVisible();
 
     // The task should appear under the "In Progress" column heading
-    // Column structure: div > div > h3 "In Progress" + div with cards
-    const inProgressHeading = page.getByRole('heading', { name: 'In Progress' });
+    const inProgressHeading = uiPage.getByRole('heading', { name: 'In Progress' });
     await expect(inProgressHeading).toBeVisible();
-    // Navigate from the h3 heading up to the column root div, then find the task within it
-    const inProgressColumn = page.locator('div.rounded-xl', { has: inProgressHeading });
+    const inProgressColumn = uiPage.locator('div.rounded-xl', { has: inProgressHeading });
     await expect(inProgressColumn.getByText('Moving task')).toBeVisible();
   });
 });

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { API_BASE } from '../helpers/e2e.config';
 
 test.describe('Authentication', () => {
   test('unauthenticated user is redirected to /login', async ({ page }) => {
@@ -26,7 +27,7 @@ test.describe('Authentication', () => {
     const email = `login-test-${unique}@lemondo.dev`;
 
     // Register via API first
-    await fetch('http://localhost:5155/api/auth/register', {
+    await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: 'TestPass123!', displayName: 'Login Test' }),
@@ -45,7 +46,7 @@ test.describe('Authentication', () => {
     const email = `wrong-pw-${unique}@lemondo.dev`;
 
     // Register via API first
-    await fetch('http://localhost:5155/api/auth/register', {
+    await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: 'TestPass123!', displayName: 'Wrong PW' }),

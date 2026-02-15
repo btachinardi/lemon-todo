@@ -1,7 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { defineConfig } from '@playwright/test';
 
-const API_PORT = 5155;
-const CLIENT_PORT = 5173;
+const config = JSON.parse(
+  fs.readFileSync(path.resolve(import.meta.dirname, 'e2e.config.json'), 'utf-8'),
+) as { apiPort: number; clientPort: number; dbName: string };
+
+const API_PORT = config.apiPort;
+const CLIENT_PORT = config.clientPort;
 
 export default defineConfig({
   testDir: './specs',
@@ -27,16 +33,19 @@ export default defineConfig({
 
   webServer: [
     {
-      command: `dotnet run --project ../../src/LemonDo.Api --launch-profile http`,
+      command: `dotnet run --project ../../src/LemonDo.Api --no-launch-profile`,
       url: `http://localhost:${API_PORT}/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
       env: {
-        ConnectionStrings__DefaultConnection: 'Data Source=lemondo-e2e.db',
+        ASPNETCORE_ENVIRONMENT: 'Development',
+        ASPNETCORE_URLS: `http://localhost:${API_PORT}`,
+        ConnectionStrings__DefaultConnection: `Data Source=${config.dbName}`,
+        RateLimiting__Auth__PermitLimit: '10000',
       },
     },
     {
-      command: `pnpm dev`,
+      command: `pnpm dev --port ${CLIENT_PORT}`,
       cwd: '../../src/client',
       url: `http://localhost:${CLIENT_PORT}`,
       reuseExistingServer: !process.env.CI,

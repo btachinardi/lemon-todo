@@ -1,116 +1,123 @@
 import type { Page } from '@playwright/test';
-
-const API_BASE = 'http://localhost:5155/api';
-
-export const E2E_USER = {
-  email: 'e2e@lemondo.dev',
-  password: 'E2eTestPass123!',
-  displayName: 'E2E User',
-};
+import { API_BASE } from './e2e.config';
 
 interface AuthResponse {
   accessToken: string;
   user: { id: string; email: string; displayName: string };
 }
 
-let cachedToken: string | null = null;
-let cachedCookie: string | null = null;
+const E2E_PASSWORD = 'E2eTestPass123!';
+let userCounter = 0;
+let currentToken: string | null = null;
 
-/** Registers the E2E test user (idempotent — ignores 409 Conflict). */
-async function ensureRegistered(): Promise<void> {
-  const res = await fetch(`${API_BASE}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(E2E_USER),
-  });
-
-  // 200 = new user, 409 = already exists — both are fine
-  if (!res.ok && res.status !== 409) {
-    throw new Error(`Register failed: ${res.status} ${await res.text()}`);
-  }
+/** Generates a unique email for test isolation — each describe block gets its own user. */
+function uniqueEmail(): string {
+  return `e2e-${Date.now()}-${++userCounter}@lemondo.dev`;
 }
 
-/** Logs in the E2E test user and returns the access token. Caches the result per test run. */
-export async function getAuthToken(): Promise<string> {
-  if (cachedToken) return cachedToken;
-
-  await ensureRegistered();
-
-  const res = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: E2E_USER.email, password: E2E_USER.password }),
-  });
-
-  if (!res.ok) throw new Error(`Login failed: ${res.status} ${await res.text()}`);
-
-  // Extract refresh token cookie from Set-Cookie header
+/** Extracts the refresh_token value from a response's Set-Cookie header. Throws if missing. */
+function extractRefreshToken(res: Response): string {
   const setCookieHeader = res.headers.get('set-cookie');
-  if (setCookieHeader) {
-    const match = setCookieHeader.match(/refresh_token=([^;]+)/);
-    if (match) {
-      cachedCookie = match[1];
-    }
+  if (!setCookieHeader) {
+    throw new Error('Response missing Set-Cookie header');
   }
 
-  const data = (await res.json()) as AuthResponse;
-  cachedToken = data.accessToken;
-  return cachedToken;
-}
+  const match = setCookieHeader.match(/refresh_token=([^;]+)/);
+  if (!match) {
+    throw new Error(`No refresh_token in Set-Cookie: ${setCookieHeader}`);
+  }
 
-/** Resets the cached token so the next call to getAuthToken() re-authenticates. */
-export function clearCachedToken(): void {
-  cachedToken = null;
-  cachedCookie = null;
+  return match[1];
 }
 
 /**
- * Logs in via the API and injects the refresh cookie + access token into the page context.
- * The refresh cookie is set on the browser context so the React app can perform
- * silent refresh on page load via AuthHydrationProvider.
+ * Creates a unique test user via the register endpoint.
+ * Sets the auth token for API helpers (createTask, getDefaultBoard, etc.).
+ *
+ * Use in `beforeAll` for API-only describe blocks that don't need a browser.
+ * Each call creates a fresh user with an empty board — no cleanup needed.
  */
-export async function loginViaApi(page: Page): Promise<void> {
-  const token = await getAuthToken();
-
-  // Login again to get fresh tokens (cookie may have been consumed by previous refresh)
-  const res = await fetch(`${API_BASE}/auth/login`, {
+export async function createTestUser(): Promise<void> {
+  const email = uniqueEmail();
+  const res = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: E2E_USER.email, password: E2E_USER.password }),
+    body: JSON.stringify({ email, password: E2E_PASSWORD, displayName: 'E2E User' }),
   });
+
+  if (!res.ok) throw new Error(`Register failed: ${res.status} ${await res.text()}`);
+
   const data = (await res.json()) as AuthResponse;
+  currentToken = data.accessToken;
+}
 
-  // Extract refresh cookie from login response
-  const setCookieHeader = res.headers.get('set-cookie');
-  let refreshTokenValue = '';
-  if (setCookieHeader) {
-    const match = setCookieHeader.match(/refresh_token=([^;]+)/);
-    if (match) {
-      refreshTokenValue = match[1];
-    }
+/**
+ * Returns the auth token for the current test user.
+ * Throws if no user has been created — call `createTestUser()` or `loginViaApi()` first.
+ */
+export async function getAuthToken(): Promise<string> {
+  if (!currentToken) {
+    throw new Error('No active auth session — call createTestUser() or loginViaApi() in beforeAll');
   }
+  return currentToken;
+}
 
-  // Navigate to login page first (establishes the origin context)
-  await page.goto('/login');
+/**
+ * Creates a unique test user and logs into the browser for E2E tests.
+ *
+ * 1. Registers a fresh user via API (unique email per call)
+ * 2. Injects the refresh cookie into the Playwright browser context
+ * 3. Navigates to `/` — AuthHydrationProvider performs silent refresh
+ * 4. Waits for the refresh response and verifies it succeeded
+ * 5. Waits for the authenticated UI to render
+ *
+ * Also sets the auth token for API helpers (createTask, etc.) so they
+ * operate against the same user's data.
+ *
+ * Call once per `beforeAll` and reuse the same page/context across tests.
+ * Each call creates a fresh user with an empty board — no cleanup needed.
+ */
+export async function loginViaApi(page: Page): Promise<void> {
+  const email = uniqueEmail();
+  const res = await fetch(`${API_BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: E2E_PASSWORD, displayName: 'E2E User' }),
+  });
 
-  // Inject the refresh token cookie into the browser context
-  if (refreshTokenValue) {
-    const context = page.context();
-    await context.addCookies([
-      {
-        name: 'refresh_token',
-        value: refreshTokenValue,
-        domain: 'localhost',
-        path: '/api/auth',
-        httpOnly: true,
-        sameSite: 'Strict',
-      },
-    ]);
-  }
+  if (!res.ok) throw new Error(`Register failed: ${res.status} ${await res.text()}`);
 
-  // Navigate to the app — AuthHydrationProvider will do a silent refresh
-  // which will set the access token in memory from the cookie
+  const data = (await res.json()) as AuthResponse;
+  currentToken = data.accessToken;
+  const refreshToken = extractRefreshToken(res);
+
+  // Inject refresh token cookie into browser context
+  // (addCookies works at context level — no page navigation required first)
+  await page.context().addCookies([
+    {
+      name: 'refresh_token',
+      value: refreshToken,
+      domain: 'localhost',
+      path: '/api/auth',
+      httpOnly: true,
+      sameSite: 'Strict',
+    },
+  ]);
+
+  // Navigate to the app and verify the silent refresh succeeds
+  const refreshPromise = page.waitForResponse(
+    (resp) => resp.url().includes('/api/auth/refresh'),
+  );
   await page.goto('/');
-  // Wait for the hydration to complete (the app renders content)
-  await page.waitForURL(/^(?!.*\/login).*$/);
+  const refreshResponse = await refreshPromise;
+
+  if (!refreshResponse.ok()) {
+    const body = await refreshResponse.text().catch(() => '(no body)');
+    throw new Error(
+      `Silent refresh failed: ${refreshResponse.status()} ${body}`,
+    );
+  }
+
+  // Wait for the authenticated layout to render (nav only appears when logged in)
+  await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible' });
 }

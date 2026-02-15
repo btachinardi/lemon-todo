@@ -1,6 +1,5 @@
 import { getAuthToken } from './auth.helpers';
-
-const API_BASE = 'http://localhost:5155/api';
+import { API_BASE } from './e2e.config';
 
 interface CreateTaskRequest {
   title: string;
@@ -112,10 +111,3 @@ export async function archiveTask(id: string): Promise<void> {
   if (!res.ok) throw new Error(`Archive task failed: ${res.status}`);
 }
 
-/** Delete all tasks to reset state between tests. */
-export async function deleteAllTasks(): Promise<void> {
-  const { items } = await listTasks();
-  for (const task of items) {
-    await deleteTask(task.id);
-  }
-}
