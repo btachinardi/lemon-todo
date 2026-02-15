@@ -1,13 +1,20 @@
 import { cn } from '@/lib/utils';
-import { Separator } from '@/ui/separator';
-import { Button } from '@/ui/button';
-import { CheckCircle2Icon, InboxIcon, LoaderIcon } from 'lucide-react';
+import { InboxIcon } from 'lucide-react';
 import type { Task } from '../../types/task.types';
-import { TaskStatus } from '../../types/task.types';
+import { TaskStatus, Priority } from '../../types/task.types';
 import { PriorityBadge } from '../atoms/PriorityBadge';
 import { TaskStatusChip } from '../atoms/TaskStatusChip';
 import { DueDateLabel } from '../atoms/DueDateLabel';
 import { TagList } from '../atoms/TagList';
+import { TaskCheckbox } from '../atoms/TaskCheckbox';
+
+const priorityBorder: Record<Priority, string> = {
+  [Priority.None]: 'border-l-transparent',
+  [Priority.Low]: 'border-l-priority-low-foreground',
+  [Priority.Medium]: 'border-l-priority-medium-foreground',
+  [Priority.High]: 'border-l-priority-high-foreground',
+  [Priority.Critical]: 'border-l-priority-critical-foreground',
+};
 
 interface TaskListViewProps {
   tasks: Task[];
@@ -17,13 +24,19 @@ interface TaskListViewProps {
   className?: string;
 }
 
+/**
+ * Flat list view of tasks with inline status, priority, due date, and tags.
+ * Shows a centered empty state when the task list is empty.
+ */
 export function TaskListView({ tasks, onCompleteTask, onSelectTask, togglingTaskId, className }: TaskListViewProps) {
   if (tasks.length === 0) {
     return (
-      <div className={cn('flex flex-col items-center justify-center gap-3 py-16', className)}>
-        <InboxIcon className="size-10 text-muted-foreground/50" />
+      <div className={cn('flex flex-col items-center justify-center gap-3 py-20', className)}>
+        <div className="rounded-full bg-secondary p-4">
+          <InboxIcon className="size-8 text-muted-foreground/50" />
+        </div>
         <div className="text-center">
-          <p className="font-medium">No tasks yet</p>
+          <p className="font-display font-semibold">No tasks yet</p>
           <p className="mt-1 text-sm text-muted-foreground">Add a task above to get started.</p>
         </div>
       </div>
@@ -31,46 +44,39 @@ export function TaskListView({ tasks, onCompleteTask, onSelectTask, togglingTask
   }
 
   return (
-    <div className={cn('mx-auto w-full max-w-4xl flex-col', className)}>
+    <div className={cn('mx-auto w-full max-w-4xl flex-col py-2', className)}>
       {tasks.map((task, index) => {
         const isDone = task.status === TaskStatus.Done;
         const isToggling = togglingTaskId === task.id;
         return (
-          <div key={task.id}>
-            <div
-              className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-              role="button"
-              tabIndex={0}
-              aria-label={`Task: ${task.title}`}
-              onClick={() => onSelectTask?.(task.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onSelectTask?.(task.id);
-                }
-              }}
-            >
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCompleteTask?.(task.id);
-                }}
-                disabled={isToggling}
-                aria-label={isDone ? 'Mark as incomplete' : 'Mark as complete'}
-              >
-                {isToggling ? (
-                  <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
-                ) : (
-                  <CheckCircle2Icon
-                    className={cn('size-4', isDone ? 'text-success-foreground' : 'text-muted-foreground')}
-                  />
-                )}
-              </Button>
+          <div
+            key={task.id}
+            className={cn(
+              'animate-fade-in-up border-l-2 border-b border-b-border/30 transition-colors',
+              'hover:bg-secondary/40',
+              'focus-visible:bg-secondary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+              priorityBorder[task.priority],
+            )}
+            style={{ animationDelay: `${index * 30}ms` }}
+            role="button"
+            tabIndex={0}
+            aria-label={`Task: ${task.title}`}
+            onClick={() => onSelectTask?.(task.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelectTask?.(task.id);
+              }
+            }}
+          >
+            <div className="flex cursor-pointer items-center gap-3 px-4 py-3">
+              <TaskCheckbox
+                checked={isDone}
+                onToggle={() => onCompleteTask?.(task.id)}
+                isLoading={isToggling}
+              />
               <div className="min-w-0 flex-1">
-                <p className={cn('truncate text-sm font-medium', isDone && 'line-through opacity-60')}>
+                <p className={cn('truncate text-sm font-medium', isDone && 'line-through opacity-50')}>
                   {task.title}
                 </p>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -81,7 +87,6 @@ export function TaskListView({ tasks, onCompleteTask, onSelectTask, togglingTask
                 </div>
               </div>
             </div>
-            {index < tasks.length - 1 && <Separator />}
           </div>
         );
       })}
