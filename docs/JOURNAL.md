@@ -1003,6 +1003,43 @@ Also added `animate-fade-in` to kanban SortableTaskCard for NFR-011.1 (task crea
 
 ---
 
+## Release: v0.3.0 — Rich UX & Polish
+
+**Date: February 15, 2026**
+
+Third release, covering Checkpoint 3. The app now has dark mode, a filter bar, task detail sheet, loading skeletons, empty states, error boundaries, toast notifications, and micro-animations. The test count grew from 388 to 478 (262 backend + 161 frontend + 55 E2E).
+
+### Release Stats
+
+| Metric | Value |
+|--------|-------|
+| Backend tests | 262 |
+| Frontend tests | 161 |
+| E2E tests | 55 |
+| Total tests | 478 |
+| New frontend components | 14 (atoms, widgets, views, hooks, stores) |
+| New Shadcn/ui primitives | 4 (Sheet, Calendar, Popover, Label) |
+| Build warnings | 0 |
+
+### Key Additions
+
+- **Dark/light theme** with system preference detection and persisted Zustand store
+- **Filter bar** with real-time search, status/priority/tag multi-select filters
+- **Task detail sheet** (slide-over) for inline editing of all task fields
+- **Loading skeletons** and **empty state components** for polished UX
+- **Route error boundaries** with retry/home recovery UI
+- **Toast notifications** for all CRUD mutations via Sonner
+- **Backend filter/search API** query params on task listing endpoint
+- **55 E2E tests** covering CP3 features plus fixes for existing tests
+
+### Lessons Learned
+
+1. **EmptyBoard changed the test contract**: Replacing "No tasks" columns with a single EmptyBoard component broke 5 existing E2E tests. Tests that expected column headings on fresh boards needed to seed a task first.
+2. **Tag deduplication matters**: Case-insensitive duplicate prevention for tags improved data quality without user friction.
+3. **Completed tasks shouldn't look overdue**: Suppressing overdue styling on done tasks was a small fix with big UX impact.
+
+---
+
 ## What's Next
 
 ### Checkpoint 4: Production Hardening

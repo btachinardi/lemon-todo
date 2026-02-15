@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-02-15
+
+Checkpoint 3: Rich UX — dark mode, filter bar, task detail sheet, loading skeletons, empty states, error boundaries, and enhanced interactions.
+
+### Added
+
+- **Dark/light theme** with system preference detection and persisted user choice via Zustand store
+  - `ThemeToggle` atom with sun/moon icon and keyboard shortcut
+  - CSS custom properties for seamless dark mode across all components
+- **Filter bar** with search, status, priority, and tag filters
+  - Real-time text search across task titles and descriptions
+  - Multi-select status and priority filters
+  - Tag filter with suggestions from existing tasks
+  - Active filter count badge and clear-all button
+- **Task detail sheet** (slide-over panel) for inline task editing
+  - Edit title, description, priority, due date, and tags without leaving the board
+  - Calendar date picker for due dates
+  - Tag management with add/remove and case-insensitive duplicate prevention
+  - Tag suggestions based on existing tags across all tasks
+  - Complete/uncomplete toggle within the sheet
+- **Loading skeletons** for board and list views during data fetch
+- **Empty state components** — `EmptyBoard` for fresh users, `EmptySearchResults` when filters match nothing
+- **Route error boundary** with recovery UI and navigation back to home
+- **Toast notifications** via Sonner for task mutations (create, complete, delete, move)
+- **Backend filter/search API** — `GET /api/tasks` now supports `search`, `status`, `priority`, and `tag` query params
+- **Shadcn/ui primitives**: Sheet, Calendar, Popover, Label components
+- **`useMediaQuery` hook** for responsive behavior
+- **55 new E2E tests** covering CP3 features (filters, detail sheet, dark mode, empty states)
+- **161 frontend tests** total (up from 49 in v0.2.0)
+
+### Changed
+
+- Board view renders `EmptyBoard` component when no tasks exist (instead of empty columns)
+- `SortableTaskCard` now has fade-in animation on mount
+- `TaskCard` opens detail sheet on click (instead of no-op)
+- `DueDateLabel` suppresses overdue styling on completed tasks
+- Enhanced `KanbanColumn` with improved drag-and-drop visual feedback
+
+### Fixed
+
+- Horizontal overflow in task detail sheet when due date is set
+- Overdue styling incorrectly applied to completed tasks
+- Tag creation allowing case-insensitive duplicates
+
 ## [0.2.0] - 2026-02-15
 
 Checkpoint 2: Authentication & Authorization — secure multi-user support with JWT tokens, cookie-based refresh, and user-scoped data isolation.
@@ -111,6 +155,7 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/btachinardi/lemon-todo/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/btachinardi/lemon-todo/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/btachinardi/lemon-todo/releases/tag/v0.1.0
