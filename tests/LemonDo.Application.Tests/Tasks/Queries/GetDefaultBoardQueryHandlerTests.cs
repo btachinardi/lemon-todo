@@ -6,6 +6,7 @@ using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
@@ -22,7 +23,7 @@ public sealed class GetDefaultBoardQueryHandlerTests
     {
         _boardRepository = Substitute.For<IBoardRepository>();
         _taskRepository = Substitute.For<ITaskRepository>();
-        _handler = new GetDefaultBoardQueryHandler(_boardRepository, _taskRepository);
+        _handler = new GetDefaultBoardQueryHandler(_boardRepository, _taskRepository, NullLogger<GetDefaultBoardQueryHandler>.Instance);
     }
 
     [TestMethod]

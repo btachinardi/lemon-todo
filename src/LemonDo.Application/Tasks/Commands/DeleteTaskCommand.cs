@@ -1,11 +1,13 @@
 namespace LemonDo.Application.Tasks.Commands;
 
+using System.Diagnostics;
 using LemonDo.Application.Common;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
@@ -16,15 +18,25 @@ public sealed record DeleteTaskCommand(Guid TaskId);
 public sealed class DeleteTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ILogger<DeleteTaskCommandHandler> logger,
+    ApplicationMetrics metrics)
 {
     /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(DeleteTaskCommand command, CancellationToken ct = default)
     {
+        using var activity = ApplicationActivitySource.Source.StartActivity("DeleteTask");
+        activity?.SetTag("task.id", command.TaskId.ToString());
+
+        logger.LogInformation("Deleting task {TaskId}", command.TaskId);
+
         var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);
         if (task is null)
-            return Result<DomainError>.Failure(
-                DomainError.NotFound("Task", command.TaskId.ToString()));
+        {
+            var error = DomainError.NotFound("Task", command.TaskId.ToString());
+            logger.LogWarning("Failed to delete task: {ErrorCode} - {ErrorMessage}", error.Code, error.Message);
+            return Result<DomainError>.Failure(error);
+        }
 
         var result = task.Delete();
         if (result.IsFailure)
@@ -40,7 +52,9 @@ public sealed class DeleteTaskCommandHandler(
 
         await taskRepository.UpdateAsync(task, ct);
         await unitOfWork.SaveChangesAsync(ct);
+        metrics.TaskDeleted();
 
+        logger.LogInformation("Task {TaskId} deleted successfully", command.TaskId);
         return Result<DomainError>.Success();
     }
 }

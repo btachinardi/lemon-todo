@@ -7,6 +7,7 @@ using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
@@ -14,6 +15,7 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 [TestClass]
 public sealed class DeleteTaskCommandHandlerTests
 {
+    private static readonly ApplicationMetrics Metrics = new(new TestMeterFactory());
     private ITaskRepository _taskRepository = null!;
     private IBoardRepository _boardRepository = null!;
     private IUnitOfWork _unitOfWork = null!;
@@ -31,7 +33,7 @@ public sealed class DeleteTaskCommandHandlerTests
         _boardRepository.GetDefaultForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(_board);
 
-        _handler = new DeleteTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork);
+        _handler = new DeleteTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork, Substitute.For<ILogger<DeleteTaskCommandHandler>>(), Metrics);
     }
 
     [TestMethod]

@@ -7,6 +7,7 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
@@ -21,7 +22,7 @@ public sealed class ListTasksQueryHandlerTests
     public void Setup()
     {
         _repository = Substitute.For<ITaskRepository>();
-        _handler = new ListTasksQueryHandler(_repository);
+        _handler = new ListTasksQueryHandler(_repository, NullLogger<ListTasksQueryHandler>.Instance);
     }
 
     [TestMethod]

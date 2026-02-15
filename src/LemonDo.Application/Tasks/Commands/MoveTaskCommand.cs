@@ -1,5 +1,6 @@
 namespace LemonDo.Application.Tasks.Commands;
 
+using System.Diagnostics;
 using LemonDo.Application.Common;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Boards.ValueObjects;
@@ -7,6 +8,7 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
@@ -20,15 +22,26 @@ public sealed record MoveTaskCommand(Guid TaskId, Guid ColumnId, Guid? PreviousT
 public sealed class MoveTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ILogger<MoveTaskCommandHandler> logger,
+    ApplicationMetrics metrics)
 {
     /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(MoveTaskCommand command, CancellationToken ct = default)
     {
+        using var activity = ApplicationActivitySource.Source.StartActivity("MoveTask");
+        activity?.SetTag("task.id", command.TaskId.ToString());
+        activity?.SetTag("task.target_column", command.ColumnId.ToString());
+
+        logger.LogInformation("Moving task {TaskId} to column {ColumnId}", command.TaskId, command.ColumnId);
+
         var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);
         if (task is null)
-            return Result<DomainError>.Failure(
-                DomainError.NotFound("Task", command.TaskId.ToString()));
+        {
+            var error = DomainError.NotFound("Task", command.TaskId.ToString());
+            logger.LogWarning("Failed to move task: {ErrorCode} - {ErrorMessage}", error.Code, error.Message);
+            return Result<DomainError>.Failure(error);
+        }
 
         var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
         if (board is null)
@@ -51,7 +64,9 @@ public sealed class MoveTaskCommandHandler(
         await taskRepository.UpdateAsync(task, ct);
         await boardRepository.UpdateAsync(board, ct);
         await unitOfWork.SaveChangesAsync(ct);
+        metrics.TaskMoved();
 
+        logger.LogInformation("Task {TaskId} moved to column {ColumnId} successfully", command.TaskId, command.ColumnId);
         return Result<DomainError>.Success();
     }
 }

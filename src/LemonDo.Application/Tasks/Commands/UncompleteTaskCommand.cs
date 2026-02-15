@@ -6,6 +6,7 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
@@ -19,15 +20,21 @@ public sealed record UncompleteTaskCommand(Guid TaskId);
 public sealed class UncompleteTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ILogger<UncompleteTaskCommandHandler> logger)
 {
     /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(UncompleteTaskCommand command, CancellationToken ct = default)
     {
+        logger.LogInformation("Uncompleting task {TaskId}", command.TaskId);
+
         var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);
         if (task is null)
-            return Result<DomainError>.Failure(
-                DomainError.NotFound("Task", command.TaskId.ToString()));
+        {
+            var error = DomainError.NotFound("Task", command.TaskId.ToString());
+            logger.LogWarning("Failed to uncomplete task: {ErrorCode} - {ErrorMessage}", error.Code, error.Message);
+            return Result<DomainError>.Failure(error);
+        }
 
         var uncompleteResult = task.Uncomplete();
         if (uncompleteResult.IsFailure)
@@ -49,6 +56,7 @@ public sealed class UncompleteTaskCommandHandler(
         await boardRepository.UpdateAsync(board, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation("Task {TaskId} uncompleted successfully", command.TaskId);
         return Result<DomainError>.Success();
     }
 }

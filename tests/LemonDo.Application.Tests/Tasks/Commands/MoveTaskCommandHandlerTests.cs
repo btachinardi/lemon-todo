@@ -8,6 +8,7 @@ using LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
@@ -15,6 +16,7 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 [TestClass]
 public sealed class MoveTaskCommandHandlerTests
 {
+    private static readonly ApplicationMetrics Metrics = new(new TestMeterFactory());
     private ITaskRepository _taskRepository = null!;
     private IBoardRepository _boardRepository = null!;
     private IUnitOfWork _unitOfWork = null!;
@@ -32,7 +34,7 @@ public sealed class MoveTaskCommandHandlerTests
         _boardRepository.GetDefaultForUserAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(_board);
 
-        _handler = new MoveTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork);
+        _handler = new MoveTaskCommandHandler(_taskRepository, _boardRepository, _unitOfWork, NullLogger<MoveTaskCommandHandler>.Instance, Metrics);
     }
 
     [TestMethod]

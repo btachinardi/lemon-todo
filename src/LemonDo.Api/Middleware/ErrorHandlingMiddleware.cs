@@ -1,5 +1,6 @@
 namespace LemonDo.Api.Middleware;
 
+using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
 
@@ -17,13 +18,19 @@ public sealed class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorH
     /// <param name="context">The HTTP context for the current request.</param>
     public async Task InvokeAsync(HttpContext context)
     {
+        var startTime = Stopwatch.GetTimestamp();
         try
         {
             await next(context);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unhandled exception");
+            var elapsedMs = Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
+            logger.LogError(ex,
+                "Unhandled exception on {Method} {Path} after {ElapsedMs:F1}ms",
+                context.Request.Method,
+                context.Request.Path,
+                elapsedMs);
 
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
@@ -34,6 +41,7 @@ public sealed class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorH
                 type = "internal_server_error",
                 title = "An unexpected error occurred.",
                 status = 500,
+                correlationId = context.TraceIdentifier,
                 detail = isDev ? ex.ToString() : null
             };
 

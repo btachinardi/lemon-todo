@@ -56,6 +56,7 @@ public static class TaskEndpoints
     private static async Task<IResult> CreateTask(
         CreateTaskCommandHandler handler,
         CreateTaskRequest request,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         if (!Enum.TryParse<Priority>(request.Priority, true, out var priority))
@@ -69,22 +70,24 @@ public static class TaskEndpoints
             request.Tags);
 
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult(dto => Results.Created($"/api/tasks/{dto.Id}", dto));
+        return result.ToHttpResult(dto => Results.Created($"/api/tasks/{dto.Id}", dto), httpContext: httpContext);
     }
 
     private static async Task<IResult> GetTaskById(
         GetTaskByIdQueryHandler handler,
         Guid id,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var result = await handler.HandleAsync(new GetTaskByIdQuery(id), ct);
-        return result.ToHttpResult();
+        return result.ToHttpResult(httpContext: httpContext);
     }
 
     private static async Task<IResult> UpdateTask(
         UpdateTaskCommandHandler handler,
         Guid id,
         UpdateTaskRequest request,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         Priority? priority = null;
@@ -100,85 +103,93 @@ public static class TaskEndpoints
             request.ClearDueDate);
 
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult();
+        return result.ToHttpResult(httpContext: httpContext);
     }
 
     private static async Task<IResult> DeleteTask(
         DeleteTaskCommandHandler handler,
         Guid id,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var result = await handler.HandleAsync(new DeleteTaskCommand(id), ct);
-        return result.ToHttpResult(() => Results.Ok(new { Success = true }));
+        return result.ToHttpResult(() => Results.Ok(new { Success = true }), httpContext: httpContext);
     }
 
     private static async Task<IResult> CompleteTask(
         CompleteTaskCommandHandler handler,
         Guid id,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var result = await handler.HandleAsync(new CompleteTaskCommand(id), ct);
-        return result.ToHttpResult(() => Results.Ok(new { Id = id, Status = "Done" }));
+        return result.ToHttpResult(() => Results.Ok(new { Id = id, Status = "Done" }), httpContext: httpContext);
     }
 
     private static async Task<IResult> UncompleteTask(
         UncompleteTaskCommandHandler handler,
         Guid id,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var result = await handler.HandleAsync(new UncompleteTaskCommand(id), ct);
-        return result.ToHttpResult(() => Results.Ok(new { Id = id, Status = "Todo" }));
+        return result.ToHttpResult(() => Results.Ok(new { Id = id, Status = "Todo" }), httpContext: httpContext);
     }
 
     private static async Task<IResult> ArchiveTask(
         ArchiveTaskCommandHandler handler,
         Guid id,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var result = await handler.HandleAsync(new ArchiveTaskCommand(id), ct);
-        return result.ToHttpResult(() => Results.Ok(new { Id = id, IsArchived = true }));
+        return result.ToHttpResult(() => Results.Ok(new { Id = id, IsArchived = true }), httpContext: httpContext);
     }
 
     private static async Task<IResult> MoveTask(
         MoveTaskCommandHandler handler,
         Guid id,
         MoveTaskRequest request,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var command = new MoveTaskCommand(id, request.ColumnId, request.PreviousTaskId, request.NextTaskId);
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult(() => Results.Ok(new { Id = id, request.ColumnId }));
+        return result.ToHttpResult(() => Results.Ok(new { Id = id, request.ColumnId }), httpContext: httpContext);
     }
 
     private static async Task<IResult> AddTag(
         AddTagToTaskCommandHandler handler,
         Guid id,
         AddTagRequest request,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var command = new AddTagToTaskCommand(id, request.Tag);
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult(() => Results.Ok(new { Id = id }));
+        return result.ToHttpResult(() => Results.Ok(new { Id = id }), httpContext: httpContext);
     }
 
     private static async Task<IResult> RemoveTag(
         RemoveTagFromTaskCommandHandler handler,
         Guid id,
         string tag,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var command = new RemoveTagFromTaskCommand(id, tag);
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult(() => Results.Ok(new { Id = id }));
+        return result.ToHttpResult(() => Results.Ok(new { Id = id }), httpContext: httpContext);
     }
 
     private static async Task<IResult> BulkComplete(
         BulkCompleteTasksCommandHandler handler,
         BulkCompleteRequest request,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var command = new BulkCompleteTasksCommand(request.TaskIds);
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult(() => Results.Ok(new { CompletedCount = request.TaskIds.Count, FailedCount = 0 }));
+        return result.ToHttpResult(() => Results.Ok(new { CompletedCount = request.TaskIds.Count, FailedCount = 0 }), httpContext: httpContext);
     }
 }

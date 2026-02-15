@@ -4,6 +4,7 @@ using LemonDo.Application.Common;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
@@ -11,15 +12,20 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 public sealed record AddTagToTaskCommand(Guid TaskId, string Tag);
 
 /// <summary>Validates the tag and delegates to <see cref="LemonDo.Domain.Tasks.Entities.Task.AddTag"/>.</summary>
-public sealed class AddTagToTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork)
+public sealed class AddTagToTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<AddTagToTaskCommandHandler> logger)
 {
     /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(AddTagToTaskCommand command, CancellationToken ct = default)
     {
+        logger.LogInformation("Adding tag {Tag} to task {TaskId}", command.Tag, command.TaskId);
+
         var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), ct);
         if (task is null)
-            return Result<DomainError>.Failure(
-                DomainError.NotFound("Task", command.TaskId.ToString()));
+        {
+            var error = DomainError.NotFound("Task", command.TaskId.ToString());
+            logger.LogWarning("Failed to add tag to task: {ErrorCode} - {ErrorMessage}", error.Code, error.Message);
+            return Result<DomainError>.Failure(error);
+        }
 
         var tagResult = Tag.Create(command.Tag);
         if (tagResult.IsFailure)
@@ -32,6 +38,7 @@ public sealed class AddTagToTaskCommandHandler(ITaskRepository repository, IUnit
         await repository.UpdateAsync(task, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation("Tag {Tag} added to task {TaskId} successfully", command.Tag, command.TaskId);
         return Result<DomainError>.Success();
     }
 }

@@ -56,8 +56,8 @@ public sealed class LemonDoDbContext : DbContext, IUnitOfWork
 
     /// <summary>
     /// Saves changes to the database with automatic timestamp management (CreatedAt, UpdatedAt)
-    /// and domain event dispatching. Events are collected before save and dispatched after
-    /// commit to ensure they represent committed facts.
+    /// and domain event dispatching. When domain events exist, save and event dispatch are wrapped
+    /// in an explicit transaction so that event handler failures trigger a full rollback.
     /// </summary>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -86,12 +86,31 @@ public sealed class LemonDoDbContext : DbContext, IUnitOfWork
             })
             .ToList();
 
-        var result = await base.SaveChangesAsync(cancellationToken);
+        // No events → EF Core's implicit transaction is sufficient
+        if (_eventDispatcher is null || domainEvents.Count == 0)
+            return await base.SaveChangesAsync(cancellationToken);
 
-        // Dispatch events after save (events represent committed facts)
-        if (_eventDispatcher is not null && domainEvents.Count > 0)
+        // Caller already manages a transaction → participate without wrapping
+        if (Database.CurrentTransaction is not null)
+        {
+            var innerResult = await base.SaveChangesAsync(cancellationToken);
             await _eventDispatcher.DispatchAsync(domainEvents, cancellationToken);
+            return innerResult;
+        }
 
-        return result;
+        // Wrap save + event dispatch in explicit transaction for atomicity
+        await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var result = await base.SaveChangesAsync(cancellationToken);
+            await _eventDispatcher.DispatchAsync(domainEvents, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return result;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

@@ -2,6 +2,7 @@ namespace LemonDo.Infrastructure.Events;
 
 using LemonDo.Domain.Common;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Dispatches domain events to their registered <see cref="IDomainEventHandler{TEvent}"/> implementations.
@@ -20,8 +21,13 @@ public interface IDomainEventDispatcher
 /// <summary>
 /// Resolves handlers from DI using reflection to match the concrete event type to
 /// <see cref="IDomainEventHandler{TEvent}"/>. Events are dispatched sequentially in order.
+/// Logs each handler invocation at debug level and logs errors with structured context before re-throwing.
 /// </summary>
-public sealed class DomainEventDispatcher(IServiceProvider serviceProvider) : IDomainEventDispatcher
+/// <param name="serviceProvider">The service provider used to resolve event handlers from the DI container.</param>
+/// <param name="logger">The logger used to trace handler invocations and record dispatch failures.</param>
+public sealed class DomainEventDispatcher(
+    IServiceProvider serviceProvider,
+    ILogger<DomainEventDispatcher> logger) : IDomainEventDispatcher
 {
     /// <inheritdoc/>
     public async Task DispatchAsync(IReadOnlyList<DomainEvent> events, CancellationToken ct = default)
@@ -37,8 +43,29 @@ public sealed class DomainEventDispatcher(IServiceProvider serviceProvider) : ID
                 var method = handlerType.GetMethod("HandleAsync");
                 if (method is not null)
                 {
-                    var task = (Task)method.Invoke(handler, [domainEvent, ct])!;
-                    await task;
+                    var handlerTypeName = handler!.GetType().Name;
+                    var eventTypeName = eventType.Name;
+
+                    logger.LogDebug(
+                        "Dispatching {EventType} to {HandlerType}",
+                        eventTypeName,
+                        handlerTypeName);
+
+                    try
+                    {
+                        var task = (Task)method.Invoke(handler, [domainEvent, ct])!;
+                        await task;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(
+                            ex,
+                            "Failed to dispatch {EventType} to {HandlerType}",
+                            eventTypeName,
+                            handlerTypeName);
+
+                        throw;
+                    }
                 }
             }
         }

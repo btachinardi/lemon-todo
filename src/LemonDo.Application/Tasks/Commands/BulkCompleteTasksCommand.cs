@@ -6,6 +6,7 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
@@ -19,15 +20,21 @@ public sealed record BulkCompleteTasksCommand(IReadOnlyList<Guid> TaskIds);
 public sealed class BulkCompleteTasksCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ILogger<BulkCompleteTasksCommandHandler> logger)
 {
     /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(BulkCompleteTasksCommand command, CancellationToken ct = default)
     {
+        logger.LogInformation("Bulk completing {TaskCount} tasks", command.TaskIds.Count);
+
         var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
         if (board is null)
-            return Result<DomainError>.Failure(
-                DomainError.NotFound("Board", "default"));
+        {
+            var error = DomainError.NotFound("Board", "default");
+            logger.LogWarning("Failed to bulk complete tasks: {ErrorCode} - {ErrorMessage}", error.Code, error.Message);
+            return Result<DomainError>.Failure(error);
+        }
 
         var doneColumn = board.GetDoneColumn();
 
@@ -51,6 +58,8 @@ public sealed class BulkCompleteTasksCommandHandler(
 
         await boardRepository.UpdateAsync(board, ct);
         await unitOfWork.SaveChangesAsync(ct);
+
+        logger.LogInformation("Bulk completed {TaskCount} tasks successfully", command.TaskIds.Count);
         return Result<DomainError>.Success();
     }
 }

@@ -1,6 +1,7 @@
 namespace LemonDo.Application.Extensions;
 
 using LemonDo.Application.Boards.Commands;
+using LemonDo.Application.Common;
 using LemonDo.Application.Tasks.Commands;
 using LemonDo.Application.Tasks.Queries;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,9 @@ public static class ApplicationServiceExtensions
     /// <summary>Registers all command and query handlers as scoped services.</summary>
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        // Application metrics (singleton — counters are thread-safe)
+        services.AddSingleton<ApplicationMetrics>();
+
         // Task command handlers
         services.AddScoped<CreateTaskCommandHandler>();
         services.AddScoped<UpdateTaskCommandHandler>();

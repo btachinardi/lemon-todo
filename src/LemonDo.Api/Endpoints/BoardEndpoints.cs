@@ -25,30 +25,33 @@ public static class BoardEndpoints
 
     private static async Task<IResult> GetDefaultBoard(
         GetDefaultBoardQueryHandler handler,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var result = await handler.HandleAsync(ct);
-        return result.ToHttpResult();
+        return result.ToHttpResult(httpContext: httpContext);
     }
 
     private static async Task<IResult> GetBoardById(
         GetBoardQueryHandler handler,
         Guid id,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var result = await handler.HandleAsync(new GetBoardQuery(id), ct);
-        return result.ToHttpResult();
+        return result.ToHttpResult(httpContext: httpContext);
     }
 
     private static async Task<IResult> AddColumn(
         AddColumnCommandHandler handler,
         Guid id,
         AddColumnRequest request,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var command = new AddColumnCommand(id, request.Name, request.TargetStatus, request.Position);
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult(dto => Results.Created($"/api/boards/{id}/columns/{dto.Id}", dto));
+        return result.ToHttpResult(dto => Results.Created($"/api/boards/{id}/columns/{dto.Id}", dto), httpContext: httpContext);
     }
 
     private static async Task<IResult> RenameColumn(
@@ -56,32 +59,35 @@ public static class BoardEndpoints
         Guid id,
         Guid colId,
         RenameColumnRequest request,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var command = new RenameColumnCommand(id, colId, request.Name);
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult();
+        return result.ToHttpResult(httpContext: httpContext);
     }
 
     private static async Task<IResult> RemoveColumn(
         RemoveColumnCommandHandler handler,
         Guid id,
         Guid colId,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var command = new RemoveColumnCommand(id, colId);
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult(() => Results.Ok(new { Success = true }));
+        return result.ToHttpResult(() => Results.Ok(new { Success = true }), httpContext: httpContext);
     }
 
     private static async Task<IResult> ReorderColumn(
         ReorderColumnCommandHandler handler,
         Guid id,
         ReorderColumnRequest request,
+        HttpContext httpContext,
         CancellationToken ct)
     {
         var command = new ReorderColumnCommand(id, request.ColumnId, request.NewPosition);
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult();
+        return result.ToHttpResult(httpContext: httpContext);
     }
 }

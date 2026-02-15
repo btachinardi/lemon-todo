@@ -5,6 +5,7 @@ using LemonDo.Application.Tasks.DTOs;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
@@ -18,15 +19,20 @@ public sealed record UpdateTaskCommand(
     bool ClearDueDate = false);
 
 /// <summary>Applies partial updates to a task. Only non-null fields are changed.</summary>
-public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork)
+public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<UpdateTaskCommandHandler> logger)
 {
     /// <inheritdoc/>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(UpdateTaskCommand command, CancellationToken ct = default)
     {
+        logger.LogInformation("Updating task {TaskId}", command.TaskId);
+
         var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), ct);
         if (task is null)
-            return Result<TaskDto, DomainError>.Failure(
-                DomainError.NotFound("Task", command.TaskId.ToString()));
+        {
+            var error = DomainError.NotFound("Task", command.TaskId.ToString());
+            logger.LogWarning("Failed to update task: {ErrorCode} - {ErrorMessage}", error.Code, error.Message);
+            return Result<TaskDto, DomainError>.Failure(error);
+        }
 
         if (command.Title is not null)
         {
@@ -73,6 +79,7 @@ public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOf
         await repository.UpdateAsync(task, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation("Task {TaskId} updated successfully", command.TaskId);
         return Result<TaskDto, DomainError>.Success(TaskDtoMapper.ToDto(task));
     }
 }

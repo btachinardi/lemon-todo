@@ -4,6 +4,7 @@ using LemonDo.Application.Tasks.Queries;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
@@ -18,7 +19,7 @@ public sealed class GetTaskByIdQueryHandlerTests
     public void Setup()
     {
         _repository = Substitute.For<ITaskRepository>();
-        _handler = new GetTaskByIdQueryHandler(_repository);
+        _handler = new GetTaskByIdQueryHandler(_repository, NullLogger<GetTaskByIdQueryHandler>.Instance);
     }
 
     [TestMethod]

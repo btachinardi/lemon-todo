@@ -1,5 +1,6 @@
 namespace LemonDo.Application.Tasks.Commands;
 
+using System.Diagnostics;
 using LemonDo.Application.Common;
 using LemonDo.Application.Tasks.DTOs;
 using LemonDo.Domain.Boards.Repositories;
@@ -7,6 +8,7 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
@@ -25,14 +27,24 @@ public sealed record CreateTaskCommand(
 public sealed class CreateTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ILogger<CreateTaskCommandHandler> logger,
+    ApplicationMetrics metrics)
 {
     /// <inheritdoc/>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(CreateTaskCommand command, CancellationToken ct = default)
     {
+        using var activity = ApplicationActivitySource.Source.StartActivity("CreateTask");
+        activity?.SetTag("task.title", command.Title);
+
+        logger.LogInformation("Creating task with title {Title}", command.Title);
+
         var titleResult = TaskTitle.Create(command.Title);
         if (titleResult.IsFailure)
+        {
+            logger.LogWarning("Failed to create task: {ErrorCode} - {ErrorMessage}", titleResult.Error.Code, titleResult.Error.Message);
             return Result<TaskDto, DomainError>.Failure(titleResult.Error);
+        }
 
         var descResult = TaskDescription.Create(command.Description);
         if (descResult.IsFailure)
@@ -79,7 +91,9 @@ public sealed class CreateTaskCommandHandler(
         await taskRepository.AddAsync(task, ct);
         await boardRepository.UpdateAsync(board, ct);
         await unitOfWork.SaveChangesAsync(ct);
+        metrics.TaskCreated();
 
+        logger.LogInformation("Task {TaskId} created successfully", task.Id);
         return Result<TaskDto, DomainError>.Success(TaskDtoMapper.ToDto(task));
     }
 }

@@ -3,6 +3,22 @@ import type { ApiError } from '@/domains/tasks/types/api.types';
 /** Accepted value types for query-string parameters. */
 type ParamValue = string | number | boolean | null | undefined;
 
+/** Default request timeout in milliseconds. */
+const REQUEST_TIMEOUT_MS = 15_000;
+
+/**
+ * Creates an AbortSignal that automatically aborts after the given timeout.
+ * Uses the native `AbortSignal.timeout()` API available in modern browsers.
+ */
+function createTimeoutSignal(ms: number = REQUEST_TIMEOUT_MS): AbortSignal {
+  return AbortSignal.timeout(ms);
+}
+
+/** Generates a short unique ID for request correlation. */
+function generateCorrelationId(): string {
+  return crypto.randomUUID().replace(/-/g, '');
+}
+
 /**
  * Runtime guard that proves an unknown value conforms to the {@link ApiError}
  * shape (RFC 7807 problem details). Used at the fetch boundary so we never
@@ -110,7 +126,11 @@ export const apiClient = {
     const fullUrl = queryString ? `${url}?${queryString}` : url;
 
     const response = await fetch(fullUrl, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Correlation-Id': generateCorrelationId(),
+      },
+      signal: createTimeoutSignal(),
     });
     return handleJsonResponse<T>(response);
   },
@@ -119,7 +139,11 @@ export const apiClient = {
   async post<T>(url: string, body?: unknown): Promise<T> {
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Correlation-Id': generateCorrelationId(),
+      },
+      signal: createTimeoutSignal(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     return handleJsonResponse<T>(response);
@@ -129,7 +153,11 @@ export const apiClient = {
   async postVoid(url: string, body?: unknown): Promise<void> {
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Correlation-Id': generateCorrelationId(),
+      },
+      signal: createTimeoutSignal(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     return handleVoidResponse(response);
@@ -139,7 +167,11 @@ export const apiClient = {
   async put<T>(url: string, body?: unknown): Promise<T> {
     const response = await fetch(url, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Correlation-Id': generateCorrelationId(),
+      },
+      signal: createTimeoutSignal(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     return handleJsonResponse<T>(response);
@@ -149,7 +181,11 @@ export const apiClient = {
   async delete<T>(url: string): Promise<T> {
     const response = await fetch(url, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Correlation-Id': generateCorrelationId(),
+      },
+      signal: createTimeoutSignal(),
     });
     return handleJsonResponse<T>(response);
   },
@@ -158,7 +194,11 @@ export const apiClient = {
   async deleteVoid(url: string): Promise<void> {
     const response = await fetch(url, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Correlation-Id': generateCorrelationId(),
+      },
+      signal: createTimeoutSignal(),
     });
     return handleVoidResponse(response);
   },

@@ -4,6 +4,7 @@ using LemonDo.Application.Common;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
@@ -11,15 +12,20 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 public sealed record RemoveTagFromTaskCommand(Guid TaskId, string Tag);
 
 /// <summary>Validates the tag and delegates to <see cref="LemonDo.Domain.Tasks.Entities.Task.RemoveTag"/>.</summary>
-public sealed class RemoveTagFromTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork)
+public sealed class RemoveTagFromTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<RemoveTagFromTaskCommandHandler> logger)
 {
     /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(RemoveTagFromTaskCommand command, CancellationToken ct = default)
     {
+        logger.LogInformation("Removing tag {Tag} from task {TaskId}", command.Tag, command.TaskId);
+
         var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), ct);
         if (task is null)
-            return Result<DomainError>.Failure(
-                DomainError.NotFound("Task", command.TaskId.ToString()));
+        {
+            var error = DomainError.NotFound("Task", command.TaskId.ToString());
+            logger.LogWarning("Failed to remove tag from task: {ErrorCode} - {ErrorMessage}", error.Code, error.Message);
+            return Result<DomainError>.Failure(error);
+        }
 
         var tagResult = Tag.Create(command.Tag);
         if (tagResult.IsFailure)
@@ -32,6 +38,7 @@ public sealed class RemoveTagFromTaskCommandHandler(ITaskRepository repository, 
         await repository.UpdateAsync(task, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
+        logger.LogInformation("Tag {Tag} removed from task {TaskId} successfully", command.Tag, command.TaskId);
         return Result<DomainError>.Success();
     }
 }

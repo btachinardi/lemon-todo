@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { AlertCircleIcon } from 'lucide-react';
+import { toastApiError } from '@/lib/toast-helpers';
 import { Button } from '@/ui/button';
 import { Skeleton } from '@/ui/skeleton';
 import { TaskListView } from '@/domains/tasks/components/views/TaskListView';
@@ -24,7 +24,7 @@ export function TaskListPage() {
     setTogglingTaskId(id);
     const mutation = task.status === TaskStatus.Done ? uncompleteTask : completeTask;
     mutation.mutate(id, {
-      onError: () => toast.error('Could not update task. Try again.'),
+      onError: (error: Error) => toastApiError(error, 'Could not update task. Try again.'),
       onSettled: () => setTogglingTaskId(null),
     });
   };
@@ -46,10 +46,10 @@ export function TaskListPage() {
           <AlertCircleIcon className="size-8 text-destructive" />
         </div>
         <div className="text-center">
-          <p className="font-display font-semibold">Could not load tasks</p>
+          <p className="text-lg font-semibold">Could not load tasks</p>
           <p className="mt-1 text-sm text-muted-foreground">Check your connection and try again.</p>
         </div>
-        <Button variant="outline" className="rounded-full" onClick={() => tasksQuery.refetch()}>
+        <Button variant="outline" onClick={() => tasksQuery.refetch()}>
           Try Again
         </Button>
       </div>
@@ -65,7 +65,7 @@ export function TaskListPage() {
           <QuickAddForm
             onSubmit={(request) =>
               createTask.mutate(request, {
-                onError: () => toast.error('Could not save task. Try again.'),
+                onError: (error: Error) => toastApiError(error, 'Could not save task. Try again.'),
               })
             }
             isLoading={createTask.isPending}
