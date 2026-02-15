@@ -50,6 +50,9 @@
 - **Account Lockout**: Configurable lockout on failed attempts
 - **Social OAuth**: Google, Microsoft, GitHub, Facebook providers
 - **Source**: [Microsoft Learn - ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity)
+- **CP2 Usage**: `Microsoft.AspNetCore.Identity.EntityFrameworkCore` in Infrastructure, `Microsoft.AspNetCore.Authentication.JwtBearer` in Api
+- **CP2 Architecture**: `ApplicationUser : IdentityUser<Guid>` in Infrastructure (EF-aware), `User` entity in Domain (pure). Deferred JWT bearer options via `AddOptions<JwtBearerOptions>().Configure<IOptions<JwtSettings>>()` for test compatibility.
+- **CP2 Gotcha**: Eager JWT config read in `Program.cs` runs before test factory config overrides → use deferred options pattern
 
 ### 1.4 Entity Framework Core 10
 

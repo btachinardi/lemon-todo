@@ -642,13 +642,72 @@ builder.HasConversion(vo => vo.Value, value => reconstruct(value));
 
 ---
 
+## Checkpoint 2: Authentication & Authorization
+
+**Date**: 2026-02-15
+
+### What Was Built
+
+Full authentication system across backend, frontend, and E2E tests:
+
+**Backend (Phases 1-5)**:
+- Domain Identity entities: `User`, `Email` VO, `DisplayName` VO in `Domain/Identity/`
+- Infrastructure: `ApplicationUser : IdentityUser<Guid>`, `IdentityDbContext`, `RefreshToken` entity
+- 5 auth endpoints: `POST /api/auth/register|login|refresh|logout`, `GET /api/auth/me`
+- `JwtTokenService` for access + refresh token generation with `jti` uniqueness claim
+- `ICurrentUserService` abstraction replacing ~10 `UserId.Default` references
+- `RequireAuthorization()` on all task/board endpoints
+- Role seeding (User, Admin) + auto-assign "User" on registration
+- Default board auto-created per user on registration
+
+**Frontend (Phases 6-10)**:
+- Auth pages: `LoginPage`, `RegisterPage` with `AuthLayout`
+- Zustand auth store with `skipHydration: true` + `AuthHydrationProvider`
+- Protected routes: `ProtectedRoute`, `LoginRoute`, `RegisterRoute`
+- Bearer token injection in `api-client.ts` with 401 → logout + redirect
+- `UserMenu` dropdown in `DashboardLayout` header
+
+**E2E (Phase 11)**:
+- `auth.helpers.ts`: `getAuthToken()`, `loginViaStorage(page)` for Playwright
+- `api.helpers.ts`: all API calls include Bearer token
+- 5 new auth E2E tests + 37 existing tests adapted
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Custom auth endpoints (not `MapIdentityApi`) | Full control over JWT response shape, refresh flow |
+| `skipHydration: true` on auth store | React 19 `useSyncExternalStore` crashes with Zustand persist auto-hydration |
+| `AuthHydrationProvider` wrapping router | Safe `await rehydrate()` after mount, before children subscribe |
+| Deferred JWT bearer options | `AddOptions<JwtBearerOptions>().Configure<IOptions<JwtSettings>>()` avoids eager config read that breaks test factory overrides |
+| `jti` claim on access tokens | Prevents identical tokens when issued within the same second |
+| `loginViaStorage` for E2E | Injects Zustand auth state into localStorage, avoids slow login-via-form for every test |
+
+### Gotchas & Lessons
+
+1. **Zustand 5 + React 19 infinite loop**: Object-returning selectors like `useStore(s => ({ a: s.a }))` create new references every call → "getSnapshot should be cached" → infinite re-render. Fix: split into separate primitive selectors or use `useShallow`.
+
+2. **Zustand persist hydration race**: Persist auto-hydration changes store mid-render, violating React 19's stricter `useSyncExternalStore` contract. Fix: `skipHydration: true` + manual `await rehydrate()` in a provider component.
+
+3. **JWT bearer eager config**: `builder.Configuration.Get<JwtSettings>()` in Program.cs runs before `CustomWebApplicationFactory.ConfigureAppConfiguration` overrides. Token signed with test key, validated with dev key → 401. Fix: deferred options pattern.
+
+4. **`WebApplicationFactory.WithWebHostBuilder()`** returns base `WebApplicationFactory<Program>`, not `CustomWebApplicationFactory`. Instance methods aren't accessible. Fix: extension methods on `WebApplicationFactory<Program>`.
+
+### Verification
+
+| Check             | Result |
+|-------------------|--------|
+| Backend Build     | 9/9 projects, 0 warnings, 0 errors |
+| Frontend Build    | Succeeds |
+| Backend Tests     | 246 passed, 0 failed |
+| Frontend Tests    | 80 passed, 0 failed |
+| Frontend Lint     | Clean |
+| E2E Tests         | 42 passed, 0 failed |
+| **Total Tests**   | **368** |
+
+---
+
 ## What's Next
-
-### Checkpoint 2: Authentication & Authorization
-
-### Checkpoint 2: Authentication & Authorization
-
-*Planned: ASP.NET Core Identity with JWT tokens, register/login/logout endpoints, user-scoped task queries, React auth pages with route guards and redirects, token refresh handling.*
 
 ### Checkpoint 3: Rich UX & Polish
 

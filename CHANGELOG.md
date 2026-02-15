@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **User authentication** with ASP.NET Core Identity and JWT tokens
+  - Register, Login, Logout, Refresh, and GetCurrentUser endpoints
+  - Access tokens (15min) + refresh tokens (7 days) with secure hashing
+  - JTI claim for token uniqueness
+- **User-scoped data** via `ICurrentUserService` — each user sees only their own tasks and boards
+  - Default board auto-created on registration
+  - Role seeding (User, Admin) on startup
+- **Frontend auth system**
+  - Login and Register pages with form validation and error handling
+  - Zustand auth store with `skipHydration` for React 19 compatibility
+  - `AuthHydrationProvider` for safe store rehydration
+  - Protected routes with automatic redirect to `/login`
+  - JWT bearer token injection in API client with 401 handling
+  - User menu dropdown with display name and sign out
+- **Auth integration tests** — 26 new API tests covering registration, login, token refresh, role assignment, and user-scoped data isolation
+- **E2E auth tests** — 5 new Playwright tests for auth flows + all 37 existing tests updated with `loginViaStorage` helper
+
+### Changed
+
+- `LemonDoDbContext` now extends `IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>` instead of `DbContext`
+- All task/board endpoints now require authentication (`RequireAuthorization()`)
+- Application command/query handlers inject `ICurrentUserService` instead of using `UserId.Default`
+
 ## [0.1.0] - 2026-02-15
 
 Checkpoint 1: Core Task Management — a full-stack task management application with DDD architecture, kanban board, and list view in single-user mode.

@@ -99,18 +99,20 @@
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | | **Backend** | | |
-| CP2.1 | User entity + Identity setup (TDD) | PENDING | ASP.NET Core Identity, Email VO, DisplayName VO |
-| CP2.2 | Auth endpoints | PENDING | Register, Login, Logout, GetCurrentUser |
-| CP2.3 | JWT token generation + refresh | PENDING | Access + refresh tokens |
-| CP2.4 | Protect task endpoints (user-scoped) | PENDING | [Authorize], filter tasks by authenticated user |
-| CP2.5 | Role seeding (User, Admin) | PENDING | Default roles on startup |
-| CP2.6 | Auth integration tests | PENDING | Register/login flow, protected endpoints |
+| CP2.1 | User entity + Identity setup (TDD) | DONE | ASP.NET Core Identity, Email VO, DisplayName VO, ApplicationUser, IdentityDbContext |
+| CP2.2 | Auth endpoints | DONE | Register, Login, Logout, Refresh, GetCurrentUser (5 endpoints) |
+| CP2.3 | JWT token generation + refresh | DONE | Access + refresh tokens, JwtTokenService, jti claim for uniqueness |
+| CP2.4 | Protect task endpoints (user-scoped) | DONE | ICurrentUserService, RequireAuthorization(), replaced ~10 UserId.Default |
+| CP2.5 | Role seeding (User, Admin) | DONE | Default roles on startup, auto-assign "User" on register |
+| CP2.6 | Auth integration tests | DONE | 46 API tests (26 auth + 20 existing adapted), deferred JWT options pattern |
 | | **Frontend** | | |
-| CP2.7 | Auth pages (Login, Register) | PENDING | AuthLayout + LoginForm + RegisterForm |
-| CP2.8 | Auth state management | PENDING | Zustand auth store + TanStack Query for user profile |
-| CP2.9 | Route guards + redirects | PENDING | Unauthenticated → /login, post-login redirect back |
-| CP2.10 | JWT handling (attach, refresh, expire) | PENDING | API client interceptor |
-| CP2.11 | User menu + logout | PENDING | Header component with user info and sign out |
+| CP2.7 | Auth pages (Login, Register) | DONE | AuthLayout, LoginForm, RegisterForm, LoginPage, RegisterPage |
+| CP2.8 | Auth state management | DONE | Zustand auth store (skipHydration + AuthHydrationProvider), auth mutations |
+| CP2.9 | Route guards + redirects | DONE | ProtectedRoute, LoginRoute, RegisterRoute, unauthenticated → /login |
+| CP2.10 | JWT handling (attach, refresh, expire) | DONE | Bearer token in api-client.ts, 401 handling clears auth + redirects |
+| CP2.11 | User menu + logout | DONE | UserMenu dropdown in DashboardLayout header, sign out |
+| | **E2E Tests** | | |
+| CP2.E2E | Auth E2E tests + update existing | DONE | 5 new auth tests, 37 existing adapted with loginViaStorage, 42 total |
 | | **Deliverable** | | Multi-user app with secure authentication |
 
 ---
@@ -236,6 +238,11 @@
 | 2026-02-15 | `ValueObject<T>` base class + `IReconstructable` interface | Eliminates ~5 lines of boilerplate per VO (11 files). `ValueObject<T>` provides `Value`, equality, `ToString()`. `IReconstructable<TSelf, TValue>` standardizes persistence reconstruction. EF extensions (`IsValueObject()`, `IsNullableValueObject()`) replace verbose `HasConversion` calls. |
 | 2026-02-15 | No static interface for `Create()` pattern | `Create()` methods are inherently non-uniform (different params, normalization, validation). `Reconstruct` works because it's always the same shape: trusted value in, VO out, no validation. A shared `ICreatable` would be too generic or too restrictive. |
 | 2026-02-15 | CS8927 workaround: delegate capture for static abstract in expression trees | EF Core `HasConversion` uses expression trees, which can't call static abstract interface members. Fix: capture `TVO.Reconstruct` as `Func<>` delegate, then use delegate in lambda. |
+| 2026-02-15 | Custom auth endpoints over `MapIdentityApi` | Full control over JWT response shape, refresh token flow, and error handling. `MapIdentityApi` scaffolds endpoints we don't need. |
+| 2026-02-15 | Domain User entity separate from ApplicationUser | Domain layer stays Identity-free. `ApplicationUser : IdentityUser<Guid>` lives in Infrastructure. Domain `User` has pure VOs (Email, DisplayName). |
+| 2026-02-15 | Deferred JWT bearer options configuration | Eager config read in Program.cs runs before test factory overrides. `AddOptions<JwtBearerOptions>().Configure<IOptions<JwtSettings>>()` defers to runtime, fixing test 401s. |
+| 2026-02-15 | Zustand persist `skipHydration` for React 19 | Auto-hydration changes store mid-render, crashing React 19's stricter `useSyncExternalStore`. Manual `await rehydrate()` in `AuthHydrationProvider` avoids the race. |
+| 2026-02-15 | `loginViaStorage` for E2E auth | Injects Zustand auth state into localStorage (avoid slow form login per test). Register once, cache token, inject for all UI tests. |
 
 ---
 
@@ -249,7 +256,11 @@
   - Domain Fix: Archive decoupled from status (any task can be archived)
   - Release: v0.1.0 tagged on main via gitflow
 - **CP2 Prep**: `ValueObject<T>` base class + `IReconstructable` + EF extensions (boilerplate reduction)
-- **Checkpoint 2**: IN PROGRESS (Auth & Authorization)
+- **Checkpoint 2**: DONE (Auth & Authorization - 368 tests total: 246 backend + 80 frontend + 42 E2E)
+  - Backend: ASP.NET Core Identity + JWT, 5 auth endpoints, ICurrentUserService, role seeding
+  - Frontend: Auth store (Zustand skipHydration), login/register pages, route guards, user menu
+  - E2E: 42 Playwright tests with auth helper (loginViaStorage)
+  - Key lesson: Zustand 5 persist + React 19 useSyncExternalStore → skipHydration required
 - **Checkpoint 3**: NOT STARTED (Rich UX & Polish)
 - **Checkpoint 4**: NOT STARTED (Production Hardening)
 - **Checkpoint 5**: NOT STARTED (Advanced & Delight)
@@ -324,3 +335,9 @@
 | f28f714 | chore(release): prepare v0.1.0 | Release |
 | 0896f8b | release: v0.1.0 — Checkpoint 1 Core Task Management | Release |
 | 18456f2 | docs: add release process guide, update README for v0.1.0 | Release |
+| 134a2ec | feat(identity): add domain identity entities, infrastructure, and migrations | CP2 |
+| 7905d82 | feat(auth): add JWT auth endpoints, ICurrentUserService, protect routes | CP2 |
+| f7c5f1e | test(auth): add auth integration tests, update all tests for JWT auth | CP2 |
+| b1ff205 | refactor(domain): add ValueObject\<T\> base class, IReconstructable, and EF extensions | CP2 |
+| e26dace | feat(auth): add frontend auth system, E2E tests, fix Zustand 5 + React 19 hydration | CP2 |
+| 0580aa4 | docs: update all project docs for CP2 authentication completion | CP2 |
