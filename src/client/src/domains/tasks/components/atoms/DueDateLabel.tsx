@@ -5,6 +5,8 @@ import { AlertTriangleIcon, CalendarIcon } from 'lucide-react';
 interface DueDateLabelProps {
   /** ISO 8601 date string or null. */
   dueDate: string | null;
+  /** When true, suppress overdue styling (completed tasks aren't overdue). */
+  isDone?: boolean;
   className?: string;
 }
 
@@ -13,12 +15,12 @@ interface DueDateLabelProps {
  * Shows "Today", "Tomorrow", or "Overdue: ..." with a warning icon.
  * Renders nothing when `dueDate` is null.
  */
-export const DueDateLabel = memo(function DueDateLabel({ dueDate, className }: DueDateLabelProps) {
+export const DueDateLabel = memo(function DueDateLabel({ dueDate, isDone, className }: DueDateLabelProps) {
   if (!dueDate) return null;
 
   const date = new Date(dueDate);
   const now = new Date();
-  const isOverdue = date < now;
+  const isOverdue = !isDone && date < now;
   const isToday = date.toDateString() === now.toDateString();
 
   const tomorrow = new Date(now);

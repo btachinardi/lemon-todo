@@ -165,7 +165,7 @@ const TaskListItem = memo(function TaskListItem({ task, index, togglingTaskId, o
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <TaskStatusChip status={task.status} />
             <PriorityBadge priority={task.priority} />
-            <DueDateLabel dueDate={task.dueDate} />
+            <DueDateLabel dueDate={task.dueDate} isDone={isDone} />
             <TagList tags={task.tags} />
           </div>
         </div>

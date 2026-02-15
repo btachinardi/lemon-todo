@@ -94,7 +94,7 @@ export const TaskCard = memo(function TaskCard({
         <CardContent className="px-3 py-0">
           <div className="flex flex-wrap items-center gap-2">
             <PriorityBadge priority={task.priority} />
-            <DueDateLabel dueDate={task.dueDate} />
+            <DueDateLabel dueDate={task.dueDate} isDone={isDone} />
           </div>
           <TagList tags={task.tags} className="mt-1.5" />
         </CardContent>
