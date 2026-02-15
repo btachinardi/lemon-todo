@@ -1,0 +1,5 @@
+{
+  "apiPort": 54155,
+  "clientPort": 54173,
+  "dbName": "lemondo-e2e.db"
+}

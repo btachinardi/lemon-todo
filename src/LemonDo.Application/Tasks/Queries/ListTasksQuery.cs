@@ -13,7 +13,7 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 public sealed record ListTasksQuery(TaskListFilter Filter);
 
 /// <summary>Returns a paginated result of task DTOs matching the filter criteria.</summary>
-public sealed class ListTasksQueryHandler(ITaskRepository repository, ILogger<ListTasksQueryHandler> logger)
+public sealed class ListTasksQueryHandler(ITaskRepository repository, ICurrentUserService currentUser, ILogger<ListTasksQueryHandler> logger)
 {
     /// <inheritdoc/>
     public async Task<PagedResult<TaskDto>> HandleAsync(ListTasksQuery query, CancellationToken ct = default)
@@ -21,7 +21,7 @@ public sealed class ListTasksQueryHandler(ITaskRepository repository, ILogger<Li
         var filter = query.Filter;
         logger.LogInformation("Listing tasks with page {Page}, pageSize {PageSize}, searchTerm {SearchTerm}", filter.Page, filter.PageSize, filter.SearchTerm);
         var pagedResult = await repository.ListAsync(
-            UserId.Default,
+            currentUser.UserId,
             filter.Priority,
             filter.Status,
             filter.SearchTerm,

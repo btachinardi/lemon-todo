@@ -1,5 +1,6 @@
 namespace LemonDo.Application.Tests.Tasks.Queries;
 
+using LemonDo.Application.Common;
 using LemonDo.Application.Tasks.Queries;
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Boards.Repositories;
@@ -23,7 +24,9 @@ public sealed class GetDefaultBoardQueryHandlerTests
     {
         _boardRepository = Substitute.For<IBoardRepository>();
         _taskRepository = Substitute.For<ITaskRepository>();
-        _handler = new GetDefaultBoardQueryHandler(_boardRepository, _taskRepository, NullLogger<GetDefaultBoardQueryHandler>.Instance);
+        var currentUser = Substitute.For<ICurrentUserService>();
+        currentUser.UserId.Returns(UserId.Default);
+        _handler = new GetDefaultBoardQueryHandler(_boardRepository, _taskRepository, currentUser, NullLogger<GetDefaultBoardQueryHandler>.Instance);
     }
 
     [TestMethod]

@@ -5,15 +5,12 @@ using LemonDo.Domain.Common;
 /// <summary>
 /// Validated board name. Must be non-empty and at most <see cref="MaxLength"/> characters (trimmed).
 /// </summary>
-public sealed class BoardName : ValueObject
+public sealed class BoardName : ValueObject<string>, IReconstructable<BoardName, string>
 {
     /// <summary>Maximum allowed length for a board name: 100 characters.</summary>
     public const int MaxLength = 100;
 
-    /// <summary>The underlying validated board name string.</summary>
-    public string Value { get; }
-
-    private BoardName(string value) => Value = value;
+    private BoardName(string value) : base(value) { }
 
     /// <summary>
     /// Creates a <see cref="BoardName"/> from a string. Trims whitespace and validates length.
@@ -33,9 +30,6 @@ public sealed class BoardName : ValueObject
         return Result<BoardName, DomainError>.Success(new BoardName(trimmed));
     }
 
-    /// <inheritdoc />
-    protected override IEnumerable<object?> GetEqualityComponents()
-    {
-        yield return Value;
-    }
+    /// <summary>Reconstructs a <see cref="BoardName"/> from a persistence value.</summary>
+    public static BoardName Reconstruct(string value) => new(value);
 }

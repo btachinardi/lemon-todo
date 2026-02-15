@@ -22,12 +22,17 @@ LemonDo is a full-stack task management platform built with .NET Aspire and Reac
 - **Full Observability** - OpenTelemetry traces, metrics, correlation IDs, structured logs
 - **287+ Tests** - Unit, property, integration, component, and E2E tests
 
-### Planned Features (CP2+)
+### Development Checkpoints
 
-- **Authentication** - User accounts, JWT tokens, role-based access (CP2)
-- **Rich UX** - Task detail editing, filters, dark/light theme, responsive design (CP3)
-- **Production Hardening** - PII redaction, audit trails, i18n, rate limiting (CP4)
-- **Advanced** - PWA, offline support, onboarding, analytics (CP5)
+LemonDo follows a checkpoint-based delivery model — each checkpoint produces a complete, runnable application.
+
+| CP | Name | Status | Key Deliverables |
+|----|------|--------|------------------|
+| 1 | **Core Task Management** | Done (v0.1.0) | DDD domain (Task + Board contexts), 18 API endpoints, Kanban board with drag-and-drop, list view with time grouping, 287+ tests |
+| 2 | **Auth & Authorization** | Done | ASP.NET Identity + JWT, 5 auth endpoints, user-scoped data, login/register UI, route guards, 368 tests |
+| 3 | **Rich UX & Polish** | Not Started | Quick-add (P0), task detail editing, filters & search, dark/light theme, responsive design, loading skeletons, empty states, toasts |
+| 4 | **Production Hardening** | Not Started | OpenTelemetry (frontend + backend), structured logging, PII redaction, audit trail, admin panel, i18n (en + pt-BR), rate limiting |
+| 5 | **Advanced & Delight** | Not Started | PWA + offline read, onboarding flow, in-app notifications, analytics events, E2E cross-browser tests, visual regression, offline mutations |
 
 ## Getting Started
 

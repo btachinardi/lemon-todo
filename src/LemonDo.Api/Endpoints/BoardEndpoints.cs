@@ -11,7 +11,7 @@ public static class BoardEndpoints
     /// <summary>Maps board query and column management endpoints under <c>/api/boards</c>.</summary>
     public static RouteGroupBuilder MapBoardEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/boards").WithTags("Boards");
+        var group = app.MapGroup("/api/boards").WithTags("Boards").RequireAuthorization();
 
         group.MapGet("/default", GetDefaultBoard);
         group.MapGet("/{id:guid}", GetBoardById);

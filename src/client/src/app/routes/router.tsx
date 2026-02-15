@@ -1,20 +1,40 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Outlet } from 'react-router';
+import { NotFoundPage } from '../pages/NotFoundPage';
+import { LoginRoute } from './LoginRoute';
+import { RegisterRoute } from './RegisterRoute';
+import { ProtectedRoute } from './ProtectedRoute';
 import { TaskBoardRoute } from './TaskBoardRoute';
 import { TaskListRoute } from './TaskListRoute';
-import { NotFoundPage } from '../pages/NotFoundPage';
 
 /**
- * Application route tree. `/` renders the kanban board,
- * `/list` renders the flat list view.
+ * Application route tree. Auth routes are public; task routes are protected.
+ * Unauthenticated users are redirected to `/login`.
  */
 export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <TaskBoardRoute />,
+    path: '/login',
+    element: <LoginRoute />,
   },
   {
-    path: '/list',
-    element: <TaskListRoute />,
+    path: '/register',
+    element: <RegisterRoute />,
+  },
+  {
+    element: (
+      <ProtectedRoute>
+        <Outlet />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        path: '/',
+        element: <TaskBoardRoute />,
+      },
+      {
+        path: '/list',
+        element: <TaskListRoute />,
+      },
+    ],
   },
   {
     path: '*',

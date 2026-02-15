@@ -58,6 +58,20 @@
 | **Cross-context coordination** | Application-layer handlers orchestrate both aggregates | Domain-level coupling between contexts | Handlers coordinate CreateTask = Task.Create + board.PlaceTask, keeping domain layers independent |
 | **Entity naming** | `Task` (with `using TaskEntity = ...` alias for collisions) | `BoardTask` or `TaskItem` | Tasks exist independently of boards; the name should reflect that; alias handles System.Threading.Tasks.Task collision |
 
+### Authentication & Security
+
+| Trade-off | What we chose | What we gave up | Why |
+|---|---|---|---|
+| **Token storage** | HttpOnly cookie (refresh) + JS memory (access) | localStorage for both tokens | XSS can read localStorage but not HttpOnly cookies; memory-only access token is invisible to injected scripts |
+| **Cookie scope** | `SameSite=Strict`, `Path=/api/auth` | `SameSite=Lax` or broader path | Strict + narrow path means cookie is only sent on same-site requests to auth endpoints; eliminates CSRF without CSRF tokens |
+| **CSRF protection** | None (SameSite=Strict is sufficient) | Explicit CSRF tokens | SameSite=Strict prevents cross-origin cookie transmission; path-scoping prevents same-origin leakage to non-auth endpoints; adding CSRF tokens would be redundant complexity |
+| **Session restoration** | Silent refresh on page load via cookie | Persisted access token in sessionStorage | sessionStorage is also XSS-readable; silent refresh adds ~100ms on page load but eliminates all client-side token storage |
+| **Zustand persistence** | Removed entirely (memory-only store) | localStorage persistence with `skipHydration` workaround | Eliminating persist also eliminated the Zustand 5 + React 19 hydration race condition; simpler code, better security |
+| **PII in logs** | Masked emails (`u***@example.com`) | Full emails for easier debugging | PII in logs violates GDPR/HIPAA; masked format preserves enough info for debugging (first char + domain) |
+| **Token family detection** | Deferred | Detect stolen refresh token reuse | Requires DB migration (FamilyId column) and complex revocation logic; current single-device model limits attack surface |
+| **HaveIBeenPwned check** | Deferred | Reject breached passwords on registration | External API dependency needs graceful degradation; can be added independently later |
+| **Refresh token cleanup** | Background service (every 6 hours) | Manual cleanup or no cleanup | Prevents unbounded table growth; 6h interval balances DB load vs staleness |
+
 ### Card Ordering & API Design
 
 | Trade-off | What we chose | What we gave up | Why |
@@ -66,6 +80,8 @@
 | **Move API contract** | Neighbor card IDs (`previousTaskId`/`nextTaskId`) | Frontend sends array index or rank directly | Intent-based ("place between these two cards") survives backend strategy changes; frontend stays dumb, backend avoids read-to-sort, API contract is unambiguous |
 | **Orphan cleanup** | Delete removes card; Archive preserves card on board | Symmetric handling (both remove or both preserve) | Asymmetric by intent: deletion is destructive with no undelete, so card is removed; archive is reversible, so card stays for rank restoration on unarchive |
 | **Orphan filtering** | Board query handlers filter out archived/deleted task cards at read time | Eager cleanup on every archive/delete | Preserves archived card placement in the database while presenting clean data to the frontend; read-layer filtering is cheaper than write-layer coordination |
+| **E2E test isolation** | Unique user per describe block (timestamp + counter email) | Shared user + `deleteAllTasks()` cleanup between tests | Fresh users = true data isolation with zero cleanup overhead; each describe block operates on an empty board; eliminates shared auth state and token rotation conflicts |
+| **E2E test execution** | `test.describe.serial` with shared page/context | Parallel execution with per-test browser context | Tests accumulate state like real users; login once in `beforeAll` instead of per test; 3x faster (20s vs 60-90s), 100% stable |
 
 ---
 

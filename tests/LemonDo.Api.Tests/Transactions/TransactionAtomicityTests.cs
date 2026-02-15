@@ -24,7 +24,7 @@ public sealed class TransactionAtomicityTests
             });
         });
 
-        using var client = factory.CreateClient();
+        using var client = await factory.CreateAuthenticatedClientAsync();
 
         // Get initial task count
         var listBefore = await client.GetFromJsonAsync<PagedResult<TaskDto>>("/api/tasks", TestJsonOptions.Default);
@@ -55,7 +55,7 @@ public sealed class TransactionAtomicityTests
             });
         });
 
-        using var client = factory.CreateClient();
+        using var client = await factory.CreateAuthenticatedClientAsync();
 
         // Get initial board card count
         var boardBefore = await client.GetFromJsonAsync<BoardDto>("/api/boards/default", TestJsonOptions.Default);
@@ -94,7 +94,7 @@ public sealed class TransactionAtomicityTests
             });
         });
 
-        using var client = factory.CreateClient();
+        using var client = await factory.CreateAuthenticatedClientAsync();
 
         // Get initial task count
         var listBefore = await client.GetFromJsonAsync<PagedResult<TaskDto>>("/api/tasks", TestJsonOptions.Default);
@@ -119,7 +119,7 @@ public sealed class TransactionAtomicityTests
     public async Task Should_PersistTask_When_NoEventHandlerRegistered()
     {
         using var factory = new CustomWebApplicationFactory();
-        using var client = factory.CreateClient();
+        using var client = await factory.CreateAuthenticatedClientAsync();
 
         var createResponse = await client.PostAsJsonAsync("/api/tasks",
             new { Title = "No handler control test" });
@@ -146,7 +146,7 @@ public sealed class TransactionAtomicityTests
             });
         });
 
-        using var client = factory.CreateClient();
+        using var client = await factory.CreateAuthenticatedClientAsync();
 
         var createResponse = await client.PostAsJsonAsync("/api/tasks",
             new { Title = "Successful handler test" });

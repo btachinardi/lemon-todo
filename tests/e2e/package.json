@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "playwright test",
-    "test:headed": "playwright test --headed",
-    "test:ui": "playwright test --ui"
+    "cleanup": "node scripts/cleanup.mjs",
+    "test": "node scripts/cleanup.mjs && playwright test",
+    "test:headed": "node scripts/cleanup.mjs && playwright test --headed",
+    "test:ui": "node scripts/cleanup.mjs && playwright test --ui"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0"

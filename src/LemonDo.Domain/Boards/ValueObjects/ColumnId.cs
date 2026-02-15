@@ -3,16 +3,10 @@ namespace LemonDo.Domain.Boards.ValueObjects;
 using LemonDo.Domain.Common;
 
 /// <summary>Strongly-typed identifier for a <see cref="Entities.Column"/>.</summary>
-public sealed class ColumnId : ValueObject
+public sealed class ColumnId : ValueObject<Guid>, IReconstructable<ColumnId, Guid>
 {
-    /// <summary>The underlying GUID value.</summary>
-    public Guid Value { get; }
-
     /// <summary>Creates a <see cref="ColumnId"/> from an existing GUID. Public to support EF Core and DTO mapping.</summary>
-    public ColumnId(Guid value)
-    {
-        Value = value;
-    }
+    public ColumnId(Guid value) : base(value) { }
 
     /// <summary>Generates a new unique column identifier.</summary>
     public static ColumnId New() => new(Guid.NewGuid());
@@ -20,12 +14,6 @@ public sealed class ColumnId : ValueObject
     /// <summary>Wraps an existing GUID as a <see cref="ColumnId"/>. Use when reconstructing from persistence.</summary>
     public static ColumnId From(Guid value) => new(value);
 
-    /// <inheritdoc />
-    protected override IEnumerable<object?> GetEqualityComponents()
-    {
-        yield return Value;
-    }
-
-    /// <inheritdoc />
-    public override string ToString() => Value.ToString();
+    /// <summary>Reconstructs a <see cref="ColumnId"/> from a persistence value.</summary>
+    public static ColumnId Reconstruct(Guid value) => new(value);
 }

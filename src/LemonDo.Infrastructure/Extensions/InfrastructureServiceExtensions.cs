@@ -1,14 +1,18 @@
 namespace LemonDo.Infrastructure.Extensions;
 
 using LemonDo.Application.Common;
+using LemonDo.Application.Identity;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Infrastructure.Events;
+using LemonDo.Infrastructure.Identity;
 using LemonDo.Infrastructure.Persistence;
 using LemonDo.Infrastructure.Persistence.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 /// <summary>DI registration for the Infrastructure layer (DbContext, repositories, event dispatcher).</summary>
 public static class InfrastructureServiceExtensions
@@ -24,6 +28,32 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IBoardRepository, BoardRepository>();
+
+        // JWT token services
+        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.AddSingleton<IValidateOptions<JwtSettings>, JwtSettingsValidator>();
+        services.AddScoped<JwtTokenService>();
+
+        // Identity + Auth ACL
+        services.AddIdentityCore<ApplicationUser>(options =>
+            {
+                options.Password.RequiredLength = 8;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+                options.User.RequireUniqueEmail = true;
+
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.AllowedForNewUsers = true;
+            })
+            .AddRoles<IdentityRole<Guid>>()
+            .AddSignInManager()
+            .AddEntityFrameworkStores<LemonDoDbContext>();
+
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddHostedService<RefreshTokenCleanupService>();
 
         return services;
     }
