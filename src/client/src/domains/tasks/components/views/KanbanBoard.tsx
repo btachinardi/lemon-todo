@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -20,6 +20,9 @@ import { TaskCard } from '../widgets/TaskCard';
 
 /** Map of columnId -> taskId[] representing the current visual order. */
 type ColumnItems = Record<string, string[]>;
+
+/** Stable drop animation config — defined outside the component to avoid creating a new object on every render. */
+const DROP_ANIMATION = { duration: 200, easing: 'ease-out' } as const;
 
 function buildColumnItems(board: Board): ColumnItems {
   const items: ColumnItems = {};
@@ -72,8 +75,14 @@ export function KanbanBoard({
   togglingTaskId,
   className,
 }: KanbanBoardProps) {
-  const sortedColumns = [...board.columns].sort((a, b) => a.position - b.position);
-  const tasksById = new Map(tasks.map((task) => [task.id, task]));
+  const sortedColumns = useMemo(
+    () => [...board.columns].sort((a, b) => a.position - b.position),
+    [board.columns],
+  );
+  const tasksById = useMemo(
+    () => new Map(tasks.map((task) => [task.id, task])),
+    [tasks],
+  );
 
   // Local state for card positions (enables optimistic drag preview)
   const [columnItems, setColumnItems] = useState<ColumnItems>(() => buildColumnItems(board));
@@ -188,6 +197,28 @@ export function KanbanBoard({
 
   const activeTask = activeId ? tasksById.get(activeId) ?? null : null;
 
+  // Pre-compute tasks for each column. Keyed on columnItems + tasksById so it
+  // only recalculates when drag state or server data changes — not on every render.
+  const columnTasksMap = useMemo(() => {
+    const map: Record<string, Task[]> = {};
+    for (const column of sortedColumns) {
+      const taskIdsInColumn = columnItems[column.id] ?? [];
+      map[column.id] = taskIdsInColumn
+        .map((id) => tasksById.get(id))
+        .filter((t): t is Task => t != null)
+        .map((t) =>
+          t.status !== column.targetStatus ? { ...t, status: column.targetStatus } : t,
+        );
+    }
+    return map;
+  }, [sortedColumns, columnItems, tasksById]);
+
+  // Stable animation delay styles for each column (only 3 columns, so this is fine).
+  const columnAnimationStyles = useMemo(
+    () => sortedColumns.map((_, index) => ({ animationDelay: `${index * 100}ms` })),
+    [sortedColumns],
+  );
+
   return (
     <DndContext
       sensors={sensors}
@@ -198,35 +229,25 @@ export function KanbanBoard({
       onDragCancel={handleDragCancel}
     >
       <ScrollArea className={cn('w-full', className)}>
-        <div className="flex gap-4 p-6">
-          {sortedColumns.map((column, index) => {
-            const taskIdsInColumn = columnItems[column.id] ?? [];
-            const columnTasks = taskIdsInColumn
-              .map((id) => tasksById.get(id))
-              .filter((t): t is Task => t != null)
-              .map((t) =>
-                t.status !== column.targetStatus ? { ...t, status: column.targetStatus } : t,
-              );
-
-            return (
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto p-4 sm:snap-none sm:p-6">
+          {sortedColumns.map((column, index) => (
               <KanbanColumn
                 key={column.id}
                 column={column}
-                tasks={columnTasks}
+                tasks={columnTasksMap[column.id] ?? []}
                 onCompleteTask={onCompleteTask}
                 onSelectTask={onSelectTask}
                 togglingTaskId={togglingTaskId}
                 className="animate-fade-in-up"
-                style={{ animationDelay: `${index * 100}ms` }}
+                style={columnAnimationStyles[index]}
               />
-            );
-          })}
+            ))}
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
 
       {/* Floating drag preview */}
-      <DragOverlay dropAnimation={{ duration: 200, easing: 'ease-out' }}>
+      <DragOverlay dropAnimation={DROP_ANIMATION}>
         {activeTask ? (
           <div className="w-80">
             <TaskCard task={activeTask} isOverlay />

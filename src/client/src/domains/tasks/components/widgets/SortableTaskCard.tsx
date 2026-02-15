@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Task } from '../../types/task.types';
@@ -13,8 +14,10 @@ interface SortableTaskCardProps {
 /**
  * Wraps {@link TaskCard} with @dnd-kit sortable behavior.
  * Provides drag listeners, transform, and dragging state.
+ *
+ * Wrapped in `React.memo` — rendered inside `.map()` in KanbanColumn.
  */
-export function SortableTaskCard({ task, onComplete, onSelect, isToggling }: SortableTaskCardProps) {
+export const SortableTaskCard = memo(function SortableTaskCard({ task, onComplete, onSelect, isToggling }: SortableTaskCardProps) {
   const {
     attributes,
     listeners,
@@ -40,4 +43,4 @@ export function SortableTaskCard({ task, onComplete, onSelect, isToggling }: Sor
       />
     </div>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { AlertTriangleIcon, CalendarIcon } from 'lucide-react';
 
@@ -12,7 +13,7 @@ interface DueDateLabelProps {
  * Shows "Today", "Tomorrow", or "Overdue: ..." with a warning icon.
  * Renders nothing when `dueDate` is null.
  */
-export function DueDateLabel({ dueDate, className }: DueDateLabelProps) {
+export const DueDateLabel = memo(function DueDateLabel({ dueDate, className }: DueDateLabelProps) {
   if (!dueDate) return null;
 
   const date = new Date(dueDate);
@@ -49,4 +50,4 @@ export function DueDateLabel({ dueDate, className }: DueDateLabelProps) {
       {label}
     </span>
   );
-}
+});

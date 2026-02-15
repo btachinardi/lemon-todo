@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -18,8 +19,13 @@ interface KanbanColumnProps {
   style?: React.CSSProperties;
 }
 
-/** Vertical lane in the kanban board. Droppable zone with sortable task cards. */
-export function KanbanColumn({
+/**
+ * Vertical lane in the kanban board. Droppable zone with sortable task cards.
+ *
+ * Wrapped in `React.memo` — rendered inside `.map()` in KanbanBoard.
+ * Each column only re-renders when its own tasks or props change.
+ */
+export const KanbanColumn = memo(function KanbanColumn({
   column,
   tasks,
   onCompleteTask,
@@ -29,12 +35,12 @@ export function KanbanColumn({
   style,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
-  const taskIds = tasks.map((t) => t.id);
+  const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
 
   return (
     <div
       className={cn(
-        'flex min-w-72 flex-1 flex-col rounded-xl border border-border/40 bg-secondary p-3 transition-all duration-300',
+        'flex min-w-[85vw] flex-1 flex-col snap-center rounded-xl border border-border/40 bg-secondary p-3 transition-all duration-300 sm:min-w-72',
         isOver && 'border-primary/30 bg-primary/5 ring-1 ring-primary/20',
         className,
       )}
@@ -71,4 +77,4 @@ export function KanbanColumn({
       </ScrollArea>
     </div>
   );
-}
+});
