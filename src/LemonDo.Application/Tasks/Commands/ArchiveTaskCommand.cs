@@ -13,6 +13,7 @@ public sealed record ArchiveTaskCommand(Guid TaskId);
 /// <summary>Archives the task via <see cref="LemonDo.Domain.Tasks.Entities.Task.Archive"/>.</summary>
 public sealed class ArchiveTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork)
 {
+    /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(ArchiveTaskCommand command, CancellationToken ct = default)
     {
         var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), ct);

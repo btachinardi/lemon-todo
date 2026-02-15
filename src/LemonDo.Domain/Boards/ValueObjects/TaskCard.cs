@@ -8,8 +8,13 @@ using LemonDo.Domain.Tasks.ValueObjects;
 /// </summary>
 public sealed class TaskCard
 {
+    /// <summary>The task being placed on the board. References a Task aggregate from the Task bounded context.</summary>
     public TaskId TaskId { get; }
+
+    /// <summary>The column on the board where this task is currently placed.</summary>
     public ColumnId ColumnId { get; }
+
+    /// <summary>Decimal rank used for ordering cards within a column. Lower ranks sort first. Uses neighbor-based computation for sparse ordering.</summary>
     public decimal Rank { get; }
 
     internal TaskCard(TaskId taskId, ColumnId columnId, decimal rank)

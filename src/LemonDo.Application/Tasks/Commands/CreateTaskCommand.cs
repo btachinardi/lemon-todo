@@ -27,6 +27,7 @@ public sealed class CreateTaskCommandHandler(
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork)
 {
+    /// <inheritdoc/>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(CreateTaskCommand command, CancellationToken ct = default)
     {
         var titleResult = TaskTitle.Create(command.Title);

@@ -16,17 +16,36 @@ using LemonDo.Domain.Tasks.ValueObjects;
 /// </remarks>
 public sealed class Task : Entity<TaskId>
 {
+    /// <summary>The user who owns this task. Immutable after creation.</summary>
     public UserId OwnerId { get; }
+
+    /// <summary>The task's required title text. Updated via <see cref="UpdateTitle"/>.</summary>
     public TaskTitle Title { get; private set; }
+
+    /// <summary>Optional longer description for the task. Can be null. Updated via <see cref="UpdateDescription"/>.</summary>
     public TaskDescription? Description { get; private set; }
+
+    /// <summary>Task priority level for sorting and filtering. Updated via <see cref="SetPriority"/>.</summary>
     public Priority Priority { get; private set; }
+
+    /// <summary>Current lifecycle status (Todo, InProgress, Done). Updated via <see cref="SetStatus"/>.</summary>
     public TaskStatus Status { get; private set; }
+
+    /// <summary>Optional due date for the task. Can be null. Updated via <see cref="SetDueDate"/>.</summary>
     public DateTimeOffset? DueDate { get; private set; }
+
+    /// <summary>Whether this task is archived (hidden from active views). Independent of status. Updated via <see cref="Archive"/> and <see cref="Unarchive"/>.</summary>
     public bool IsArchived { get; private set; }
+
+    /// <summary>Whether this task is soft-deleted. Deleted tasks reject all mutations. Updated via <see cref="Delete"/>.</summary>
     public bool IsDeleted { get; private set; }
+
+    /// <summary>Timestamp when the task was last marked as Done. Null if never completed or currently not Done.</summary>
     public DateTimeOffset? CompletedAt { get; private set; }
 
     private readonly List<Tag> _tags = [];
+
+    /// <summary>Collection of tags attached to this task. Tags are case-insensitive and normalized to lowercase.</summary>
     public IReadOnlyList<Tag> Tags => _tags.AsReadOnly();
 
     private Task(

@@ -9,6 +9,7 @@ public abstract class ValueObject : IEquatable<ValueObject>
     /// <summary>Returns the values that define structural equality for this value object.</summary>
     protected abstract IEnumerable<object?> GetEqualityComponents();
 
+    /// <inheritdoc />
     public override bool Equals(object? obj)
     {
         if (obj is null || obj.GetType() != GetType())
@@ -17,6 +18,7 @@ public abstract class ValueObject : IEquatable<ValueObject>
         return Equals((ValueObject)obj);
     }
 
+    /// <inheritdoc />
     public bool Equals(ValueObject? other)
     {
         if (other is null || other.GetType() != GetType())
@@ -26,6 +28,7 @@ public abstract class ValueObject : IEquatable<ValueObject>
             .SequenceEqual(other.GetEqualityComponents());
     }
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         return GetEqualityComponents()
@@ -33,6 +36,7 @@ public abstract class ValueObject : IEquatable<ValueObject>
                 HashCode.Combine(hash, component));
     }
 
+    /// <inheritdoc />
     public static bool operator ==(ValueObject? left, ValueObject? right)
     {
         if (left is null && right is null) return true;
@@ -40,6 +44,7 @@ public abstract class ValueObject : IEquatable<ValueObject>
         return left.Equals(right);
     }
 
+    /// <inheritdoc />
     public static bool operator !=(ValueObject? left, ValueObject? right)
     {
         return !(left == right);

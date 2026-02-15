@@ -12,6 +12,7 @@ public sealed record GetDefaultBoardQuery;
 /// <summary>Loads the default board with columns and cards, filtering out cards for deleted/archived tasks.</summary>
 public sealed class GetDefaultBoardQueryHandler(IBoardRepository boardRepository, ITaskRepository taskRepository)
 {
+    /// <inheritdoc/>
     public async Task<Result<BoardDto, DomainError>> HandleAsync(CancellationToken ct = default)
     {
         var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);

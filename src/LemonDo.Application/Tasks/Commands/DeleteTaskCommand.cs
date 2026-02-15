@@ -18,6 +18,7 @@ public sealed class DeleteTaskCommandHandler(
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork)
 {
+    /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(DeleteTaskCommand command, CancellationToken ct = default)
     {
         var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);

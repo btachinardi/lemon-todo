@@ -22,6 +22,7 @@ public sealed class MoveTaskCommandHandler(
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork)
 {
+    /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(MoveTaskCommand command, CancellationToken ct = default)
     {
         var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);

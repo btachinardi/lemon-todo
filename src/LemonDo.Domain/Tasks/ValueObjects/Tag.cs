@@ -8,8 +8,10 @@ using LemonDo.Domain.Common;
 /// </summary>
 public sealed class Tag : ValueObject
 {
+    /// <summary>Maximum allowed length for a tag: 50 characters.</summary>
     public const int MaxLength = 50;
 
+    /// <summary>The underlying validated tag string, trimmed and normalized to lowercase.</summary>
     public string Value { get; }
 
     private Tag(string value)
@@ -20,6 +22,10 @@ public sealed class Tag : ValueObject
     // EF Core constructor
     private Tag() { Value = default!; }
 
+    /// <summary>
+    /// Creates a <see cref="Tag"/> from a string. Trims whitespace, converts to lowercase, and validates length.
+    /// Returns failure if the input is null, empty, whitespace-only, or exceeds <see cref="MaxLength"/>.
+    /// </summary>
     public static Result<Tag, DomainError> Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -35,10 +41,12 @@ public sealed class Tag : ValueObject
         return Result<Tag, DomainError>.Success(new Tag(normalized));
     }
 
+    /// <inheritdoc />
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;
     }
 
+    /// <inheritdoc />
     public override string ToString() => Value;
 }

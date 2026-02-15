@@ -12,6 +12,7 @@ public sealed record ReorderColumnCommand(Guid BoardId, Guid ColumnId, int NewPo
 /// <summary>Moves the column to the new position via <see cref="LemonDo.Domain.Boards.Entities.Board.ReorderColumn"/>.</summary>
 public sealed class ReorderColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork)
 {
+    /// <inheritdoc/>
     public async Task<Result<ColumnDto, DomainError>> HandleAsync(ReorderColumnCommand command, CancellationToken ct = default)
     {
         var board = await repository.GetByIdAsync(BoardId.From(command.BoardId), ct);

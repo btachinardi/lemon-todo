@@ -40,6 +40,7 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>, IHasDomainEvents wh
         _domainEvents.Clear();
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj)
     {
         if (obj is not Entity<TId> other)
@@ -48,6 +49,7 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>, IHasDomainEvents wh
         return Equals(other);
     }
 
+    /// <inheritdoc />
     public bool Equals(Entity<TId>? other)
     {
         if (other is null)
@@ -59,8 +61,10 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>, IHasDomainEvents wh
         return EqualityComparer<TId>.Default.Equals(Id, other.Id);
     }
 
+    /// <inheritdoc />
     public override int GetHashCode() => Id.GetHashCode();
 
+    /// <inheritdoc />
     public static bool operator ==(Entity<TId>? left, Entity<TId>? right)
     {
         if (left is null && right is null) return true;
@@ -68,6 +72,7 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>, IHasDomainEvents wh
         return left.Equals(right);
     }
 
+    /// <inheritdoc />
     public static bool operator !=(Entity<TId>? left, Entity<TId>? right)
     {
         return !(left == right);

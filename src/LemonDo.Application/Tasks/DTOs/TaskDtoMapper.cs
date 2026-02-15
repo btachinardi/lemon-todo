@@ -5,6 +5,7 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 /// <summary>Maps <see cref="LemonDo.Domain.Tasks.Entities.Task"/> aggregates to <see cref="TaskDto"/> read models.</summary>
 public static class TaskDtoMapper
 {
+    /// <summary>Converts a Task entity to a DTO, flattening value objects to primitive types.</summary>
     public static TaskDto ToDto(TaskEntity task) => new()
     {
         Id = task.Id.Value,

@@ -21,13 +21,20 @@ public sealed class LemonDoDbContext : DbContext, IUnitOfWork
 {
     private readonly IDomainEventDispatcher? _eventDispatcher;
 
+    /// <summary>
+    /// Initializes the DbContext with EF Core options and an optional domain event dispatcher.
+    /// When dispatcher is provided, domain events are dispatched automatically after SaveChangesAsync.
+    /// </summary>
     public LemonDoDbContext(DbContextOptions<LemonDoDbContext> options, IDomainEventDispatcher? eventDispatcher = null)
         : base(options)
     {
         _eventDispatcher = eventDispatcher;
     }
 
+    /// <summary>Gets the DbSet for Task entities, including tags when queried via repository.</summary>
     public DbSet<TaskEntity> Tasks => Set<TaskEntity>();
+
+    /// <summary>Gets the DbSet for Board entities, including columns and task cards when queried via repository.</summary>
     public DbSet<Board> Boards => Set<Board>();
 
     /// <summary>Applies all EF Core entity configurations from this assembly.</summary>
@@ -47,6 +54,11 @@ public sealed class LemonDoDbContext : DbContext, IUnitOfWork
             .HaveConversion<string>();
     }
 
+    /// <summary>
+    /// Saves changes to the database with automatic timestamp management (CreatedAt, UpdatedAt)
+    /// and domain event dispatching. Events are collected before save and dispatched after
+    /// commit to ensure they represent committed facts.
+    /// </summary>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var entries = ChangeTracker.Entries()

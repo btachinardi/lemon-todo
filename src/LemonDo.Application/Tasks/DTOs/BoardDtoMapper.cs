@@ -9,6 +9,7 @@ using LemonDo.Domain.Tasks.ValueObjects;
 /// </summary>
 public static class BoardDtoMapper
 {
+    /// <summary>Converts a Board entity to a DTO, optionally filtering cards to only include tasks in the provided set of active IDs.</summary>
     public static BoardDto ToDto(Board board, HashSet<TaskId>? activeTaskIds = null) => new()
     {
         Id = board.Id.Value,

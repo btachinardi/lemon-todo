@@ -20,6 +20,7 @@ public sealed record UpdateTaskCommand(
 /// <summary>Applies partial updates to a task. Only non-null fields are changed.</summary>
 public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork)
 {
+    /// <inheritdoc/>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(UpdateTaskCommand command, CancellationToken ct = default)
     {
         var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), ct);

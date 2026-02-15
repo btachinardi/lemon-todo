@@ -10,6 +10,11 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 /// <summary>EF Core configuration for the Task aggregate, including the owned <c>TaskTags</c> table.</summary>
 public sealed class TaskConfiguration : IEntityTypeConfiguration<TaskEntity>
 {
+    /// <summary>
+    /// Configures the Task entity mapping to the Tasks table with owned collection for
+    /// tags (TaskTags table). Uses value object conversions for strongly-typed IDs and
+    /// validates Title/Description max lengths.
+    /// </summary>
     public void Configure(EntityTypeBuilder<TaskEntity> builder)
     {
         builder.ToTable("Tasks");

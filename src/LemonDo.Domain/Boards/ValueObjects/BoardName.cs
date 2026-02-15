@@ -7,11 +7,18 @@ using LemonDo.Domain.Common;
 /// </summary>
 public sealed class BoardName : ValueObject
 {
+    /// <summary>Maximum allowed length for a board name: 100 characters.</summary>
     public const int MaxLength = 100;
+
+    /// <summary>The underlying validated board name string.</summary>
     public string Value { get; }
 
     private BoardName(string value) => Value = value;
 
+    /// <summary>
+    /// Creates a <see cref="BoardName"/> from a string. Trims whitespace and validates length.
+    /// Returns failure if the input is null, empty, whitespace-only, or exceeds <see cref="MaxLength"/>.
+    /// </summary>
     public static Result<BoardName, DomainError> Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -26,6 +33,7 @@ public sealed class BoardName : ValueObject
         return Result<BoardName, DomainError>.Success(new BoardName(trimmed));
     }
 
+    /// <inheritdoc />
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;

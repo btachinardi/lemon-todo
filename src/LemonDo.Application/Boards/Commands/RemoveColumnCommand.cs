@@ -11,6 +11,7 @@ public sealed record RemoveColumnCommand(Guid BoardId, Guid ColumnId);
 /// <summary>Removes the column via <see cref="LemonDo.Domain.Boards.Entities.Board.RemoveColumn"/>. Enforces minimum column invariants.</summary>
 public sealed class RemoveColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork)
 {
+    /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(RemoveColumnCommand command, CancellationToken ct = default)
     {
         var board = await repository.GetByIdAsync(BoardId.From(command.BoardId), ct);

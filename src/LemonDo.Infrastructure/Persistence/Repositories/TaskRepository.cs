@@ -11,6 +11,7 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 /// <summary>EF Core implementation of <see cref="ITaskRepository"/>. Eagerly loads tags.</summary>
 public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
 {
+    /// <inheritdoc/>
     public async System.Threading.Tasks.Task<TaskEntity?> GetByIdAsync(TaskId id, CancellationToken ct = default)
     {
         return await context.Tasks
@@ -18,6 +19,7 @@ public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
             .FirstOrDefaultAsync(t => t.Id == id, ct);
     }
 
+    /// <inheritdoc/>
     public async System.Threading.Tasks.Task<PagedResult<TaskEntity>> ListAsync(
         UserId ownerId,
         Priority? priority = null,
@@ -51,6 +53,7 @@ public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
         return new PagedResult<TaskEntity>(items, totalCount, page, pageSize);
     }
 
+    /// <inheritdoc/>
     public async System.Threading.Tasks.Task<HashSet<TaskId>> GetActiveTaskIdsAsync(UserId ownerId, CancellationToken ct = default)
     {
         var ids = await context.Tasks
@@ -61,11 +64,13 @@ public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
         return ids.ToHashSet();
     }
 
+    /// <inheritdoc/>
     public async System.Threading.Tasks.Task AddAsync(TaskEntity task, CancellationToken ct = default)
     {
         await context.Tasks.AddAsync(task, ct);
     }
 
+    /// <inheritdoc/>
     public System.Threading.Tasks.Task UpdateAsync(TaskEntity task, CancellationToken ct = default)
     {
         context.Tasks.Update(task);

@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 /// <summary>EF Core implementation of <see cref="IBoardRepository"/>. Eagerly loads columns and cards.</summary>
 public sealed class BoardRepository(LemonDoDbContext context) : IBoardRepository
 {
+    /// <inheritdoc/>
     public async Task<Board?> GetByIdAsync(BoardId id, CancellationToken ct = default)
     {
         return await context.Boards
@@ -17,6 +18,7 @@ public sealed class BoardRepository(LemonDoDbContext context) : IBoardRepository
             .FirstOrDefaultAsync(b => b.Id == id, ct);
     }
 
+    /// <inheritdoc/>
     public async Task<Board?> GetDefaultForUserAsync(UserId ownerId, CancellationToken ct = default)
     {
         return await context.Boards
@@ -25,11 +27,13 @@ public sealed class BoardRepository(LemonDoDbContext context) : IBoardRepository
             .FirstOrDefaultAsync(b => b.OwnerId == ownerId, ct);
     }
 
+    /// <inheritdoc/>
     public async Task AddAsync(Board board, CancellationToken ct = default)
     {
         await context.Boards.AddAsync(board, ct);
     }
 
+    /// <inheritdoc/>
     public Task UpdateAsync(Board board, CancellationToken ct = default)
     {
         context.Boards.Update(board);

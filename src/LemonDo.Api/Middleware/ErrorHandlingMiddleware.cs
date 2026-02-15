@@ -9,6 +9,12 @@ using System.Text.Json;
 /// </summary>
 public sealed class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
 {
+    /// <summary>
+    /// Processes the HTTP request and catches any unhandled exceptions.
+    /// Returns a standardized JSON error response (500) with structured problem details.
+    /// In development mode, includes the full exception stack trace in the response detail field.
+    /// </summary>
+    /// <param name="context">The HTTP context for the current request.</param>
     public async Task InvokeAsync(HttpContext context)
     {
         try

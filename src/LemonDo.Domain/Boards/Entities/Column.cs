@@ -10,13 +10,18 @@ using LemonDo.Domain.Tasks.ValueObjects;
 /// </summary>
 public sealed class Column : Entity<ColumnId>
 {
+    /// <summary>Display name for this column. Can be renamed while the column is on a board.</summary>
     public ColumnName Name { get; private set; }
 
     /// <summary>
     /// The <see cref="TaskStatus"/> that tasks in this column should have.
     /// </summary>
     public TaskStatus TargetStatus { get; }
+
+    /// <summary>Zero-based position of this column in the board's column list. Managed by the board aggregate.</summary>
     public int Position { get; internal set; }
+
+    /// <summary>Optional work-in-progress limit. When set, restricts the number of cards that can be placed in this column.</summary>
     public int? MaxTasks { get; private set; }
 
     /// <summary>

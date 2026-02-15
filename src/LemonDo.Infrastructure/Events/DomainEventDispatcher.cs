@@ -8,6 +8,12 @@ using Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public interface IDomainEventDispatcher
 {
+    /// <summary>
+    /// Dispatches a collection of domain events to all registered handlers. Events are dispatched
+    /// sequentially in the order they appear in the collection.
+    /// </summary>
+    /// <param name="events">Domain events to dispatch, typically collected during an aggregate operation.</param>
+    /// <param name="ct">Cancellation token to cancel the dispatch operation.</param>
     Task DispatchAsync(IReadOnlyList<DomainEvent> events, CancellationToken ct = default);
 }
 
@@ -17,6 +23,7 @@ public interface IDomainEventDispatcher
 /// </summary>
 public sealed class DomainEventDispatcher(IServiceProvider serviceProvider) : IDomainEventDispatcher
 {
+    /// <inheritdoc/>
     public async Task DispatchAsync(IReadOnlyList<DomainEvent> events, CancellationToken ct = default)
     {
         foreach (var domainEvent in events)

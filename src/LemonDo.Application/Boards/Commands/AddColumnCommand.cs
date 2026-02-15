@@ -13,6 +13,7 @@ public sealed record AddColumnCommand(Guid BoardId, string Name, string TargetSt
 /// <summary>Validates the column name and status, then delegates to <see cref="LemonDo.Domain.Boards.Entities.Board.AddColumn"/>.</summary>
 public sealed class AddColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork)
 {
+    /// <inheritdoc/>
     public async Task<Result<ColumnDto, DomainError>> HandleAsync(AddColumnCommand command, CancellationToken ct = default)
     {
         var board = await repository.GetByIdAsync(BoardId.From(command.BoardId), ct);

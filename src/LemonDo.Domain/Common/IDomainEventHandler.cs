@@ -7,5 +7,9 @@ namespace LemonDo.Domain.Common;
 /// <typeparam name="TEvent">The domain event type to handle.</typeparam>
 public interface IDomainEventHandler<in TEvent> where TEvent : DomainEvent
 {
+    /// <summary>
+    /// Handles the domain event asynchronously. Called by the infrastructure dispatcher after the
+    /// transaction commits. Should be idempotent if possible, since event dispatch is at-least-once.
+    /// </summary>
     Task HandleAsync(TEvent domainEvent, CancellationToken ct = default);
 }

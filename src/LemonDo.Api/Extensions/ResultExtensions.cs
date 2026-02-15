@@ -10,6 +10,16 @@ using LemonDo.Domain.Common;
 /// </summary>
 public static class ResultExtensions
 {
+    /// <summary>
+    /// Converts a domain <see cref="Result{TValue, TError}"/> to an HTTP response.
+    /// Success returns 200 with the value (or custom <paramref name="onSuccess"/> response).
+    /// Failure returns a problem details response with status code based on error classification:
+    /// 404 for not_found errors, 400 for validation errors, 422 for business rule violations.
+    /// </summary>
+    /// <typeparam name="TValue">The success value type.</typeparam>
+    /// <param name="result">The domain result to convert.</param>
+    /// <param name="onSuccess">Optional custom success response factory. Defaults to Ok(value).</param>
+    /// <returns>An <see cref="IResult"/> representing the HTTP response.</returns>
     public static IResult ToHttpResult<TValue>(this Result<TValue, DomainError> result, Func<TValue, IResult>? onSuccess = null)
     {
         if (result.IsSuccess)
@@ -18,6 +28,15 @@ public static class ResultExtensions
         return ToErrorResponse(result.Error);
     }
 
+    /// <summary>
+    /// Converts a domain <see cref="Result{TError}"/> (no value) to an HTTP response.
+    /// Success returns 200 OK (or custom <paramref name="onSuccess"/> response).
+    /// Failure returns a problem details response with status code based on error classification:
+    /// 404 for not_found errors, 400 for validation errors, 422 for business rule violations.
+    /// </summary>
+    /// <param name="result">The domain result to convert.</param>
+    /// <param name="onSuccess">Optional custom success response factory. Defaults to Ok().</param>
+    /// <returns>An <see cref="IResult"/> representing the HTTP response.</returns>
     public static IResult ToHttpResult(this Result<DomainError> result, Func<IResult>? onSuccess = null)
     {
         if (result.IsSuccess)

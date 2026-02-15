@@ -21,6 +21,7 @@ public sealed class BulkCompleteTasksCommandHandler(
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork)
 {
+    /// <inheritdoc/>
     public async Task<Result<DomainError>> HandleAsync(BulkCompleteTasksCommand command, CancellationToken ct = default)
     {
         var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);

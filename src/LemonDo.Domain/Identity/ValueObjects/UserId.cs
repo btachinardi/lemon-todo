@@ -24,10 +24,12 @@ public sealed class UserId : ValueObject
     /// <summary>Generates a new random <see cref="UserId"/>.</summary>
     public static UserId New() => new(Guid.NewGuid());
 
+    /// <inheritdoc />
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;
     }
 
+    /// <inheritdoc />
     public override string ToString() => Value.ToString();
 }

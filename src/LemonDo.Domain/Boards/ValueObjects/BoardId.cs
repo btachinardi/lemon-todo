@@ -10,9 +10,13 @@ public sealed class BoardId : ValueObject
 
     private BoardId(Guid value) => Value = value;
 
+    /// <summary>Generates a new unique board identifier.</summary>
     public static BoardId New() => new(Guid.NewGuid());
+
+    /// <summary>Wraps an existing GUID as a <see cref="BoardId"/>. Use when reconstructing from persistence.</summary>
     public static BoardId From(Guid value) => new(value);
 
+    /// <inheritdoc />
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;

@@ -13,6 +13,7 @@ public sealed record GetTaskByIdQuery(Guid TaskId);
 /// <summary>Returns the task as a DTO, or a not-found error.</summary>
 public sealed class GetTaskByIdQueryHandler(ITaskRepository repository)
 {
+    /// <inheritdoc/>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(GetTaskByIdQuery query, CancellationToken ct = default)
     {
         var task = await repository.GetByIdAsync(TaskId.From(query.TaskId), ct);

@@ -10,6 +10,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 /// <summary>EF Core configuration for the <see cref="Board"/> aggregate, including owned <c>Columns</c> and <c>TaskCards</c> tables.</summary>
 public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
 {
+    /// <summary>
+    /// Configures the Board entity mapping to the Boards table with owned collections for
+    /// columns (Columns table) and task cards (TaskCards table). Uses value object conversions
+    /// for strongly-typed IDs and names.
+    /// </summary>
     public void Configure(EntityTypeBuilder<Board> builder)
     {
         builder.ToTable("Boards");

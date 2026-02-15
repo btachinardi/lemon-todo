@@ -7,11 +7,18 @@ using LemonDo.Domain.Common;
 /// </summary>
 public sealed class ColumnName : ValueObject
 {
+    /// <summary>Maximum allowed length for a column name: 50 characters.</summary>
     public const int MaxLength = 50;
+
+    /// <summary>The underlying validated column name string.</summary>
     public string Value { get; }
 
     private ColumnName(string value) => Value = value;
 
+    /// <summary>
+    /// Creates a <see cref="ColumnName"/> from a string. Trims whitespace and validates length.
+    /// Returns failure if the input is null, empty, whitespace-only, or exceeds <see cref="MaxLength"/>.
+    /// </summary>
     public static Result<ColumnName, DomainError> Create(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -26,6 +33,7 @@ public sealed class ColumnName : ValueObject
         return Result<ColumnName, DomainError>.Success(new ColumnName(trimmed));
     }
 
+    /// <inheritdoc />
     protected override IEnumerable<object?> GetEqualityComponents()
     {
         yield return Value;

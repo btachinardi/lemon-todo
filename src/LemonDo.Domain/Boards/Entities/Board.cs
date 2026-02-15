@@ -22,9 +22,16 @@ public sealed class Board : Entity<BoardId>
     private readonly List<Column> _columns = [];
     private readonly List<TaskCard> _cards = [];
 
+    /// <summary>The user who owns this board. Immutable after creation.</summary>
     public UserId OwnerId { get; }
+
+    /// <summary>Display name for this board. Can be changed via board update commands.</summary>
     public BoardName Name { get; private set; }
+
+    /// <summary>The columns on this board, ordered by <see cref="Column.Position"/>. Minimum 1 column required.</summary>
     public IReadOnlyList<Column> Columns => _columns.AsReadOnly();
+
+    /// <summary>Task cards currently placed on this board, each mapped to a column with a rank for ordering.</summary>
     public IReadOnlyList<TaskCard> Cards => _cards.AsReadOnly();
 
     private Board(BoardId id, UserId ownerId, BoardName name) : base(id)
