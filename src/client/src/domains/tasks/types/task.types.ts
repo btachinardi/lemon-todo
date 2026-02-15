@@ -3,13 +3,19 @@
  * Values match the backend enum and are used in API serialization.
  */
 export const Priority = {
+  /** No priority assigned (default for quick-added tasks). */
   None: 'None',
+  /** Nice to have; no deadline pressure. */
   Low: 'Low',
+  /** Normal work item. */
   Medium: 'Medium',
+  /** Needs attention soon. */
   High: 'High',
+  /** Blocking other work; handle immediately. */
   Critical: 'Critical',
 } as const;
 
+/** Union of valid priority levels. Use the companion `Priority` const for values. */
 export type Priority = (typeof Priority)[keyof typeof Priority];
 
 /**
@@ -19,11 +25,15 @@ export type Priority = (typeof Priority)[keyof typeof Priority];
  * Board columns map to these statuses via {@link Column.targetStatus}.
  */
 export const TaskStatus = {
+  /** Initial state for newly created tasks. */
   Todo: 'Todo',
+  /** Task is actively being worked on. */
   InProgress: 'InProgress',
+  /** Task is finished; sets `completedAt` timestamp. */
   Done: 'Done',
 } as const;
 
+/** Union of valid task lifecycle statuses. Use the companion `TaskStatus` const for values. */
 export type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus];
 
 /**

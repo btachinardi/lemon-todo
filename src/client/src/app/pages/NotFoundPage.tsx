@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { Button } from '@/ui/button';
 
+/** Catch-all 404 page with a link back to the home route. */
 export function NotFoundPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">

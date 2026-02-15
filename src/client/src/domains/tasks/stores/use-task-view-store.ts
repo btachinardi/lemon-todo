@@ -20,6 +20,7 @@ interface TaskViewState {
   resetFilters: () => void;
 }
 
+/** Zustand store for client-only task view UI state. View mode persists to localStorage. */
 export const useTaskViewStore = create<TaskViewState>()(
   persist(
     (set) => ({
