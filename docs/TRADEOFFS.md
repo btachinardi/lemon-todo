@@ -58,6 +58,20 @@
 | **Cross-context coordination** | Application-layer handlers orchestrate both aggregates | Domain-level coupling between contexts | Handlers coordinate CreateTask = Task.Create + board.PlaceTask, keeping domain layers independent |
 | **Entity naming** | `Task` (with `using TaskEntity = ...` alias for collisions) | `BoardTask` or `TaskItem` | Tasks exist independently of boards; the name should reflect that; alias handles System.Threading.Tasks.Task collision |
 
+### Authentication & Security
+
+| Trade-off | What we chose | What we gave up | Why |
+|---|---|---|---|
+| **Token storage** | HttpOnly cookie (refresh) + JS memory (access) | localStorage for both tokens | XSS can read localStorage but not HttpOnly cookies; memory-only access token is invisible to injected scripts |
+| **Cookie scope** | `SameSite=Strict`, `Path=/api/auth` | `SameSite=Lax` or broader path | Strict + narrow path means cookie is only sent on same-site requests to auth endpoints; eliminates CSRF without CSRF tokens |
+| **CSRF protection** | None (SameSite=Strict is sufficient) | Explicit CSRF tokens | SameSite=Strict prevents cross-origin cookie transmission; path-scoping prevents same-origin leakage to non-auth endpoints; adding CSRF tokens would be redundant complexity |
+| **Session restoration** | Silent refresh on page load via cookie | Persisted access token in sessionStorage | sessionStorage is also XSS-readable; silent refresh adds ~100ms on page load but eliminates all client-side token storage |
+| **Zustand persistence** | Removed entirely (memory-only store) | localStorage persistence with `skipHydration` workaround | Eliminating persist also eliminated the Zustand 5 + React 19 hydration race condition; simpler code, better security |
+| **PII in logs** | Masked emails (`u***@example.com`) | Full emails for easier debugging | PII in logs violates GDPR/HIPAA; masked format preserves enough info for debugging (first char + domain) |
+| **Token family detection** | Deferred | Detect stolen refresh token reuse | Requires DB migration (FamilyId column) and complex revocation logic; current single-device model limits attack surface |
+| **HaveIBeenPwned check** | Deferred | Reject breached passwords on registration | External API dependency needs graceful degradation; can be added independently later |
+| **Refresh token cleanup** | Background service (every 6 hours) | Manual cleanup or no cleanup | Prevents unbounded table growth; 6h interval balances DB load vs staleness |
+
 ### Card Ordering & API Design
 
 | Trade-off | What we chose | What we gave up | Why |

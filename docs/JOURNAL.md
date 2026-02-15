@@ -662,13 +662,14 @@ Full authentication system across backend, frontend, and E2E tests:
 
 **Frontend (Phases 6-10)**:
 - Auth pages: `LoginPage`, `RegisterPage` with `AuthLayout`
-- Zustand auth store with `skipHydration: true` + `AuthHydrationProvider`
+- Zustand auth store (memory-only, no persistence) + `AuthHydrationProvider` (silent refresh via HttpOnly cookie)
 - Protected routes: `ProtectedRoute`, `LoginRoute`, `RegisterRoute`
-- Bearer token injection in `api-client.ts` with 401 → logout + redirect
+- Bearer token injection from Zustand memory in `api-client.ts` with 401 → token refresh → retry
+- `credentials: 'include'` on all fetch calls for cookie transmission
 - `UserMenu` dropdown in `DashboardLayout` header
 
 **E2E (Phase 11)**:
-- `auth.helpers.ts`: `getAuthToken()`, `loginViaStorage(page)` for Playwright
+- `auth.helpers.ts`: `getAuthToken()`, `loginViaApi(page)` for Playwright (cookie injection + silent refresh)
 - `api.helpers.ts`: all API calls include Bearer token
 - 5 new auth E2E tests + 37 existing tests adapted
 
@@ -677,21 +678,23 @@ Full authentication system across backend, frontend, and E2E tests:
 | Decision | Rationale |
 |----------|-----------|
 | Custom auth endpoints (not `MapIdentityApi`) | Full control over JWT response shape, refresh flow |
-| `skipHydration: true` on auth store | React 19 `useSyncExternalStore` crashes with Zustand persist auto-hydration |
-| `AuthHydrationProvider` wrapping router | Safe `await rehydrate()` after mount, before children subscribe |
+| Memory-only auth store (no persist) | HttpOnly cookie handles session persistence; Zustand persist removed entirely, eliminating React 19 hydration race |
+| `AuthHydrationProvider` wrapping router | Silent refresh via HttpOnly cookie on mount, restores in-memory access token before children render |
 | Deferred JWT bearer options | `AddOptions<JwtBearerOptions>().Configure<IOptions<JwtSettings>>()` avoids eager config read that breaks test factory overrides |
 | `jti` claim on access tokens | Prevents identical tokens when issued within the same second |
-| `loginViaStorage` for E2E | Injects Zustand auth state into localStorage, avoids slow login-via-form for every test |
+| `loginViaApi` for E2E | Calls login API, injects HttpOnly cookie via Playwright `addCookies`, silent refresh restores session |
 
 ### Gotchas & Lessons
 
 1. **Zustand 5 + React 19 infinite loop**: Object-returning selectors like `useStore(s => ({ a: s.a }))` create new references every call → "getSnapshot should be cached" → infinite re-render. Fix: split into separate primitive selectors or use `useShallow`.
 
-2. **Zustand persist hydration race**: Persist auto-hydration changes store mid-render, violating React 19's stricter `useSyncExternalStore` contract. Fix: `skipHydration: true` + manual `await rehydrate()` in a provider component.
+2. **Zustand persist hydration race** (resolved by removal): Persist auto-hydration changes store mid-render, violating React 19's stricter `useSyncExternalStore` contract. Originally fixed with `skipHydration: true` + manual `await rehydrate()`. Later eliminated entirely by removing persist middleware — auth tokens now use HttpOnly cookies + memory-only Zustand store.
 
 3. **JWT bearer eager config**: `builder.Configuration.Get<JwtSettings>()` in Program.cs runs before `CustomWebApplicationFactory.ConfigureAppConfiguration` overrides. Token signed with test key, validated with dev key → 401. Fix: deferred options pattern.
 
 4. **`WebApplicationFactory.WithWebHostBuilder()`** returns base `WebApplicationFactory<Program>`, not `CustomWebApplicationFactory`. Instance methods aren't accessible. Fix: extension methods on `WebApplicationFactory<Program>`.
+
+5. **TestServer HttpClient maintains a cookie jar**: `CreateClient()` enables `UseCookies = true` by default. Login responses set cookies, and subsequent requests from the same client include them. Tests needing a pristine "no cookie" client must use `HandleCookies = false`.
 
 ### Verification
 
@@ -707,6 +710,88 @@ Full authentication system across backend, frontend, and E2E tests:
 
 ---
 
+## CP2 Security Hardening: HttpOnly Cookies & Medium Fixes
+
+**Date**: 2026-02-15
+
+### The Problem
+
+After completing CP2's initial auth implementation, a security review identified several concerns:
+
+1. **Refresh tokens stored in localStorage** — vulnerable to XSS. Any injected script can read localStorage and exfiltrate tokens. This was the most critical issue.
+2. **PII in logs** — email addresses logged in plain text during login/register attempts.
+3. **No CORS configuration** — required for production deployments and cookie-based auth.
+4. **No HTTPS enforcement** — required for the `Secure` cookie flag.
+5. **No security response headers** — missing standard protections (X-Frame-Options, CSP, etc.).
+6. **No refresh token cleanup** — revoked/expired tokens accumulate forever in the database.
+
+### The Architecture: Memory-Only Access Token + HttpOnly Refresh Cookie
+
+We adopted a split-token architecture that eliminates localStorage entirely:
+
+**Access token** — kept in JavaScript memory (Zustand store, NOT persisted). Lost on page refresh. Sent as `Authorization: Bearer` header on API calls. Short-lived (15 min).
+
+**Refresh token** — set as an HttpOnly cookie by the server. Never accessible to JavaScript. Scoped to `Path=/api/auth` so it's only sent on auth endpoints. `SameSite=Strict` prevents CSRF. `Secure` flag enforced in production.
+
+**Session restoration on page refresh**: `AuthHydrationProvider` makes a silent `POST /api/auth/refresh` on mount. The browser automatically sends the HttpOnly cookie. If successful, the server returns a new access token in the response body, which gets stored in Zustand memory. If the cookie is expired/invalid, the user lands on the login page.
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| HttpOnly cookie for refresh token (not localStorage) | XSS can't read HttpOnly cookies; eliminates the most dangerous token theft vector |
+| SameSite=Strict (not Lax) | Cookie only sent on same-site requests; no CSRF protection needed |
+| Path=/api/auth (not /) | Cookie not sent on `/api/tasks`, `/api/boards`, etc.; minimizes exposure surface |
+| No CSRF tokens | SameSite=Strict + path-scoped cookie makes traditional CSRF impossible |
+| Memory-only access token (not sessionStorage) | sessionStorage is also readable by XSS; pure JS variable is the only storage invisible to injected scripts |
+| Silent refresh on page load | Restores session without user interaction; feels like "staying logged in" despite memory-only tokens |
+| Removed Zustand persist entirely | No localStorage usage at all for auth — eliminates the attack surface completely |
+| Email masking in logs (`u***@example.com`) | Prevents PII exposure in log aggregators, satisfies GDPR/HIPAA log requirements |
+| Background cleanup service (6h interval) | Prevents unbounded RefreshTokens table growth from accumulated expired/revoked tokens |
+
+### What Was Deferred
+
+- **Token family detection**: Would detect refresh token reuse (stolen token scenario). Requires a `FamilyId` column on RefreshToken and more complex revocation logic. Deferred because it needs a DB migration and the current single-device-per-user model limits the attack surface.
+- **HaveIBeenPwned password check**: Would reject passwords found in known breaches. Deferred because it requires an external API dependency and needs graceful degradation when the API is unavailable.
+
+### Implementation Details
+
+**Middleware pipeline order** (matters for security):
+```
+SecurityHeaders → CorrelationId → ErrorHandling → HSTS/HTTPS → CORS → RateLimiter → Auth → Authorization → Endpoints
+```
+
+**Security headers added**:
+- `X-Content-Type-Options: nosniff` — prevents MIME-type sniffing
+- `X-Frame-Options: DENY` — prevents clickjacking
+- `Referrer-Policy: strict-origin-when-cross-origin` — limits referer leakage
+- `X-XSS-Protection: 0` — disables browser's broken XSS filter (CSP is better)
+- `Content-Security-Policy` — restricts script/style/image sources to `'self'`
+
+**E2E test adaptation**: `loginViaStorage()` was renamed to `loginViaApi()`. Instead of injecting localStorage, it now calls the login API, extracts the `Set-Cookie` header, injects the refresh cookie via Playwright's `context.addCookies()`, and navigates to `/` where `AuthHydrationProvider` performs a silent refresh to restore the in-memory access token.
+
+### Verification
+
+| Check             | Result |
+|-------------------|--------|
+| Backend Build     | 9/9 projects, 0 warnings, 0 errors |
+| Frontend Build    | 1947 modules, 585 KB JS + 53 KB CSS |
+| Backend Tests     | 262 passed, 0 failed |
+| Frontend Tests    | 84 passed, 0 failed |
+| Frontend Lint     | Clean |
+
+### Lessons Learned
+
+1. **localStorage is not a secure token store.** Any XSS vulnerability (a single unescaped user input, a compromised npm package) can read localStorage. HttpOnly cookies are the only browser storage mechanism that JavaScript categorically cannot access.
+
+2. **SameSite=Strict + path scoping makes CSRF tokens unnecessary.** The cookie is only sent on same-site navigation to `/api/auth/*` paths. Cross-origin requests and even same-origin requests to other paths never include it. This is a simpler security model than managing CSRF tokens.
+
+3. **Memory-only state simplifies the frontend.** Removing Zustand's `persist` middleware eliminated the `skipHydration` workaround, the `_hydrated` flag, and the Zustand 5 + React 19 rehydration race condition. The new `AuthHydrationProvider` is simpler: one `fetch` call, one `setAuth` call, done.
+
+4. **TestServer HttpClient maintains a cookie jar.** `WebApplicationFactory.CreateClient()` creates an `HttpClient` with `UseCookies = true` by default. Login responses set cookies, and subsequent requests from the same client include them. Tests that need a "no cookie" baseline must use `HandleCookies = false`.
+
+---
+
 ## What's Next
 
 ### Checkpoint 3: Rich UX & Polish
@@ -715,7 +800,7 @@ Full authentication system across backend, frontend, and E2E tests:
 
 ### Checkpoint 4: Production Hardening
 
-*Planned: OpenTelemetry + Serilog observability, PII redaction in admin views, audit trail, admin panel, SystemAdmin role, i18n (en + pt-BR), rate limiting, data encryption at rest.*
+*Planned: OpenTelemetry + Serilog observability, PII redaction in admin views, audit trail, admin panel, SystemAdmin role, i18n (en + pt-BR), data encryption at rest.*
 
 ### Checkpoint 5: Advanced & Delight
 
