@@ -142,4 +142,105 @@ describe('TaskDetailSheet', () => {
     expect(dueDateTrigger.className).toContain('flex-1');
     expect(dueDateTrigger.className).not.toContain('w-full');
   });
+
+  describe('tag suggestions', () => {
+    const allTags = ['shopping', 'urgent', 'work', 'personal', 'errands'];
+
+    it('should show suggestion list when tag input is focused and allTags is provided', async () => {
+      const user = userEvent.setup();
+      renderSheet({ allTags });
+
+      const tagInput = screen.getByLabelText('New tag');
+      await user.click(tagInput);
+
+      // Should show tags that are NOT already on the task (task has 'shopping' and 'urgent')
+      expect(screen.getByRole('option', { name: 'work' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'personal' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'errands' })).toBeInTheDocument();
+    });
+
+    it('should not show tags already on the task in suggestions', async () => {
+      const user = userEvent.setup();
+      renderSheet({ allTags });
+
+      const tagInput = screen.getByLabelText('New tag');
+      await user.click(tagInput);
+
+      // 'shopping' and 'urgent' are already on testTask
+      const options = screen.getAllByRole('option');
+      const optionTexts = options.map((o) => o.textContent);
+      expect(optionTexts).not.toContain('shopping');
+      expect(optionTexts).not.toContain('urgent');
+    });
+
+    it('should filter suggestions as user types', async () => {
+      const user = userEvent.setup();
+      renderSheet({ allTags });
+
+      const tagInput = screen.getByLabelText('New tag');
+      await user.type(tagInput, 'wo');
+
+      expect(screen.getByRole('option', { name: 'work' })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'personal' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'errands' })).not.toBeInTheDocument();
+    });
+
+    it('should call onAddTag with suggestion value when clicking a suggestion', async () => {
+      const onAddTag = vi.fn();
+      const user = userEvent.setup();
+      renderSheet({ onAddTag, allTags });
+
+      const tagInput = screen.getByLabelText('New tag');
+      await user.click(tagInput);
+      await user.click(screen.getByRole('option', { name: 'work' }));
+
+      expect(onAddTag).toHaveBeenCalledWith('work');
+    });
+
+    it('should clear input after selecting a suggestion', async () => {
+      const user = userEvent.setup();
+      renderSheet({ allTags });
+
+      const tagInput = screen.getByLabelText('New tag');
+      await user.type(tagInput, 'wo');
+      await user.click(screen.getByRole('option', { name: 'work' }));
+
+      expect(tagInput).toHaveValue('');
+    });
+
+    it('should not call onAddTag for case-different duplicate of tag already on task', async () => {
+      const onAddTag = vi.fn();
+      const user = userEvent.setup();
+      renderSheet({ onAddTag, allTags });
+
+      const tagInput = screen.getByLabelText('New tag');
+      await user.type(tagInput, 'Shopping');
+      await user.click(screen.getByRole('button', { name: /add/i }));
+
+      // 'shopping' (lowercase) is already on the task — should not call onAddTag
+      expect(onAddTag).not.toHaveBeenCalled();
+      expect(tagInput).toHaveValue('');
+    });
+
+    it('should not show suggestions when allTags is not provided', async () => {
+      const user = userEvent.setup();
+      renderSheet(); // no allTags prop
+
+      const tagInput = screen.getByLabelText('New tag');
+      await user.click(tagInput);
+
+      expect(screen.queryByRole('option')).not.toBeInTheDocument();
+    });
+
+    it('should show no suggestions when all existing tags are already on the task', async () => {
+      const user = userEvent.setup();
+      // Task already has both tags from allTags
+      renderSheet({ allTags: ['shopping', 'urgent'] });
+
+      const tagInput = screen.getByLabelText('New tag');
+      await user.click(tagInput);
+
+      expect(screen.queryByRole('option')).not.toBeInTheDocument();
+    });
+  });
 });

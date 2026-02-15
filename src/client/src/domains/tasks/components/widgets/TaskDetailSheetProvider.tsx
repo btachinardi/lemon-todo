@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { toastApiError } from '@/lib/toast-helpers';
-import { useTaskQuery } from '../../hooks/use-tasks-query';
+import { useTaskQuery, useTasksQuery } from '../../hooks/use-tasks-query';
 import { useUpdateTask, useDeleteTask, useAddTag, useRemoveTag } from '../../hooks/use-task-mutations';
 import { TaskDetailSheet } from './TaskDetailSheet';
 
@@ -17,12 +17,22 @@ interface TaskDetailSheetProviderProps {
  */
 export function TaskDetailSheetProvider({ taskId, onClose }: TaskDetailSheetProviderProps) {
   const taskQuery = useTaskQuery(taskId ?? '');
+  const tasksQuery = useTasksQuery();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const addTag = useAddTag();
   const removeTag = useRemoveTag();
 
   const task = taskQuery.data;
+
+  const allTags = useMemo(() => {
+    if (!tasksQuery.data) return undefined;
+    const tagSet = new Set<string>();
+    for (const t of tasksQuery.data.items) {
+      for (const tag of t.tags) tagSet.add(tag);
+    }
+    return [...tagSet].sort();
+  }, [tasksQuery.data]);
 
   const handleUpdateTitle = useCallback(
     (title: string) => {
@@ -120,6 +130,7 @@ export function TaskDetailSheetProvider({ taskId, onClose }: TaskDetailSheetProv
       onRemoveTag={handleRemoveTag}
       onDelete={handleDelete}
       isDeleting={deleteTask.isPending}
+      allTags={allTags}
     />
   );
 }

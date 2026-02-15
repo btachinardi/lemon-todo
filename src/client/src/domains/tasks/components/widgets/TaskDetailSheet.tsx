@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
   CalendarIcon,
@@ -50,6 +50,8 @@ export interface TaskDetailSheetProps {
   onRemoveTag: (tag: string) => void;
   onDelete: () => void;
   isDeleting?: boolean;
+  /** All distinct tags across all tasks, used for autocomplete suggestions. */
+  allTags?: string[];
 }
 
 /** Slide-over panel for viewing and editing all fields of a single task. */
@@ -67,6 +69,7 @@ export function TaskDetailSheet({
   onRemoveTag,
   onDelete,
   isDeleting,
+  allTags,
 }: TaskDetailSheetProps) {
   const isOpen = taskId !== null;
 
@@ -87,6 +90,7 @@ export function TaskDetailSheet({
             onRemoveTag={onRemoveTag}
             onDelete={onDelete}
             isDeleting={isDeleting}
+            allTags={allTags}
           />
         )}
       </SheetContent>
@@ -107,6 +111,7 @@ interface TaskDetailContentProps {
   onRemoveTag: (tag: string) => void;
   onDelete: () => void;
   isDeleting?: boolean;
+  allTags?: string[];
 }
 
 function TaskDetailContent({
@@ -122,11 +127,13 @@ function TaskDetailContent({
   onRemoveTag,
   onDelete,
   isDeleting,
+  allTags,
 }: TaskDetailContentProps) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(task?.title ?? '');
   const [descDraft, setDescDraft] = useState(task?.description ?? '');
   const [tagInput, setTagInput] = useState('');
+  const [tagInputFocused, setTagInputFocused] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -167,13 +174,33 @@ function TaskDetailContent({
     if (!task) return;
     const tag = tagInput.trim();
     if (!tag) return;
-    if (task.tags.includes(tag)) {
+    const normalizedInput = tag.toLowerCase();
+    if (task.tags.some((t) => t.toLowerCase() === normalizedInput)) {
       setTagInput('');
       return;
     }
     onAddTag(tag);
     setTagInput('');
   }, [task, tagInput, onAddTag]);
+
+  const handleSelectSuggestion = useCallback(
+    (tag: string) => {
+      onAddTag(tag);
+      setTagInput('');
+    },
+    [onAddTag],
+  );
+
+  const filteredSuggestions = useMemo(() => {
+    if (!allTags || !task) return [];
+    const taskTagsLower = new Set(task.tags.map((t) => t.toLowerCase()));
+    const inputLower = tagInput.trim().toLowerCase();
+    return allTags.filter((tag) => {
+      if (taskTagsLower.has(tag.toLowerCase())) return false;
+      if (inputLower && !tag.toLowerCase().includes(inputLower)) return false;
+      return true;
+    });
+  }, [allTags, task, tagInput]);
 
   if (isLoading) {
     return (
@@ -329,31 +356,59 @@ function TaskDetailContent({
               </Badge>
             ))}
           </div>
-          <form
-            className="flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleAddTag();
-            }}
-          >
-            <Input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              placeholder="Add a tag..."
-              className="h-8 text-sm"
-              aria-label="New tag"
-            />
-            <Button
-              type="submit"
-              variant="outline"
-              size="sm"
-              className="h-8 shrink-0"
-              disabled={!tagInput.trim()}
+          <div className="relative">
+            <form
+              className="flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddTag();
+              }}
             >
-              <PlusIcon className="mr-1 size-3" />
-              Add
-            </Button>
-          </form>
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onFocus={() => setTagInputFocused(true)}
+                onBlur={() => {
+                  // Delay hiding so click on suggestion registers first
+                  setTimeout(() => setTagInputFocused(false), 150);
+                }}
+                placeholder="Add a tag..."
+                className="h-8 text-sm"
+                aria-label="New tag"
+              />
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                className="h-8 shrink-0"
+                disabled={!tagInput.trim()}
+              >
+                <PlusIcon className="mr-1 size-3" />
+                Add
+              </Button>
+            </form>
+            {tagInputFocused && filteredSuggestions.length > 0 && (
+              <ul
+                className="absolute z-50 mt-1 max-h-32 w-full overflow-y-auto rounded-md border bg-popover p-1 shadow-md"
+                role="listbox"
+              >
+                {filteredSuggestions.map((tag) => (
+                  <li
+                    key={tag}
+                    role="option"
+                    aria-selected={false}
+                    className="cursor-pointer rounded-sm px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
+                    onMouseDown={(e) => {
+                      e.preventDefault(); // Prevent blur before click
+                      handleSelectSuggestion(tag);
+                    }}
+                  >
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         {/* Delete */}
