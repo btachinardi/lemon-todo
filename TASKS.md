@@ -299,3 +299,24 @@
 | 44c96b9 | fix(kanban): replace dense integer positions with sparse decimal ranks | CP1 |
 | faabd82 | test(e2e): add card ordering and orphaned card E2E tests | CP1 |
 | 4b9f7c6 | fix(domain): allow archiving tasks regardless of status | CP1 |
+| f58fcc9 | docs: update domain model and journal for rank ordering and archive changes | CP1 |
+| 75d140a | refactor(client): eliminate all unsafe type assertions and `any` usage | CP1 |
+| abbc71b | docs(typescript): add missing JSDoc to frontend types, routes, and utilities | CP1 |
+| 332cd7f | docs(csharp): add comprehensive XML documentation to all public APIs | CP1 |
+| 4ed272d | docs(csharp): add XML documentation to Application and Infrastructure layers | CP1 |
+| debb5ab | docs(csharp): add XML documentation to Domain layer | CP1 |
+| 6e375ad | fix(migration): add data migration for Position-to-Rank card ordering | CP1 |
+| b9ae69a | docs(csharp): fix all 146 CS1591 missing XML comment warnings | CP1 |
+| f421b5b | fix(kanban): use drop target for cross-column card positioning | CP1 |
+| a16880a | refactor(tests): replace manual assertions with MSTest 4 typed equivalents | CP1 |
+| 5a6a7a6 | docs(tradeoffs): expand with domain design, bounded context, and ordering decisions | CP1 |
+| 0d85a73 | chore: gitignore SQLite databases and untrack dev db files | CP1 |
+| 7fab5e8 | feat(observability): add full-stack telemetry, error handling, and monitoring | CP1 |
+| 6512e59 | style(theme): overhaul design tokens and fonts to match lemon.io | CP1 |
+| de1becc | style(layout): polish header, navigation, and page containers | CP1 |
+| 2210e36 | style(kanban): refine columns, cards, and quick-add form | CP1 |
+| 54c0262 | feat(list-view): add time-based grouping and completed-task splitting | CP1 |
+| 44f56cd | merge: integrate CP1 core task management into develop | Release |
+| f28f714 | chore(release): prepare v0.1.0 | Release |
+| 0896f8b | release: v0.1.0 — Checkpoint 1 Core Task Management | Release |
+| 18456f2 | docs: add release process guide, update README for v0.1.0 | Release |
