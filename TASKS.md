@@ -247,6 +247,7 @@
 | 2026-02-15 | Cookie-based E2E auth over localStorage injection | Playwright E2E uses `context.addCookies()` + silent refresh (not localStorage). Matches production auth flow exactly. Verifies `POST /api/auth/refresh` succeeds before proceeding. |
 | 2026-02-15 | Unique user per describe block for E2E isolation | Each `test.describe.serial` creates a fresh user (timestamp + counter email). No cleanup needed — users never see each other's data. Eliminates flaky token rotation conflicts from shared state. |
 | 2026-02-15 | Serial execution for E2E UI tests | `test.describe.serial` with shared page/context. Login once in `beforeAll`, tests accumulate state within block. 42 logins → 8 logins, 60-90s → 20s, 100% stability (3/3 green runs). |
+| 2026-02-15 | v0.2.0 release via gitflow | CP2 (Auth & Authorization) release. 388 tests (262 backend + 84 frontend + 42 E2E). Cookie-based auth, security hardening, multi-user support. |
 
 ---
 
