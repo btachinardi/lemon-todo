@@ -40,13 +40,13 @@ export function QuickAddForm({ onSubmit, isLoading, className }: QuickAddFormPro
           placeholder="What needs to be done?"
           maxLength={500}
           disabled={isLoading}
-          className="h-10 rounded-full bg-secondary/80 px-4 text-sm placeholder:text-muted-foreground/60 focus-visible:bg-secondary"
+          className="h-10 rounded-lg border-border bg-secondary/60 px-4 text-sm placeholder:text-muted-foreground/60 focus-visible:border-primary/40 focus-visible:bg-secondary/80"
         />
         <Button
           type="submit"
           size="sm"
           disabled={!title.trim() || isLoading}
-          className="h-10 rounded-full px-5 font-semibold shadow-[0_0_16px_rgba(169,255,3,0.15)] transition-shadow hover:shadow-[0_0_24px_rgba(169,255,3,0.3)]"
+          className="h-10 px-4 shadow-[0_0_16px_rgba(220,255,2,0.15)] transition-shadow hover:shadow-[0_0_24px_rgba(220,255,2,0.3)]"
         >
           {isLoading ? (
             <LoaderIcon className="size-4 animate-spin" />

@@ -34,17 +34,17 @@ export function KanbanColumn({
   return (
     <div
       className={cn(
-        'flex w-80 shrink-0 flex-col rounded-xl bg-secondary/40 p-3 transition-all duration-200',
-        isOver && 'bg-primary/5 ring-1 ring-primary/20',
+        'flex min-w-72 flex-1 flex-col rounded-xl border border-border/40 bg-secondary p-3 transition-all duration-300',
+        isOver && 'border-primary/30 bg-primary/5 ring-1 ring-primary/20',
         className,
       )}
       style={style}
     >
       <div className="mb-3 flex items-center justify-between px-1">
-        <h3 className="font-display text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-secondary-foreground">
           {column.name}
         </h3>
-        <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-border px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-muted-foreground">
+        <span className="inline-flex min-w-5 items-center justify-center rounded-md bg-border px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-muted-foreground">
           {tasks.length}
           {column.maxTasks != null && `/${column.maxTasks}`}
         </span>
@@ -62,8 +62,8 @@ export function KanbanColumn({
               />
             ))}
             {tasks.length === 0 && (
-              <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-border/50 py-8 text-center">
-                <p className="text-sm text-muted-foreground/70">No tasks</p>
+              <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-border py-8 text-center">
+                <p className="text-sm text-muted-foreground">No tasks</p>
               </div>
             )}
           </div>

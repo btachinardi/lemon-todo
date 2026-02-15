@@ -198,7 +198,7 @@ export function KanbanBoard({
       onDragCancel={handleDragCancel}
     >
       <ScrollArea className={cn('w-full', className)}>
-        <div className="flex gap-5 p-6">
+        <div className="flex gap-4 p-6">
           {sortedColumns.map((column, index) => {
             const taskIdsInColumn = columnItems[column.id] ?? [];
             const columnTasks = taskIdsInColumn
