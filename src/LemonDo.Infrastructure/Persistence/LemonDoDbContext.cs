@@ -4,6 +4,9 @@ using LemonDo.Application.Common;
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Common;
 using LemonDo.Infrastructure.Events;
+using LemonDo.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
@@ -17,7 +20,7 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 /// SQLite does not natively support <see cref="DateTimeOffset"/>; values are stored as ISO 8601
 /// strings via <see cref="ConfigureConventions"/> to preserve correct sort order.
 /// </remarks>
-public sealed class LemonDoDbContext : DbContext, IUnitOfWork
+public sealed class LemonDoDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IUnitOfWork
 {
     private readonly IDomainEventDispatcher? _eventDispatcher;
 
@@ -37,9 +40,13 @@ public sealed class LemonDoDbContext : DbContext, IUnitOfWork
     /// <summary>Gets the DbSet for Board entities, including columns and task cards when queried via repository.</summary>
     public DbSet<Board> Boards => Set<Board>();
 
-    /// <summary>Applies all EF Core entity configurations from this assembly.</summary>
+    /// <summary>Gets the DbSet for refresh tokens used in JWT authentication.</summary>
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    /// <summary>Applies Identity schema and all EF Core entity configurations from this assembly.</summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LemonDoDbContext).Assembly);
     }
 

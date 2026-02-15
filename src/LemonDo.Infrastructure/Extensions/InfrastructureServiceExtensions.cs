@@ -4,8 +4,10 @@ using LemonDo.Application.Common;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Infrastructure.Events;
+using LemonDo.Infrastructure.Identity;
 using LemonDo.Infrastructure.Persistence;
 using LemonDo.Infrastructure.Persistence.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +26,18 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IBoardRepository, BoardRepository>();
+
+        services.AddIdentityCore<ApplicationUser>(options =>
+            {
+                options.Password.RequiredLength = 8;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+                options.User.RequireUniqueEmail = true;
+            })
+            .AddRoles<IdentityRole<Guid>>()
+            .AddEntityFrameworkStores<LemonDoDbContext>();
 
         return services;
     }
