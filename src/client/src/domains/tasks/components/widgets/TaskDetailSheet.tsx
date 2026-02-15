@@ -281,7 +281,7 @@ function TaskDetailContent({
                 <Button
                   variant="outline"
                   className={cn(
-                    'w-full justify-start text-left font-normal',
+                    'flex-1 min-w-0 justify-start truncate text-left font-normal',
                     !parsedDueDate && 'text-muted-foreground',
                   )}
                 >

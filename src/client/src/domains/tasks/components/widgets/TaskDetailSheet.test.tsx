@@ -130,4 +130,16 @@ describe('TaskDetailSheet', () => {
     renderSheet({ isError: true, task: undefined });
     expect(screen.getByText('Could not load task details.')).toBeInTheDocument();
   });
+
+  it('should use flex-1 instead of w-full on due date trigger so clear button does not cause overflow', () => {
+    renderSheet({
+      task: createTask({ dueDate: '2026-03-15' }),
+    });
+
+    // The due date trigger button should use flex-1 (not w-full) to share
+    // space with the clear button without overflowing the container.
+    const dueDateTrigger = screen.getByRole('button', { name: /march 15/i });
+    expect(dueDateTrigger.className).toContain('flex-1');
+    expect(dueDateTrigger.className).not.toContain('w-full');
+  });
 });
