@@ -47,8 +47,10 @@ export interface BulkCompleteRequest {
 export interface ListTasksParams {
   status?: string;
   priority?: string;
-  /** Case-insensitive substring match on task title. */
+  /** Case-insensitive substring match on task title and description. */
   search?: string;
+  /** Exact match on a tag value. */
+  tag?: string;
   /** One-based page number. @defaultValue 1 */
   page?: number;
   /** @defaultValue 50 */

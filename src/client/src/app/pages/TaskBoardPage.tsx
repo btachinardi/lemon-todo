@@ -1,13 +1,20 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { AlertCircleIcon } from 'lucide-react';
 import { toastApiError } from '@/lib/toast-helpers';
 import { Button } from '@/ui/button';
-import { Skeleton } from '@/ui/skeleton';
 import { KanbanBoard } from '@/domains/tasks/components/views/KanbanBoard';
+import { BoardSkeleton } from '@/domains/tasks/components/atoms/BoardSkeleton';
+import { EmptyBoard } from '@/domains/tasks/components/atoms/EmptyBoard';
+import { EmptySearchResults } from '@/domains/tasks/components/atoms/EmptySearchResults';
 import { QuickAddForm } from '@/domains/tasks/components/widgets/QuickAddForm';
+import { TaskDetailSheetProvider } from '@/domains/tasks/components/widgets/TaskDetailSheetProvider';
+import { FilterBar } from '@/domains/tasks/components/widgets/FilterBar';
 import { useDefaultBoardQuery } from '@/domains/tasks/hooks/use-board-query';
 import { useTasksQuery } from '@/domains/tasks/hooks/use-tasks-query';
 import { useCompleteTask, useCreateTask, useMoveTask, useUncompleteTask } from '@/domains/tasks/hooks/use-task-mutations';
+import type { CreateTaskRequest } from '@/domains/tasks/types/api.types';
+import { useTaskViewStore } from '@/domains/tasks/stores/use-task-view-store';
+import { filterTasks, hasActiveFilters } from '@/domains/tasks/utils/filter-tasks';
 import { TaskStatus } from '@/domains/tasks/types/task.types';
 
 /** Kanban board page with quick-add form and toggle-complete support. */
@@ -19,31 +26,68 @@ export function TaskBoardPage() {
   const uncompleteTask = useUncompleteTask();
   const moveTask = useMoveTask();
   const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
-  const handleToggleComplete = (id: string) => {
-    const task = tasksQuery.data?.items.find((t) => t.id === id);
-    if (!task) return;
+  const searchTerm = useTaskViewStore((s) => s.searchTerm);
+  const filterPriority = useTaskViewStore((s) => s.filterPriority);
+  const filterStatus = useTaskViewStore((s) => s.filterStatus);
+  const filterTag = useTaskViewStore((s) => s.filterTag);
+  const setSearchTerm = useTaskViewStore((s) => s.setSearchTerm);
+  const setFilterPriority = useTaskViewStore((s) => s.setFilterPriority);
+  const setFilterStatus = useTaskViewStore((s) => s.setFilterStatus);
+  const setFilterTag = useTaskViewStore((s) => s.setFilterTag);
+  const resetFilters = useTaskViewStore((s) => s.resetFilters);
 
-    setTogglingTaskId(id);
-    const mutation = task.status === TaskStatus.Done ? uncompleteTask : completeTask;
-    mutation.mutate(id, {
-      onError: (error: Error) => toastApiError(error, 'Could not update task. Try again.'),
-      onSettled: () => setTogglingTaskId(null),
-    });
-  };
+  const allTasks = useMemo(() => tasksQuery.data?.items ?? [], [tasksQuery.data?.items]);
+  const criteria = useMemo(
+    () => ({ searchTerm, filterPriority, filterStatus, filterTag }),
+    [searchTerm, filterPriority, filterStatus, filterTag],
+  );
+  const filteredTasks = useMemo(
+    () => hasActiveFilters(criteria) ? filterTasks(allTasks, criteria) : allTasks,
+    [allTasks, criteria],
+  );
+
+  const handleToggleComplete = useCallback(
+    (id: string) => {
+      const task = allTasks.find((t) => t.id === id);
+      if (!task) return;
+
+      setTogglingTaskId(id);
+      const mutation = task.status === TaskStatus.Done ? uncompleteTask : completeTask;
+      mutation.mutate(id, {
+        onError: (error: Error) => toastApiError(error, 'Could not update task. Try again.'),
+        onSettled: () => setTogglingTaskId(null),
+      });
+    },
+    [allTasks, completeTask, uncompleteTask],
+  );
+
+  const handleMoveTask = useCallback(
+    (taskId: string, columnId: string, previousTaskId: string | null, nextTaskId: string | null) =>
+      moveTask.mutate(
+        { id: taskId, request: { columnId, previousTaskId, nextTaskId } },
+        { onError: (error: Error) => toastApiError(error, 'Could not move task. Try again.') },
+      ),
+    [moveTask],
+  );
+
+  const handleCreateTask = useCallback(
+    (request: CreateTaskRequest) =>
+      createTask.mutate(request, {
+        onError: (error: Error) => toastApiError(error, 'Could not save task. Try again.'),
+      }),
+    [createTask],
+  );
+
+  const handleCloseDetail = useCallback(() => setSelectedTaskId(null), []);
+
+  const handleClearFilters = useCallback(() => {
+    resetFilters();
+  }, [resetFilters]);
 
   if (boardQuery.isLoading || tasksQuery.isLoading) {
-    return (
-      <div className="flex gap-4 p-6">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="min-w-72 flex-1 space-y-3 rounded-xl bg-secondary/40 p-3">
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-20 w-full rounded-lg" />
-            <Skeleton className="h-20 w-full rounded-lg" />
-          </div>
-        ))}
-      </div>
-    );
+    return <BoardSkeleton />;
   }
 
   if (boardQuery.error || tasksQuery.error) {
@@ -58,7 +102,6 @@ export function TaskBoardPage() {
         </div>
         <Button
           variant="outline"
-          className=""
           onClick={() => {
             boardQuery.refetch();
             tasksQuery.refetch();
@@ -71,33 +114,45 @@ export function TaskBoardPage() {
   }
 
   const board = boardQuery.data!;
-  const tasks = tasksQuery.data?.items ?? [];
+  const isFiltering = hasActiveFilters(criteria);
+  const isEmpty = allTasks.length === 0;
+  const isEmptyFromFilters = isFiltering && filteredTasks.length === 0;
 
   return (
     <div className="flex flex-col">
-      <div className="border-b border-border/50 px-6 py-4">
+      <div className="space-y-3 border-b border-border/50 px-3 py-3 sm:px-6 sm:py-4">
         <QuickAddForm
-          onSubmit={(request) =>
-            createTask.mutate(request, {
-              onError: (error: Error) => toastApiError(error, 'Could not save task. Try again.'),
-            })
-          }
+          onSubmit={handleCreateTask}
           isLoading={createTask.isPending}
         />
+        <FilterBar
+          searchTerm={searchTerm}
+          filterPriority={filterPriority}
+          filterStatus={filterStatus}
+          filterTag={filterTag}
+          onSearchTermChange={setSearchTerm}
+          onFilterPriorityChange={setFilterPriority}
+          onFilterStatusChange={setFilterStatus}
+          onFilterTagChange={setFilterTag}
+          onResetFilters={resetFilters}
+        />
       </div>
-      <KanbanBoard
-        board={board}
-        tasks={tasks}
-        onCompleteTask={handleToggleComplete}
-        onMoveTask={(taskId, columnId, previousTaskId, nextTaskId) =>
-          moveTask.mutate(
-            { id: taskId, request: { columnId, previousTaskId, nextTaskId } },
-            { onError: (error: Error) => toastApiError(error, 'Could not move task. Try again.') },
-          )
-        }
-        togglingTaskId={togglingTaskId}
-        className="flex-1"
-      />
+      {isEmpty ? (
+        <EmptyBoard />
+      ) : isEmptyFromFilters ? (
+        <EmptySearchResults onClearFilters={handleClearFilters} />
+      ) : (
+        <KanbanBoard
+          board={board}
+          tasks={filteredTasks}
+          onCompleteTask={handleToggleComplete}
+          onSelectTask={setSelectedTaskId}
+          onMoveTask={handleMoveTask}
+          togglingTaskId={togglingTaskId}
+          className="flex-1"
+        />
+      )}
+      <TaskDetailSheetProvider taskId={selectedTaskId} onClose={handleCloseDetail} />
     </div>
   );
 }

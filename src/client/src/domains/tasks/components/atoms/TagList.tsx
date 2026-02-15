@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Badge } from '@/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -9,7 +10,7 @@ interface TagListProps {
 }
 
 /** Horizontal list of tag badges. Renders nothing when `tags` is empty. */
-export function TagList({ tags, className, onRemove }: TagListProps) {
+export const TagList = memo(function TagList({ tags, className, onRemove }: TagListProps) {
   if (tags.length === 0) return null;
 
   return (
@@ -31,4 +32,4 @@ export function TagList({ tags, className, onRemove }: TagListProps) {
       ))}
     </div>
   );
-}
+});

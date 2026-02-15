@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/ui/badge';
 import { CheckCircle2Icon, InboxIcon } from 'lucide-react';
@@ -121,9 +122,15 @@ interface TaskListItemProps {
   onSelectTask?: (id: string) => void;
 }
 
-function TaskListItem({ task, index, togglingTaskId, onCompleteTask, onSelectTask }: TaskListItemProps) {
+/**
+ * Single row in the task list view. Wrapped in `React.memo` because it
+ * renders inside `.map()` — without memo, toggling ONE task re-renders
+ * ALL rows in the list.
+ */
+const TaskListItem = memo(function TaskListItem({ task, index, togglingTaskId, onCompleteTask, onSelectTask }: TaskListItemProps) {
   const isDone = task.status === TaskStatus.Done;
   const isToggling = togglingTaskId === task.id;
+  const animationStyle = useMemo(() => ({ animationDelay: `${index * 30}ms` }), [index]);
 
   return (
     <div
@@ -133,7 +140,7 @@ function TaskListItem({ task, index, togglingTaskId, onCompleteTask, onSelectTas
         'focus-visible:bg-secondary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
         priorityBorder[task.priority],
       )}
-      style={{ animationDelay: `${index * 30}ms` }}
+      style={animationStyle}
       role="button"
       tabIndex={0}
       aria-label={`Task: ${task.title}`}
@@ -158,11 +165,11 @@ function TaskListItem({ task, index, togglingTaskId, onCompleteTask, onSelectTas
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <TaskStatusChip status={task.status} />
             <PriorityBadge priority={task.priority} />
-            <DueDateLabel dueDate={task.dueDate} />
+            <DueDateLabel dueDate={task.dueDate} isDone={isDone} />
             <TagList tags={task.tags} />
           </div>
         </div>
       </div>
     </div>
   );
-}
+});

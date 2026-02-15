@@ -3,6 +3,7 @@ import { tasksApi } from '../api/tasks.api';
 import type { CreateTaskRequest, MoveTaskRequest, UpdateTaskRequest } from '../types/api.types';
 import { boardKeys } from './use-board-query';
 import { taskKeys } from './use-tasks-query';
+import { toastSuccess } from '@/lib/toast-helpers';
 
 /**
  * Invalidates both task and board query caches.
@@ -19,7 +20,10 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: CreateTaskRequest) => tasksApi.create(request),
-    onSuccess: () => invalidateTaskAndBoard(queryClient),
+    onSuccess: () => {
+      invalidateTaskAndBoard(queryClient);
+      toastSuccess('Task created');
+    },
   });
 }
 
@@ -40,7 +44,10 @@ export function useCompleteTask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => tasksApi.complete(id),
-    onSuccess: () => invalidateTaskAndBoard(queryClient),
+    onSuccess: () => {
+      invalidateTaskAndBoard(queryClient);
+      toastSuccess('Task completed');
+    },
   });
 }
 
@@ -49,7 +56,10 @@ export function useUncompleteTask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => tasksApi.uncomplete(id),
-    onSuccess: () => invalidateTaskAndBoard(queryClient),
+    onSuccess: () => {
+      invalidateTaskAndBoard(queryClient);
+      toastSuccess('Task reopened');
+    },
   });
 }
 
@@ -58,7 +68,10 @@ export function useDeleteTask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => tasksApi.delete(id),
-    onSuccess: () => invalidateTaskAndBoard(queryClient),
+    onSuccess: () => {
+      invalidateTaskAndBoard(queryClient);
+      toastSuccess('Task deleted');
+    },
   });
 }
 
@@ -80,6 +93,7 @@ export function useAddTag() {
       tasksApi.addTag(id, { tag }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
+      toastSuccess('Tag added');
     },
   });
 }
@@ -92,6 +106,7 @@ export function useRemoveTag() {
       tasksApi.removeTag(id, tag),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
+      toastSuccess('Tag removed');
     },
   });
 }

@@ -18,3 +18,8 @@ export function toastApiError(error: Error, fallback: string): void {
   }
   toast.error(fallback);
 }
+
+/** Shows a success toast with the given message. */
+export function toastSuccess(message: string): void {
+  toast.success(message);
+}

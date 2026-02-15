@@ -25,6 +25,7 @@ public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
         Priority? priority = null,
         TaskStatus? status = null,
         string? searchTerm = null,
+        string? tag = null,
         int page = 1,
         int pageSize = 50,
         CancellationToken ct = default)
@@ -40,7 +41,12 @@ public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
             query = query.Where(t => t.Status == status.Value);
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
-            query = query.Where(t => EF.Property<string>(t, "Title").Contains(searchTerm));
+            query = query.Where(t =>
+                EF.Property<string>(t, "Title").Contains(searchTerm) ||
+                (EF.Property<string?>(t, "Description") != null && EF.Property<string>(t, "Description").Contains(searchTerm)));
+
+        if (!string.IsNullOrWhiteSpace(tag))
+            query = query.Where(t => t.Tags.Any(tg => EF.Property<string>(tg, "Value") == tag));
 
         var totalCount = await query.CountAsync(ct);
 

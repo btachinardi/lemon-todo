@@ -19,13 +19,14 @@ public interface ITaskRepository
     /// <summary>
     /// Returns a paginated, filtered list of tasks owned by the given user.
     /// Filters are optional and combined with AND logic. The <paramref name="searchTerm"/>
-    /// matches against the task title.
+    /// matches against the task title and description.
     /// </summary>
     System.Threading.Tasks.Task<PagedResult<TaskEntity>> ListAsync(
         UserId ownerId,
         Priority? priority = null,
         TaskStatus? status = null,
         string? searchTerm = null,
+        string? tag = null,
         int page = 1,
         int pageSize = 50,
         CancellationToken ct = default);

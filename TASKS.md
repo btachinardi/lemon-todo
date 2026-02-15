@@ -125,16 +125,17 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| CP3.1 | Kanban drag-and-drop | PENDING | Move tasks between columns via drag |
-| CP3.2 | Quick-add (title-only creation) | PENDING | One-tap task creation - our P0 feature |
-| CP3.3 | Task detail modal/sheet | PENDING | Edit title, description, priority, due date, tags |
-| CP3.4 | Filters and search | PENDING | By priority, status, tag, text search |
-| CP3.5 | Dark/light theme toggle | PENDING | System-aware + manual toggle, Zustand persisted |
-| CP3.6 | Responsive design | PENDING | Mobile-first, sidebar collapse, touch-friendly |
-| CP3.7 | Loading states + skeletons | PENDING | Skeleton components for every view |
-| CP3.8 | Empty states | PENDING | Friendly empty board, no results, first-task prompt |
-| CP3.9 | Toast notifications | PENDING | Success/error feedback on all actions |
-| CP3.10 | Error boundaries | PENDING | Graceful error recovery per route |
+| CP3.1 | Kanban drag-and-drop | DONE | @dnd-kit integration, cross-column + within-column reorder with sparse rank ordering |
+| CP3.2 | Quick-add (title-only creation) | DONE | QuickAddForm wired in both board and list views |
+| CP3.3 | Task detail modal/sheet | DONE | TaskDetailSheet (slide-over) + TaskDetailSheetProvider context. Inline edit title, description, due date, priority, tags. 12 tests. |
+| CP3.4 | Filters and search | DONE | FilterBar widget + filter-tasks.ts utility (12 tests). Backend query params for status, priority, search, tags, archive. |
+| CP3.5 | Dark/light theme toggle | DONE | ThemeProvider + ThemeToggle + Zustand persisted store (8 tests). System-aware default. |
+| CP3.6 | Responsive design | DONE | use-media-query hook, snap-scroll mobile columns, adaptive layouts |
+| CP3.7 | Loading states + skeletons | DONE | BoardSkeleton + ListSkeleton with tests |
+| CP3.8 | Empty states | DONE | EmptyBoard (CTA to create first task) + EmptySearchResults (clear filters). Tests for both. |
+| CP3.9 | Toast notifications | DONE | All CRUD mutations + error toasts via sonner |
+| CP3.10 | Error boundaries | DONE | RouteErrorBoundary per route with retry/home recovery UI (4 tests) |
+| CP3.E2E | E2E tests for CP3 features | DONE | 13 new tests: task detail sheet (5), filter/search (5), theme toggle (3). Fixed 5 pre-existing E2E failures caused by EmptyBoard change. |
 | | **Deliverable** | | Polished, responsive, delightful task management app |
 
 ---
@@ -248,6 +249,15 @@
 | 2026-02-15 | Unique user per describe block for E2E isolation | Each `test.describe.serial` creates a fresh user (timestamp + counter email). No cleanup needed — users never see each other's data. Eliminates flaky token rotation conflicts from shared state. |
 | 2026-02-15 | Serial execution for E2E UI tests | `test.describe.serial` with shared page/context. Login once in `beforeAll`, tests accumulate state within block. 42 logins → 8 logins, 60-90s → 20s, 100% stability (3/3 green runs). |
 | 2026-02-15 | v0.2.0 release via gitflow | CP2 (Auth & Authorization) release. 388 tests (262 backend + 84 frontend + 42 E2E). Cookie-based auth, security hardening, multi-user support. |
+| 2026-02-15 | @dnd-kit for drag-and-drop (not react-beautiful-dnd) | react-beautiful-dnd is unmaintained; @dnd-kit is modular, actively maintained, supports touch/keyboard, and has first-class React 19 support |
+| 2026-02-15 | Slide-over Sheet for task details (not modal Dialog) | Sheet keeps board/list visible in the background, feels lighter than a modal, supports mobile swipe-to-dismiss |
+| 2026-02-15 | Client-side filtering with backend query param support | Filters applied client-side for instant UX; backend params added for future server-side filtering at scale |
+| 2026-02-15 | Zustand persisted theme store (separate from auth store) | Theme preference is non-sensitive client state that should survive page refresh; auth store deliberately avoids persistence |
+| 2026-02-15 | Per-route error boundaries (not global) | Route-level granularity lets users retry or navigate home without losing state in other routes |
+| 2026-02-15 | date-fns over dayjs/moment for date formatting | Tree-shakeable, functional API, no global mutation; only imports what we use |
+| 2026-02-15 | react-day-picker for calendar (Shadcn/ui default) | Shadcn Calendar component is built on react-day-picker; using the standard primitive |
+| 2026-02-15 | CSS animate-fade-in on kanban cards (NFR-011.1) | New DOM elements (new tasks) get fade-in animation via CSS animation-fill-mode:both. React reconciliation preserves existing elements, so only new cards animate. TaskListView already had animate-fade-in-up. |
+| 2026-02-15 | v0.3.0 release via gitflow | CP3 (Rich UX & Polish) release. 478 tests (262 backend + 161 frontend + 55 E2E). Dark mode, filter bar, task detail sheet, loading skeletons, empty states, error boundaries, toasts, micro-animations. |
 
 ---
 
@@ -267,7 +277,19 @@
   - E2E: 42 Playwright tests, 100% stable via unique users + serial execution
   - Security: HttpOnly cookie refresh, CORS, SecurityHeadersMiddleware, rate limiting, PII masking
   - Key lessons: (1) localStorage is not secure for tokens, (2) flaky E2E = test architecture problem
-- **Checkpoint 3**: NOT STARTED (Rich UX & Polish)
+- **Checkpoint 3**: DONE (Rich UX & Polish - 262 backend + 161 frontend + 55 E2E = 478 tests)
+  - Drag-and-drop: @dnd-kit with cross-column moves and within-column reorder
+  - Task detail sheet: slide-over with inline editing (title, description, due date, priority, tags)
+  - Filters & search: FilterBar + backend query params + client-side filter utility
+  - Theme: dark/light with ThemeProvider, ThemeToggle, persisted Zustand store
+  - Responsive: use-media-query hook, snap-scroll mobile, adaptive layouts
+  - Loading: BoardSkeleton + ListSkeleton
+  - Empty states: EmptyBoard + EmptySearchResults with CTA
+  - Toasts: success/error feedback on all mutations
+  - Error boundaries: RouteErrorBoundary per route with recovery UI
+  - Micro-animations: fade-in for kanban cards, draw-check + bounce for completion checkbox
+  - New Shadcn/ui primitives: Sheet, Calendar, Popover, Label
+  - E2E: 13 new tests (detail sheet, filters, theme toggle) + 5 existing tests fixed for CP3 changes
 - **Checkpoint 4**: NOT STARTED (Production Hardening)
 - **Checkpoint 5**: NOT STARTED (Advanced & Delight)
 
@@ -353,3 +375,14 @@
 | 35ad089 | test(e2e): switch from localStorage injection to cookie-based loginViaApi | CP2 Security |
 | ebcf97e | docs: update journal, research, and tradeoffs for CP2 security hardening | CP2 Security |
 | 212a6a8 | test(e2e): eliminate flaky tests via unique users and serial execution | CP2 Security |
+| e38ffac | merge: back-merge release/0.2.0 into develop | Release |
+| 8090552 | feat(api): add filter and search query params to task listing | CP3 |
+| 0b32f0d | feat(ui): add Sheet, Calendar, Popover, and Label primitives | CP3 |
+| ec52d55 | feat(client): add dark/light theme with persisted preference | CP3 |
+| c120bf0 | feat(client): add use-media-query hook and toast helpers | CP3 |
+| e679d57 | feat(ui): add RouteErrorBoundary with recovery UI | CP3 |
+| 69c18ab | feat(tasks): add loading skeletons and empty state components | CP3 |
+| 466262d | feat(tasks): add FilterBar with search, status, priority, and tag filters | CP3 |
+| e298324 | feat(tasks): add TaskDetailSheet with inline editing | CP3 |
+| c5e8be3 | feat(tasks): enhance task components with DnD, toasts, and responsive UI | CP3 |
+| 9d072dd | feat(client): wire CP3 features into app shell | CP3 |

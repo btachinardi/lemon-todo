@@ -1,13 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { AlertCircleIcon } from 'lucide-react';
 import { toastApiError } from '@/lib/toast-helpers';
 import { Button } from '@/ui/button';
-import { Skeleton } from '@/ui/skeleton';
 import { TaskListView } from '@/domains/tasks/components/views/TaskListView';
+import { ListSkeleton } from '@/domains/tasks/components/atoms/ListSkeleton';
 import { ListViewToolbar } from '@/domains/tasks/components/widgets/ListViewToolbar';
 import { QuickAddForm } from '@/domains/tasks/components/widgets/QuickAddForm';
+import { TaskDetailSheetProvider } from '@/domains/tasks/components/widgets/TaskDetailSheetProvider';
 import { useTasksQuery } from '@/domains/tasks/hooks/use-tasks-query';
 import { useCompleteTask, useCreateTask, useUncompleteTask } from '@/domains/tasks/hooks/use-task-mutations';
+import type { CreateTaskRequest } from '@/domains/tasks/types/api.types';
 import { useTaskViewStore } from '@/domains/tasks/stores/use-task-view-store';
 import { TaskStatus } from '@/domains/tasks/types/task.types';
 import { GroupBy } from '@/domains/tasks/types/grouping.types';
@@ -20,6 +22,7 @@ export function TaskListPage() {
   const completeTask = useCompleteTask();
   const uncompleteTask = useUncompleteTask();
   const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const groupBy = useTaskViewStore((s) => s.groupBy);
   const splitCompleted = useTaskViewStore((s) => s.splitCompleted);
@@ -32,26 +35,33 @@ export function TaskListPage() {
     [tasks, groupBy, splitCompleted],
   );
 
-  const handleToggleComplete = (id: string) => {
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
+  const handleToggleComplete = useCallback(
+    (id: string) => {
+      const task = tasks.find((t) => t.id === id);
+      if (!task) return;
 
-    setTogglingTaskId(id);
-    const mutation = task.status === TaskStatus.Done ? uncompleteTask : completeTask;
-    mutation.mutate(id, {
-      onError: (error: Error) => toastApiError(error, 'Could not update task. Try again.'),
-      onSettled: () => setTogglingTaskId(null),
-    });
-  };
+      setTogglingTaskId(id);
+      const mutation = task.status === TaskStatus.Done ? uncompleteTask : completeTask;
+      mutation.mutate(id, {
+        onError: (error: Error) => toastApiError(error, 'Could not update task. Try again.'),
+        onSettled: () => setTogglingTaskId(null),
+      });
+    },
+    [tasks, completeTask, uncompleteTask],
+  );
+
+  const handleCreateTask = useCallback(
+    (request: CreateTaskRequest) =>
+      createTask.mutate(request, {
+        onError: (error: Error) => toastApiError(error, 'Could not save task. Try again.'),
+      }),
+    [createTask],
+  );
+
+  const handleCloseDetail = useCallback(() => setSelectedTaskId(null), []);
 
   if (tasksQuery.isLoading) {
-    return (
-      <div className="mx-auto max-w-4xl space-y-3 p-6">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton key={i} className="h-14 w-full rounded-lg" />
-        ))}
-      </div>
-    );
+    return <ListSkeleton />;
   }
 
   if (tasksQuery.error) {
@@ -73,15 +83,11 @@ export function TaskListPage() {
 
   return (
     <div className="flex flex-col">
-      <div className="border-b border-border/50 px-6 py-4">
+      <div className="border-b border-border/50 px-3 py-3 sm:px-6 sm:py-4">
         <div className="mx-auto flex max-w-4xl items-center gap-4">
           <div className="flex-1">
             <QuickAddForm
-              onSubmit={(request) =>
-                createTask.mutate(request, {
-                  onError: (error: Error) => toastApiError(error, 'Could not save task. Try again.'),
-                })
-              }
+              onSubmit={handleCreateTask}
               isLoading={createTask.isPending}
             />
           </div>
@@ -97,8 +103,10 @@ export function TaskListPage() {
         groups={groups}
         showGroupHeaders={groupBy !== GroupBy.None}
         onCompleteTask={handleToggleComplete}
+        onSelectTask={setSelectedTaskId}
         togglingTaskId={togglingTaskId}
       />
+      <TaskDetailSheetProvider taskId={selectedTaskId} onClose={handleCloseDetail} />
     </div>
   );
 }

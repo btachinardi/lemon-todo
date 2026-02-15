@@ -225,7 +225,31 @@
 - **Requires**: React 18+ (uses `useSyncExternalStore`)
 - **Source**: [TanStack Query](https://tanstack.com/query/latest)
 
-### 2.9 OpenTelemetry Browser SDK (Frontend Telemetry)
+### 2.9 date-fns 4
+
+- **Version**: 4.1.0
+- **Purpose**: Date formatting and manipulation for task due dates
+- **Key Advantages**:
+  - Tree-shakeable: only imports what you use (unlike moment.js which bundles everything)
+  - Pure functional API: no global mutation, immutable operations
+  - Excellent TypeScript support with strict types
+  - Smaller bundle impact than dayjs for selective imports
+- **CP3 Usage**: `format()`, `formatDistanceToNow()` for DueDateLabel and TaskDetailSheet
+- **Source**: [date-fns.org](https://date-fns.org/)
+
+### 2.10 react-day-picker 9
+
+- **Version**: 9.13.2
+- **Purpose**: Calendar widget for date selection
+- **Key Advantages**:
+  - Default calendar primitive used by Shadcn/ui's Calendar component
+  - Accessible (ARIA roles, keyboard navigation)
+  - Customizable with Tailwind CSS classes
+  - Works with date-fns for locale and formatting
+- **CP3 Usage**: Due date picker inside TaskDetailSheet via Shadcn Calendar + Popover
+- **Source**: [react-day-picker](https://react-day-picker.js.org/)
+
+### 2.11 OpenTelemetry Browser SDK (Frontend Telemetry)
 
 - **Purpose**: Distributed tracing and performance monitoring for the browser, connected to the same OTel pipeline as the backend
 - **Key Packages**:
@@ -404,6 +428,8 @@ vite-plugin-pwa: 1.x
 @opentelemetry/sdk-trace-web: 2.x
 @opentelemetry/instrumentation-fetch: 0.x (experimental, follows OTel JS contrib)
 @opentelemetry/exporter-trace-otlp-http: 0.x (experimental, follows OTel JS contrib)
+date-fns: 4.x
+react-day-picker: 9.x
 
 # Testing
 vitest: 4.x

@@ -16,12 +16,14 @@ interface TaskViewState {
   searchTerm: string;
   filterPriority: string | undefined;
   filterStatus: string | undefined;
+  filterTag: string | undefined;
   setViewMode: (mode: ViewMode) => void;
   setGroupBy: (groupBy: GroupBy) => void;
   setSplitCompleted: (split: boolean) => void;
   setSearchTerm: (term: string) => void;
   setFilterPriority: (priority: string | undefined) => void;
   setFilterStatus: (status: string | undefined) => void;
+  setFilterTag: (tag: string | undefined) => void;
   /** Clears search term and all active filters. */
   resetFilters: () => void;
 }
@@ -36,14 +38,16 @@ export const useTaskViewStore = create<TaskViewState>()(
       searchTerm: '',
       filterPriority: undefined,
       filterStatus: undefined,
+      filterTag: undefined,
       setViewMode: (viewMode) => set({ viewMode }),
       setGroupBy: (groupBy) => set({ groupBy }),
       setSplitCompleted: (splitCompleted) => set({ splitCompleted }),
       setSearchTerm: (searchTerm) => set({ searchTerm }),
       setFilterPriority: (filterPriority) => set({ filterPriority }),
       setFilterStatus: (filterStatus) => set({ filterStatus }),
+      setFilterTag: (filterTag) => set({ filterTag }),
       resetFilters: () =>
-        set({ searchTerm: '', filterPriority: undefined, filterStatus: undefined }),
+        set({ searchTerm: '', filterPriority: undefined, filterStatus: undefined, filterTag: undefined }),
     }),
     {
       name: 'lemondo-task-view',

@@ -83,6 +83,21 @@
 | **E2E test isolation** | Unique user per describe block (timestamp + counter email) | Shared user + `deleteAllTasks()` cleanup between tests | Fresh users = true data isolation with zero cleanup overhead; each describe block operates on an empty board; eliminates shared auth state and token rotation conflicts |
 | **E2E test execution** | `test.describe.serial` with shared page/context | Parallel execution with per-test browser context | Tests accumulate state like real users; login once in `beforeAll` instead of per test; 3x faster (20s vs 60-90s), 100% stable |
 
+### Rich UX & Polish (CP3)
+
+| Trade-off | What we chose | What we gave up | Why |
+|---|---|---|---|
+| **Drag-and-drop library** | @dnd-kit (modular, actively maintained) | react-beautiful-dnd | rbd is unmaintained (last release 2021); @dnd-kit is modular, supports touch/keyboard, has first-class React 19 support |
+| **Task detail panel** | Slide-over Sheet | Modal Dialog | Sheet keeps board/list visible in background, provides spatial context, supports mobile swipe-to-dismiss; modals feel heavier and block the view |
+| **Filtering strategy** | Client-side filtering + backend query params | Server-side only or client-side only | Client-side gives instant UX (no round-trip); backend params ready for future pagination/scale; dual approach is fast today and scalable tomorrow |
+| **Theme persistence** | Separate Zustand store with `persist` | Single store or CSS-only | Auth store deliberately avoids `persist` (security); theme is non-sensitive UI state that should survive refresh; separate store keeps concerns isolated |
+| **Error boundary scope** | Per-route `errorElement` | Single global error boundary | Route-level granularity contains failures to the affected route; global boundary unmounts entire app on any error |
+| **Date library** | date-fns 4 (tree-shakeable, functional) | dayjs, moment, Temporal API | Tree-shakeable (only import what we use), no global mutation; Temporal API not yet universally available |
+| **Calendar component** | react-day-picker 9 (Shadcn default) | Custom calendar or alternative library | Shadcn Calendar is built on react-day-picker; using the standard primitive avoids custom styling work |
+| **Loading states** | Dedicated skeleton components | Loading spinners or `isLoading` prop on components | Skeletons mirror loaded layout exactly, preventing layout shift; separate components keep loaded components clean |
+| **Empty states** | Dedicated empty state components with CTAs | Inline conditional text | Dedicated components provide better UX with illustrations and actionable CTAs; reusable across views |
+| **Bundle size** | Single chunk (691 KB JS) | Code-splitting with dynamic imports | All CP3 features are used on every page load; code-splitting deferred to CP4/CP5 when we add admin panel and other lazy-loaded routes |
+
 ---
 
 ## Scalability Considerations

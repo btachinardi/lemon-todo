@@ -36,6 +36,7 @@ public static class TaskEndpoints
         string? status = null,
         string? priority = null,
         string? search = null,
+        string? tag = null,
         int page = 1,
         int pageSize = 50,
         CancellationToken ct = default)
@@ -45,6 +46,7 @@ public static class TaskEndpoints
             Status = Enum.TryParse<TaskStatus>(status, true, out var s) ? s : null,
             Priority = Enum.TryParse<Priority>(priority, true, out var p) ? p : null,
             SearchTerm = search,
+            Tag = tag,
             Page = page,
             PageSize = pageSize
         };
