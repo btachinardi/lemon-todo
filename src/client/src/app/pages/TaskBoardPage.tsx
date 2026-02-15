@@ -34,9 +34,9 @@ export function TaskBoardPage() {
 
   if (boardQuery.isLoading || tasksQuery.isLoading) {
     return (
-      <div className="flex gap-5 p-6">
+      <div className="flex gap-4 p-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="w-80 shrink-0 space-y-3 rounded-xl bg-secondary/40 p-3">
+          <div key={i} className="min-w-72 flex-1 space-y-3 rounded-xl bg-secondary/40 p-3">
             <Skeleton className="h-5 w-24" />
             <Skeleton className="h-20 w-full rounded-lg" />
             <Skeleton className="h-20 w-full rounded-lg" />

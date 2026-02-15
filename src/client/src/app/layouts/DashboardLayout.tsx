@@ -12,14 +12,14 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <div className="flex h-16 items-center justify-between px-6">
-          <h1 className="font-display text-xl font-bold tracking-tight">
-            <span className="text-foreground">Lemon</span>
-            <span className="text-primary">Do</span>
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+          <h1 className="font-mono text-lg font-light tracking-normal">
+            <span className="text-foreground">LEMON</span>
+            <span className="text-primary">DO</span>
           </h1>
           <nav
-            className="flex items-center gap-1 rounded-full border border-border/50 bg-secondary/50 p-1"
+            className="flex items-center gap-1 rounded-lg border-2 border-border/40 bg-secondary/30 p-1"
             aria-label="View switcher"
           >
             <NavLink
@@ -27,9 +27,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               end
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200',
+                  'inline-flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-semibold transition-all duration-300',
                   isActive
-                    ? 'bg-primary text-primary-foreground shadow-[0_0_12px_rgba(169,255,3,0.3)]'
+                    ? 'bg-primary text-primary-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
                 )
               }
@@ -41,9 +41,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               to="/list"
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200',
+                  'inline-flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-semibold transition-all duration-300',
                   isActive
-                    ? 'bg-primary text-primary-foreground shadow-[0_0_12px_rgba(169,255,3,0.3)]'
+                    ? 'bg-primary text-primary-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
                 )
               }
@@ -54,7 +54,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </nav>
         </div>
       </header>
-      <main className="flex-1">{children}</main>
+      <main className="mx-auto w-full max-w-7xl flex-1">{children}</main>
       <Toaster theme="dark" />
     </div>
   );
