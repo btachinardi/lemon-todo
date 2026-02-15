@@ -135,6 +135,7 @@
 | CP3.8 | Empty states | DONE | EmptyBoard (CTA to create first task) + EmptySearchResults (clear filters). Tests for both. |
 | CP3.9 | Toast notifications | DONE | All CRUD mutations + error toasts via sonner |
 | CP3.10 | Error boundaries | DONE | RouteErrorBoundary per route with retry/home recovery UI (4 tests) |
+| CP3.E2E | E2E tests for CP3 features | DONE | 13 new tests: task detail sheet (5), filter/search (5), theme toggle (3). Fixed 5 pre-existing E2E failures caused by EmptyBoard change. |
 | | **Deliverable** | | Polished, responsive, delightful task management app |
 
 ---
@@ -255,6 +256,7 @@
 | 2026-02-15 | Per-route error boundaries (not global) | Route-level granularity lets users retry or navigate home without losing state in other routes |
 | 2026-02-15 | date-fns over dayjs/moment for date formatting | Tree-shakeable, functional API, no global mutation; only imports what we use |
 | 2026-02-15 | react-day-picker for calendar (Shadcn/ui default) | Shadcn Calendar component is built on react-day-picker; using the standard primitive |
+| 2026-02-15 | CSS animate-fade-in on kanban cards (NFR-011.1) | New DOM elements (new tasks) get fade-in animation via CSS animation-fill-mode:both. React reconciliation preserves existing elements, so only new cards animate. TaskListView already had animate-fade-in-up. |
 
 ---
 
@@ -274,7 +276,7 @@
   - E2E: 42 Playwright tests, 100% stable via unique users + serial execution
   - Security: HttpOnly cookie refresh, CORS, SecurityHeadersMiddleware, rate limiting, PII masking
   - Key lessons: (1) localStorage is not secure for tokens, (2) flaky E2E = test architecture problem
-- **Checkpoint 3**: DONE (Rich UX & Polish - 262 backend + 149 frontend = 411 tests)
+- **Checkpoint 3**: DONE (Rich UX & Polish - 262 backend + 161 frontend + 55 E2E = 478 tests)
   - Drag-and-drop: @dnd-kit with cross-column moves and within-column reorder
   - Task detail sheet: slide-over with inline editing (title, description, due date, priority, tags)
   - Filters & search: FilterBar + backend query params + client-side filter utility
@@ -284,7 +286,9 @@
   - Empty states: EmptyBoard + EmptySearchResults with CTA
   - Toasts: success/error feedback on all mutations
   - Error boundaries: RouteErrorBoundary per route with recovery UI
+  - Micro-animations: fade-in for kanban cards, draw-check + bounce for completion checkbox
   - New Shadcn/ui primitives: Sheet, Calendar, Popover, Label
+  - E2E: 13 new tests (detail sheet, filters, theme toggle) + 5 existing tests fixed for CP3 changes
 - **Checkpoint 4**: NOT STARTED (Production Hardening)
 - **Checkpoint 5**: NOT STARTED (Advanced & Delight)
 

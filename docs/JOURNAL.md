@@ -974,14 +974,31 @@ Note: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` were already ad
 
 **Skeleton composition**: Skeletons mirror the exact layout of their loaded counterparts (same grid columns, card heights, spacing). This prevents layout shift when data arrives. Each skeleton is a separate component, not a loading prop on the real component — keeping the loaded component clean.
 
-### 3.6 Verification
+### 3.6 E2E Tests & Polish
+
+Added 13 new E2E tests covering CP3 features:
+
+- **Task Detail Sheet** (5 tests): open sheet by clicking card, verify fields, edit description (persists across close/reopen), inline title editing, delete task via sheet
+- **Filter & Search** (5 tests): search by title (debounced), clear search, filter by priority, clear all filters, empty search results state
+- **Theme Toggle** (3 tests): default dark class, cycle through themes, persist across navigation
+
+Fixed 5 pre-existing E2E tests broken by CP3's EmptyBoard component:
+- `auth.spec.ts`: Fresh users now see "Your board is empty" instead of column headings after login/register
+- `navigation.spec.ts`: Seeded a task so columns render for navigation tests
+- `task-board.spec.ts`: Updated empty state assertion from "No tasks" x3 to "Your board is empty"
+- `card-ordering.spec.ts`: Wait for task text instead of column heading in cross-column test
+
+Also added `animate-fade-in` to kanban SortableTaskCard for NFR-011.1 (task creation animation). TaskListView already had `animate-fade-in-up`.
+
+### 3.7 Verification
 
 | Check | Result |
 |---|---|
-| **Backend Build** | 9/9 projects, 0 warnings, 0 errors (3.08s) |
-| **Frontend Build** | 2906 modules, 691 KB JS + 66 KB CSS (8.25s) |
-| **Backend Tests** | 262 passed, 0 failed, 0 skipped (4.06s) |
-| **Frontend Tests** | 149 passed, 0 failed (25 test files, 28.19s) |
+| **Backend Build** | 9/9 projects, 0 warnings, 0 errors |
+| **Frontend Build** | 691 KB JS + 66 KB CSS |
+| **Backend Tests** | 262 passed, 0 failed, 0 skipped |
+| **Frontend Tests** | 161 passed, 0 failed (25 test files) |
+| **E2E Tests** | 55 passed, 0 failed |
 | **Frontend Lint** | Clean, no issues |
 
 ---
