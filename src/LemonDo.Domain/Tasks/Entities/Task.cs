@@ -104,16 +104,19 @@ public sealed class Task : Entity<TaskId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>Convenience method that transitions the task to <see cref="TaskStatus.Done"/>. Delegates to <see cref="SetStatus"/>.</summary>
     public Result<DomainError> Complete()
     {
         return SetStatus(TaskStatus.Done);
     }
 
+    /// <summary>Reverts a completed task back to <see cref="TaskStatus.Todo"/>. Delegates to <see cref="SetStatus"/>.</summary>
     public Result<DomainError> Uncomplete()
     {
         return SetStatus(TaskStatus.Todo);
     }
 
+    /// <summary>Replaces the task title. Raises <see cref="Events.TaskUpdatedEvent"/>.</summary>
     public Result<DomainError> UpdateTitle(TaskTitle newTitle)
     {
         if (IsDeleted)
@@ -128,6 +131,7 @@ public sealed class Task : Entity<TaskId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>Replaces the task description. Raises <see cref="Events.TaskUpdatedEvent"/>.</summary>
     public Result<DomainError> UpdateDescription(TaskDescription newDescription)
     {
         if (IsDeleted)
@@ -142,6 +146,7 @@ public sealed class Task : Entity<TaskId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>Changes the task priority. Raises <see cref="Events.TaskPriorityChangedEvent"/>.</summary>
     public Result<DomainError> SetPriority(Priority newPriority)
     {
         if (IsDeleted)
@@ -156,6 +161,7 @@ public sealed class Task : Entity<TaskId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>Sets or clears the due date. Pass <c>null</c> to remove it. Raises <see cref="Events.TaskDueDateChangedEvent"/>.</summary>
     public Result<DomainError> SetDueDate(DateTimeOffset? newDueDate)
     {
         if (IsDeleted)
@@ -190,6 +196,7 @@ public sealed class Task : Entity<TaskId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>Removes a tag from the task. Fails if the tag does not exist.</summary>
     public Result<DomainError> RemoveTag(Tag tag)
     {
         if (IsDeleted)
@@ -224,6 +231,7 @@ public sealed class Task : Entity<TaskId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>Restores a previously archived task to active views. Fails if not currently archived.</summary>
     public Result<DomainError> Unarchive()
     {
         if (IsDeleted)

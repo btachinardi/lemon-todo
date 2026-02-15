@@ -2,8 +2,10 @@ namespace LemonDo.Domain.Boards.ValueObjects;
 
 using LemonDo.Domain.Common;
 
+/// <summary>Strongly-typed identifier for a <see cref="Entities.Board"/> aggregate.</summary>
 public sealed class BoardId : ValueObject
 {
+    /// <summary>The underlying GUID value.</summary>
     public Guid Value { get; }
 
     private BoardId(Guid value) => Value = value;

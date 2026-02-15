@@ -64,21 +64,25 @@ public sealed class Board : Entity<BoardId>
         return Result<Board, DomainError>.Success(board);
     }
 
+    /// <summary>Returns the first Todo-targeting column (by position). Used to place new tasks.</summary>
     public Column GetInitialColumn()
     {
         return _columns.Where(c => c.TargetStatus == TaskStatus.Todo).OrderBy(c => c.Position).First();
     }
 
+    /// <summary>Returns the first Done-targeting column (by position). Used to place completed tasks.</summary>
     public Column GetDoneColumn()
     {
         return _columns.Where(c => c.TargetStatus == TaskStatus.Done).OrderBy(c => c.Position).First();
     }
 
+    /// <summary>Finds a column by its ID, or <c>null</c> if not found.</summary>
     public Column? FindColumnById(ColumnId columnId)
     {
         return _columns.Find(c => c.Id == columnId);
     }
 
+    /// <summary>Adds a new column to the board. Fails if a column with the same name already exists.</summary>
     public Result<DomainError> AddColumn(ColumnName name, TaskStatus targetStatus, int? position = null)
     {
         if (_columns.Any(c => c.Name.Value.Equals(name.Value, StringComparison.OrdinalIgnoreCase)))
@@ -135,6 +139,7 @@ public sealed class Board : Entity<BoardId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>Moves a column to a new position, re-indexing all sibling positions.</summary>
     public Result<DomainError> ReorderColumn(ColumnId columnId, int newPosition)
     {
         if (newPosition < 0 || newPosition >= _columns.Count)
@@ -156,6 +161,7 @@ public sealed class Board : Entity<BoardId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>Renames a column. Fails if the new name duplicates another column on this board.</summary>
     public Result<DomainError> RenameColumn(ColumnId columnId, ColumnName newName)
     {
         var column = _columns.Find(c => c.Id == columnId);
@@ -275,6 +281,7 @@ public sealed class Board : Entity<BoardId>
         return Result<TaskStatus, DomainError>.Success(column.TargetStatus);
     }
 
+    /// <summary>Removes a task card from the board. Fails if the task has no card on this board.</summary>
     public Result<DomainError> RemoveCard(TaskId taskId)
     {
         var card = _cards.Find(c => c.TaskId == taskId);
@@ -287,11 +294,13 @@ public sealed class Board : Entity<BoardId>
         return Result<DomainError>.Success();
     }
 
+    /// <summary>Finds a card by its task ID, or <c>null</c> if the task has no card on this board.</summary>
     public TaskCard? FindCardByTaskId(TaskId taskId)
     {
         return _cards.Find(c => c.TaskId == taskId);
     }
 
+    /// <summary>Returns the number of cards currently placed in the specified column.</summary>
     public int GetCardCountInColumn(ColumnId columnId)
     {
         return _cards.Count(c => c.ColumnId == columnId);

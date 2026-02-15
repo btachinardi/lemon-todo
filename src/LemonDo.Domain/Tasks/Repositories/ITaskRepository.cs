@@ -36,6 +36,9 @@ public interface ITaskRepository
     /// </summary>
     System.Threading.Tasks.Task<HashSet<TaskId>> GetActiveTaskIdsAsync(UserId ownerId, CancellationToken ct = default);
 
+    /// <summary>Persists a new task aggregate.</summary>
     System.Threading.Tasks.Task AddAsync(TaskEntity task, CancellationToken ct = default);
+
+    /// <summary>Marks an existing task aggregate as modified for the next unit-of-work commit.</summary>
     System.Threading.Tasks.Task UpdateAsync(TaskEntity task, CancellationToken ct = default);
 }

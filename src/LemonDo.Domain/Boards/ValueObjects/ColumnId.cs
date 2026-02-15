@@ -2,8 +2,10 @@ namespace LemonDo.Domain.Boards.ValueObjects;
 
 using LemonDo.Domain.Common;
 
+/// <summary>Strongly-typed identifier for a <see cref="Entities.Column"/>.</summary>
 public sealed class ColumnId : ValueObject
 {
+    /// <summary>The underlying GUID value.</summary>
     public Guid Value { get; }
 
     public ColumnId(Guid value)

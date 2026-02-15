@@ -20,6 +20,9 @@ public interface IBoardRepository
     /// </summary>
     Task<Board?> GetDefaultForUserAsync(UserId ownerId, CancellationToken ct = default);
 
+    /// <summary>Persists a new board aggregate.</summary>
     Task AddAsync(Board board, CancellationToken ct = default);
+
+    /// <summary>Marks an existing board aggregate as modified for the next unit-of-work commit.</summary>
     Task UpdateAsync(Board board, CancellationToken ct = default);
 }
