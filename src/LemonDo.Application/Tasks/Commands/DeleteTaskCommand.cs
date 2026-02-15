@@ -19,6 +19,7 @@ public sealed class DeleteTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork,
+    ICurrentUserService currentUser,
     ILogger<DeleteTaskCommandHandler> logger,
     ApplicationMetrics metrics)
 {
@@ -43,7 +44,7 @@ public sealed class DeleteTaskCommandHandler(
             return result;
 
         // Remove the card from the board
-        var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
+        var board = await boardRepository.GetDefaultForUserAsync(currentUser.UserId, ct);
         if (board is not null)
         {
             board.RemoveCard(task.Id);

@@ -13,7 +13,7 @@ public static class TaskEndpoints
     /// <summary>Maps all task CRUD, lifecycle, and tag endpoints under <c>/api/tasks</c>.</summary>
     public static RouteGroupBuilder MapTaskEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/tasks").WithTags("Tasks");
+        var group = app.MapGroup("/api/tasks").WithTags("Tasks").RequireAuthorization();
 
         group.MapGet("/", ListTasks);
         group.MapPost("/", CreateTask);

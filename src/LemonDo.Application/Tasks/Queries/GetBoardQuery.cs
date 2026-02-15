@@ -1,5 +1,6 @@
 namespace LemonDo.Application.Tasks.Queries;
 
+using LemonDo.Application.Common;
 using LemonDo.Application.Tasks.DTOs;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Boards.ValueObjects;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Logging;
 public sealed record GetBoardQuery(Guid BoardId);
 
 /// <summary>Loads the board with columns and cards, filtering out cards for deleted/archived tasks.</summary>
-public sealed class GetBoardQueryHandler(IBoardRepository boardRepository, ITaskRepository taskRepository, ILogger<GetBoardQueryHandler> logger)
+public sealed class GetBoardQueryHandler(IBoardRepository boardRepository, ITaskRepository taskRepository, ICurrentUserService currentUser, ILogger<GetBoardQueryHandler> logger)
 {
     /// <inheritdoc/>
     public async Task<Result<BoardDto, DomainError>> HandleAsync(GetBoardQuery query, CancellationToken ct = default)
@@ -27,7 +28,7 @@ public sealed class GetBoardQueryHandler(IBoardRepository boardRepository, ITask
                 DomainError.NotFound("Board", query.BoardId.ToString()));
         }
 
-        var activeTaskIds = await taskRepository.GetActiveTaskIdsAsync(UserId.Default, ct);
+        var activeTaskIds = await taskRepository.GetActiveTaskIdsAsync(currentUser.UserId, ct);
         logger.LogInformation("Board {BoardId} fetched successfully", query.BoardId);
         return Result<BoardDto, DomainError>.Success(BoardDtoMapper.ToDto(board, activeTaskIds));
     }

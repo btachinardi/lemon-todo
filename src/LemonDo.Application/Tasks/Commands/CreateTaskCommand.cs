@@ -28,6 +28,7 @@ public sealed class CreateTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork,
+    ICurrentUserService currentUser,
     ILogger<CreateTaskCommandHandler> logger,
     ApplicationMetrics metrics)
 {
@@ -64,7 +65,7 @@ public sealed class CreateTaskCommandHandler(
 
         // Create task (defaults to Todo status)
         var taskResult = TaskEntity.Create(
-            UserId.Default,
+            currentUser.UserId,
             titleResult.Value,
             descResult.Value,
             command.Priority,
@@ -77,7 +78,7 @@ public sealed class CreateTaskCommandHandler(
         var task = taskResult.Value;
 
         // Place on default board's initial column
-        var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
+        var board = await boardRepository.GetDefaultForUserAsync(currentUser.UserId, ct);
         if (board is null)
             return Result<TaskDto, DomainError>.Failure(
                 DomainError.NotFound("Board", "default"));

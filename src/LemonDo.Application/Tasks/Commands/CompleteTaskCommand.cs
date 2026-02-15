@@ -22,6 +22,7 @@ public sealed class CompleteTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork,
+    ICurrentUserService currentUser,
     ILogger<CompleteTaskCommandHandler> logger,
     ApplicationMetrics metrics)
 {
@@ -46,7 +47,7 @@ public sealed class CompleteTaskCommandHandler(
             return completeResult;
 
         // Move card to Done column on board
-        var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
+        var board = await boardRepository.GetDefaultForUserAsync(currentUser.UserId, ct);
         if (board is null)
             return Result<DomainError>.Failure(
                 DomainError.NotFound("Board", "default"));

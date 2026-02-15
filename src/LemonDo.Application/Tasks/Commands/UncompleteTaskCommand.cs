@@ -21,6 +21,7 @@ public sealed class UncompleteTaskCommandHandler(
     ITaskRepository taskRepository,
     IBoardRepository boardRepository,
     IUnitOfWork unitOfWork,
+    ICurrentUserService currentUser,
     ILogger<UncompleteTaskCommandHandler> logger)
 {
     /// <inheritdoc/>
@@ -41,7 +42,7 @@ public sealed class UncompleteTaskCommandHandler(
             return uncompleteResult;
 
         // Move card to initial (Todo) column on board
-        var board = await boardRepository.GetDefaultForUserAsync(UserId.Default, ct);
+        var board = await boardRepository.GetDefaultForUserAsync(currentUser.UserId, ct);
         if (board is null)
             return Result<DomainError>.Failure(
                 DomainError.NotFound("Board", "default"));
