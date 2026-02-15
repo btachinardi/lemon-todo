@@ -144,19 +144,49 @@ public sealed class TaskEndpointsTests
     [TestMethod]
     public async Task MoveTask_ToColumn_Returns200()
     {
-        // Get default board to get a column ID
         var boardResponse = await _client.GetAsync("/api/boards/default");
         var board = await boardResponse.Content.ReadFromJsonAsync<BoardDto>(JsonOpts);
 
         var createResponse = await _client.PostAsJsonAsync("/api/tasks", new { Title = "Task to move" });
         var created = await createResponse.Content.ReadFromJsonAsync<TaskDto>(JsonOpts);
 
-        var columnId = board!.Columns[0].Id;
+        var inProgressColumn = board!.Columns.First(c => c.TargetStatus == "InProgress");
         var response = await _client.PostAsJsonAsync(
             $"/api/tasks/{created!.Id}/move",
-            new { ColumnId = columnId, Position = 0 });
+            new { ColumnId = inProgressColumn.Id, PreviousTaskId = (Guid?)null, NextTaskId = (Guid?)null });
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task MoveTask_RankPersistsAcrossReads()
+    {
+        // Create 3 tasks (they land in Todo column with ascending ranks)
+        var t1 = await (await _client.PostAsJsonAsync("/api/tasks", new { Title = "Rank A" }))
+            .Content.ReadFromJsonAsync<TaskDto>(JsonOpts);
+        var t2 = await (await _client.PostAsJsonAsync("/api/tasks", new { Title = "Rank B" }))
+            .Content.ReadFromJsonAsync<TaskDto>(JsonOpts);
+        var t3 = await (await _client.PostAsJsonAsync("/api/tasks", new { Title = "Rank C" }))
+            .Content.ReadFromJsonAsync<TaskDto>(JsonOpts);
+
+        // Get board, find Todo column, move C to top (before A)
+        var board = await (await _client.GetAsync("/api/boards/default"))
+            .Content.ReadFromJsonAsync<BoardDto>(JsonOpts);
+        var todoCol = board!.Columns.First(c => c.TargetStatus == "Todo");
+
+        await _client.PostAsJsonAsync(
+            $"/api/tasks/{t3!.Id}/move",
+            new { ColumnId = todoCol.Id, PreviousTaskId = (Guid?)null, NextTaskId = t1!.Id });
+
+        // Re-read the board and verify rank order: C < A < B
+        var boardAfter = await (await _client.GetAsync("/api/boards/default"))
+            .Content.ReadFromJsonAsync<BoardDto>(JsonOpts);
+        var rankC = boardAfter!.Cards.First(c => c.TaskId == t3.Id).Rank;
+        var rankA = boardAfter.Cards.First(c => c.TaskId == t1.Id).Rank;
+        var rankB = boardAfter.Cards.First(c => c.TaskId == t2!.Id).Rank;
+
+        Assert.IsTrue(rankC < rankA, $"C rank ({rankC}) should be less than A rank ({rankA})");
+        Assert.IsTrue(rankA < rankB, $"A rank ({rankA}) should be less than B rank ({rankB})");
     }
 
     [TestMethod]

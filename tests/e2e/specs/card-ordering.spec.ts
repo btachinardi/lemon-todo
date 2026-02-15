@@ -231,6 +231,126 @@ test.describe('Card Ordering (UI)', () => {
     await expect(page.getByText('Gets deleted')).not.toBeVisible();
   });
 
+  test('UI-created tasks maintain order after reload', async ({ page }) => {
+    await page.goto('/');
+
+    // Create tasks through the quick-add form
+    for (const title of ['UI Task One', 'UI Task Two', 'UI Task Three']) {
+      const input = page.getByLabel('New task title');
+      await input.fill(title);
+      await page.getByRole('button', { name: /add/i }).click();
+      // Wait for the card to appear before adding next
+      await expect(page.getByText(title)).toBeVisible();
+    }
+
+    // Capture the order
+    const cards = page.locator('[role="button"][aria-label^="Task:"]');
+    await expect(cards).toHaveCount(3);
+    const labelsBeforeReload = await cards.evaluateAll((els) =>
+      els.map((el) => el.getAttribute('aria-label')),
+    );
+
+    // Reload the page
+    await page.reload();
+    await expect(cards).toHaveCount(3);
+    const labelsAfterReload = await cards.evaluateAll((els) =>
+      els.map((el) => el.getAttribute('aria-label')),
+    );
+
+    // Order must be identical
+    expect(labelsAfterReload).toEqual(labelsBeforeReload);
+  });
+
+  test('creation order is stable across page reloads', async ({ page }) => {
+    // Create 5 tasks sequentially — no reordering
+    await createTask({ title: 'Task Alpha' });
+    await createTask({ title: 'Task Beta' });
+    await createTask({ title: 'Task Gamma' });
+    await createTask({ title: 'Task Delta' });
+    await createTask({ title: 'Task Epsilon' });
+
+    // Load page and capture order
+    await page.goto('/');
+    const cards = page.locator('[role="button"][aria-label^="Task:"]');
+    await expect(cards).toHaveCount(5);
+    const labelsFirstLoad = await cards.evaluateAll((els) =>
+      els.map((el) => el.getAttribute('aria-label')),
+    );
+
+    // Reload 3 times — order must be identical each time
+    for (let i = 0; i < 3; i++) {
+      await page.reload();
+      await expect(cards).toHaveCount(5);
+      const labelsAfterReload = await cards.evaluateAll((els) =>
+        els.map((el) => el.getAttribute('aria-label')),
+      );
+      expect(labelsAfterReload).toEqual(labelsFirstLoad);
+    }
+  });
+
+  test('card order persists after page reload', async ({ page }) => {
+    const t1 = await createTask({ title: 'First item' });
+    const t2 = await createTask({ title: 'Second item' });
+    const t3 = await createTask({ title: 'Third item' });
+
+    // Reorder via API: move Third to top (before First)
+    const board = await getDefaultBoard();
+    const todoCol = board.columns.find((c) => c.targetStatus === 'Todo')!;
+    await moveTask(t3.id, todoCol.id, null, t1.id);
+
+    // Load the page and verify initial order: Third, First, Second
+    await page.goto('/');
+    const cards = page.locator('[role="button"][aria-label^="Task:"]');
+    await expect(cards).toHaveCount(3);
+    const labelsBefore = await cards.evaluateAll((els) =>
+      els.map((el) => el.getAttribute('aria-label')),
+    );
+    expect(labelsBefore[0]).toContain('Third');
+    expect(labelsBefore[1]).toContain('First');
+    expect(labelsBefore[2]).toContain('Second');
+
+    // Reload the page — order must be identical
+    await page.reload();
+    await expect(cards).toHaveCount(3);
+    const labelsAfter = await cards.evaluateAll((els) =>
+      els.map((el) => el.getAttribute('aria-label')),
+    );
+    expect(labelsAfter[0]).toContain('Third');
+    expect(labelsAfter[1]).toContain('First');
+    expect(labelsAfter[2]).toContain('Second');
+  });
+
+  test('card order persists after API re-fetch', async () => {
+    const t1 = await createTask({ title: 'Alpha' });
+    const t2 = await createTask({ title: 'Beta' });
+    const t3 = await createTask({ title: 'Gamma' });
+
+    // Reorder: move Gamma to top
+    const board = await getDefaultBoard();
+    const todoCol = board.columns.find((c) => c.targetStatus === 'Todo')!;
+    await moveTask(t3.id, todoCol.id, null, t1.id);
+
+    // Fetch board multiple times — rank order must be stable
+    const board1 = await getDefaultBoard();
+    const board2 = await getDefaultBoard();
+    const board3 = await getDefaultBoard();
+
+    const getRanks = (b: typeof board1) =>
+      [t3, t1, t2].map((t) => b.cards.find((c) => c.taskId === t.id)!.rank);
+
+    const ranks1 = getRanks(board1);
+    const ranks2 = getRanks(board2);
+    const ranks3 = getRanks(board3);
+
+    // All fetches must return identical ranks
+    expect(ranks1).toEqual(ranks2);
+    expect(ranks2).toEqual(ranks3);
+
+    // Gamma must have the lowest rank (top position)
+    expect(ranks1[0]).toBeLessThan(ranks1[1]);
+    expect(ranks1[1]).toBeLessThan(ranks1[2]);
+  });
+
   test('cross-column move renders task in target column', async ({ page }) => {
     const t1 = await createTask({ title: 'Moving task' });
 
