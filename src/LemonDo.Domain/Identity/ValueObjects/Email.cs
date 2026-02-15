@@ -7,18 +7,12 @@ using LemonDo.Domain.Common;
 /// Strongly-typed email address with format validation.
 /// Maximum length is 254 characters per RFC 5321.
 /// </summary>
-public sealed partial class Email : ValueObject
+public sealed partial class Email : ValueObject<string>, IReconstructable<Email, string>
 {
     /// <summary>Maximum allowed length for an email address (RFC 5321).</summary>
     public const int MaxLength = 254;
 
-    /// <summary>The normalized (lowercased) email string.</summary>
-    public string Value { get; }
-
-    private Email(string value)
-    {
-        Value = value;
-    }
+    private Email(string value) : base(value) { }
 
     /// <summary>Creates an <see cref="Email"/> after validating format and length.</summary>
     public static Result<Email, DomainError> Create(string? email)
@@ -40,14 +34,8 @@ public sealed partial class Email : ValueObject
         return Result<Email, DomainError>.Success(new Email(trimmed.ToLowerInvariant()));
     }
 
-    /// <inheritdoc />
-    protected override IEnumerable<object?> GetEqualityComponents()
-    {
-        yield return Value;
-    }
-
-    /// <inheritdoc />
-    public override string ToString() => Value;
+    /// <summary>Reconstructs an <see cref="Email"/> from a persistence value.</summary>
+    public static Email Reconstruct(string value) => new(value);
 
     [GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled)]
     private static partial Regex EmailRegex();

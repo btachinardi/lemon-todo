@@ -1,7 +1,7 @@
 namespace LemonDo.Infrastructure.Persistence.Configurations;
 
-using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.ValueObjects;
+using LemonDo.Infrastructure.Persistence.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -20,19 +20,9 @@ public sealed class TaskConfiguration : IEntityTypeConfiguration<TaskEntity>
         builder.ToTable("Tasks");
 
         builder.HasKey(t => t.Id);
-        builder.Property(t => t.Id)
-            .HasConversion(id => id.Value, guid => TaskId.From(guid));
-
-        builder.Property(t => t.Title)
-            .HasConversion(t => t.Value, v => TaskTitle.Create(v).Value)
-            .HasMaxLength(TaskTitle.MaxLength)
-            .IsRequired();
-
-        builder.Property(t => t.Description)
-            .HasConversion(
-                d => d != null ? d.Value : null,
-                v => v != null ? TaskDescription.Create(v).Value : null)
-            .HasMaxLength(TaskDescription.MaxLength);
+        builder.Property(t => t.Id).IsValueObject();
+        builder.Property(t => t.Title).IsValueObject(TaskTitle.MaxLength);
+        builder.Property(t => t.Description).IsNullableValueObject(TaskDescription.MaxLength);
 
         builder.Property(t => t.Priority)
             .HasConversion<string>()
@@ -44,11 +34,7 @@ public sealed class TaskConfiguration : IEntityTypeConfiguration<TaskEntity>
             .HasMaxLength(20)
             .IsRequired();
 
-        builder.Property(t => t.OwnerId)
-            .HasConversion(id => id.Value, guid => new UserId(guid))
-            .IsRequired();
-
-        // REMOVED: ColumnId and Position properties (moved to Board's TaskCards)
+        builder.Property(t => t.OwnerId).IsValueObject().IsRequired();
 
         builder.Property(t => t.IsArchived);
         builder.Property(t => t.IsDeleted);

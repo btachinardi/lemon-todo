@@ -5,18 +5,12 @@ using LemonDo.Domain.Common;
 /// <summary>
 /// Validated task description. Allows empty strings; rejects values exceeding <see cref="MaxLength"/> characters.
 /// </summary>
-public sealed class TaskDescription : ValueObject
+public sealed class TaskDescription : ValueObject<string>, IReconstructable<TaskDescription, string>
 {
     /// <summary>Maximum allowed length for a task description: 10,000 characters.</summary>
     public const int MaxLength = 10_000;
 
-    /// <summary>The underlying task description string. Can be empty but never null.</summary>
-    public string Value { get; }
-
-    private TaskDescription(string value)
-    {
-        Value = value;
-    }
+    private TaskDescription(string value) : base(value) { }
 
     /// <summary>
     /// Creates a <see cref="TaskDescription"/> from a string. Accepts empty strings and treats null as empty.
@@ -33,12 +27,6 @@ public sealed class TaskDescription : ValueObject
         return Result<TaskDescription, DomainError>.Success(new TaskDescription(text));
     }
 
-    /// <inheritdoc />
-    protected override IEnumerable<object?> GetEqualityComponents()
-    {
-        yield return Value;
-    }
-
-    /// <inheritdoc />
-    public override string ToString() => Value;
+    /// <summary>Reconstructs a <see cref="TaskDescription"/> from a persistence value.</summary>
+    public static TaskDescription Reconstruct(string value) => new(value);
 }

@@ -592,6 +592,56 @@ See [CHANGELOG.md](../CHANGELOG.md) for the full list. Highlights:
 
 ---
 
+## CP2 Prep: ValueObject\<T\> Base Class Refactor
+
+**Date: February 15, 2026**
+
+### The Problem
+
+Every value object in the codebase repeated the same boilerplate: a `Value` property, `GetEqualityComponents()` yielding that value, and a `ToString()` override. That's ~5 lines of ceremony per VO across 11 files. Worse, every EF Core configuration repeated a verbose `HasConversion(vo => vo.Value, value => SomeVO.SomeMethod(value))` call, and each VO used a *different* reconstruction method (`From()`, `Create().Value`, `new()`) — an inconsistency smell.
+
+### The Solution: Three New Abstractions
+
+**1. `ValueObject<T>` base class** (`Domain/Common/ValueObjectOfT.cs`): Extends the existing `ValueObject` with a generic `Value` property, single-value equality, and `ToString()`. Single-value VOs (all 11 of ours) inherit from this instead of raw `ValueObject`.
+
+**2. `IReconstructable<TSelf, TValue>` interface** (`Domain/Common/IReconstructable.cs`): A static abstract interface that standardizes how VOs are materialized from trusted persistence values. Every VO implements `static TSelf Reconstruct(TValue value) => new(value)`. This is *not* validation — it bypasses `Create()` entirely, because values coming from the database are already trusted.
+
+**3. `ValueObjectPropertyExtensions`** (`Infrastructure/Persistence/Extensions/`): Three extension methods on EF Core's `PropertyBuilder<TVO>`:
+- `IsValueObject()` — for `Guid`-backed VOs (just conversion)
+- `IsValueObject(maxLength)` — for required `string`-backed VOs (conversion + max length + IsRequired)
+- `IsNullableValueObject(maxLength)` — for nullable `string`-backed VOs (null-safe conversion + max length)
+
+### Design Decision: No Static Interface for Create()
+
+We deliberately did **not** create an `ICreatable<TSelf, TInput>` interface to standardize the `Create()` factory pattern. The reason: `Create()` methods are inherently non-uniform:
+
+- **ID types** (TaskId, BoardId, etc.) have no `Create()` at all — they use `New()` / `From()`
+- **String VOs** return `Result<TSelf, DomainError>` but differ in parameters and normalization logic (Tag lowercases, Email validates format + lowercases, DisplayName enforces min length, TaskDescription allows null/empty)
+
+A shared interface would either be too generic to enforce anything useful or too restrictive to accommodate the variations. `Reconstruct` works precisely because reconstruction is *always* the same shape: trusted value in, VO out, no validation. `Create` is the opposite — it's where each VO's unique domain rules live.
+
+### Gotcha: CS8927 — Static Abstract Members in Expression Trees
+
+EF Core's `HasConversion` takes expression trees, but C# prohibits calling static abstract interface members inside expression trees (CS8927). The fix: capture `TVO.Reconstruct` as a `Func<>` delegate first, then use the delegate in the lambda. The expression tree sees a captured variable invocation (legal) instead of a static virtual dispatch (illegal).
+
+```csharp
+// Won't compile — CS8927
+builder.HasConversion(vo => vo.Value, value => TVO.Reconstruct(value));
+
+// Works — delegate capture
+Func<Guid, TVO> reconstruct = TVO.Reconstruct;
+builder.HasConversion(vo => vo.Value, value => reconstruct(value));
+```
+
+### Impact
+
+- **11 value objects** lost ~5 lines of boilerplate each (55 lines removed)
+- **2 EF configurations** replaced verbose conversion calls with one-liner extensions
+- **0 test changes** — public API (`.Value`, `.Create()`, `.From()`) unchanged
+- **246 backend + 80 frontend tests** still pass
+
+---
+
 ## What's Next
 
 ### Checkpoint 2: Authentication & Authorization

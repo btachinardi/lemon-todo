@@ -233,6 +233,9 @@
 | 2026-02-15 | Column.NextRank per-column monotonic counter | Ranks are column-scoped. Each column tracks its own NextRank (starts 1000, +1000 per placement). Avoids scanning cards for max rank. MoveCard bumps target column's NextRank when computed rank exceeds it. |
 | 2026-02-15 | Archive decoupled from task status | Archive is a visibility flag orthogonal to lifecycle. Any task (Todo, InProgress, Done) can be archived. Status changes never affect IsArchived. Only explicit Unarchive() clears it. |
 | 2026-02-15 | v0.1.0 release via gitflow | Pre-1.0 SemVer for initial development. Centralized .NET versioning via `src/Directory.Build.props`. Annotated tag for GitHub release recognition. CHANGELOG.md in Keep a Changelog format. |
+| 2026-02-15 | `ValueObject<T>` base class + `IReconstructable` interface | Eliminates ~5 lines of boilerplate per VO (11 files). `ValueObject<T>` provides `Value`, equality, `ToString()`. `IReconstructable<TSelf, TValue>` standardizes persistence reconstruction. EF extensions (`IsValueObject()`, `IsNullableValueObject()`) replace verbose `HasConversion` calls. |
+| 2026-02-15 | No static interface for `Create()` pattern | `Create()` methods are inherently non-uniform (different params, normalization, validation). `Reconstruct` works because it's always the same shape: trusted value in, VO out, no validation. A shared `ICreatable` would be too generic or too restrictive. |
+| 2026-02-15 | CS8927 workaround: delegate capture for static abstract in expression trees | EF Core `HasConversion` uses expression trees, which can't call static abstract interface members. Fix: capture `TVO.Reconstruct` as `Func<>` delegate, then use delegate in lambda. |
 
 ---
 
@@ -245,7 +248,8 @@
   - Bug Fix: Sparse rank ordering replaces dense integer positions
   - Domain Fix: Archive decoupled from status (any task can be archived)
   - Release: v0.1.0 tagged on main via gitflow
-- **Checkpoint 2**: NOT STARTED (Auth & Authorization)
+- **CP2 Prep**: `ValueObject<T>` base class + `IReconstructable` + EF extensions (boilerplate reduction)
+- **Checkpoint 2**: IN PROGRESS (Auth & Authorization)
 - **Checkpoint 3**: NOT STARTED (Rich UX & Polish)
 - **Checkpoint 4**: NOT STARTED (Production Hardening)
 - **Checkpoint 5**: NOT STARTED (Advanced & Delight)

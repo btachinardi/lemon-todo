@@ -5,15 +5,12 @@ using LemonDo.Domain.Common;
 /// <summary>
 /// Validated column name. Must be non-empty and at most <see cref="MaxLength"/> characters (trimmed).
 /// </summary>
-public sealed class ColumnName : ValueObject
+public sealed class ColumnName : ValueObject<string>, IReconstructable<ColumnName, string>
 {
     /// <summary>Maximum allowed length for a column name: 50 characters.</summary>
     public const int MaxLength = 50;
 
-    /// <summary>The underlying validated column name string.</summary>
-    public string Value { get; }
-
-    private ColumnName(string value) => Value = value;
+    private ColumnName(string value) : base(value) { }
 
     /// <summary>
     /// Creates a <see cref="ColumnName"/> from a string. Trims whitespace and validates length.
@@ -33,9 +30,6 @@ public sealed class ColumnName : ValueObject
         return Result<ColumnName, DomainError>.Success(new ColumnName(trimmed));
     }
 
-    /// <inheritdoc />
-    protected override IEnumerable<object?> GetEqualityComponents()
-    {
-        yield return Value;
-    }
+    /// <summary>Reconstructs a <see cref="ColumnName"/> from a persistence value.</summary>
+    public static ColumnName Reconstruct(string value) => new(value);
 }

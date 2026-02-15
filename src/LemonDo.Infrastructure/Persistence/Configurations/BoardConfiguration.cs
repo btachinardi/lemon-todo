@@ -2,8 +2,7 @@ namespace LemonDo.Infrastructure.Persistence.Configurations;
 
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Boards.ValueObjects;
-using LemonDo.Domain.Identity.ValueObjects;
-using LemonDo.Domain.Tasks.ValueObjects;
+using LemonDo.Infrastructure.Persistence.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -20,17 +19,9 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
         builder.ToTable("Boards");
 
         builder.HasKey(b => b.Id);
-        builder.Property(b => b.Id)
-            .HasConversion(id => id.Value, guid => BoardId.From(guid));
-
-        builder.Property(b => b.Name)
-            .HasConversion(n => n.Value, v => BoardName.Create(v).Value)
-            .HasMaxLength(BoardName.MaxLength)
-            .IsRequired();
-
-        builder.Property(b => b.OwnerId)
-            .HasConversion(id => id.Value, guid => new UserId(guid))
-            .IsRequired();
+        builder.Property(b => b.Id).IsValueObject();
+        builder.Property(b => b.Name).IsValueObject(BoardName.MaxLength);
+        builder.Property(b => b.OwnerId).IsValueObject().IsRequired();
 
         builder.Property(b => b.CreatedAt);
         builder.Property(b => b.UpdatedAt);
@@ -43,13 +34,8 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
             columnBuilder.ToTable("Columns");
 
             columnBuilder.HasKey(c => c.Id);
-            columnBuilder.Property(c => c.Id)
-                .HasConversion(id => id.Value, guid => ColumnId.From(guid));
-
-            columnBuilder.Property(c => c.Name)
-                .HasConversion(n => n.Value, v => ColumnName.Create(v).Value)
-                .HasMaxLength(ColumnName.MaxLength)
-                .IsRequired();
+            columnBuilder.Property(c => c.Id).IsValueObject();
+            columnBuilder.Property(c => c.Name).IsValueObject(ColumnName.MaxLength);
 
             columnBuilder.Property(c => c.TargetStatus)
                 .HasConversion<string>()
@@ -77,13 +63,8 @@ public sealed class BoardConfiguration : IEntityTypeConfiguration<Board>
             cardBuilder.ToTable("TaskCards");
             cardBuilder.WithOwner().HasForeignKey("BoardId");
 
-            cardBuilder.Property(c => c.TaskId)
-                .HasConversion(id => id.Value, guid => TaskId.From(guid))
-                .IsRequired();
-
-            cardBuilder.Property(c => c.ColumnId)
-                .HasConversion(id => id.Value, guid => ColumnId.From(guid))
-                .IsRequired();
+            cardBuilder.Property(c => c.TaskId).IsValueObject().IsRequired();
+            cardBuilder.Property(c => c.ColumnId).IsValueObject().IsRequired();
 
             cardBuilder.Property(c => c.Rank)
                 .HasColumnType("TEXT");
