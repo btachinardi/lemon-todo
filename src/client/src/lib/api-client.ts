@@ -1,4 +1,6 @@
 import type { ApiError } from '@/domains/tasks/types/api.types';
+import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
+import { attemptTokenRefresh } from './token-refresh';
 
 /** Accepted value types for query-string parameters. */
 type ParamValue = string | number | boolean | null | undefined;
@@ -7,18 +9,11 @@ type ParamValue = string | number | boolean | null | undefined;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 /**
- * Returns the stored access token from localStorage (Zustand persist).
- * Reads directly from localStorage to avoid circular imports with the store module.
+ * Returns the access token from the in-memory Zustand auth store.
+ * No localStorage reads — tokens live only in JS memory.
  */
 function getAccessToken(): string | null {
-  try {
-    const raw = localStorage.getItem('lemondo-auth');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { state?: { accessToken?: string } };
-    return parsed?.state?.accessToken ?? null;
-  } catch {
-    return null;
-  }
+  return useAuthStore.getState().accessToken;
 }
 
 /**
@@ -114,23 +109,45 @@ async function throwApiError(response: Response): Promise<never> {
   throw new ApiRequestError(response.status, apiError);
 }
 
+/** Whether a URL is an auth endpoint (should not trigger token refresh). */
+function isAuthEndpoint(url: string): boolean {
+  return url.includes('/api/auth/');
+}
+
 /**
- * Clears auth state from localStorage and redirects to login on 401.
- * Skips redirect for auth endpoints (login/register) to let their error handling work.
+ * Handles a 401 response by attempting a token refresh, then retrying the request.
+ * Skips retry for auth endpoints to avoid infinite loops.
+ * Returns the retried response on success, or throws ApiRequestError on failure.
  */
-function handleUnauthorized(response: Response): void {
-  if (response.status === 401 && !response.url.includes('/api/auth/')) {
-    try {
-      localStorage.removeItem('lemondo-auth');
-    } catch { /* ignore */ }
-    window.location.href = '/login';
+async function handleUnauthorizedWithRefresh(
+  response: Response,
+  retryFn: () => Promise<Response>,
+): Promise<Response | null> {
+  if (response.status !== 401 || isAuthEndpoint(response.url)) {
+    return null;
   }
+
+  const refreshResult = await attemptTokenRefresh();
+  if (!refreshResult) {
+    // Refresh failed — redirect already happened in attemptTokenRefresh
+    await throwApiError(response);
+  }
+
+  // Retry the original request with the new token
+  return retryFn();
 }
 
 /** Handles responses that return a JSON body (non-204). */
-async function handleJsonResponse<T>(response: Response): Promise<T> {
+async function handleJsonResponse<T>(
+  response: Response,
+  retryFn: () => Promise<Response>,
+): Promise<T> {
   if (!response.ok) {
-    handleUnauthorized(response);
+    const retried = await handleUnauthorizedWithRefresh(response, retryFn);
+    if (retried) {
+      if (!retried.ok) await throwApiError(retried);
+      return retried.json() as Promise<T>;
+    }
     await throwApiError(response);
   }
 
@@ -138,9 +155,16 @@ async function handleJsonResponse<T>(response: Response): Promise<T> {
 }
 
 /** Handles responses with no body (204 No Content, or any void endpoint). */
-async function handleVoidResponse(response: Response): Promise<void> {
+async function handleVoidResponse(
+  response: Response,
+  retryFn: () => Promise<Response>,
+): Promise<void> {
   if (!response.ok) {
-    handleUnauthorized(response);
+    const retried = await handleUnauthorizedWithRefresh(response, retryFn);
+    if (retried) {
+      if (!retried.ok) await throwApiError(retried);
+      return;
+    }
     await throwApiError(response);
   }
 }
@@ -151,6 +175,13 @@ async function handleVoidResponse(response: Response): Promise<void> {
  *
  * Uses the Vite dev server proxy in development -- all URLs are relative
  * (e.g. `/api/tasks`), no base URL configuration needed.
+ *
+ * On 401 responses (except from auth endpoints), automatically attempts
+ * a token refresh and retries the original request once.
+ *
+ * All requests include `credentials: 'include'` so the HttpOnly refresh
+ * token cookie is sent on `/api/auth/*` paths (cookie is scoped to
+ * `/api/auth` so it won't be sent on other paths).
  *
  * Methods suffixed with `Void` are for endpoints that return no body
  * (204 No Content or action endpoints). This eliminates the need for
@@ -170,63 +201,87 @@ export const apiClient = {
     const queryString = searchParams.toString();
     const fullUrl = queryString ? `${url}?${queryString}` : url;
 
-    const response = await fetch(fullUrl, {
-      headers: buildHeaders(),
-      signal: createTimeoutSignal(),
-    });
-    return handleJsonResponse<T>(response);
+    const doFetch = () =>
+      fetch(fullUrl, {
+        headers: buildHeaders(),
+        signal: createTimeoutSignal(),
+        credentials: 'include',
+      });
+
+    const response = await doFetch();
+    return handleJsonResponse<T>(response, doFetch);
   },
 
   /** Sends a POST request with a JSON body. Returns the parsed response. */
   async post<T>(url: string, body?: unknown): Promise<T> {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: buildHeaders(),
-      signal: createTimeoutSignal(),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
-    return handleJsonResponse<T>(response);
+    const doFetch = () =>
+      fetch(url, {
+        method: 'POST',
+        headers: buildHeaders(),
+        signal: createTimeoutSignal(),
+        credentials: 'include',
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+
+    const response = await doFetch();
+    return handleJsonResponse<T>(response, doFetch);
   },
 
   /** Sends a POST request for action endpoints that return no body. */
   async postVoid(url: string, body?: unknown): Promise<void> {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: buildHeaders(),
-      signal: createTimeoutSignal(),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
-    return handleVoidResponse(response);
+    const doFetch = () =>
+      fetch(url, {
+        method: 'POST',
+        headers: buildHeaders(),
+        signal: createTimeoutSignal(),
+        credentials: 'include',
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+
+    const response = await doFetch();
+    return handleVoidResponse(response, doFetch);
   },
 
   /** Sends a PUT request with a JSON body. Returns the parsed response. */
   async put<T>(url: string, body?: unknown): Promise<T> {
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: buildHeaders(),
-      signal: createTimeoutSignal(),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
-    return handleJsonResponse<T>(response);
+    const doFetch = () =>
+      fetch(url, {
+        method: 'PUT',
+        headers: buildHeaders(),
+        signal: createTimeoutSignal(),
+        credentials: 'include',
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+
+    const response = await doFetch();
+    return handleJsonResponse<T>(response, doFetch);
   },
 
   /** Sends a DELETE request. Returns the parsed response body. */
   async delete<T>(url: string): Promise<T> {
-    const response = await fetch(url, {
-      method: 'DELETE',
-      headers: buildHeaders(),
-      signal: createTimeoutSignal(),
-    });
-    return handleJsonResponse<T>(response);
+    const doFetch = () =>
+      fetch(url, {
+        method: 'DELETE',
+        headers: buildHeaders(),
+        signal: createTimeoutSignal(),
+        credentials: 'include',
+      });
+
+    const response = await doFetch();
+    return handleJsonResponse<T>(response, doFetch);
   },
 
   /** Sends a DELETE request for endpoints that return no body. */
   async deleteVoid(url: string): Promise<void> {
-    const response = await fetch(url, {
-      method: 'DELETE',
-      headers: buildHeaders(),
-      signal: createTimeoutSignal(),
-    });
-    return handleVoidResponse(response);
+    const doFetch = () =>
+      fetch(url, {
+        method: 'DELETE',
+        headers: buildHeaders(),
+        signal: createTimeoutSignal(),
+        credentials: 'include',
+      });
+
+    const response = await doFetch();
+    return handleVoidResponse(response, doFetch);
   },
 };

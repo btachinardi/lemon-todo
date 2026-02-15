@@ -11,11 +11,6 @@ export interface LoginRequest {
   password: string;
 }
 
-/** Payload for `POST /api/auth/refresh`. */
-export interface RefreshRequest {
-  refreshToken: string;
-}
-
 /** User profile returned in auth responses and from `GET /api/auth/me`. */
 export interface UserProfile {
   id: string;
@@ -23,9 +18,8 @@ export interface UserProfile {
   displayName: string;
 }
 
-/** Response from login, register, and refresh endpoints. */
+/** Response from login, register, and refresh endpoints. Access token in body, refresh token in HttpOnly cookie. */
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   user: UserProfile;
 }

@@ -26,11 +26,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         onSuccess,
         onError: (err) => {
           if (err instanceof ApiRequestError) {
-            setError(
-              err.status === 401
-                ? 'Invalid email or password.'
-                : err.apiError.title,
-            );
+            if (err.status === 401) {
+              setError('Invalid email or password.');
+            } else if (err.status === 429) {
+              setError('Account temporarily locked. Please try again later.');
+            } else {
+              setError(err.apiError.title);
+            }
           } else {
             setError('Something went wrong. Please try again.');
           }

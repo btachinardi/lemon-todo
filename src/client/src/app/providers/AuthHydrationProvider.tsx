@@ -6,24 +6,42 @@ interface AuthHydrationProviderProps {
 }
 
 /**
- * Triggers Zustand auth store rehydration from localStorage after mount.
- * Renders nothing until hydration completes, preventing flash-of-wrong-state.
+ * Performs a silent token refresh on mount to restore the session
+ * from the HttpOnly refresh cookie.
  *
- * Required because `skipHydration: true` is set on the auth store to avoid
- * React 19's "getSnapshot should be cached" infinite loop with useSyncExternalStore.
+ * Renders nothing until the refresh attempt completes, preventing
+ * flash-of-wrong-state. If the refresh fails (no cookie / expired),
+ * the app renders in unauthenticated state and ProtectedRoute handles redirect.
  */
 export function AuthHydrationProvider({ children }: AuthHydrationProviderProps) {
-  const [hydrated, setHydrated] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const hydrate = async () => {
-      await useAuthStore.persist.rehydrate();
-      setHydrated(true);
+    const silentRefresh = async () => {
+      try {
+        const response = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = (await response.json()) as {
+            accessToken: string;
+            user: { id: string; email: string; displayName: string };
+          };
+          useAuthStore.getState().setAuth(data.accessToken, data.user);
+        }
+      } catch {
+        // No valid session — stay unauthenticated
+      } finally {
+        setReady(true);
+      }
     };
-    hydrate();
+    silentRefresh();
   }, []);
 
-  if (!hydrated) {
+  if (!ready) {
     return null;
   }
 

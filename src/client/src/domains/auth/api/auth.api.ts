@@ -3,7 +3,6 @@ import type {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
-  RefreshRequest,
   UserProfile,
 } from '../types/auth.types';
 
@@ -19,12 +18,14 @@ export const authApi = {
     return apiClient.post<AuthResponse>(`${BASE}/login`, request);
   },
 
-  refresh(request: RefreshRequest): Promise<AuthResponse> {
-    return apiClient.post<AuthResponse>(`${BASE}/refresh`, request);
+  /** Refresh uses HttpOnly cookie — no request body needed. */
+  refresh(): Promise<AuthResponse> {
+    return apiClient.post<AuthResponse>(`${BASE}/refresh`);
   },
 
-  logout(request: RefreshRequest): Promise<void> {
-    return apiClient.postVoid(`${BASE}/logout`, request);
+  /** Logout uses HttpOnly cookie — no request body needed. */
+  logout(): Promise<void> {
+    return apiClient.postVoid(`${BASE}/logout`);
   },
 
   me(): Promise<UserProfile> {
