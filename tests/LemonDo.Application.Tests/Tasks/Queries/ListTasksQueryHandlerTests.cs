@@ -38,7 +38,8 @@ public sealed class ListTasksQueryHandlerTests
         _repository.ListAsync(
             Arg.Any<UserId>(),
             Arg.Any<Priority?>(), Arg.Any<TaskStatus?>(),
-            Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(),
+            Arg.Any<string?>(), Arg.Any<string?>(),
+            Arg.Any<int>(), Arg.Any<int>(),
             Arg.Any<CancellationToken>())
             .Returns(new PagedResult<TaskEntity>([task1, task2], 2, 1, 50));
 
@@ -56,7 +57,8 @@ public sealed class ListTasksQueryHandlerTests
         _repository.ListAsync(
             Arg.Any<UserId>(),
             Arg.Any<Priority?>(), Arg.Any<TaskStatus?>(),
-            Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(),
+            Arg.Any<string?>(), Arg.Any<string?>(),
+            Arg.Any<int>(), Arg.Any<int>(),
             Arg.Any<CancellationToken>())
             .Returns(new PagedResult<TaskEntity>([], 0, 1, 50));
 
@@ -74,6 +76,7 @@ public sealed class ListTasksQueryHandlerTests
             Priority = Priority.High,
             Status = TaskStatus.Todo,
             SearchTerm = "groceries",
+            Tag = "shopping",
             Page = 2,
             PageSize = 10
         };
@@ -81,7 +84,8 @@ public sealed class ListTasksQueryHandlerTests
         _repository.ListAsync(
             Arg.Any<UserId>(),
             Arg.Any<Priority?>(), Arg.Any<TaskStatus?>(),
-            Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(),
+            Arg.Any<string?>(), Arg.Any<string?>(),
+            Arg.Any<int>(), Arg.Any<int>(),
             Arg.Any<CancellationToken>())
             .Returns(new PagedResult<TaskEntity>([], 0, 2, 10));
 
@@ -92,6 +96,7 @@ public sealed class ListTasksQueryHandlerTests
             Priority.High,
             TaskStatus.Todo,
             "groceries",
+            "shopping",
             2,
             10,
             Arg.Any<CancellationToken>());

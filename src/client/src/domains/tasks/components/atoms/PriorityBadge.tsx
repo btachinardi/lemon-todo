@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Badge } from '@/ui/badge';
 import { cn } from '@/lib/utils';
 import { Priority } from '../../types/task.types';
@@ -16,7 +17,7 @@ interface PriorityBadgeProps {
 }
 
 /** Colored badge indicating task priority. Renders nothing for `Priority.None`. */
-export function PriorityBadge({ priority, className }: PriorityBadgeProps) {
+export const PriorityBadge = memo(function PriorityBadge({ priority, className }: PriorityBadgeProps) {
   if (priority === Priority.None) return null;
 
   const config = priorityConfig[priority];
@@ -26,4 +27,4 @@ export function PriorityBadge({ priority, className }: PriorityBadgeProps) {
       {config.label}
     </Badge>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Badge } from '@/ui/badge';
 import { cn } from '@/lib/utils';
 import { TaskStatus } from '../../types/task.types';
@@ -14,7 +15,7 @@ interface TaskStatusChipProps {
 }
 
 /** Colored badge displaying the current task lifecycle status. */
-export function TaskStatusChip({ status, className }: TaskStatusChipProps) {
+export const TaskStatusChip = memo(function TaskStatusChip({ status, className }: TaskStatusChipProps) {
   const config = statusConfig[status];
 
   return (
@@ -22,4 +23,4 @@ export function TaskStatusChip({ status, className }: TaskStatusChipProps) {
       {config.label}
     </Badge>
   );
-}
+});

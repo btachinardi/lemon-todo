@@ -379,7 +379,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     await uiPage.goto('/');
 
     // Wait for board to fully render (auth refresh + data fetch)
-    await expect(uiPage.getByRole('heading', { name: 'To Do' })).toBeVisible();
+    await expect(uiPage.getByText('Moving task')).toBeVisible();
 
     // The task should appear under the "In Progress" column heading
     const inProgressHeading = uiPage.getByRole('heading', { name: 'In Progress' });

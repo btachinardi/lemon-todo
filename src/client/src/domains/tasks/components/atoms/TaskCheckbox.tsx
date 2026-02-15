@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { LoaderIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +13,7 @@ interface TaskCheckboxProps {
  * Animated circular checkbox with lime-green fill, checkmark stroke draw,
  * and scale bounce. Used for task completion toggling.
  */
-export function TaskCheckbox({ checked, onToggle, isLoading, className }: TaskCheckboxProps) {
+export const TaskCheckbox = memo(function TaskCheckbox({ checked, onToggle, isLoading, className }: TaskCheckboxProps) {
   if (isLoading) {
     return (
       <div className={cn('flex size-5 shrink-0 items-center justify-center', className)}>
@@ -79,4 +80,4 @@ export function TaskCheckbox({ checked, onToggle, isLoading, className }: TaskCh
       </svg>
     </button>
   );
-}
+});

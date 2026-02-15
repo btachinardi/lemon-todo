@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card';
 import { cn } from '@/lib/utils';
 import type { Task } from '../../types/task.types';
@@ -35,8 +36,12 @@ interface TaskCardProps {
  * Compact card used in both kanban columns and list views.
  * Displays title, priority badge, due date, and tags. Completed tasks
  * render with reduced opacity and a strikethrough title.
+ *
+ * Wrapped in `React.memo` because it renders inside `.map()` loops in
+ * KanbanColumn and TaskListView. Without memo, changing ANY task would
+ * re-render EVERY card in the board.
  */
-export function TaskCard({
+export const TaskCard = memo(function TaskCard({
   task,
   onComplete,
   onSelect,
@@ -89,11 +94,11 @@ export function TaskCard({
         <CardContent className="px-3 py-0">
           <div className="flex flex-wrap items-center gap-2">
             <PriorityBadge priority={task.priority} />
-            <DueDateLabel dueDate={task.dueDate} />
+            <DueDateLabel dueDate={task.dueDate} isDone={isDone} />
           </div>
           <TagList tags={task.tags} className="mt-1.5" />
         </CardContent>
       )}
     </Card>
   );
-}
+});
