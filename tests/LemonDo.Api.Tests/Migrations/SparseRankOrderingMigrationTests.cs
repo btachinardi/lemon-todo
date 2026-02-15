@@ -155,9 +155,9 @@ public sealed class SparseRankOrderingMigrationTests
         var rankOfTask1 = ranks.First(r => r.taskId == task1).rank;
         var rankOfTask2 = ranks.First(r => r.taskId == task2).rank;
 
-        Assert.IsTrue(rankOfTask0 < rankOfTask1,
+        Assert.IsLessThan(rankOfTask1, rankOfTask0,
             $"Task at Position 0 (rank {rankOfTask0}) should be before Task at Position 1 (rank {rankOfTask1})");
-        Assert.IsTrue(rankOfTask1 < rankOfTask2,
+        Assert.IsLessThan(rankOfTask2, rankOfTask1,
             $"Task at Position 1 (rank {rankOfTask1}) should be before Task at Position 2 (rank {rankOfTask2})");
     }
 
@@ -180,7 +180,7 @@ public sealed class SparseRankOrderingMigrationTests
         var maxRank = ranks.Max(r => r.rank);
         var nextRank = QueryColumnNextRank(columnId);
 
-        Assert.IsTrue(nextRank > maxRank,
+        Assert.IsGreaterThan(maxRank, nextRank,
             $"Column NextRank ({nextRank}) must be greater than highest card rank ({maxRank})");
     }
 
@@ -197,7 +197,7 @@ public sealed class SparseRankOrderingMigrationTests
 
         // NextRank should be a positive value (the migration default)
         var nextRank = QueryColumnNextRank(columnId);
-        Assert.IsTrue(nextRank > 0, $"Column NextRank ({nextRank}) should be positive");
+        Assert.IsGreaterThan(0, nextRank, $"Column NextRank ({nextRank}) should be positive");
     }
 
     [TestMethod]
@@ -213,10 +213,10 @@ public sealed class SparseRankOrderingMigrationTests
 
         var ranks = QueryCardRanks();
         Assert.HasCount(1, ranks);
-        Assert.IsTrue(ranks[0].rank > 0, "Single card rank should be greater than 0");
+        Assert.IsGreaterThan(0, ranks[0].rank, "Single card rank should be greater than 0");
 
         var nextRank = QueryColumnNextRank(columnId);
-        Assert.IsTrue(nextRank > ranks[0].rank,
+        Assert.IsGreaterThan(ranks[0].rank, nextRank,
             $"NextRank ({nextRank}) must be above single card rank ({ranks[0].rank})");
     }
 }

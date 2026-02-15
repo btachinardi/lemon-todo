@@ -181,12 +181,13 @@ public sealed class TaskEndpointsTests
         // Re-read the board and verify rank order: C < A < B
         var boardAfter = await (await _client.GetAsync("/api/boards/default"))
             .Content.ReadFromJsonAsync<BoardDto>(JsonOpts);
-        var rankC = boardAfter!.Cards.First(c => c.TaskId == t3.Id).Rank;
+        Assert.IsNotNull(boardAfter?.Cards);
+        var rankC = boardAfter.Cards.First(c => c.TaskId == t3.Id).Rank;
         var rankA = boardAfter.Cards.First(c => c.TaskId == t1.Id).Rank;
         var rankB = boardAfter.Cards.First(c => c.TaskId == t2!.Id).Rank;
 
-        Assert.IsTrue(rankC < rankA, $"C rank ({rankC}) should be less than A rank ({rankA})");
-        Assert.IsTrue(rankA < rankB, $"A rank ({rankA}) should be less than B rank ({rankB})");
+        Assert.IsLessThan(rankA, rankC, $"C rank ({rankC}) should be less than A rank ({rankA})");
+        Assert.IsLessThan(rankB, rankA, $"A rank ({rankA}) should be less than B rank ({rankB})");
     }
 
     [TestMethod]

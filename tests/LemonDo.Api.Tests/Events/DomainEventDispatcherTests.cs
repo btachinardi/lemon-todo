@@ -32,7 +32,7 @@ public sealed class DomainEventDispatcherTests
             new { Title = "Event dispatch test" });
 
         Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
-        Assert.IsTrue(capturedEvents.Count > 0, "Expected at least one domain event to be dispatched.");
+        Assert.IsNotEmpty(capturedEvents, "Expected at least one domain event to be dispatched.");
         Assert.IsInstanceOfType<TaskCreatedEvent>(capturedEvents[0]);
         Assert.AreEqual("Event dispatch test", ((TaskCreatedEvent)capturedEvents[0]).Title);
     }

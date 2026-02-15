@@ -91,7 +91,7 @@ public sealed class CreateTaskCommandHandlerTests
             .Max();
         var newTaskId = TaskId.From(result.Value.Id);
         var newCardRank = _board.FindCardByTaskId(newTaskId)!.Rank;
-        Assert.IsTrue(newCardRank > existingMaxRank,
+        Assert.IsGreaterThan(existingMaxRank, newCardRank,
             $"New card rank ({newCardRank}) should be > existing max ({existingMaxRank})");
     }
 

@@ -100,8 +100,8 @@ public sealed class MoveTaskCommandHandlerTests
         var rankA = _board.FindCardByTaskId(taskA.Id)!.Rank;
         var rankC = _board.FindCardByTaskId(taskC.Id)!.Rank;
         var rankB = _board.FindCardByTaskId(taskB.Id)!.Rank;
-        Assert.IsTrue(rankC > rankA, "C should be ranked after A");
-        Assert.IsTrue(rankC < rankB, "C should be ranked before B");
+        Assert.IsGreaterThan(rankA, rankC, "C should be ranked after A");
+        Assert.IsLessThan(rankB, rankC, "C should be ranked before B");
     }
 
     [TestMethod]
