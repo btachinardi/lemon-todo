@@ -550,11 +550,51 @@ These axes should never be coupled. A task can be archived at any point on the s
 
 ---
 
+## Release: v0.1.0
+
+**Date: February 15, 2026**
+
+### Version Strategy
+
+We adopted **pre-1.0 SemVer** (`0.MINOR.PATCH`) for initial development. v0.1.0 signals "first feature-complete checkpoint" rather than production stability. The `1.0.0` release will come when the app has authentication, polish, and production hardening (likely after CP3 or CP4).
+
+### Release Infrastructure
+
+- **Centralized .NET versioning**: `src/Directory.Build.props` sets `Version`, `AssemblyVersion`, `FileVersion`, and `InformationalVersion` for all 6 source projects. Test projects under `tests/` are intentionally excluded — they're internal tooling, not versioned deliverables.
+- **Frontend version**: `src/client/package.json` version bumped from `0.0.0` to `0.1.0`. Version displayed in the footer of the dashboard layout.
+- **Backend version logging**: API startup logs emit the assembly informational version for traceability.
+- **CHANGELOG.md**: Created in [Keep a Changelog](https://keepachangelog.com/) format with curated, user-facing entries grouped into Added/Changed/Fixed sections.
+- **Annotated git tag**: `v0.1.0` with message, tagger, and timestamp. GitHub recognizes annotated tags as releases.
+
+### Gitflow Process
+
+The release followed strict gitflow:
+
+1. `feature/cp1-core-task-management` merged to `develop` (--no-ff)
+2. `release/0.1.0` branch created from `develop`
+3. Release prep committed on `release/0.1.0` (version bumps, CHANGELOG, docs)
+4. Verification gate passed (build, tests, lint)
+5. `release/0.1.0` merged to `main` (--no-ff) and tagged `v0.1.0`
+6. `release/0.1.0` back-merged to `develop`
+7. Stale branches cleaned up (`release/0.1.0`, `feature/cp1-core-task-management`, `feature/phase3-bootstrap`)
+
+### What Ships in v0.1.0
+
+See [CHANGELOG.md](../CHANGELOG.md) for the full list. Highlights:
+
+- Full-stack DDD task management with two bounded contexts
+- Kanban board with drag-and-drop (sparse rank ordering)
+- List view with time-based grouping
+- 18 API endpoints with Result-to-HTTP mapping
+- 242+ tests (backend unit/property/integration + frontend component/property + E2E)
+- Lemon.io-inspired design with custom theme
+- Full-stack observability (OpenTelemetry + correlation IDs)
+
+---
+
 ## What's Next
 
-### Checkpoint 1 Complete
-
-The bounded context split is complete. Task and Board are now separate contexts with clear boundaries. All 279 tests pass with zero build warnings. Next step: merge to develop and begin CP2.
+### Checkpoint 2: Authentication & Authorization
 
 ### Checkpoint 2: Authentication & Authorization
 

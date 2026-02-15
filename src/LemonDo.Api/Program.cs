@@ -7,6 +7,7 @@ using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Infrastructure.Extensions;
 using LemonDo.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,10 @@ var app = builder.Build();
 // Auto-migrate on startup and seed default board
 var startupLogger = app.Services.GetRequiredService<ILoggerFactory>()
     .CreateLogger("LemonDo.Api.Startup");
+
+var version = typeof(LemonDo.Api.Endpoints.TaskEndpoints).Assembly
+    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
+startupLogger.LogInformation("LemonDo API v{Version} starting", version);
 
 try
 {

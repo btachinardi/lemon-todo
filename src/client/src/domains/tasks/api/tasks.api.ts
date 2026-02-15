@@ -21,7 +21,7 @@ const BASE = '/api/tasks';
 export const tasksApi = {
   /** Paginated, filterable task list. */
   list(params?: ListTasksParams): Promise<PagedResult<Task>> {
-    return apiClient.get<PagedResult<Task>>(BASE, params);
+    return apiClient.get<PagedResult<Task>>(BASE, params as Record<string, string | number | boolean | null | undefined>);
   },
 
   /** Fetches a single task by ID. Returns 404 if the task is deleted. */

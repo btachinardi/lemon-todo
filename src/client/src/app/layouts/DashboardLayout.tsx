@@ -55,6 +55,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1">{children}</main>
+      <footer className="pointer-events-none fixed bottom-2 right-3">
+        <span className="text-[10px] text-muted-foreground/40 select-none">
+          v{__APP_VERSION__}
+        </span>
+      </footer>
       <Toaster theme="dark" />
     </div>
   );
