@@ -2,6 +2,7 @@ namespace LemonDo.Application.Administration.Commands;
 
 using System.Text.Json;
 using LemonDo.Application.Common;
+using LemonDo.Application.Identity;
 using LemonDo.Domain.Administration;
 using LemonDo.Domain.Common;
 
@@ -30,7 +31,8 @@ public sealed record PiiRevealAuditDetails(
 /// validates justification, re-authenticates the admin, reveals PII, and records a structured audit entry.
 /// </summary>
 public sealed class RevealPiiCommandHandler(
-    IAdminUserService adminService,
+    IAuthService authService,
+    IPiiAccessService piiAccessService,
     IAuditService auditService,
     IRequestContext requestContext)
 {
@@ -50,17 +52,17 @@ public sealed class RevealPiiCommandHandler(
         // 2. Re-authenticate the acting admin
         var adminUserId = requestContext.UserId
             ?? throw new InvalidOperationException("No authenticated user in request context.");
-        var passwordResult = await adminService.VerifyAdminPasswordAsync(
+        var passwordResult = await authService.VerifyPasswordAsync(
             adminUserId, command.AdminPassword, ct);
         if (passwordResult.IsFailure)
             return Result<RevealedPiiDto, DomainError>.Failure(passwordResult.Error);
 
-        // 3. Reveal PII
-        var result = await adminService.RevealPiiAsync(command.UserId, ct);
+        // 3. Reveal PII via the audited access service
+        var result = await piiAccessService.RevealForAdminAsync(command.UserId, ct);
         if (result.IsFailure)
             return Result<RevealedPiiDto, DomainError>.Failure(result.Error);
 
-        // 4. Record structured audit entry
+        // 4. Record structured audit entry (admin-specific context: reason, comments)
         var auditDetails = new PiiRevealAuditDetails(
             command.Reason.ToString(),
             command.ReasonDetails,
@@ -73,6 +75,7 @@ public sealed class RevealPiiCommandHandler(
             JsonSerializer.Serialize(auditDetails),
             cancellationToken: ct);
 
-        return result;
+        return Result<RevealedPiiDto, DomainError>.Success(
+            new RevealedPiiDto(result.Value.Email, result.Value.DisplayName));
     }
 }

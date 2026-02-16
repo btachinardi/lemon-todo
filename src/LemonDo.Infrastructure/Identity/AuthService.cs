@@ -13,8 +13,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Anti-Corruption Layer implementation that translates between the domain model
-/// and ASP.NET Identity + JWT infrastructure.
+/// Anti-Corruption Layer: translates between the domain model and ASP.NET Identity + JWT.
+/// Handles ONLY credentials and authorization — no user profile data.
+/// User profile data is managed by <see cref="LemonDo.Domain.Identity.Repositories.IUserRepository"/>.
 /// </summary>
 public sealed class AuthService(
     UserManager<ApplicationUser> userManager,
@@ -28,29 +29,28 @@ public sealed class AuthService(
     private readonly JwtSettings _jwtSettings = jwtSettings.Value;
 
     /// <inheritdoc />
-    public async Task<Result<AuthResult, DomainError>> RegisterAsync(
-        UserId userId, Email email, string password, DisplayName displayName,
-        CancellationToken ct)
+    public async Task<Result<DomainError>> CreateCredentialsAsync(
+        UserId userId, string emailHash, string password, CancellationToken ct)
     {
+        // Check for duplicate via email hash (UserName stores the hash)
+        var existing = await userManager.FindByNameAsync(emailHash);
+        if (existing is not null)
+            return Result<DomainError>.Failure(
+                DomainError.Conflict("auth", "Email already registered."));
+
         var appUser = new ApplicationUser
         {
             Id = userId.Value,
-            UserName = email.Value,
-            Email = email.Value,
-            DisplayName = displayName.Value,
+            UserName = emailHash,
         };
 
         var identityResult = await userManager.CreateAsync(appUser, password);
         if (!identityResult.Succeeded)
         {
             var errors = identityResult.Errors.Select(e => e.Description).ToList();
-            logger.LogWarning("Registration failed for {EmailHash}: {Errors}", LogHelpers.MaskEmail(email.Value), string.Join(", ", errors));
+            logger.LogWarning("Credential creation failed: {Errors}", string.Join(", ", errors));
 
-            if (identityResult.Errors.Any(e => e.Code is "DuplicateEmail" or "DuplicateUserName"))
-                return Result<AuthResult, DomainError>.Failure(
-                    DomainError.Conflict("auth", "Email already registered."));
-
-            return Result<AuthResult, DomainError>.Failure(
+            return Result<DomainError>.Failure(
                 DomainError.Validation("auth", string.Join(" ", errors)));
         }
 
@@ -58,16 +58,18 @@ public sealed class AuthService(
         if (await roleManager.RoleExistsAsync("User"))
             await userManager.AddToRoleAsync(appUser, "User");
 
-        return await GenerateAuthResultAsync(appUser, ct);
+        return Result<DomainError>.Success();
     }
 
     /// <inheritdoc />
-    public async Task<Result<AuthResult, DomainError>> LoginAsync(
+    public async Task<Result<UserId, DomainError>> AuthenticateAsync(
         string email, string password, CancellationToken ct)
     {
-        var user = await userManager.FindByEmailAsync(email);
+        // Look up by email hash stored in UserName
+        var emailHash = PiiHasher.HashEmail(email);
+        var user = await userManager.FindByNameAsync(emailHash);
         if (user is null)
-            return Result<AuthResult, DomainError>.Failure(
+            return Result<UserId, DomainError>.Failure(
                 DomainError.Unauthorized("auth", "Invalid email or password."));
 
         var signInResult = await signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
@@ -75,19 +77,34 @@ public sealed class AuthService(
         if (signInResult.IsLockedOut)
         {
             logger.LogWarning("Account locked for {EmailHash}", LogHelpers.MaskEmail(email));
-            return Result<AuthResult, DomainError>.Failure(
+            return Result<UserId, DomainError>.Failure(
                 DomainError.RateLimited("auth", "Account temporarily locked due to too many failed attempts. Please try again later."));
         }
 
         if (!signInResult.Succeeded)
-            return Result<AuthResult, DomainError>.Failure(
+            return Result<UserId, DomainError>.Failure(
                 DomainError.Unauthorized("auth", "Invalid email or password."));
 
-        return await GenerateAuthResultAsync(user, ct);
+        return Result<UserId, DomainError>.Success(UserId.Reconstruct(user.Id));
     }
 
     /// <inheritdoc />
-    public async Task<Result<AuthResult, DomainError>> RefreshTokenAsync(
+    public async Task<AuthTokens> GenerateTokensAsync(UserId userId, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(userId.Value.ToString())
+            ?? throw new InvalidOperationException($"Identity user {userId} not found.");
+
+        var roles = await userManager.GetRolesAsync(user);
+        var accessToken = tokenService.GenerateAccessToken(user.Id, roles);
+        var refreshToken = JwtTokenService.GenerateRefreshToken();
+
+        await StoreRefreshTokenAsync(user.Id, refreshToken, ct);
+
+        return new AuthTokens(accessToken, refreshToken, roles.AsReadOnly());
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<(UserId UserId, AuthTokens Tokens), DomainError>> RefreshTokenAsync(
         string refreshToken, CancellationToken ct)
     {
         var tokenHash = HashToken(refreshToken);
@@ -95,18 +112,16 @@ public sealed class AuthService(
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
 
         if (storedToken is null || !storedToken.IsActive)
-            return Result<AuthResult, DomainError>.Failure(
+            return Result<(UserId, AuthTokens), DomainError>.Failure(
                 DomainError.Unauthorized("auth", "Invalid or expired refresh token."));
 
         // Revoke old token
         storedToken.RevokedAt = DateTimeOffset.UtcNow;
 
-        var user = await userManager.FindByIdAsync(storedToken.UserId.ToString());
-        if (user is null)
-            return Result<AuthResult, DomainError>.Failure(
-                DomainError.Unauthorized("auth", "Invalid or expired refresh token."));
+        var userId = UserId.Reconstruct(storedToken.UserId);
+        var tokens = await GenerateTokensAsync(userId, ct);
 
-        return await GenerateAuthResultAsync(user, ct);
+        return Result<(UserId, AuthTokens), DomainError>.Success((userId, tokens));
     }
 
     /// <inheritdoc />
@@ -126,22 +141,20 @@ public sealed class AuthService(
         return Result<DomainError>.Success();
     }
 
-    private async Task<Result<AuthResult, DomainError>> GenerateAuthResultAsync(
-        ApplicationUser user, CancellationToken ct)
+    /// <inheritdoc />
+    public async Task<Result<DomainError>> VerifyPasswordAsync(
+        Guid userId, string password, CancellationToken ct)
     {
-        var roles = await userManager.GetRolesAsync(user);
-        var accessToken = tokenService.GenerateAccessToken(user.Id, user.Email!, user.DisplayName, roles);
-        var refreshToken = JwtTokenService.GenerateRefreshToken();
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+            return Result<DomainError>.Failure(DomainError.NotFound("user", userId.ToString()));
 
-        await StoreRefreshTokenAsync(user.Id, refreshToken, ct);
+        var isValid = await userManager.CheckPasswordAsync(user, password);
+        if (!isValid)
+            return Result<DomainError>.Failure(
+                DomainError.Unauthorized("auth", "Invalid password. Re-authentication failed."));
 
-        return Result<AuthResult, DomainError>.Success(new AuthResult(
-            user.Id,
-            user.Email!,
-            user.DisplayName,
-            roles.AsReadOnly(),
-            accessToken,
-            refreshToken));
+        return Result<DomainError>.Success();
     }
 
     private async Task StoreRefreshTokenAsync(Guid userId, string refreshToken, CancellationToken ct)

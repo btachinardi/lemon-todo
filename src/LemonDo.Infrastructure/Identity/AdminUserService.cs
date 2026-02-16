@@ -1,20 +1,23 @@
 namespace LemonDo.Infrastructure.Identity;
 
 using LemonDo.Application.Administration.Commands;
+using LemonDo.Application.Common;
 using LemonDo.Domain.Common;
-using LemonDo.Infrastructure.Persistence;
-using LemonDo.Infrastructure.Security;
+using LemonDo.Domain.Identity.Repositories;
+using LemonDo.Domain.Identity.ValueObjects;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// Infrastructure implementation of <see cref="IAdminUserService"/> using ASP.NET Identity.
+/// Infrastructure implementation of <see cref="IAdminUserService"/>.
+/// Role management uses ASP.NET Identity directly. Deactivation coordinates
+/// the domain <see cref="LemonDo.Domain.Identity.Entities.User"/> with Identity lockout.
 /// </summary>
 public sealed class AdminUserService(
     UserManager<ApplicationUser> userManager,
     RoleManager<IdentityRole<Guid>> roleManager,
-    LemonDoDbContext dbContext,
-    IFieldEncryptionService encryptionService,
+    IUserRepository userRepository,
+    IUnitOfWork unitOfWork,
     ILogger<AdminUserService> logger) : IAdminUserService
 {
     /// <inheritdoc />
@@ -70,18 +73,21 @@ public sealed class AdminUserService(
     /// <inheritdoc />
     public async Task<Result<DomainError>> DeactivateUserAsync(Guid userId, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(userId.ToString());
-        if (user is null)
+        var domainUser = await userRepository.GetByIdAsync(UserId.Reconstruct(userId), ct);
+        if (domainUser is null)
             return Result<DomainError>.Failure(DomainError.NotFound("user", userId.ToString()));
 
-        if (user.IsDeactivated)
-            return Result<DomainError>.Failure(
-                DomainError.BusinessRule("user.deactivation", "User is already deactivated."));
+        var result = domainUser.Deactivate();
+        if (result.IsFailure)
+            return result;
 
-        user.IsDeactivated = true;
-        // Set lockout to far future to prevent login
-        await userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
-        await dbContext.SaveChangesAsync(ct);
+        await userRepository.UpdateAsync(domainUser, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+
+        // Also lock out in Identity to prevent login
+        var identityUser = await userManager.FindByIdAsync(userId.ToString());
+        if (identityUser is not null)
+            await userManager.SetLockoutEndDateAsync(identityUser, DateTimeOffset.MaxValue);
 
         return Result<DomainError>.Success();
     }
@@ -89,55 +95,25 @@ public sealed class AdminUserService(
     /// <inheritdoc />
     public async Task<Result<DomainError>> ReactivateUserAsync(Guid userId, CancellationToken ct)
     {
-        var user = await userManager.FindByIdAsync(userId.ToString());
-        if (user is null)
+        var domainUser = await userRepository.GetByIdAsync(UserId.Reconstruct(userId), ct);
+        if (domainUser is null)
             return Result<DomainError>.Failure(DomainError.NotFound("user", userId.ToString()));
 
-        if (!user.IsDeactivated)
-            return Result<DomainError>.Failure(
-                DomainError.BusinessRule("user.reactivation", "User is not deactivated."));
+        var result = domainUser.Reactivate();
+        if (result.IsFailure)
+            return result;
 
-        user.IsDeactivated = false;
-        await userManager.SetLockoutEndDateAsync(user, null);
-        await userManager.ResetAccessFailedCountAsync(user);
-        await dbContext.SaveChangesAsync(ct);
+        await userRepository.UpdateAsync(domainUser, ct);
+        await unitOfWork.SaveChangesAsync(ct);
 
-        return Result<DomainError>.Success();
-    }
-
-    /// <inheritdoc />
-    public async Task<Result<DomainError>> VerifyAdminPasswordAsync(Guid adminUserId, string password, CancellationToken ct)
-    {
-        var user = await userManager.FindByIdAsync(adminUserId.ToString());
-        if (user is null)
-            return Result<DomainError>.Failure(DomainError.NotFound("admin", adminUserId.ToString()));
-
-        var isValid = await userManager.CheckPasswordAsync(user, password);
-        if (!isValid)
-            return Result<DomainError>.Failure(
-                DomainError.Unauthorized("auth", "Invalid password. Re-authentication failed."));
+        // Clear Identity lockout
+        var identityUser = await userManager.FindByIdAsync(userId.ToString());
+        if (identityUser is not null)
+        {
+            await userManager.SetLockoutEndDateAsync(identityUser, null);
+            await userManager.ResetAccessFailedCountAsync(identityUser);
+        }
 
         return Result<DomainError>.Success();
-    }
-
-    /// <inheritdoc />
-    public async Task<Result<RevealedPiiDto, DomainError>> RevealPiiAsync(Guid userId, CancellationToken ct)
-    {
-        var user = await userManager.FindByIdAsync(userId.ToString());
-        if (user is null)
-            return Result<RevealedPiiDto, DomainError>.Failure(
-                DomainError.NotFound("user", userId.ToString()));
-
-        // Prefer decrypted values from encrypted columns; fall back to raw Identity columns
-        var email = !string.IsNullOrEmpty(user.EncryptedEmail)
-            ? encryptionService.Decrypt(user.EncryptedEmail)
-            : user.Email ?? "";
-
-        var displayName = !string.IsNullOrEmpty(user.EncryptedDisplayName)
-            ? encryptionService.Decrypt(user.EncryptedDisplayName)
-            : user.DisplayName;
-
-        return Result<RevealedPiiDto, DomainError>.Success(
-            new RevealedPiiDto(email, displayName));
     }
 }

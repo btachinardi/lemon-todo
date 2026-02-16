@@ -5,33 +5,62 @@ using LemonDo.Domain.Identity.Events;
 using LemonDo.Domain.Identity.ValueObjects;
 
 /// <summary>
-/// Domain user entity. Pure domain model with no ASP.NET Identity dependency.
-/// The Infrastructure layer maps this to/from <c>ApplicationUser</c> (IdentityUser).
+/// Domain user aggregate root. Owns all user profile data (email, display name, account status).
+/// Persisted to its own <c>Users</c> table. ASP.NET Identity only handles credentials and roles.
 /// </summary>
 public sealed class User : Entity<UserId>
 {
-    /// <summary>The user's email address.</summary>
-    public Email Email { get; private set; }
+    /// <summary>Redacted email for safe display/logging (e.g. "j***@example.com").</summary>
+    public string RedactedEmail { get; private set; }
 
-    /// <summary>The user's display name.</summary>
-    public DisplayName DisplayName { get; private set; }
+    /// <summary>Redacted display name for safe display/logging (e.g. "J***e").</summary>
+    public string RedactedDisplayName { get; private set; }
 
-    private User(UserId id, Email email, DisplayName displayName)
+    /// <summary>Whether the user has been deactivated by an admin.</summary>
+    public bool IsDeactivated { get; private set; }
+
+    private User(UserId id, string redactedEmail, string redactedDisplayName)
         : base(id)
     {
-        Email = email;
-        DisplayName = displayName;
+        RedactedEmail = redactedEmail;
+        RedactedDisplayName = redactedDisplayName;
     }
 
-    /// <summary>Creates a new user and raises a <see cref="UserRegisteredEvent"/>.</summary>
+    /// <summary>
+    /// Creates a new user. Validates VOs, stores only redacted forms.
+    /// Full PII is passed to the repository for encryption during persistence.
+    /// </summary>
     public static Result<User, DomainError> Create(Email email, DisplayName displayName)
     {
-        var user = new User(UserId.New(), email, displayName);
-        user.RaiseDomainEvent(new UserRegisteredEvent(user.Id, email.Value, displayName.Value));
+        var user = new User(UserId.New(), email.Redacted, displayName.Redacted);
+        user.RaiseDomainEvent(new UserRegisteredEvent(user.Id));
         return Result<User, DomainError>.Success(user);
     }
 
-    /// <summary>Creates a user from existing data (e.g., loaded from database). No events raised.</summary>
-    public static User Reconstitute(UserId id, Email email, DisplayName displayName) =>
-        new(id, email, displayName);
+    /// <summary>Reconstructs from persistence. No events raised.</summary>
+    public static User Reconstitute(
+        UserId id, string redactedEmail, string redactedDisplayName, bool isDeactivated) =>
+        new(id, redactedEmail, redactedDisplayName) { IsDeactivated = isDeactivated };
+
+    /// <summary>Deactivates the user account (admin action).</summary>
+    public Result<DomainError> Deactivate()
+    {
+        if (IsDeactivated)
+            return Result<DomainError>.Failure(
+                DomainError.BusinessRule("user.deactivation", "User is already deactivated."));
+
+        IsDeactivated = true;
+        return Result<DomainError>.Success();
+    }
+
+    /// <summary>Reactivates a deactivated user account (admin action).</summary>
+    public Result<DomainError> Reactivate()
+    {
+        if (!IsDeactivated)
+            return Result<DomainError>.Failure(
+                DomainError.BusinessRule("user.reactivation", "User is not deactivated."));
+
+        IsDeactivated = false;
+        return Result<DomainError>.Success();
+    }
 }

@@ -1,5 +1,6 @@
 namespace LemonDo.Infrastructure.Extensions;
 
+using LemonDo.Application.Administration;
 using LemonDo.Application.Administration.Commands;
 using LemonDo.Application.Administration.Queries;
 using LemonDo.Application.Common;
@@ -7,6 +8,7 @@ using LemonDo.Application.Identity;
 using LemonDo.Infrastructure.Security;
 using LemonDo.Domain.Administration.Repositories;
 using LemonDo.Domain.Boards.Repositories;
+using LemonDo.Domain.Identity.Repositories;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Infrastructure.Events;
 using LemonDo.Infrastructure.Identity;
@@ -32,6 +34,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IBoardRepository, BoardRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IAuditEntryRepository, AuditEntryRepository>();
 
         // JWT token services
@@ -47,7 +50,7 @@ public static class InfrastructureServiceExtensions
                 options.Password.RequireLowercase = true;
                 options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = false;
-                options.User.RequireUniqueEmail = true;
+                options.User.RequireUniqueEmail = false; // Uniqueness enforced via UserName (email hash)
 
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 options.Lockout.MaxFailedAccessAttempts = 5;
@@ -64,6 +67,9 @@ public static class InfrastructureServiceExtensions
 
         // Field encryption for PII data at rest
         services.AddSingleton<IFieldEncryptionService, AesFieldEncryptionService>();
+
+        // Audited PII access service — the ONLY authorized path for decrypting PII
+        services.AddScoped<IPiiAccessService, PiiAccessService>();
 
         return services;
     }

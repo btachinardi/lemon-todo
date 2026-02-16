@@ -5,6 +5,8 @@ using LemonDo.Api.Contracts.Auth;
 using LemonDo.Api.Extensions;
 using LemonDo.Application.Identity;
 using LemonDo.Application.Identity.Commands;
+using LemonDo.Domain.Identity.Repositories;
+using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Infrastructure.Identity;
 using Microsoft.Extensions.Options;
 
@@ -94,17 +96,22 @@ public static class AuthEndpoints
             httpContext: httpContext);
     }
 
-    private static IResult GetMe(ClaimsPrincipal user)
+    private static async Task<IResult> GetMe(
+        ClaimsPrincipal principal,
+        IUserRepository userRepository)
     {
-        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        var email = user.FindFirstValue(ClaimTypes.Email);
-        var displayName = user.FindFirstValue("display_name");
-        var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-
-        if (userId is null)
+        var userIdStr = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdStr is null || !Guid.TryParse(userIdStr, out var guid))
             return Results.Unauthorized();
 
-        return Results.Ok(new UserResponse(Guid.Parse(userId), email ?? "", displayName ?? "", roles));
+        var user = await userRepository.GetByIdAsync(UserId.Reconstruct(guid));
+        if (user is null)
+            return Results.Unauthorized();
+
+        var roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+
+        // Returns redacted values from domain User entity
+        return Results.Ok(new UserResponse(user.Id.Value, user.RedactedEmail, user.RedactedDisplayName, roles));
     }
 
     private static IResult SetCookieAndReturnResponse(HttpContext httpContext, AuthResult auth, JwtSettings jwt)
@@ -113,7 +120,7 @@ public static class AuthEndpoints
 
         return Results.Ok(new AuthResponse(
             auth.AccessToken,
-            new UserResponse(auth.UserId, auth.Email, auth.DisplayName, auth.Roles)));
+            new UserResponse(auth.UserId, auth.RedactedEmail, auth.RedactedDisplayName, auth.Roles)));
     }
 
     private static void SetRefreshTokenCookie(HttpContext httpContext, string token, int expirationDays)

@@ -7,12 +7,23 @@ using LemonDo.Domain.Common;
 /// Strongly-typed email address with format validation.
 /// Maximum length is 254 characters per RFC 5321.
 /// </summary>
-public sealed partial class Email : ValueObject<string>, IReconstructable<Email, string>
+public sealed partial class Email : ValueObject<string>, IReconstructable<Email, string>, ISensitivePii
 {
     /// <summary>Maximum allowed length for an email address (RFC 5321).</summary>
     public const int MaxLength = 254;
 
     private Email(string value) : base(value) { }
+
+    /// <inheritdoc />
+    public string Redacted
+    {
+        get
+        {
+            var atIndex = Value.IndexOf('@');
+            if (atIndex <= 1) return "***@***";
+            return $"{Value[0]}***@{Value[(atIndex + 1)..]}";
+        }
+    }
 
     /// <summary>Creates an <see cref="Email"/> after validating format and length.</summary>
     public static Result<Email, DomainError> Create(string? email)

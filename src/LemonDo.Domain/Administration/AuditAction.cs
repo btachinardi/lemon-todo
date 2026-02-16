@@ -40,4 +40,7 @@ public enum AuditAction
 
     /// <summary>A user account was reactivated.</summary>
     UserReactivated,
+
+    /// <summary>The system decrypted PII for an automated operation (e.g., sending email).</summary>
+    PiiAccessed,
 }

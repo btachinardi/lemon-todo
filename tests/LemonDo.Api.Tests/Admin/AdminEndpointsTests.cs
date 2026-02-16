@@ -130,16 +130,17 @@ public sealed class AdminEndpointsTests
         var client = await _factory.CreateSystemAdminClientAsync();
 
         // Create a new user to assign role to
+        var email = $"roletest-{Guid.NewGuid():N}@example.com";
         var registerClient = _factory.CreateClient();
         await registerClient.PostAsJsonAsync("/api/auth/register", new
         {
-            Email = $"roletest-{Guid.NewGuid():N}@example.com",
+            Email = email,
             Password = "Test1234!",
             DisplayName = "Role Test"
         });
 
-        // Find that user
-        var listResponse = await client.GetAsync("/api/admin/users?search=roletest");
+        // Find that user by exact email (hash-based lookup)
+        var listResponse = await client.GetAsync($"/api/admin/users?search={Uri.EscapeDataString(email)}");
         var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
         Assert.IsNotEmpty(list!.Items);
         var userId = list.Items[0].Id;
@@ -170,15 +171,16 @@ public sealed class AdminEndpointsTests
         var client = await _factory.CreateSystemAdminClientAsync();
 
         // Create a test user
+        var email = $"deactivate-{Guid.NewGuid():N}@example.com";
         var registerClient = _factory.CreateClient();
         await registerClient.PostAsJsonAsync("/api/auth/register", new
         {
-            Email = $"deactivate-{Guid.NewGuid():N}@example.com",
+            Email = email,
             Password = "Test1234!",
             DisplayName = "Deactivate Test"
         });
 
-        var listResponse = await client.GetAsync("/api/admin/users?search=deactivate");
+        var listResponse = await client.GetAsync($"/api/admin/users?search={Uri.EscapeDataString(email)}");
         var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
         var userId = list!.Items[0].Id;
 
@@ -236,8 +238,8 @@ public sealed class AdminEndpointsTests
             DisplayName = displayName
         });
 
-        // Find the user
-        var listResponse = await client.GetAsync("/api/admin/users?search=reveal");
+        // Find the user by exact email (hash-based lookup)
+        var listResponse = await client.GetAsync($"/api/admin/users?search={Uri.EscapeDataString(email)}");
         var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
         var userId = list!.Items[0].Id;
 
@@ -339,7 +341,7 @@ public sealed class AdminEndpointsTests
             DisplayName = displayName
         });
 
-        var listResponse = await client.GetAsync("/api/admin/users?search=reveal-other");
+        var listResponse = await client.GetAsync($"/api/admin/users?search={Uri.EscapeDataString(email)}");
         var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
         var userId = list!.Items[0].Id;
 
@@ -356,5 +358,89 @@ public sealed class AdminEndpointsTests
         Assert.IsNotNull(revealed);
         Assert.AreEqual(email, revealed.Email);
         Assert.AreEqual(displayName, revealed.DisplayName);
+    }
+
+    // --- Deactivated User Login Rejection ---
+
+    [TestMethod]
+    public async Task Should_RejectLogin_When_UserIsDeactivated()
+    {
+        var sysClient = await _factory.CreateSystemAdminClientAsync();
+
+        // Create a user
+        var email = $"deactivate-login-{Guid.NewGuid():N}@example.com";
+        var registerClient = _factory.CreateClient();
+        await registerClient.PostAsJsonAsync("/api/auth/register", new
+        {
+            Email = email,
+            Password = "Test1234!",
+            DisplayName = "Deactivate Login Test"
+        });
+
+        // Verify login works before deactivation
+        var loginClient = _factory.CreateClient();
+        var loginBefore = await loginClient.PostAsJsonAsync("/api/auth/login", new
+        {
+            Email = email,
+            Password = "Test1234!"
+        });
+        Assert.AreEqual(HttpStatusCode.OK, loginBefore.StatusCode);
+
+        // Find and deactivate via admin
+        var listResponse = await sysClient.GetAsync($"/api/admin/users?search={Uri.EscapeDataString(email)}");
+        var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
+        var userId = list!.Items[0].Id;
+
+        await sysClient.PostAsync($"/api/admin/users/{userId}/deactivate", null);
+
+        // Attempt login after deactivation — should be rejected
+        var loginAfter = await loginClient.PostAsJsonAsync("/api/auth/login", new
+        {
+            Email = email,
+            Password = "Test1234!"
+        });
+        Assert.AreNotEqual(HttpStatusCode.OK, loginAfter.StatusCode,
+            "Deactivated user should not be able to login");
+    }
+
+    // --- PII Reveal Audit Trail ---
+
+    [TestMethod]
+    public async Task Should_CreateAuditEntry_When_PiiIsRevealed()
+    {
+        var client = await _factory.CreateSystemAdminClientAsync();
+
+        // Create a user whose PII we'll reveal
+        var email = $"audit-reveal-{Guid.NewGuid():N}@example.com";
+        var registerClient = _factory.CreateClient();
+        await registerClient.PostAsJsonAsync("/api/auth/register", new
+        {
+            Email = email,
+            Password = "Test1234!",
+            DisplayName = "Audit Reveal User"
+        });
+
+        var listResponse = await client.GetAsync($"/api/admin/users?search={Uri.EscapeDataString(email)}");
+        var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
+        var userId = list!.Items[0].Id;
+
+        // Reveal PII
+        var revealResponse = await client.PostAsJsonAsync($"/api/admin/users/{userId}/reveal", new
+        {
+            Reason = "SupportTicket",
+            Password = CustomWebApplicationFactory.SystemAdminUserPassword
+        });
+        Assert.AreEqual(HttpStatusCode.OK, revealResponse.StatusCode);
+
+        // Check audit log for PiiRevealed action
+        var auditResponse = await client.GetAsync("/api/admin/audit?action=PiiRevealed&resourceType=User");
+        Assert.AreEqual(HttpStatusCode.OK, auditResponse.StatusCode);
+
+        var audit = await auditResponse.Content.ReadFromJsonAsync<PagedResult<AuditEntryDto>>(TestJsonOptions.Default);
+        Assert.IsNotNull(audit);
+
+        // Find the audit entry for this specific user
+        var entry = audit.Items.FirstOrDefault(e => e.ResourceId == userId.ToString());
+        Assert.IsNotNull(entry, "PII reveal should create an audit entry for the target user");
     }
 }

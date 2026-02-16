@@ -3,9 +3,12 @@ namespace LemonDo.Api.Tests.Infrastructure;
 using LemonDo.Application.Common;
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Boards.Repositories;
+using LemonDo.Domain.Common;
+using LemonDo.Domain.Identity.Entities;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Infrastructure.Identity;
 using LemonDo.Infrastructure.Persistence;
+using LemonDo.Infrastructure.Security;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -92,15 +95,16 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         }
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var encryptionService = scope.ServiceProvider.GetRequiredService<IFieldEncryptionService>();
 
         // Seed test user (regular User role)
-        SeedUser(userManager, db, TestUserEmail, TestUserPassword, TestUserDisplayName, Roles.User);
+        SeedUser(userManager, encryptionService, db, TestUserEmail, TestUserPassword, TestUserDisplayName, Roles.User);
 
         // Seed admin user
-        SeedUser(userManager, db, AdminUserEmail, AdminUserPassword, AdminUserDisplayName, Roles.Admin);
+        SeedUser(userManager, encryptionService, db, AdminUserEmail, AdminUserPassword, AdminUserDisplayName, Roles.Admin);
 
         // Seed system admin user
-        SeedUser(userManager, db, SystemAdminUserEmail, SystemAdminUserPassword, SystemAdminUserDisplayName, Roles.SystemAdmin);
+        SeedUser(userManager, encryptionService, db, SystemAdminUserEmail, SystemAdminUserPassword, SystemAdminUserDisplayName, Roles.SystemAdmin);
 
         // Keep legacy default board for backward compat
         var legacyBoardRepo = scope.ServiceProvider.GetRequiredService<IBoardRepository>();
@@ -117,33 +121,43 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     private static void SeedUser(
         UserManager<ApplicationUser> userManager,
+        IFieldEncryptionService encryptionService,
         LemonDoDbContext db,
         string email,
         string password,
         string displayName,
         string role)
     {
-        var existingUser = userManager.FindByEmailAsync(email).GetAwaiter().GetResult();
+        var emailHash = PiiHasher.HashEmail(email);
+        var existingUser = userManager.FindByNameAsync(emailHash).GetAwaiter().GetResult();
         if (existingUser is not null) return;
 
-        var user = new ApplicationUser
-        {
-            UserName = email,
-            Email = email,
-            DisplayName = displayName,
-        };
-        userManager.CreateAsync(user, password).GetAwaiter().GetResult();
-        userManager.AddToRoleAsync(user, role).GetAwaiter().GetResult();
+        var emailVo = Email.Create(email).Value;
+        var displayNameVo = DisplayName.Create(displayName).Value;
 
-        // Create default board for user
-        var userId = new UserId(user.Id);
-        var boardResult = Board.CreateDefault(userId);
-        if (boardResult.IsSuccess)
+        // 1. Create domain User (generates the shared ID + UserRegisteredEvent)
+        var domainUser = User.Create(emailVo, displayNameVo).Value;
+
+        // 2. Create Identity credentials with the SAME ID
+        var appUser = new ApplicationUser
         {
-            var boardRepo = db.Set<Board>();
-            boardRepo.Add(boardResult.Value);
-            db.SaveChanges();
-        }
+            Id = domainUser.Id.Value,
+            UserName = emailHash,
+        };
+        userManager.CreateAsync(appUser, password).GetAwaiter().GetResult();
+        userManager.AddToRoleAsync(appUser, Roles.User).GetAwaiter().GetResult();
+        if (role != Roles.User)
+            userManager.AddToRoleAsync(appUser, role).GetAwaiter().GetResult();
+
+        // 3. Persist domain User with encrypted shadow properties
+        db.Users.Add(domainUser);
+        var entry = db.Entry(domainUser);
+        entry.Property("EmailHash").CurrentValue = emailHash;
+        entry.Property("EncryptedEmail").CurrentValue = encryptionService.Encrypt(email);
+        entry.Property("EncryptedDisplayName").CurrentValue = encryptionService.Encrypt(displayName);
+
+        // SaveChangesAsync dispatches UserRegisteredEvent → CreateDefaultBoardOnUserRegistered
+        db.SaveChangesAsync().GetAwaiter().GetResult();
     }
 
     protected override void Dispose(bool disposing)
