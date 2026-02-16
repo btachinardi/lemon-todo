@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Checkpoint 4: Production Hardening — observability, security, admin tooling, audit trail, i18n, and data encryption.
+## [0.4.0] - 2026-02-16
+
+Checkpoint 4: Production Hardening — observability, security, admin tooling, audit trail, i18n, data encryption, and cloud deployment.
 
 ### Added
 
@@ -51,10 +53,30 @@ Checkpoint 4: Production Hardening — observability, security, admin tooling, a
   - Task detail sheet with encrypted note section: add/replace textarea, "View Note" dialog with 30s auto-hide
   - Lock icon badge on task cards when a sensitive note exists
   - `SensitiveNoteRevealed` audit action for both owner and admin access
-- **593 tests** total (370 backend + 223 frontend), up from 478
-  - 13 new domain tests (SensitiveNote VO + Task entity with notes)
-  - New application-layer command handlers (ViewTaskNote, RevealTaskNote)
-  - 24 new frontend tests (TaskNoteRevealDialog, TaskDetailSheet sensitive note, TaskCard lock icon)
+- **Dual database support** — SQLite (development) + SQL Server (production)
+  - `DatabaseProvider` configuration key for provider selection
+  - Separate EF Core migration assemblies (`Migrations.Sqlite` + `Migrations.SqlServer`)
+  - `DesignTimeDbContextFactory` per provider for `dotnet ef` tooling
+  - Unconditional `MigrateAsync()` on startup for both providers
+- **Azure infrastructure** via Terraform with 3 progressive stages
+  - Stage 1 MVP: Container App, ACR, SQL Database, Key Vault, Static Web App, App Insights, Log Analytics (~$18/mo)
+  - Stage 2 Resilience: + Front Door with WAF, VNet, private endpoints (~$180/mo)
+  - Stage 3 Scale: + Redis Cache, CDN, premium Container Apps with auto-scaling (~$1.7K/mo)
+  - 10 reusable Terraform modules (container-app, sql-database, key-vault, monitoring, static-web-app, networking, frontdoor, cdn, redis, app-service)
+  - Remote state backend (Azure Storage) with bootstrap script
+- **CI/CD pipeline** via GitHub Actions
+  - 4-job test matrix: backend (SQLite), backend (SQL Server), frontend (lint + test + build), E2E
+  - Docker build and push to Azure Container Registry with commit SHA tags
+  - Container App deployment via `az containerapp update`
+  - Static Web App deployment via `azure/static-web-apps-deploy`
+- **Multi-stage Dockerfile** for API containerization
+  - Non-root user, curl healthcheck, migration assemblies included
+  - `.dockerignore` for minimal image size
+- **Developer CLI** (`./dev`) — unified bash script for all development commands
+  - `build`, `test` (backend/frontend/e2e with SQLite/SQL Server variants), `lint`, `start`, `verify`
+  - `migrate add/list/remove` (dual-provider), `docker up/down`
+  - `infra bootstrap/init/plan/apply/destroy/output/status/unlock`
+- **668 tests** total (370 backend + 243 frontend + 55 E2E), up from 478
 
 ### Changed
 
@@ -62,6 +84,14 @@ Checkpoint 4: Production Hardening — observability, security, admin tooling, a
 - Admin user list shows protected-data-redacted values by default
 - API client sends `traceparent` and `X-Correlation-Id` headers on every request
 - Renamed "PII" terminology to "Protected Data" across entire codebase (zero functional changes)
+- Azure deployment uses Container Apps instead of App Service (VM quota unavailable)
+
+### Fixed
+
+- Admin pagination controls not shown on single-page results
+- Missing LanguageSwitcher in AdminLayout header
+- Wrong password in note reveal dialog not showing error feedback
+- Unsaved description changes lost when closing task detail sheet
 
 ## [0.3.0] - 2026-02-15
 
@@ -211,7 +241,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/btachinardi/lemon-todo/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/btachinardi/lemon-todo/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/btachinardi/lemon-todo/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/btachinardi/lemon-todo/releases/tag/v0.1.0
