@@ -13,5 +13,11 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
         builder.Property(u => u.DisplayName)
             .HasMaxLength(100)
             .IsRequired();
+
+        builder.Property(u => u.CreatedAt)
+            .IsRequired();
+
+        builder.Property(u => u.IsDeactivated)
+            .HasDefaultValue(false);
     }
 }

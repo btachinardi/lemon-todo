@@ -1,6 +1,7 @@
 namespace LemonDo.Application.Extensions;
 
 using LemonDo.Application.Administration;
+using LemonDo.Application.Administration.Commands;
 using LemonDo.Application.Administration.EventHandlers;
 using LemonDo.Application.Administration.Queries;
 using LemonDo.Application.Boards.Commands;
@@ -55,6 +56,12 @@ public static class ApplicationServiceExtensions
         // Administration
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<SearchAuditLogQueryHandler>();
+        services.AddScoped<ListUsersAdminQueryHandler>();
+        services.AddScoped<GetUserAdminQueryHandler>();
+        services.AddScoped<AssignRoleCommandHandler>();
+        services.AddScoped<RemoveRoleCommandHandler>();
+        services.AddScoped<DeactivateUserCommandHandler>();
+        services.AddScoped<ReactivateUserCommandHandler>();
 
         // Audit event handlers
         services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, AuditOnUserRegistered>();

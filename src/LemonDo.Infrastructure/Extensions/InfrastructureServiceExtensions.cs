@@ -1,5 +1,7 @@
 namespace LemonDo.Infrastructure.Extensions;
 
+using LemonDo.Application.Administration.Commands;
+using LemonDo.Application.Administration.Queries;
 using LemonDo.Application.Common;
 using LemonDo.Application.Identity;
 using LemonDo.Domain.Administration.Repositories;
@@ -55,6 +57,8 @@ public static class InfrastructureServiceExtensions
             .AddEntityFrameworkStores<LemonDoDbContext>();
 
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAdminUserQuery, AdminUserQuery>();
+        services.AddScoped<IAdminUserService, AdminUserService>();
         services.AddHostedService<RefreshTokenCleanupService>();
 
         return services;
