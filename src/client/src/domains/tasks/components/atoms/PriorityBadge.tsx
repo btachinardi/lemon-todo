@@ -25,7 +25,10 @@ interface PriorityBadgeProps {
   className?: string;
 }
 
-/** Colored badge indicating task priority. Renders nothing for `Priority.None`. */
+/**
+ * Colored badge indicating task priority. Renders nothing for `Priority.None`.
+ * Memoized — rendered in task card lists.
+ */
 export const PriorityBadge = memo(function PriorityBadge({ priority, className }: PriorityBadgeProps) {
   const { t } = useTranslation();
 

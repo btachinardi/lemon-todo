@@ -178,6 +178,7 @@ export function TaskDetailSheetProvider({ taskId, onClose }: TaskDetailSheetProv
         onUpdateSensitiveNote={handleUpdateSensitiveNote}
         onClearSensitiveNote={handleClearSensitiveNote}
         onViewNote={handleViewNote}
+        saveStatus={updateTask.status}
       />
       <TaskNoteRevealDialog
         open={noteDialogOpen}

@@ -4,6 +4,12 @@ namespace LemonDo.Api.Middleware;
 /// Adds standard security headers to every HTTP response.
 /// Should be placed early in the pipeline (after error handling).
 /// </summary>
+/// <remarks>
+/// Headers added: X-Content-Type-Options (nosniff), X-Frame-Options (DENY),
+/// Referrer-Policy (strict-origin-when-cross-origin), X-XSS-Protection (0),
+/// Content-Security-Policy (default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
+/// img-src 'self' data:; font-src 'self' data:).
+/// </remarks>
 public sealed class SecurityHeadersMiddleware(RequestDelegate next)
 {
     /// <summary>Adds security headers and invokes the next middleware.</summary>

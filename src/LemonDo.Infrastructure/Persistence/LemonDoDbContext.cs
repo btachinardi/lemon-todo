@@ -66,10 +66,14 @@ public sealed class LemonDoDbContext : IdentityDbContext<ApplicationUser, Identi
     {
         // SQLite doesn't natively support DateTimeOffset. Store as ISO 8601 strings
         // which sort lexicographically correctly and support ORDER BY.
-        configurationBuilder.Properties<DateTimeOffset>()
-            .HaveConversion<string>();
-        configurationBuilder.Properties<DateTimeOffset?>()
-            .HaveConversion<string>();
+        // SQL Server handles DateTimeOffset natively — skip conversion.
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+        {
+            configurationBuilder.Properties<DateTimeOffset>()
+                .HaveConversion<string>();
+            configurationBuilder.Properties<DateTimeOffset?>()
+                .HaveConversion<string>();
+        }
     }
 
     /// <summary>

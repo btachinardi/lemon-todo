@@ -7,6 +7,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 /// EF Core <see cref="PropertyBuilder{TProperty}"/> extensions that wire up
 /// <see cref="ValueObject{T}"/> conversions via <see cref="IReconstructable{TSelf,TValue}"/>.
 /// </summary>
+/// <remarks>
+/// Use IsValueObject&lt;TVO&gt;() for Guid-backed value objects (IDs). Use IsValueObject&lt;TVO&gt;(maxLength)
+/// for required string-backed value objects. Use IsNullableValueObject&lt;TVO&gt;(maxLength) for optional
+/// string-backed value objects.
+/// </remarks>
 public static class ValueObjectPropertyExtensions
 {
     /// <summary>

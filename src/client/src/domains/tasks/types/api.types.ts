@@ -1,6 +1,9 @@
 import type { Priority } from './task.types';
 
-/** Payload for `POST /api/tasks`. Only `title` is required by the backend. */
+/**
+ * Payload for `POST /api/tasks`. Creates a new task and places it on the default board.
+ * Only `title` is required by the backend.
+ */
 export interface CreateTaskRequest {
   title: string;
   description?: string | null;
@@ -30,12 +33,18 @@ export interface UpdateTaskRequest {
   clearSensitiveNote?: boolean;
 }
 
-/** Payload for `POST /api/tasks/:id/view-note`. */
+/**
+ * Payload for `POST /api/tasks/:id/view-note`.
+ * Re-authenticates the user before decrypting the sensitive note.
+ */
 export interface ViewTaskNoteRequest {
   password: string;
 }
 
-/** Response from `POST /api/tasks/:id/view-note`. */
+/**
+ * Response from `POST /api/tasks/:id/view-note`.
+ * Contains the decrypted plaintext note.
+ */
 export interface ViewTaskNoteResponse {
   note: string;
 }
@@ -49,12 +58,18 @@ export interface MoveTaskRequest {
   nextTaskId: string | null;
 }
 
-/** Payload for `POST /api/tasks/:id/tags`. */
+/**
+ * Payload for `POST /api/tasks/:id/tags`.
+ * Appends a tag to the task. Silently succeeds if the tag already exists.
+ */
 export interface AddTagRequest {
   tag: string;
 }
 
-/** Payload for `POST /api/tasks/bulk/complete`. */
+/**
+ * Payload for `POST /api/tasks/bulk/complete`.
+ * Marks multiple tasks as complete in a single request.
+ */
 export interface BulkCompleteRequest {
   taskIds: string[];
 }

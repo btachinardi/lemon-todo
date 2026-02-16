@@ -6,8 +6,10 @@ import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
 import { UserMenu } from '@/domains/auth/components/UserMenu';
 import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
+import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 
+/** Props for {@link AdminLayout}. */
 interface AdminLayoutProps {
   children: ReactNode;
 }
@@ -25,7 +27,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className="flex items-center gap-3">
             <h1 className="font-mono text-base font-light tracking-normal sm:text-lg">
               <span className="text-foreground">{t('brand.lemon')}</span>
-              <span className="text-primary">{t('brand.do')}</span>
+              <span className="text-lemon">{t('brand.do')}</span>
               <span className="ml-2 text-xs text-muted-foreground">{t('brand.admin')}</span>
             </h1>
           </div>
@@ -70,6 +72,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <ArrowLeftIcon className="size-3.5" />
               <span className="hidden sm:inline">{t('common.back')}</span>
             </NavLink>
+            <LanguageSwitcher />
             <ThemeToggle
               theme={theme}
               onToggle={() => {

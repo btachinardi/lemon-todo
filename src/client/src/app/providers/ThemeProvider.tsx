@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useThemeStore, applyThemeClass } from '@/stores/use-theme-store';
 
+/** Props for {@link ThemeProvider}. */
 interface ThemeProviderProps {
   children: ReactNode;
 }

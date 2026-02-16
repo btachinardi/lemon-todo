@@ -21,7 +21,10 @@ export function useDefaultBoardQuery() {
   });
 }
 
-/** Fetches a board by ID. Disabled when `id` is falsy. */
+/**
+ * Fetches a board by ID. Disabled when `id` is falsy.
+ * @param id - Unique board identifier
+ */
 export function useBoardQuery(id: string) {
   return useQuery({
     queryKey: boardKeys.detail(id),

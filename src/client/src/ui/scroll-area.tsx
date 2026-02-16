@@ -5,6 +5,7 @@ import { ScrollArea as ScrollAreaPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/** Container with custom-styled scrollbars. Wraps overflowing content. */
 function ScrollArea({
   className,
   children,
@@ -28,6 +29,7 @@ function ScrollArea({
   )
 }
 
+/** Custom scrollbar for ScrollArea. Rendered automatically, can be used standalone for custom layouts. */
 function ScrollBar({
   className,
   orientation = "vertical",

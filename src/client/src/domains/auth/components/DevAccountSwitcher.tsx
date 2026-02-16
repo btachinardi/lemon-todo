@@ -10,9 +10,12 @@ interface DevAccount {
   email: string;
   password: string;
   roleKey: string;
+  /** i18n key for the role label (e.g., "auth.devSwitcher.roles.user"). */
   labelKey: string;
+  /** i18n key for the role description (e.g., "auth.devSwitcher.roles.userDesc"). */
   descKey: string;
   icon: typeof UserIcon;
+  /** Tailwind classes for color accent (text, background, border). */
   accent: string;
 }
 
@@ -97,7 +100,7 @@ export function DevAccountSwitcher() {
       <p className="text-center text-[11px] text-muted-foreground/60">
         {t('auth.devSwitcher.subtitle')}
       </p>
-      <div className="grid gap-2">
+      <div className="grid gap-2 overflow-hidden">
         {DEV_ACCOUNTS.map((account) => {
           const Icon = account.icon;
           const isActive = switchingRole === account.roleKey;

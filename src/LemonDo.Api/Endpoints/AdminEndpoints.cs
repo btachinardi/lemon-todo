@@ -10,7 +10,11 @@ using LemonDo.Domain.Administration;
 /// <summary>Minimal API endpoint definitions for admin operations under <c>/api/admin</c>.</summary>
 public static class AdminEndpoints
 {
-    /// <summary>Maps all admin endpoints under <c>/api/admin</c>.</summary>
+    /// <summary>
+    /// Maps all administrative endpoints under <c>/api/admin</c> including user management,
+    /// role assignment, account deactivation, protected data reveal, and audit log search.
+    /// </summary>
+    /// <returns>The route group builder for method chaining.</returns>
     public static RouteGroupBuilder MapAdminEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/admin")
@@ -46,7 +50,7 @@ public static class AdminEndpoints
         string? search = null,
         string? role = null,
         int page = 1,
-        int pageSize = 20,
+        int pageSize = 10,
         CancellationToken ct = default)
     {
         var result = await handler.HandleAsync(
@@ -114,7 +118,7 @@ public static class AdminEndpoints
         Guid? actorId = null,
         string? resourceType = null,
         int page = 1,
-        int pageSize = 20,
+        int pageSize = 10,
         CancellationToken ct = default)
     {
         var result = await handler.HandleAsync(

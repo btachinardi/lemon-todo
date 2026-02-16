@@ -16,6 +16,10 @@ public sealed class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorH
     /// In development mode, includes the full exception stack trace in the response detail field.
     /// </summary>
     /// <param name="context">The HTTP context for the current request.</param>
+    /// <remarks>
+    /// Side effect: logs unhandled exceptions with request context (method, path, elapsed time)
+    /// for observability and debugging.
+    /// </remarks>
     public async Task InvokeAsync(HttpContext context)
     {
         var startTime = Stopwatch.GetTimestamp();

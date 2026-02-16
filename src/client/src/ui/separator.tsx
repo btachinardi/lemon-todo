@@ -3,6 +3,7 @@ import { Separator as SeparatorPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/** Visual divider line for separating content sections. Can be horizontal or vertical. */
 function Separator({
   className,
   orientation = "horizontal",

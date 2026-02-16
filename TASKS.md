@@ -160,7 +160,14 @@
 | CP4.8 | i18n setup (en + pt-BR) | DONE | i18next + i18next-browser-languagedetector, 158 keys in en.json + pt-BR.json, LanguageSwitcher |
 | CP4.9 | Rate limiting on auth endpoints | DONE | Configurable per-IP limits (done in CP2 security hardening) |
 | CP4.10 | Data encryption at rest (PII fields) | DONE | AES-256-GCM field encryption, EncryptedEmail + EncryptedDisplayName columns |
-| | **Deliverable** | | Production-hardened app with observability and compliance readiness |
+| CP4.11 | Dual-provider SQL Server support | DONE | DatabaseProvider config, SqlServerTestCleanup, EnsureCreated for SQL Server, 370 tests pass on both |
+| CP4.12 | Dual EF Core migration assemblies | DONE | Migrations.Sqlite + Migrations.SqlServer projects, unconditional MigrateAsync for both providers |
+| CP4.13 | Terraform Azure infrastructure | DONE | Bootstrap + 3 stages, 10 reusable modules (added container-app), Container Apps replaces App Service (VM quota blocked) |
+| CP4.14 | CI/CD pipeline (GitHub Actions) | DONE | 4-job test + 1-job deploy workflow: Docker push to ACR + `az containerapp update`, deploy only on main |
+| CP4.15 | Dockerfile + containerization | DONE | Multi-stage build, non-root user, curl healthcheck, migration assemblies, .dockerignore |
+| CP4.16 | Developer CLI (`./dev`) | DONE | Unified bash script: build, test, lint, start, migrate, docker, verify, infra (bootstrap/init/plan/apply/destroy/output/status/unlock) |
+| CP4.17 | Azure deployment verification | DONE | 15 resources deployed, API healthy, Key Vault secrets configured, GitHub CI/CD secrets + variables set |
+| | **Deliverable** | | Production-hardened app with observability, compliance, and cloud deployment |
 
 ---
 
@@ -265,6 +272,12 @@
 | 2026-02-16 | PII redacted by default in admin views | PiiRedactor masks emails/names, SystemAdmin reveal creates PiiRevealed audit entry, 30-second auto-hide in UI |
 | 2026-02-16 | i18next over react-intl for i18n | Simpler API, namespace support, browser language detection, localStorage persistence |
 | 2026-02-16 | Manual traceparent over OTel Browser SDK | Zero new npm deps, W3C Trace Context format, sufficient for distributed tracing correlation |
+| 2026-02-16 | Dual-provider database support (SQLite + SQL Server) | DatabaseProvider config key, conditional UseSqlite/UseSqlServer, per-instance unique test DBs for SQL Server |
+| 2026-02-16 | Separate migration assemblies per provider | EF Core requires one ModelSnapshot per DbContext per assembly. SQLite and SQL Server produce different column types. Migrations.Sqlite + Migrations.SqlServer assemblies, each with IDesignTimeDbContextFactory. DatabaseProvider env var needed for SQL Server migration generation (dotnet ef finds both factories via Api's references). |
+| 2026-02-16 | `./dev` CLI over Makefile or npm scripts | Bash script is portable (Git Bash on Windows), has colored output, auto-manages env vars for SQL Server, and wraps dual-provider migrations in a single command. Colon-separated subcommands (`test backend:sql`) read naturally without flag parsing. |
+| 2026-02-16 | Container Apps over App Service | Azure Free Trial and Pay-As-You-Go both had 0 VM quota for App Service (all tiers, all regions). Container Apps use consumption model — no VM quota needed, built-in auto-scaling, cheaper for MVP. |
+| 2026-02-16 | Docker push + `az containerapp update` over ZIP deploy | Container Apps don't support ZIP deploy. CI/CD builds Docker image, pushes to ACR with commit SHA tag, then updates Container App image reference. |
+| 2026-02-16 | `./dev infra` CLI commands | Terraform operations need Azure CLI in PATH, `MSYS_NO_PATHCONV=1` for Git Bash, and stage selection. CLI wraps all this, making `./dev infra plan stage1-mvp` as simple as `./dev test`. |
 
 ---
 
@@ -297,13 +310,17 @@
   - Micro-animations: fade-in for kanban cards, draw-check + bounce for completion checkbox
   - New Shadcn/ui primitives: Sheet, Calendar, Popover, Label
   - E2E: 13 new tests (detail sheet, filters, theme toggle) + 5 existing tests fixed for CP3 changes
-- **Checkpoint 4**: DONE (Production Hardening - 321 backend + 164 frontend = 485 tests)
+- **Checkpoint 4**: DONE (Production Hardening - 370 backend + 243 frontend + 55 E2E = 668 tests)
   - Observability: Serilog structured logging, PII masking, W3C traceparent propagation
   - Security: AES-256-GCM field encryption for PII, SystemAdmin role with authorization policies
   - Audit: Administration bounded context with AuditEntry entity and domain event handlers
   - Admin panel: User management (list, search, roles, deactivate) + audit log viewer (filters, pagination)
   - PII redaction: Default-masked in admin views, SystemAdmin reveal with audit trail
   - i18n: i18next with en + pt-BR (158 translation keys), LanguageSwitcher component
+  - Dual database: SQLite + SQL Server with separate migration assemblies, MigrateAsync for both
+  - Infrastructure: Terraform Azure (bootstrap + 3 stages, 10 modules incl. container-app), GitHub Actions CI/CD, Docker
+  - Azure deployment: 15 resources live (Container Apps, ACR, SQL, Key Vault, SWA, App Insights, Log Analytics)
+  - Developer CLI: `./dev` script with build, test, lint, start, migrate, docker, verify, infra commands
 - **Checkpoint 5**: NOT STARTED (Advanced & Delight)
 
 ---
@@ -412,3 +429,18 @@
 | 1d3bec3 | feat(audit-ui): add audit log viewer with filters and pagination | CP4 |
 | 5240f4c | feat(i18n): add i18next with en + pt-BR translations across all components | CP4 |
 | 8172d24 | feat(otel): add W3C traceparent propagation from frontend to backend | CP4 |
+| d57fc1a | test(db): add dual-provider test infrastructure for SQL Server | CP4 |
+| a6575eb | feat(telemetry): enable Azure Monitor OpenTelemetry integration | CP4 |
+| d5346fd | feat(health): expose health endpoints in all environments | CP4 |
+| 61cec27 | ci(docker): add multi-stage Dockerfile for API | CP4 |
+| 364961b | ci(actions): add GitHub Actions CI/CD pipeline | CP4 |
+| d3070c7 | ci(terraform): add Azure infrastructure with staged deployment | CP4 |
+| 0fbf76f | chore(dx): add developer CLI script | CP4 |
+| 5f045bc | docs: update documentation for CP4 infrastructure changes | CP4 |
+| 0a9a078 | fix(admin): add missing LanguageSwitcher to AdminLayout header | CP4 |
+| 12981dc | fix(admin): show pagination controls on single-page results | CP4 |
+| 2b388a9 | fix(infra): complete CP4 infrastructure — Dockerfile, CI/CD, and bug fixes | CP4 |
+| 8a168ee | docs(csharp): improve XML documentation for API contracts and middleware | CP4 |
+| 9b2ae63 | docs(csharp): add XML documentation to domain, infrastructure, and service defaults | CP4 |
+| 65a702b | docs(csharp): add XML documentation to endpoints and domain types | CP4 |
+| 823672c | docs: add CP4 commit history to TASKS.md | CP4 |

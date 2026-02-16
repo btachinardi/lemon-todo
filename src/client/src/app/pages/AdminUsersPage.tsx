@@ -2,7 +2,10 @@ import { useTranslation } from 'react-i18next';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { UserManagementView } from '@/domains/admin/components/views/UserManagementView';
 
-/** Admin users page with user management table. */
+/**
+ * Admin user management page.
+ * Displays a table of registered users with search, role editing, and deactivation capabilities.
+ */
 export function AdminUsersPage() {
   const { t } = useTranslation();
 

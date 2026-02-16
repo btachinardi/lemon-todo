@@ -6,6 +6,9 @@ const listeners = new Set<NetworkCallback>();
 
 /**
  * Subscribe to network status changes. Returns an unsubscribe function.
+ *
+ * @param callback - Function called with the new online status when network state changes.
+ * @returns A function to unsubscribe this callback from network events.
  */
 export function onNetworkChange(callback: NetworkCallback): () => void {
   listeners.add(callback);

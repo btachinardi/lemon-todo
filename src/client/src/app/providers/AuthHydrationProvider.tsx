@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
+/** Props for {@link AuthHydrationProvider}. */
 interface AuthHydrationProviderProps {
   children: ReactNode;
 }

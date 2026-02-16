@@ -6,7 +6,10 @@ const BASE = '/api/boards';
 /**
  * Client for the boards REST API (`/api/boards`).
  *
- * @throws {@link import("@/lib/api-client").ApiRequestError} on non-2xx responses.
+ * @throws {@link import("@/lib/api-client").ApiRequestError} on non-2xx responses:
+ * - 400 validation errors (malformed request, constraint violations)
+ * - 401 unauthorized (missing or invalid authentication)
+ * - 404 not found (board or column does not exist)
  */
 export const boardsApi = {
   /** Fetches the single default board (CP1 single-user mode). */

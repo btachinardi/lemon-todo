@@ -8,13 +8,13 @@ using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
-/// <summary>Command to archive a task, hiding it from active views.</summary>
+/// <summary>Hides a completed task from active board views without deleting it.</summary>
 public sealed record ArchiveTaskCommand(Guid TaskId);
 
 /// <summary>Archives the task via <see cref="LemonDo.Domain.Tasks.Entities.Task.Archive"/>.</summary>
 public sealed class ArchiveTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<ArchiveTaskCommandHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Loads the task, marks it as archived (enforces completion precondition), and persists the change.</summary>
     public async Task<Result<DomainError>> HandleAsync(ArchiveTaskCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Archiving task {TaskId}", command.TaskId);

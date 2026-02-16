@@ -17,6 +17,9 @@ public sealed class AesFieldEncryptionService : IFieldEncryptionService
     private readonly byte[] _key;
 
     /// <summary>Creates the service with the encryption key from configuration.</summary>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when Encryption:FieldEncryptionKey is not configured or is shorter than 32 bytes.
+    /// </exception>
     public AesFieldEncryptionService(IConfiguration configuration)
     {
         var keyBase64 = configuration["Encryption:FieldEncryptionKey"]
@@ -50,6 +53,9 @@ public sealed class AesFieldEncryptionService : IFieldEncryptionService
     }
 
     /// <inheritdoc />
+    /// <exception cref="System.Security.Cryptography.CryptographicException">
+    /// Thrown when the ciphertext is corrupted or cannot be authenticated.
+    /// </exception>
     public string Decrypt(string ciphertextBase64)
     {
         var combined = Convert.FromBase64String(ciphertextBase64);

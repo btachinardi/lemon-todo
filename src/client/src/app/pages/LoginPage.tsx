@@ -3,7 +3,10 @@ import { Link, useNavigate } from 'react-router';
 import { LoginForm } from '@/domains/auth/components/LoginForm';
 import { DevAccountSwitcher } from '@/domains/auth/components/DevAccountSwitcher';
 
-/** Login page with link to register. */
+/**
+ * Login page with email/password form validation.
+ * Redirects to the home page on successful authentication.
+ */
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -17,7 +20,7 @@ export function LoginPage() {
       <LoginForm onSuccess={() => navigate('/', { replace: true })} />
       <p className="text-center text-sm text-muted-foreground">
         {t('auth.login.noAccount')}{' '}
-        <Link to="/register" className="font-medium text-primary hover:underline">
+        <Link to="/register" className="font-medium text-lemon hover:underline">
           {t('auth.login.createOne')}
         </Link>
       </p>

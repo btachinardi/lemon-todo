@@ -3,6 +3,7 @@ import { Progress as ProgressPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/** Horizontal progress bar indicating completion percentage. Value is 0-100. */
 function Progress({
   className,
   value,

@@ -30,6 +30,7 @@ function renderSheet(overrides: Partial<React.ComponentProps<typeof TaskDetailSh
     onRemoveTag: vi.fn(),
     onDelete: vi.fn(),
     isDeleting: false,
+    saveStatus: 'idle',
     ...overrides,
   };
   return { ...render(<TaskDetailSheet {...defaultProps} />), props: defaultProps };
@@ -316,6 +317,58 @@ describe('TaskDetailSheet', () => {
       await user.click(tagInput);
 
       expect(screen.queryByRole('option')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('flush on close', () => {
+    it('should flush pending description changes when sheet closes via Escape', async () => {
+      const onUpdateDescription = vi.fn();
+      const onClose = vi.fn();
+      const user = userEvent.setup();
+      renderSheet({ onUpdateDescription, onClose });
+
+      // Modify description without blurring
+      const textarea = screen.getByDisplayValue('Milk, eggs, bread');
+      await user.clear(textarea);
+      await user.type(textarea, 'Updated grocery list');
+
+      // Escape closes the sheet — should flush pending description
+      await user.keyboard('{Escape}');
+
+      expect(onUpdateDescription).toHaveBeenCalledWith('Updated grocery list');
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it('should not call onUpdateDescription on close when description has not changed', async () => {
+      const onUpdateDescription = vi.fn();
+      const onClose = vi.fn();
+      const user = userEvent.setup();
+      renderSheet({ onUpdateDescription, onClose });
+
+      // Focus the textarea but don't change its value
+      await user.click(screen.getByDisplayValue('Milk, eggs, bread'));
+      await user.keyboard('{Escape}');
+
+      expect(onUpdateDescription).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  describe('save indicator', () => {
+    it('should show saving indicator when saveStatus is pending', () => {
+      renderSheet({ saveStatus: 'pending' });
+      expect(screen.getByText('Saving...')).toBeInTheDocument();
+    });
+
+    it('should show saved indicator when saveStatus is success', () => {
+      renderSheet({ saveStatus: 'success' });
+      expect(screen.getByText('Saved')).toBeInTheDocument();
+    });
+
+    it('should not show save indicator when saveStatus is idle', () => {
+      renderSheet({ saveStatus: 'idle' });
+      expect(screen.queryByText('Saving...')).not.toBeInTheDocument();
+      expect(screen.queryByText('Saved')).not.toBeInTheDocument();
     });
   });
 });

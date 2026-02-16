@@ -1310,6 +1310,210 @@ Tasks often contain sensitive information (medical notes, legal references, conf
 
 ---
 
+## CP4 Infrastructure: Dual EF Core Migrations
+
+**Date: February 16, 2026**
+
+### The Problem
+
+When we added SQL Server support in CP4, we used `EnsureCreatedAsync()` for SQL Server and `MigrateAsync()` for SQLite — a pragmatic hack. But `EnsureCreated` doesn't support incremental schema changes, so any future migration would break SQL Server deployments.
+
+### The Solution: Separate Migration Assemblies
+
+EF Core allows only one `ModelSnapshot` per `DbContext` per assembly, and SQLite and SQL Server produce different column types (e.g., `TEXT` vs `datetimeoffset`). We created dedicated migration assemblies:
+
+- **`LemonDo.Migrations.Sqlite`** — houses all 11 SQLite migrations (moved from Infrastructure)
+- **`LemonDo.Migrations.SqlServer`** — houses a single `InitialCreate` migration covering the full schema
+
+Each has its own `IDesignTimeDbContextFactory` for `dotnet ef` commands.
+
+### Key Decisions
+
+1. **Separate assemblies over shared migrations**: EF Core's `ModelSnapshot` is provider-specific. A single assembly would produce SQLite-typed snapshots when adding SQL Server migrations (or vice versa).
+
+2. **Environment variable for SQL Server migration generation**: `dotnet ef` starts Program.cs which defaults to SQLite. Setting `DatabaseProvider=SqlServer` makes the runtime path select the correct provider. The design-time factory alone doesn't suffice because EF tools find both factories (from both assemblies loaded via Api's references) and fall back to the host builder.
+
+3. **Avoid `!` in SQL Server passwords on Windows/MSYS2**: The `!` in `YourStrong!Passw0rd` causes login failures when the connection string is passed through bash scripts on Git Bash/MSYS2. Changed to `YourStr0ngPassw0rd` to avoid shell escaping issues entirely.
+
+4. **EF Core Design package stays in Api**: The startup project needs `Microsoft.EntityFrameworkCore.Design` for `dotnet ef` to work, even though the migration projects also have it.
+
+### Changes Summary
+
+- **New**: `src/LemonDo.Migrations.Sqlite/` (csproj + design-time factory + 23 migration files moved from Infrastructure)
+- **New**: `src/LemonDo.Migrations.SqlServer/` (csproj + design-time factory + generated InitialCreate)
+- **Deleted**: `src/LemonDo.Infrastructure/Migrations/` (moved to Sqlite project)
+- **Deleted**: `src/LemonDo.Infrastructure/Persistence/DesignTimeDbContextFactory.cs`
+- **Modified**: `InfrastructureServiceExtensions.cs` — `MigrationsAssembly(...)` on both provider calls
+- **Modified**: `Program.cs` — unconditional `MigrateAsync()` (removed `EnsureCreatedAsync` hack)
+- **Modified**: Test factory — `MigrationsAssembly` on SQLite re-registration, removed `EnsureCreated`
+- **Result**: 370 backend tests pass on both SQLite and SQL Server; 55/56 E2E pass (1 pre-existing failure)
+
+---
+
+## CP4 Infrastructure: Developer CLI (`./dev`)
+
+**Date: February 16, 2026**
+
+### The Problem
+
+Every common operation required remembering long, provider-specific commands:
+- `dotnet clean src/LemonDo.slnx -v quiet && dotnet build src/LemonDo.slnx`
+- `export TEST_DATABASE_PROVIDER=SqlServer && export TEST_SQLSERVER_CONNECTION_STRING='...' && dotnet test --solution src/LemonDo.slnx`
+- `DatabaseProvider=SqlServer dotnet ef migrations add <Name> --project src/LemonDo.Migrations.SqlServer --startup-project src/LemonDo.Api`
+
+Connection string escaping (`!` in passwords triggers bash history expansion), multiple directory changes for frontend commands, and dual-provider migration generation all added friction.
+
+### The Solution
+
+A single `./dev` bash script at the project root that wraps all common operations:
+
+- **`./dev build`** — clean + build all 11 projects
+- **`./dev test backend:sql`** — automatically sets env vars, checks Docker container, runs tests
+- **`./dev test e2e:sql`** — E2E with SQL Server backend, connection wired automatically
+- **`./dev migrate add <Name>`** — generates migrations for BOTH providers in one command
+- **`./dev verify`** — full verification gate (build + frontend build + all tests + lint)
+- **`./dev docker up/down`** — manages the SQL Server container
+
+### Design Decisions
+
+1. **Bash over Makefile**: More portable on Windows (Git Bash), better error handling, colored output
+2. **Subcommands with colon-separated variants**: `test backend:sql` reads naturally, avoids flag parsing complexity
+3. **Auto-detect SQL Server**: `./dev docker up` checks if container already exists before starting
+4. **Connection string defaults**: Hardcoded `sa/YourStr0ngPassw0rd` with `TEST_SQLSERVER_CONNECTION_STRING` override for CI/custom setups
+5. **Pass-through args**: Extra arguments after the target are forwarded to the underlying tool (e.g., `./dev test backend -- --filter "TaskTitle"`)
+
+---
+
+### CP4 Infrastructure Completion
+
+**Date**: 2026-02-16
+
+Finalized the three remaining infrastructure tasks for CP4:
+
+#### Terraform Azure Infrastructure (CP4.13)
+
+Complete IaC with progressive enhancement across three deployment stages:
+
+| Stage | Cost | What You Get |
+|-------|------|-------------|
+| **MVP** | ~$18/mo | B1 App Service, Basic SQL, Free Static Web App, App Insights |
+| **Resilience** | ~$180/mo | S1 App Service + staging slot, S1 SQL + geo-backup, VNet + private endpoints, Front Door + WAF |
+| **Scale** | ~$1.7K/mo | P2v3 App Service + auto-scale (2-10), P1 SQL + read replica, Premium Redis, CDN |
+
+Nine reusable modules: `app-service`, `sql-database`, `key-vault`, `static-web-app`, `monitoring`, `networking`, `frontdoor`, `redis`, `cdn`. Bootstrap script initializes Azure remote state backend.
+
+#### CI/CD Pipeline (CP4.14)
+
+Six-job GitHub Actions workflow:
+1. **backend-test** — Build + test on SQLite
+2. **backend-test-sqlserver** — Test with SQL Server service container
+3. **frontend-test** — pnpm install + lint + test + build
+4. **docker-build** — Validates Dockerfile builds successfully
+5. **deploy-staging** — On develop push, deploys API to App Service staging slot + frontend to Static Web App
+6. **deploy-production** — On main push, deploys to production with environment approval gate
+
+#### Dockerfile (CP4.15)
+
+Multi-stage build:
+- **Build stage**: SDK image, layer-cached restore, includes all migration assemblies
+- **Runtime stage**: aspnet image, non-root user, curl healthcheck on `/alive`, port 8080
+
+#### Bug Fixes
+
+- **Password normalization**: `YourStrong!Passw0rd` → `YourStr0ngPassw0rd` across all files (deploy.yml, dev CLI, README, test infrastructure). The `!` character caused login failures when passed through Git Bash/MSYS2 scripts.
+- **In-memory SQLite EnsureCreated**: Added `EnsureCreated()` safety net for in-memory SQLite test databases (ephemeral connections don't persist MigrateAsync schema).
+- **Dockerfile migration assemblies**: Added missing `LemonDo.Migrations.Sqlite` and `LemonDo.Migrations.SqlServer` to Docker build (required by API project references).
+- **Dockerfile curl**: Installed curl in runtime image for HEALTHCHECK command.
+
+---
+
+### CP4 Verification Results
+
+| Check | Result |
+|-------|--------|
+| **Backend Build** | 11/11 projects, 0 warnings, 0 errors |
+| **Backend Tests** | 370 passed, 0 failed, 0 skipped |
+| **Frontend Tests** | 243 passed, 0 failed |
+| **Frontend Lint** | Clean |
+| **Frontend Build** | 4 files, 797 KB JS + 71 KB CSS |
+
+**All 16 CP4 tasks complete.**
+
+---
+
+### Azure Deployment: App Service → Container Apps Migration
+
+**Date**: 2026-02-16
+
+#### The Quota Problem
+
+After bootstrapping the Terraform state backend and deploying 12 of 14 resources successfully, the App Service Plan consistently failed — Azure reported **0 VM quota** for all tiers (Basic, Standard, and even Free) in East US 2. We upgraded from Free Trial to Pay-As-You-Go, but quota requests were denied.
+
+#### The Solution: Azure Container Apps
+
+Container Apps run on a consumption-based model that **doesn't require VM quotas**. Key advantages over B1 App Service for our MVP:
+
+| Capability | App Service (B1) | Container Apps |
+|------------|------------------|----------------|
+| Auto-scaling | No (fixed 1 instance) | Yes (0-N replicas) |
+| Health probes | Health check path | Liveness + Readiness + Startup |
+| Zero-downtime deploy | Only with slots (Stage 2+) | Built-in via revisions |
+| Cost | ~$13/month fixed | Pay-per-use (cheaper for MVP) |
+| Observability | App Insights | App Insights + Log Analytics |
+
+#### Infrastructure Changes
+
+Created `infra/modules/container-app/` with:
+- **Azure Container Registry (Basic)** — stores Docker images
+- **Container App Environment** — managed Kubernetes with Log Analytics integration
+- **Container App** — runs the API with secrets, health probes, and managed identity
+
+Updated all three stages to use `container_app` module instead of `app_service`. Stage 2 and 3 have TODOs for networking module adaptation (Container Apps use VNet integration differently than App Service).
+
+#### CI/CD Changes
+
+Replaced ZIP deploy with Docker-based deployment:
+1. `az acr login` — authenticate to Container Registry
+2. `docker build + push` — build and push image tagged with commit SHA
+3. `az containerapp update` — deploy new image to Container App
+
+Deploy only triggers on push to `main` (develop only runs tests). Removed the staging deploy job since Stage 1 doesn't have a staging environment.
+
+#### Developer CLI (`./dev infra`)
+
+Added infrastructure management commands with dynamic Azure CLI detection:
+- `./dev infra bootstrap` — one-time state backend setup
+- `./dev infra init` / `plan` / `apply` / `destroy` — stage lifecycle
+- `./dev infra output` / `status` / `unlock` — operational commands
+- Automatic `MSYS_NO_PATHCONV=1` for Git Bash/MSYS2 path conversion fix
+
+#### Deployed Resources (15 total)
+
+| Resource | Name |
+|----------|------|
+| Container App | `ca-lemondo-mvp-eus2` |
+| Container Registry | `crlemondomvpeus2` |
+| Container App Environment | `cae-lemondo-mvp-eus2` |
+| SQL Server | `sql-lemondo-mvp-eus2` |
+| SQL Database | `sqldb-lemondo-mvp` |
+| Key Vault | `kv-lemondo-mvp-eus2` |
+| App Insights | `appi-lemondo-mvp-eus2` |
+| Log Analytics | `log-lemondo-mvp-eus2` |
+| Static Web App | `swa-lemondo-mvp-eus2` |
+| Resource Group | `rg-lemondo-mvp-eus2` |
+
+API verified healthy at `https://ca-lemondo-mvp-eus2.greenground-1ee8436d.eastus2.azurecontainerapps.io`.
+
+#### Lessons Learned
+
+1. **Azure Free Trial VM quotas are 0** for App Service in some regions — upgrading to Pay-As-You-Go doesn't immediately fix it
+2. **Container Apps are a better MVP choice** — consumption pricing, no quota issues, built-in auto-scaling
+3. **Push Docker image before Terraform apply** — Container Apps validates image existence during provisioning
+4. **MSYS2 path conversion** — `/subscriptions/...` gets mangled to `C:/Program Files/Git/subscriptions/...`; fix with `MSYS_NO_PATHCONV=1`
+5. **Failed Container Apps can't be imported** — must delete from Azure first, then re-create via Terraform
+
+---
+
 ## What's Next
 
 ### Checkpoint 5: Advanced & Delight

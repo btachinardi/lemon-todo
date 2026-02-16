@@ -17,6 +17,14 @@ public sealed class AuditEntryRepository(LemonDoDbContext context) : IAuditEntry
     }
 
     /// <inheritdoc />
+    /// <param name="dateFrom">Optional date range filter (inclusive).</param>
+    /// <param name="dateTo">Optional date range filter (inclusive).</param>
+    /// <param name="action">Optional filter by audit action type.</param>
+    /// <param name="actorId">Optional filter by the user who performed the action.</param>
+    /// <param name="resourceType">Optional filter by resource type (e.g. "Task", "User").</param>
+    /// <param name="page">1-based page number.</param>
+    /// <param name="pageSize">Number of items per page (max 100).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<PagedResult<AuditEntry>> SearchAsync(
         DateTimeOffset? dateFrom,
         DateTimeOffset? dateTo,

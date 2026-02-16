@@ -2,10 +2,16 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { captureError } from '@/lib/error-logger';
 import { ErrorFallback } from '@/ui/feedback/ErrorFallback';
 
+/** Props for {@link ErrorBoundaryProvider}. */
 interface Props {
   children: ReactNode;
 }
 
+/**
+ * Error boundary state.
+ * @property hasError - Derived from error being non-null; indicates whether an error was caught.
+ * @property error - The caught rendering error, or null if no error occurred.
+ */
 interface State {
   error: Error | null;
 }

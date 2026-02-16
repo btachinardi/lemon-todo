@@ -108,7 +108,9 @@
       "tagPlaceholder": "Add a tag...",
       "removeTag": "Remove tag {{tag}}",
       "deleteTitle": "Delete this task?",
-      "deleteButton": "Delete task"
+      "deleteButton": "Delete task",
+      "saving": "Saving...",
+      "saved": "Saved"
     },
     "filter": {
       "searchPlaceholder": "Search tasks...",
@@ -164,6 +166,7 @@
       "password": "Password",
       "passwordPlaceholder": "Enter your account password",
       "passwordError": "Incorrect password. Please try again.",
+      "genericError": "Something went wrong. Please try again.",
       "submit": "View Note",
       "submitting": "Decrypting...",
       "autoHide": "Auto-hiding in",
@@ -261,6 +264,7 @@
       "password": "Your Password",
       "passwordPlaceholder": "Enter your account password",
       "passwordError": "Invalid password. Please try again.",
+      "genericError": "Something went wrong. Please try again.",
       "auditWarning": "This action is permanently recorded in the audit trail.",
       "submit": "Reveal Protected Data",
       "submitting": "Verifying..."

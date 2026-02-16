@@ -2,6 +2,7 @@ import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@ta
 import { useState, type ReactNode } from 'react';
 import { captureError } from '@/lib/error-logger';
 
+/** Props for {@link QueryProvider}. */
 interface QueryProviderProps {
   children: ReactNode;
 }

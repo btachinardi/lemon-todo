@@ -13,6 +13,7 @@ import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitc
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
+/** Props for {@link DashboardLayout}. */
 interface DashboardLayoutProps {
   children: ReactNode;
 }
@@ -31,7 +32,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:h-16 sm:px-6">
           <h1 className="font-mono text-base font-light tracking-normal sm:text-lg">
             <span className="text-foreground">{t('brand.lemon')}</span>
-            <span className="text-primary">{t('brand.do')}</span>
+            <span className="text-lemon">{t('brand.do')}</span>
           </h1>
           <nav
             className="flex items-center gap-1 rounded-lg border-2 border-border/40 bg-secondary/30 p-1"

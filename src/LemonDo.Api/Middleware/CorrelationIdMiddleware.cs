@@ -13,6 +13,12 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next)
     private const string CorrelationIdHeader = "X-Correlation-Id";
 
     /// <summary>Processes the request, enriching it with a correlation ID.</summary>
+    /// <remarks>
+    /// Side effects: mutates HttpContext.TraceIdentifier with the correlation ID,
+    /// adds X-Correlation-Id response header, and pushes CorrelationId to Serilog LogContext
+    /// for downstream log entries. Reuses client-provided X-Correlation-Id header if present,
+    /// otherwise generates a new GUID.
+    /// </remarks>
     public async Task InvokeAsync(HttpContext context)
     {
         var correlationId = context.Request.Headers[CorrelationIdHeader].FirstOrDefault()

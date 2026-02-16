@@ -13,6 +13,7 @@ public static class ProtectedDataHasher
     /// Hashes an email address using SHA-256 after case-normalization.
     /// The result is a 64-character uppercase hex string.
     /// </summary>
+    /// <param name="email">The email address to hash. Automatically trimmed and uppercased before hashing for consistent lookups.</param>
     public static string HashEmail(string email)
     {
         var normalized = email.Trim().ToUpperInvariant();

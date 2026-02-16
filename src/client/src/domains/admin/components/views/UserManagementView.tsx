@@ -47,6 +47,7 @@ export function UserManagementView() {
     search: search || undefined,
     role: roleFilter !== 'All' ? roleFilter : undefined,
     page,
+    pageSize: 10,
   };
 
   const { data, isLoading } = useAdminUsers(params);
@@ -170,7 +171,7 @@ export function UserManagementView() {
       </div>
 
       {/* Pagination */}
-      {data && data.totalPages > 1 && (
+      {data && data.totalCount > 0 && (
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
             {t('common.page', { page: data.page, totalPages: data.totalPages, totalCount: data.totalCount, unit: t('nav.users').toLowerCase() })}

@@ -15,6 +15,7 @@ interface DueDateLabelProps {
  * Displays a human-friendly due date with contextual styling.
  * Shows "Today", "Tomorrow", or "Overdue: ..." with a warning icon.
  * Renders nothing when `dueDate` is null.
+ * Memoized — rendered in task card lists.
  */
 export const DueDateLabel = memo(function DueDateLabel({ dueDate, isDone, className }: DueDateLabelProps) {
   const { t } = useTranslation();

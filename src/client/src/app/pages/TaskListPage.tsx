@@ -16,7 +16,10 @@ import { TaskStatus } from '@/domains/tasks/types/task.types';
 import { GroupBy } from '@/domains/tasks/types/grouping.types';
 import { groupTasksByDate } from '@/domains/tasks/utils/group-tasks';
 
-/** List page with grouping toolbar, quick-add form, and toggle-complete support. */
+/**
+ * List page with grouping toolbar, quick-add form, and toggle-complete support.
+ * Supports grouping by due date, priority, or status, with optional split view for completed tasks.
+ */
 export function TaskListPage() {
   const { t } = useTranslation();
   const tasksQuery = useTasksQuery();

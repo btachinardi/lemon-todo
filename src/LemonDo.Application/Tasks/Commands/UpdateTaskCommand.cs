@@ -10,6 +10,10 @@ using Microsoft.Extensions.Logging;
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
 /// <summary>Command to partially update a task's scalar fields (title, description, priority, due date, sensitive note).</summary>
+/// <remarks>
+/// Only provided fields are modified. To explicitly remove the due date, set ClearDueDate to true (the DueDate value is ignored when true).
+/// Same for ClearSensitiveNote: set to true to remove the sensitive note (the SensitiveNote value is ignored when true).
+/// </remarks>
 public sealed record UpdateTaskCommand(
     Guid TaskId,
     string? Title = null,
@@ -23,7 +27,7 @@ public sealed record UpdateTaskCommand(
 /// <summary>Applies partial updates to a task. Only non-null fields are changed.</summary>
 public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<UpdateTaskCommandHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Loads the task, applies partial updates to provided fields, validates all changes, and persists the modified task.</summary>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(UpdateTaskCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Updating task {TaskId}", command.TaskId);

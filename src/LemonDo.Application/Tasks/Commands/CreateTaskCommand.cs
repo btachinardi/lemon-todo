@@ -33,7 +33,7 @@ public sealed class CreateTaskCommandHandler(
     ILogger<CreateTaskCommandHandler> logger,
     ApplicationMetrics metrics)
 {
-    /// <inheritdoc/>
+    /// <summary>Validates all fields, creates the task entity with optional tags and encrypted sensitive note, places it on the initial board column, and persists all changes atomically.</summary>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(CreateTaskCommand command, CancellationToken ct = default)
     {
         using var activity = ApplicationActivitySource.Source.StartActivity("CreateTask");

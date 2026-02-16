@@ -64,6 +64,32 @@ public sealed class AdminEndpointsTests
     }
 
     [TestMethod]
+    public async Task Should_DefaultPageSizeTo10_When_AdminListsUsersWithoutPageSize()
+    {
+        var client = await _factory.CreateAdminClientAsync();
+
+        var response = await client.GetAsync("/api/admin/users");
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(10, result.PageSize);
+    }
+
+    [TestMethod]
+    public async Task Should_DefaultPageSizeTo10_When_AdminSearchesAuditLogWithoutPageSize()
+    {
+        var client = await _factory.CreateAdminClientAsync();
+
+        var response = await client.GetAsync("/api/admin/audit");
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<PagedResult<AuditEntryDto>>(TestJsonOptions.Default);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(10, result.PageSize);
+    }
+
+    [TestMethod]
     public async Task Should_ReturnRedactedProtectedData_When_AdminListsUsers()
     {
         var client = await _factory.CreateAdminClientAsync();

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 
+/** Animated placeholder for loading content. Pulsing background indicates content is being fetched. */
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

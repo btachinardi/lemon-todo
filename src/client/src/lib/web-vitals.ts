@@ -23,6 +23,8 @@ function reportMetric(metric: Metric): void {
  * Initializes Web Vitals collection for CLS, FCP, FID, INP, LCP, and TTFB.
  * Uses dynamic import to avoid adding to the critical bundle path.
  * Call once at app startup.
+ *
+ * @returns A promise that resolves when the web-vitals library is loaded and observers are registered.
  */
 export async function initWebVitals(): Promise<void> {
   const { onCLS, onFCP, onINP, onLCP, onTTFB } = await import('web-vitals');

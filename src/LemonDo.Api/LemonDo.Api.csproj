@@ -3,6 +3,8 @@
   <ItemGroup>
     <ProjectReference Include="..\LemonDo.Application\LemonDo.Application.csproj" />
     <ProjectReference Include="..\LemonDo.Infrastructure\LemonDo.Infrastructure.csproj" />
+    <ProjectReference Include="..\LemonDo.Migrations.Sqlite\LemonDo.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\LemonDo.Migrations.SqlServer\LemonDo.Migrations.SqlServer.csproj" />
     <ProjectReference Include="..\LemonDo.ServiceDefaults\LemonDo.ServiceDefaults.csproj" />
   </ItemGroup>
 

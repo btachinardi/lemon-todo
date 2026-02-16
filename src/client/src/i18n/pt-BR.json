@@ -108,7 +108,9 @@
       "tagPlaceholder": "Adicionar uma tag...",
       "removeTag": "Remover tag {{tag}}",
       "deleteTitle": "Excluir esta tarefa?",
-      "deleteButton": "Excluir tarefa"
+      "deleteButton": "Excluir tarefa",
+      "saving": "Salvando...",
+      "saved": "Salvo"
     },
     "filter": {
       "searchPlaceholder": "Buscar tarefas...",
@@ -164,6 +166,7 @@
       "password": "Senha",
       "passwordPlaceholder": "Digite a senha da sua conta",
       "passwordError": "Senha incorreta. Tente novamente.",
+      "genericError": "Algo deu errado. Tente novamente.",
       "submit": "Ver Nota",
       "submitting": "Descriptografando...",
       "autoHide": "Ocultando automaticamente em",
@@ -261,6 +264,7 @@
       "password": "Sua Senha",
       "passwordPlaceholder": "Digite sua senha da conta",
       "passwordError": "Senha inv\u00e1lida. Tente novamente.",
+      "genericError": "Algo deu errado. Tente novamente.",
       "auditWarning": "Esta a\u00e7\u00e3o \u00e9 registrada permanentemente no log de auditoria.",
       "submit": "Revelar Dados Protegidos",
       "submitting": "Verificando..."

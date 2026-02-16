@@ -13,7 +13,10 @@ const languages = [
   { code: 'pt-BR', label: 'Português (BR)' },
 ] as const;
 
-/** Dropdown to switch between available languages. */
+/**
+ * Dropdown to switch between available languages.
+ * Self-contained — manages its own i18n state via `useTranslation`.
+ */
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
 

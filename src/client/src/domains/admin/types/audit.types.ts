@@ -17,11 +17,15 @@ export type AuditAction =
 export interface AuditEntry {
   id: string;
   timestamp: string;
+  /** ID of the user who performed the action. Null for system-initiated actions (e.g., automated cleanup). */
   actorId: string | null;
   action: AuditAction;
   resourceType: string;
+  /** ID of the affected resource. Null for non-resource actions (e.g., UserLoggedIn, UserLoggedOut). */
   resourceId: string | null;
+  /** Optional JSON payload with action-specific metadata (e.g., reveal reason, changed fields). */
   details: string | null;
+  /** IP address of the client. Null for system-initiated actions or when IP cannot be determined. */
   ipAddress: string | null;
 }
 

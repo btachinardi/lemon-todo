@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProtectedDataRevealDialog } from './ProtectedDataRevealDialog';
+import { ApiRequestError } from '@/lib/api-client';
 
 // Mock i18next — return key as value for deterministic assertions
 vi.mock('react-i18next', () => ({
@@ -50,18 +51,48 @@ describe('ProtectedDataRevealDialog', () => {
     expect(screen.queryByText('admin.protectedDataRevealDialog.reasonDetails')).not.toBeInTheDocument();
   });
 
-  it('should show password error when mutation returns 401', () => {
-    const error = new Error('Request failed with status 401');
+  it('should show password error when ApiRequestError has status 401', () => {
+    const error = new ApiRequestError(401, {
+      type: 'unauthorized',
+      title: 'Invalid password. Re-authentication failed.',
+      status: 401,
+    });
     render(<ProtectedDataRevealDialog {...defaultProps} error={error} />);
 
     expect(screen.getByText('admin.protectedDataRevealDialog.passwordError')).toBeInTheDocument();
   });
 
   it('should not show password error when error is not 401', () => {
-    const error = new Error('Network error');
+    const error = new ApiRequestError(500, {
+      type: 'unknown_error',
+      title: 'Internal server error',
+      status: 500,
+    });
     render(<ProtectedDataRevealDialog {...defaultProps} error={error} />);
 
     expect(screen.queryByText('admin.protectedDataRevealDialog.passwordError')).not.toBeInTheDocument();
+  });
+
+  it('should show generic error for non-401 errors', () => {
+    const error = new ApiRequestError(500, {
+      type: 'unknown_error',
+      title: 'Internal server error',
+      status: 500,
+    });
+    render(<ProtectedDataRevealDialog {...defaultProps} error={error} />);
+
+    expect(screen.getByText('admin.protectedDataRevealDialog.genericError')).toBeInTheDocument();
+  });
+
+  it('should not show generic error when error is password error', () => {
+    const error = new ApiRequestError(401, {
+      type: 'unauthorized',
+      title: 'Invalid password. Re-authentication failed.',
+      status: 401,
+    });
+    render(<ProtectedDataRevealDialog {...defaultProps} error={error} />);
+
+    expect(screen.queryByText('admin.protectedDataRevealDialog.genericError')).not.toBeInTheDocument();
   });
 
   it('should call onOpenChange when cancel is clicked', async () => {

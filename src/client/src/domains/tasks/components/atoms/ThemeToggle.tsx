@@ -15,7 +15,10 @@ interface ThemeToggleProps {
   onToggle: () => void;
 }
 
-/** Compact theme toggle button. Displays the current theme icon and cycles on click. */
+/**
+ * Compact theme toggle button. Displays the current theme icon and cycles on click.
+ * Receives theme state via props — parent component manages theme store.
+ */
 export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
   const { t } = useTranslation();
   const currentIndex = options.findIndex((o) => o.value === theme);

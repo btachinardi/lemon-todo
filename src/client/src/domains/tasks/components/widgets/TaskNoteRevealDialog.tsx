@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ApiRequestError } from '@/lib/api-client';
 import {
   Dialog,
   DialogContent,
@@ -66,8 +67,8 @@ export function TaskNoteRevealDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealedNote]);
 
-  const isPasswordError =
-    error?.message?.includes('401') || error?.message?.includes('unauthorized');
+  const isPasswordError = error instanceof ApiRequestError && error.status === 401;
+  const isGenericError = !!error && !isPasswordError;
 
   const handleSubmit = () => {
     if (!password || isPending) return;
@@ -139,6 +140,11 @@ export function TaskNoteRevealDialog({
               {isPasswordError && (
                 <p className="text-xs text-destructive">
                   {t('tasks.noteRevealDialog.passwordError')}
+                </p>
+              )}
+              {isGenericError && (
+                <p className="text-xs text-destructive">
+                  {t('tasks.noteRevealDialog.genericError')}
                 </p>
               )}
             </div>

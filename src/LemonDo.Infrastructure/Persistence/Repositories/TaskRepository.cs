@@ -24,6 +24,14 @@ public sealed class TaskRepository(LemonDoDbContext context, IFieldEncryptionSer
     }
 
     /// <inheritdoc/>
+    /// <param name="ownerId">The task owner to filter by.</param>
+    /// <param name="priority">Optional priority filter.</param>
+    /// <param name="status">Optional status filter.</param>
+    /// <param name="searchTerm">Optional text to search in title and description. Null or empty returns all.</param>
+    /// <param name="tag">Optional tag filter (exact match, case-insensitive).</param>
+    /// <param name="page">1-based page number.</param>
+    /// <param name="pageSize">Items per page.</param>
+    /// <param name="ct">Cancellation token.</param>
     public async System.Threading.Tasks.Task<PagedResult<TaskEntity>> ListAsync(
         UserId ownerId,
         Priority? priority = null,

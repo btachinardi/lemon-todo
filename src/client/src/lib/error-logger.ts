@@ -50,6 +50,9 @@ function log(level: LogLevel, messageOrError: unknown, context: ErrorContext): v
  * Captures an error with structured context. In development, logs to console.
  * This is the single seam where a reporting service (Sentry, Datadog, etc.)
  * would be wired in.
+ *
+ * @param error - The error to capture (Error instance or any thrown value).
+ * @param context - Contextual metadata about where and why the error occurred.
  */
 export function captureError(error: unknown, context: ErrorContext): void {
   log('error', error, context);
@@ -58,6 +61,9 @@ export function captureError(error: unknown, context: ErrorContext): void {
 /**
  * Captures a warning-level message with context. Used for non-fatal issues
  * like failed background refreshes or degraded functionality.
+ *
+ * @param message - The warning message describing the issue.
+ * @param context - Contextual metadata about where the warning originated.
  */
 export function captureWarning(message: string, context: ErrorContext): void {
   log('warn', message, context);
@@ -66,6 +72,9 @@ export function captureWarning(message: string, context: ErrorContext): void {
 /**
  * Captures an informational message. Used for significant user actions
  * or lifecycle events worth tracking.
+ *
+ * @param message - The informational message to log.
+ * @param context - Contextual metadata about the event.
  */
 export function captureInfo(message: string, context: ErrorContext): void {
   log('info', message, context);
@@ -74,6 +83,9 @@ export function captureInfo(message: string, context: ErrorContext): void {
 /**
  * Captures a debug-level message. Used for verbose diagnostics
  * during development.
+ *
+ * @param message - The debug message for diagnostics.
+ * @param context - Contextual metadata about the debug event.
  */
 export function captureDebug(message: string, context: ErrorContext): void {
   log('debug', message, context);

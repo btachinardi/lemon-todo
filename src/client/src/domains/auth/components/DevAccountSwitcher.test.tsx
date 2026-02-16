@@ -148,6 +148,15 @@ describe('DevAccountSwitcher', () => {
     expect(screen.getByText(/quick login/i)).toBeInTheDocument();
   });
 
+  it('should have overflow-hidden on the button grid to prevent overflow in narrow containers', () => {
+    render(<DevAccountSwitcher />, { wrapper: createWrapper() });
+
+    const buttons = screen.getAllByRole('button');
+    const grid = buttons[0].parentElement!;
+
+    expect(grid).toHaveClass('overflow-hidden');
+  });
+
   it('should render nothing when not in development mode', () => {
     vi.stubEnv('DEV', false);
 

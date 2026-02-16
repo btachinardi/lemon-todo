@@ -24,7 +24,7 @@ public sealed class UncompleteTaskCommandHandler(
     ICurrentUserService currentUser,
     ILogger<UncompleteTaskCommandHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Loads the task, reverts it to Todo status (clearing CompletedAt and IsArchived), moves its card to the initial column, and persists both changes atomically.</summary>
     public async Task<Result<DomainError>> HandleAsync(UncompleteTaskCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Uncompleting task {TaskId}", command.TaskId);
