@@ -590,6 +590,39 @@
         "Fila de mutações IndexedDB — sync offline-first"
       ]
     },
+    "domains": {
+      "title": "Cinco Contextos Delimitados, Um Sistema Coeso",
+      "highlight": "Sistema Coeso",
+      "subtitle": "Cada contexto possui seus invariantes. Eventos de domínio fluem entre eles. Zero acoplamento, coesão total.",
+      "insight": "O segredo não são microsserviços — são fronteiras claras. Cada contexto poderia ser extraído para seu próprio serviço sem alterar uma única classe de domínio.",
+      "contexts": {
+        "task": {
+          "name": "Task",
+          "role": "Domínio Core",
+          "description": "O coração do sistema — possui ciclo de vida da tarefa, prioridade, tags, datas de vencimento, notas sensíveis e arquivamento."
+        },
+        "board": {
+          "name": "Board",
+          "role": "Suporte",
+          "description": "Conformista ao Task — possui posicionamento espacial com colunas, posições de cards e ordenação drag-and-drop."
+        },
+        "identity": {
+          "name": "Identity",
+          "role": "Kernel Compartilhado",
+          "description": "Autenticação com JWT, refresh via cookie HttpOnly, hierarquia de papéis e dados pessoais criptografados com AES-256."
+        },
+        "admin": {
+          "name": "Administration",
+          "role": "Governança",
+          "description": "Trilha de auditoria imutável para cada ação de segurança, redação de dados protegidos e gestão de usuários."
+        },
+        "notification": {
+          "name": "Notification",
+          "role": "Experiência",
+          "description": "Alertas in-app, Web Push via VAPID, lembretes de vencimento e mensagens de boas-vindas para novos usuários."
+        }
+      }
+    },
     "tech": {
       "title": "Construído com as Melhores Ferramentas",
       "highlight": "Melhores Ferramentas",

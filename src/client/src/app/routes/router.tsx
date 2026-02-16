@@ -2,6 +2,7 @@ import { createBrowserRouter, Outlet } from 'react-router';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { LandingPage } from '../pages/LandingPage';
 import { StoryPage } from '../pages/StoryPage';
+import { RoadmapPage } from '../pages/RoadmapPage';
 import { LoginRoute } from './LoginRoute';
 import { RegisterRoute } from './RegisterRoute';
 import { PublicRoute } from './PublicRoute';
@@ -35,6 +36,14 @@ export const router = createBrowserRouter([
     element: (
       <LandingLayout>
         <StoryPage />
+      </LandingLayout>
+    ),
+  },
+  {
+    path: '/roadmap',
+    element: (
+      <LandingLayout>
+        <RoadmapPage />
       </LandingLayout>
     ),
   },

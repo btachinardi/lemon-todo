@@ -42,6 +42,12 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             >
               {t('story.nav')}
             </Link>
+            <Link
+              to="/roadmap"
+              className="rounded-md px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {t('roadmap.nav')}
+            </Link>
             <LanguageSwitcher />
             <ThemeToggle
               theme={theme}
@@ -84,6 +90,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             <a href="#features" className="hover:text-foreground">{t('landing.footer.features')}</a>
             <a href="#security" className="hover:text-foreground">{t('landing.footer.security')}</a>
             <Link to="/story" className="hover:text-foreground">{t('landing.footer.story')}</Link>
+            <Link to="/roadmap" className="hover:text-foreground">{t('landing.footer.roadmap')}</Link>
             <a
               href="https://github.com/btachinardi/lemon-todo"
               target="_blank"

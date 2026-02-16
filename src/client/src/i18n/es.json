@@ -590,6 +590,39 @@
         "Cola de mutaciones IndexedDB — sync offline-first"
       ]
     },
+    "domains": {
+      "title": "Cinco Contextos Delimitados, Un Sistema Cohesivo",
+      "highlight": "Sistema Cohesivo",
+      "subtitle": "Cada contexto posee sus invariantes. Eventos de dominio fluyen entre ellos. Cero acoplamiento, cohesión total.",
+      "insight": "El secreto no son los microservicios — son fronteras claras. Cada contexto podría extraerse a su propio servicio sin cambiar una sola clase de dominio.",
+      "contexts": {
+        "task": {
+          "name": "Task",
+          "role": "Dominio Core",
+          "description": "El corazón del sistema — posee ciclo de vida de tarea, prioridad, tags, fechas de vencimiento, notas sensibles y archivado."
+        },
+        "board": {
+          "name": "Board",
+          "role": "Soporte",
+          "description": "Conformista a Task — posee posicionamiento espacial con columnas, posiciones de cards y ordenamiento drag-and-drop."
+        },
+        "identity": {
+          "name": "Identity",
+          "role": "Kernel Compartido",
+          "description": "Autenticación con JWT, refresh via cookie HttpOnly, jerarquía de roles y datos personales cifrados con AES-256."
+        },
+        "admin": {
+          "name": "Administration",
+          "role": "Gobernanza",
+          "description": "Registro de auditoría inmutable para cada acción de seguridad, redacción de datos protegidos y gestión de usuarios."
+        },
+        "notification": {
+          "name": "Notification",
+          "role": "Experiencia",
+          "description": "Alertas in-app, Web Push vía VAPID, recordatorios de vencimiento y mensajes de bienvenida para nuevos usuarios."
+        }
+      }
+    },
     "tech": {
       "title": "Construido con las Mejores Herramientas",
       "highlight": "Mejores Herramientas",

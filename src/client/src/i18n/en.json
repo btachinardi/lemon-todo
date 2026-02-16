@@ -465,7 +465,8 @@
       "tagline": "Open-source task management for teams that own their data.",
       "features": "Features",
       "security": "Security",
-      "story": "Our Story"
+      "story": "Our Story",
+      "roadmap": "Roadmap"
     }
   },
   "onboarding": {
@@ -589,6 +590,39 @@
         "AES-256-GCM encryption — protected data at rest",
         "IndexedDB mutation queue — offline-first sync"
       ]
+    },
+    "domains": {
+      "title": "Five Bounded Contexts, One Cohesive System",
+      "highlight": "Cohesive System",
+      "subtitle": "Each context owns its invariants. Domain events flow between them. Zero coupling, total cohesion.",
+      "insight": "The secret isn't microservices — it's clear boundaries. Each context could be extracted into its own service without changing a single domain class.",
+      "contexts": {
+        "task": {
+          "name": "Task",
+          "role": "Core Domain",
+          "description": "The heart of the system — owns task lifecycle, priority, tags, due dates, sensitive notes, and archiving."
+        },
+        "board": {
+          "name": "Board",
+          "role": "Supporting",
+          "description": "Conformist to Task — owns spatial placement with columns, card positions, and drag-and-drop ordering."
+        },
+        "identity": {
+          "name": "Identity",
+          "role": "Shared Kernel",
+          "description": "User authentication with JWT, HttpOnly cookie refresh, role hierarchy, and AES-256 encrypted personal data."
+        },
+        "admin": {
+          "name": "Administration",
+          "role": "Governance",
+          "description": "Immutable audit trail for every security action, protected data redaction, and user management."
+        },
+        "notification": {
+          "name": "Notification",
+          "role": "Experience",
+          "description": "In-app alerts, Web Push via VAPID, due date reminders, and welcome messages for new users."
+        }
+      }
     },
     "tech": {
       "title": "Built With the Best Tools",
@@ -732,6 +766,129 @@
       ],
       "ctaPrimary": "See It In Action",
       "ctaGithub": "Read the Code"
+    }
+  },
+  "roadmap": {
+    "nav": "Roadmap",
+    "hero": {
+      "titleLine1": "This Is Just",
+      "titleHighlight": "The Beginning.",
+      "subtitle": "808 tests. Production deployed. Five checkpoints shipped. Here's everything we're building next — from AI-powered workflows to enterprise compliance."
+    },
+    "horizons": {
+      "near": {
+        "label": "NEAR HORIZON",
+        "title": "Intelligence & Connectivity",
+        "subtitle": "AI that manages tasks for you, and integrations that connect your entire workflow."
+      },
+      "mid": {
+        "label": "MID HORIZON",
+        "title": "Teams, Power & Developer Tools",
+        "subtitle": "Real-time collaboration, advanced task modeling, and tools built for the way developers actually work."
+      },
+      "far": {
+        "label": "FAR HORIZON",
+        "title": "Platform, Growth & Reliability",
+        "subtitle": "Native apps, enterprise compliance, UX perfection, and the infrastructure to back it all up."
+      }
+    },
+    "tiers": [
+      {
+        "name": "AI & Agent Ecosystem",
+        "tagline": "Your tasks, managed by AI.",
+        "features": [
+          { "title": "AI Assistant", "description": "Chat with your board. Create tasks, ask questions, get summaries — all in natural language." },
+          { "title": "MCP Server", "description": "AI agents manage your tasks through the Model Context Protocol. Plug into Claude, Copilot, or your own." },
+          { "title": "MCP Client", "description": "Pull context from calendars, email, and code repos. Your AI sees your whole toolchain." },
+          { "title": "Smart Categorization", "description": "Auto-suggest priority, tags, and columns based on your task history and patterns." }
+        ]
+      },
+      {
+        "name": "Third-Party Integrations",
+        "tagline": "Connect everything. Automate the rest.",
+        "features": [
+          { "title": "Calendar Sync", "description": "Two-way sync with Google Calendar and Outlook. Tasks become events, events become tasks." },
+          { "title": "Smart Notifications", "description": "Slack, Teams, WhatsApp, and SMS reminders for deadlines, mentions, and status changes." },
+          { "title": "Email-to-Task", "description": "Forward any email to create a task instantly. Subject line becomes the title." },
+          { "title": "Zapier & Make", "description": "Webhooks on every domain event. Connect to 5,000+ services with zero code." }
+        ]
+      },
+      {
+        "name": "Collaboration & Real-Time",
+        "tagline": "See a task move the moment a colleague drags it.",
+        "features": [
+          { "title": "Real-Time Boards", "description": "Live sync via SignalR. Watch cards move as your team works, in real-time." },
+          { "title": "Teams & Projects", "description": "Group boards under projects. Assign members. Track per-team velocity." },
+          { "title": "Comments & Mentions", "description": "Threaded discussions on any task. @mention to loop someone in instantly." },
+          { "title": "Activity Feed", "description": "Per-task and per-board history. Who did what, when, and why." }
+        ]
+      },
+      {
+        "name": "Advanced Task Modeling",
+        "tagline": "Tasks that understand relationships.",
+        "features": [
+          { "title": "Task Dependencies", "description": "Blocked-by relationships with visual dependency graphs and auto-status propagation." },
+          { "title": "Subtasks & Checklists", "description": "Nested hierarchies with progress tracking. Break big goals into atomic steps." },
+          { "title": "Recurring Tasks", "description": "Cron-based generation. Set it and forget it. Your Monday standup prep, automated." },
+          { "title": "Custom Fields", "description": "Extend task schema per workspace. Dropdowns, dates, numbers — your data model." }
+        ]
+      },
+      {
+        "name": "Reporting & Developer Experience",
+        "tagline": "Built for builders.",
+        "features": [
+          { "title": "Dashboards", "description": "Burndown charts, velocity tracking, workload heatmaps. Data-driven productivity." },
+          { "title": "Public API & SDK", "description": "Versioned REST API with auto-generated TypeScript and C# client SDKs." },
+          { "title": "CLI Tool", "description": "lemondo tasks list --status=todo. Power users never leave the terminal." },
+          { "title": "GitHub Integration", "description": "Link commits to tasks. Auto-transition status on merge. Close the loop." }
+        ]
+      },
+      {
+        "name": "Platform & Compliance",
+        "tagline": "Everywhere you are. Secure everywhere you go.",
+        "features": [
+          { "title": "Desktop App", "description": "Tauri-powered native desktop. System tray, global shortcuts, offline-first." },
+          { "title": "Mobile Native", "description": "React Native for iOS and Android. Shared types, native performance." },
+          { "title": "Enterprise SSO", "description": "SAML 2.0 and OIDC. Okta, Azure AD, Auth0. One login for everything." },
+          { "title": "Full Compliance", "description": "HIPAA certification, GDPR compliance, SOC 2 Type II. Regulated industries welcome." }
+        ]
+      },
+      {
+        "name": "Product & Growth",
+        "tagline": "From product to business.",
+        "features": [
+          { "title": "Freemium Model", "description": "Free for individuals. Pro for power users. Team for collaboration. Enterprise for compliance." },
+          { "title": "Template Gallery", "description": "Sprint Planning, GTD, Content Calendar — start with proven structures, not blank boards." },
+          { "title": "Conversion Analytics", "description": "MRR, ARPU, churn rate, LTV. A real-time dashboard for business health." },
+          { "title": "Lifecycle Optimization", "description": "Onboarding funnels, churn prevention, re-engagement sequences. Data-driven growth." }
+        ]
+      },
+      {
+        "name": "UX Excellence",
+        "tagline": "The details that make you fall in love.",
+        "features": [
+          { "title": "Command Palette", "description": "Cmd+K for everything. Tasks, boards, actions, settings. Full speed, zero mouse." },
+          { "title": "Undo Everywhere", "description": "5-second undo toast on every destructive action. Faster than confirmation dialogs." },
+          { "title": "Batch Operations", "description": "Multi-select, bulk move, bulk tag, bulk delete. Manage dozens of tasks in seconds." },
+          { "title": "Smart Defaults", "description": "Type 'urgent' and priority auto-sets to Critical. The app learns your patterns." }
+        ]
+      },
+      {
+        "name": "Reliability & Operations",
+        "tagline": "The boring stuff that makes it bulletproof.",
+        "features": [
+          { "title": "Global CDN", "description": "Frontend from 100+ edge locations. Sub-50ms first-byte times, worldwide." },
+          { "title": "Blue/Green Deploys", "description": "Zero-downtime deployments with canary progression and instant rollback." },
+          { "title": "Feature Flags", "description": "Ship behind flags. Gradual rollouts, kill switches, and A/B testing built in." },
+          { "title": "99.9% SLA", "description": "Error budgets, on-call rotation, blameless post-mortems. Enterprise-grade reliability." }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "Want to Shape What's Next?",
+      "subtitle": "LemonDo is open source. Star us, fork us, contribute. The roadmap is a conversation, not a monologue.",
+      "ctaPrimary": "Get Started Free",
+      "ctaGithub": "Star on GitHub"
     }
   }
 }
