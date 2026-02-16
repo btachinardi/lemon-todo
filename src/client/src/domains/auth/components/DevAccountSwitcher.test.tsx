@@ -147,4 +147,15 @@ describe('DevAccountSwitcher', () => {
 
     expect(screen.getByText(/quick login/i)).toBeInTheDocument();
   });
+
+  it('should render nothing when not in development mode', () => {
+    vi.stubEnv('DEV', false);
+
+    const { container } = render(<DevAccountSwitcher />, { wrapper: createWrapper() });
+
+    expect(container.innerHTML).toBe('');
+    expect(screen.queryByText(/quick login/i)).not.toBeInTheDocument();
+
+    vi.unstubAllEnvs();
+  });
 });
