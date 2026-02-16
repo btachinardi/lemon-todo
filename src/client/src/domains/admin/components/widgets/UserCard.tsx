@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { AdminUser, RevealProtectedDataRequest } from '../../types/admin.types';
 import { useRevealProtectedData } from '../../hooks/use-admin-mutations';
+import { useDevAccountPassword } from '@/domains/auth/hooks/use-dev-account-password';
 import { ProtectedDataRevealDialog } from './ProtectedDataRevealDialog';
 
 const roleBadgeVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -47,6 +48,7 @@ export function UserCard({
   const { t } = useTranslation();
   const [revealDialogOpen, setRevealDialogOpen] = useState(false);
   const revealProtectedData = useRevealProtectedData();
+  const devPassword = useDevAccountPassword();
 
   const handleRevealConfirm = (request: RevealProtectedDataRequest) => {
     revealProtectedData.mutate(
@@ -134,6 +136,7 @@ export function UserCard({
         onReveal={handleRevealConfirm}
         isPending={revealProtectedData.isPending}
         error={revealProtectedData.error}
+        devPassword={devPassword}
       />
     </>
   );

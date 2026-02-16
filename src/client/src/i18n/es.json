@@ -20,7 +20,8 @@
       "generic": "Algo sali\u00f3 mal. Por favor, int\u00e9ntalo de nuevo.",
       "connection": "Verifica tu conexi\u00f3n e int\u00e9ntalo de nuevo."
     },
-    "page": "P\u00e1gina {{page}} de {{totalPages}} ({{totalCount}} {{unit}})"
+    "page": "P\u00e1gina {{page}} de {{totalPages}} ({{totalCount}} {{unit}})",
+    "devAutoFill": "Autocompletar contraseña"
   },
   "auth": {
     "login": {

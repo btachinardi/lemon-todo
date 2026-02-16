@@ -128,4 +128,26 @@ describe('ProtectedDataRevealDialog', () => {
     expect(passwordInput).toBeInTheDocument();
     expect(passwordInput).toHaveAttribute('type', 'password');
   });
+
+  describe('dev auto-fill', () => {
+    it('should show auto-fill button when devPassword is provided', () => {
+      render(<ProtectedDataRevealDialog {...defaultProps} devPassword="SysAdmin1234" />);
+      expect(screen.getByText('common.devAutoFill')).toBeInTheDocument();
+    });
+    it('should not show auto-fill button when devPassword is null', () => {
+      render(<ProtectedDataRevealDialog {...defaultProps} devPassword={null} />);
+      expect(screen.queryByText('common.devAutoFill')).not.toBeInTheDocument();
+    });
+    it('should not show auto-fill button when devPassword is not provided', () => {
+      render(<ProtectedDataRevealDialog {...defaultProps} />);
+      expect(screen.queryByText('common.devAutoFill')).not.toBeInTheDocument();
+    });
+    it('should fill password field when auto-fill button is clicked', async () => {
+      const user = userEvent.setup();
+      render(<ProtectedDataRevealDialog {...defaultProps} devPassword="SysAdmin1234" />);
+      await user.click(screen.getByText('common.devAutoFill'));
+      const passwordInput = screen.getByPlaceholderText('admin.protectedDataRevealDialog.passwordPlaceholder');
+      expect(passwordInput).toHaveValue('SysAdmin1234');
+    });
+  });
 });

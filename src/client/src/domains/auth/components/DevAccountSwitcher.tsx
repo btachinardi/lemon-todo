@@ -19,7 +19,7 @@ interface DevAccount {
   accent: string;
 }
 
-const DEV_ACCOUNTS: DevAccount[] = [
+export const DEV_ACCOUNTS: DevAccount[] = [
   {
     email: 'dev.user@lemondo.dev',
     password: 'User1234',

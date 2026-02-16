@@ -168,4 +168,30 @@ describe('TaskNoteRevealDialog', () => {
     await user.click(screen.getByText('common.cancel'));
     expect(defaultProps.onOpenChange).toHaveBeenCalledWith(false);
   });
+
+  describe('dev auto-fill', () => {
+    it('should show auto-fill button when devPassword is provided', () => {
+      render(<TaskNoteRevealDialog {...defaultProps} devPassword="SysAdmin1234" />);
+      expect(screen.getByText('common.devAutoFill')).toBeInTheDocument();
+    });
+    it('should not show auto-fill button when devPassword is null', () => {
+      render(<TaskNoteRevealDialog {...defaultProps} devPassword={null} />);
+      expect(screen.queryByText('common.devAutoFill')).not.toBeInTheDocument();
+    });
+    it('should not show auto-fill button when devPassword is not provided', () => {
+      render(<TaskNoteRevealDialog {...defaultProps} />);
+      expect(screen.queryByText('common.devAutoFill')).not.toBeInTheDocument();
+    });
+    it('should fill password field when auto-fill button is clicked', async () => {
+      const user = userEvent.setup();
+      render(<TaskNoteRevealDialog {...defaultProps} devPassword="SysAdmin1234" />);
+      await user.click(screen.getByText('common.devAutoFill'));
+      const passwordInput = screen.getByPlaceholderText('tasks.noteRevealDialog.passwordPlaceholder');
+      expect(passwordInput).toHaveValue('SysAdmin1234');
+    });
+    it('should not show auto-fill button when note is already revealed', () => {
+      render(<TaskNoteRevealDialog {...defaultProps} devPassword="SysAdmin1234" revealedNote="Secret content" />);
+      expect(screen.queryByText('common.devAutoFill')).not.toBeInTheDocument();
+    });
+  });
 });

@@ -20,7 +20,8 @@
       "generic": "Something went wrong. Please try again.",
       "connection": "Check your connection and try again."
     },
-    "page": "Page {{page}} of {{totalPages}} ({{totalCount}} {{unit}})"
+    "page": "Page {{page}} of {{totalPages}} ({{totalCount}} {{unit}})",
+    "devAutoFill": "Auto-fill password"
   },
   "auth": {
     "login": {
@@ -430,7 +431,8 @@
     "footer": {
       "tagline": "Open-source task management for teams that own their data.",
       "features": "Features",
-      "security": "Security"
+      "security": "Security",
+      "story": "Our Story"
     }
   },
   "onboarding": {
@@ -448,5 +450,236 @@
     "dark": "Dark theme",
     "system": "System theme",
     "toggle": "Current: {{label}}. Click for {{next}}"
+  },
+  "story": {
+    "nav": "Our Story",
+    "hero": {
+      "titleLine1": "From Empty Folder to",
+      "titleHighlight": "Production",
+      "titleLine2": "in 3 Days",
+      "subtitle": "The story of building a production-grade, compliance-ready task manager with DDD, strict TDD, and an obsession with doing things right."
+    },
+    "vision": {
+      "title": "5 Documents Before One Line of Code",
+      "highlight": "One Line",
+      "subtitle": "Every great product starts with a plan. We wrote five foundational documents before touching a single line of code.",
+      "quote": "Planning is not wasted time. It is compressed debugging.",
+      "items": [
+        {
+          "title": "Product Requirements",
+          "description": "Defined the what and the why. Three personas, five checkpoints, clear success criteria."
+        },
+        {
+          "title": "Technology Research",
+          "description": "Evaluated .NET 10, React 19, Vite 7 — locked versions before writing code."
+        },
+        {
+          "title": "User Scenarios",
+          "description": "Storyboarded Sarah the freelancer, Marcus the team lead, and Diana the compliance officer."
+        },
+        {
+          "title": "Domain Model",
+          "description": "Two bounded contexts designed upfront: Task (upstream) and Board (downstream conformist)."
+        },
+        {
+          "title": "Development Guidelines",
+          "description": "Naming conventions, layer rules, TDD methodology — the team's contract with itself."
+        }
+      ]
+    },
+    "journey": {
+      "title": "5 Checkpoints, 5 Shippable Products",
+      "highlight": "5 Shippable Products",
+      "subtitle": "Every checkpoint shipped a complete, working application. Stop at any point and you have something real.",
+      "insight": "Every checkpoint ships a complete app. Stop at any point and you have something real.",
+      "checkpoints": [
+        {
+          "title": "Core Tasks",
+          "subtitle": "CP1 — The Foundation",
+          "description": "Full-stack CRUD with DDD from day one. Single-user mode, kanban board, list view, drag-and-drop.",
+          "decision": "Column determines status — one source of truth",
+          "tests": "242"
+        },
+        {
+          "title": "Auth & Security",
+          "subtitle": "CP2 — Identity",
+          "description": "JWT with HttpOnly cookies, user isolation, role-based access, security headers.",
+          "decision": "Cookie-based refresh, memory-only access tokens",
+          "tests": "388"
+        },
+        {
+          "title": "Rich UX",
+          "subtitle": "CP3 — Polish",
+          "description": "Dark mode, priority filters, task detail sheet, drag-and-drop reordering, i18n in 3 languages.",
+          "decision": "Sparse decimal ranks for O(1) card moves",
+          "tests": "434"
+        },
+        {
+          "title": "Production Ready",
+          "subtitle": "CP4 — Enterprise",
+          "description": "Audit trail, encrypted notes, admin panel, Azure deployment with Terraform, dual database support.",
+          "decision": "Result pattern over exceptions for domain logic",
+          "tests": "668"
+        },
+        {
+          "title": "Delight",
+          "subtitle": "CP5 — Experience",
+          "description": "PWA with offline support, onboarding tour, landing pages, push notifications, analytics.",
+          "decision": "Service Worker caching for offline-first reads",
+          "tests": "700+"
+        }
+      ]
+    },
+    "arch": {
+      "title": "Two Bounded Contexts, Zero Compromises",
+      "highlight": "Zero Compromises",
+      "subtitle": "Clean architecture with strict layer boundaries. Every import direction is intentional.",
+      "backendLabel": "Backend Layers",
+      "frontendLabel": "Frontend Tiers",
+      "backendLayers": [
+        "Domain",
+        "Application",
+        "Infrastructure",
+        "API"
+      ],
+      "frontendTiers": [
+        "Routing",
+        "Pages",
+        "State",
+        "Components"
+      ],
+      "decisions": [
+        "Column determines status — one source of truth",
+        "Sparse decimal ranks — O(1) moves, no position drift",
+        "Result pattern, not exceptions — for business logic"
+      ]
+    },
+    "tech": {
+      "title": "Built With the Best Tools",
+      "highlight": "Best Tools",
+      "subtitle": "Cutting-edge stack, locked to specific versions, chosen for production readiness.",
+      "categories": {
+        "backend": "Backend",
+        "frontend": "Frontend",
+        "testing": "Testing",
+        "devops": "DevOps"
+      },
+      "items": {
+        "dotnet": {
+          "name": ".NET 10",
+          "description": "High-performance backend runtime"
+        },
+        "aspire": {
+          "name": "Aspire",
+          "description": "Cloud-native orchestration"
+        },
+        "efcore": {
+          "name": "EF Core",
+          "description": "Database ORM with migrations"
+        },
+        "sqlite": {
+          "name": "SQLite + SQL Server",
+          "description": "Dual database support"
+        },
+        "react": {
+          "name": "React 19",
+          "description": "Component-based UI framework"
+        },
+        "vite": {
+          "name": "Vite 7",
+          "description": "Lightning-fast build tool"
+        },
+        "tailwind": {
+          "name": "Tailwind 4",
+          "description": "Utility-first CSS framework"
+        },
+        "shadcn": {
+          "name": "Shadcn/ui",
+          "description": "Beautiful, accessible components"
+        },
+        "tanstack": {
+          "name": "TanStack Query",
+          "description": "Server state management"
+        },
+        "zustand": {
+          "name": "Zustand",
+          "description": "Lightweight client state"
+        },
+        "mstest": {
+          "name": "MSTest 4",
+          "description": "Backend unit and integration tests"
+        },
+        "fscheck": {
+          "name": "FsCheck",
+          "description": "Property-based testing for .NET"
+        },
+        "vitest": {
+          "name": "Vitest",
+          "description": "Fast frontend test runner"
+        },
+        "fastcheck": {
+          "name": "fast-check",
+          "description": "Property-based testing for JS"
+        },
+        "playwright": {
+          "name": "Playwright",
+          "description": "Cross-browser E2E testing"
+        },
+        "azure": {
+          "name": "Azure",
+          "description": "Cloud hosting and services"
+        },
+        "terraform": {
+          "name": "Terraform",
+          "description": "Infrastructure as code"
+        },
+        "ghactions": {
+          "name": "GitHub Actions",
+          "description": "CI/CD pipelines"
+        },
+        "docker": {
+          "name": "Docker",
+          "description": "Container runtime"
+        }
+      }
+    },
+    "numbers": {
+      "title": "The Numbers Speak",
+      "highlight": "Numbers",
+      "items": [
+        {
+          "value": "700+",
+          "label": "Tests",
+          "detail": "Backend + Frontend + E2E"
+        },
+        {
+          "value": "11",
+          "label": "Projects",
+          "detail": ".NET solution structure"
+        },
+        {
+          "value": "5",
+          "label": "Checkpoints",
+          "detail": "Each one shippable"
+        },
+        {
+          "value": "3",
+          "label": "Languages",
+          "detail": "EN, PT-BR, ES"
+        },
+        {
+          "value": "2",
+          "label": "Contexts",
+          "detail": "Task + Board (DDD)"
+        },
+        {
+          "value": "3",
+          "label": "Days",
+          "detail": "Empty folder to production"
+        }
+      ],
+      "ctaPrimary": "See It In Action",
+      "ctaGithub": "Read the Code"
+    }
   }
 }
