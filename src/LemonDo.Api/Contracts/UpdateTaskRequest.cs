@@ -1,6 +1,11 @@
 namespace LemonDo.Api.Contracts;
 
-/// <summary>Request body for <c>PUT /api/tasks/{id}</c>. All fields are optional for partial updates.</summary>
+/// <summary>Updates a task with partial field modifications.</summary>
+/// <remarks>
+/// All fields are optional; only provided fields are modified.
+/// ClearDueDate=true removes the due date (DueDate value is ignored when true).
+/// ClearSensitiveNote=true removes the sensitive note (SensitiveNote value is ignored when true).
+/// </remarks>
 public sealed record UpdateTaskRequest(
     string? Title = null,
     string? Description = null,

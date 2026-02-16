@@ -5,9 +5,15 @@ using LemonDo.Application.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 
 /// <summary>Reads the current user from the JWT claims in the HTTP context.</summary>
+/// <remarks>
+/// Only use behind RequireAuthorization(). Properties throw when accessed in anonymous requests.
+/// </remarks>
 public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when accessed outside an authenticated request context (e.g., anonymous endpoints).
+    /// </exception>
     public UserId UserId
     {
         get

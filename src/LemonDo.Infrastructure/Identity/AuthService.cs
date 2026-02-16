@@ -89,6 +89,9 @@ public sealed class AuthService(
     }
 
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the Identity user is not found by the given userId.
+    /// </exception>
     public async Task<AuthTokens> GenerateTokensAsync(UserId userId, CancellationToken ct)
     {
         var user = await userManager.FindByIdAsync(userId.Value.ToString())

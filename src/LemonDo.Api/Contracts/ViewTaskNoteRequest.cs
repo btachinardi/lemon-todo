@@ -1,4 +1,8 @@
 namespace LemonDo.Api.Contracts;
 
-/// <summary>Request body for <c>POST /api/tasks/{id}/view-note</c>. Requires password re-authentication.</summary>
+/// <summary>Views a task's sensitive note via break-the-glass authentication.</summary>
+/// <remarks>
+/// Password is the current user's password for re-authentication.
+/// Creates an audit trail entry for compliance.
+/// </remarks>
 public sealed record ViewTaskNoteRequest(string Password);

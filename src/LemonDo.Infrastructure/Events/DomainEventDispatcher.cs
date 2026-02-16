@@ -15,6 +15,10 @@ public interface IDomainEventDispatcher
     /// </summary>
     /// <param name="events">Domain events to dispatch, typically collected during an aggregate operation.</param>
     /// <param name="ct">Cancellation token to cancel the dispatch operation.</param>
+    /// <remarks>
+    /// Called by SaveChangesAsync after the database write succeeds. Events are dispatched sequentially
+    /// in collection order within the same transaction scope.
+    /// </remarks>
     Task DispatchAsync(IReadOnlyList<DomainEvent> events, CancellationToken ct = default);
 }
 
