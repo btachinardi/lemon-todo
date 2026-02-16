@@ -6,6 +6,7 @@ import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
 import { UserMenu } from '@/domains/auth/components/UserMenu';
 import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
+import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 
 interface AdminLayoutProps {
@@ -70,6 +71,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <ArrowLeftIcon className="size-3.5" />
               <span className="hidden sm:inline">{t('common.back')}</span>
             </NavLink>
+            <LanguageSwitcher />
             <ThemeToggle
               theme={theme}
               onToggle={() => {
