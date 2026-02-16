@@ -9,3 +9,7 @@ aad_admin_object_id = "00000000-0000-0000-0000-000000000000"
 
 jwt_secret_key      = "CHANGE-ME-at-least-32-characters-long!!"
 encryption_key      = "CHANGE-ME-base64-encoded-32-byte-key=="
+
+# Custom domains (optional — set after DNS records are created)
+# api_custom_domain      = "api.lemondo.btas.dev"
+# frontend_custom_domain = "lemondo.btas.dev"

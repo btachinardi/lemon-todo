@@ -10,6 +10,14 @@ type ParamValue = string | number | boolean | null | undefined;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 /**
+ * Base URL for API requests. In production with separate domains
+ * (e.g. frontend on lemondo.btas.dev, API on api.lemondo.btas.dev),
+ * this is set via VITE_API_BASE_URL. In development, defaults to ''
+ * so the Vite dev server proxy handles routing.
+ */
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
+
+/**
  * Returns the access token from the in-memory Zustand auth store.
  * No localStorage reads — tokens live only in JS memory.
  *
@@ -249,7 +257,7 @@ export const apiClient = {
     const fullUrl = queryString ? `${url}?${queryString}` : url;
 
     const doFetch = () =>
-      fetch(fullUrl, {
+      fetch(`${API_BASE_URL}${fullUrl}`, {
         headers: buildHeaders(),
         signal: createTimeoutSignal(),
         credentials: 'include',
@@ -269,7 +277,7 @@ export const apiClient = {
    */
   async post<T>(url: string, body?: unknown): Promise<T> {
     const doFetch = () =>
-      fetch(url, {
+      fetch(`${API_BASE_URL}${url}`, {
         method: 'POST',
         headers: buildHeaders(),
         signal: createTimeoutSignal(),
@@ -290,7 +298,7 @@ export const apiClient = {
    */
   async postVoid(url: string, body?: unknown): Promise<void> {
     const doFetch = () =>
-      fetch(url, {
+      fetch(`${API_BASE_URL}${url}`, {
         method: 'POST',
         headers: buildHeaders(),
         signal: createTimeoutSignal(),
@@ -312,7 +320,7 @@ export const apiClient = {
    */
   async put<T>(url: string, body?: unknown): Promise<T> {
     const doFetch = () =>
-      fetch(url, {
+      fetch(`${API_BASE_URL}${url}`, {
         method: 'PUT',
         headers: buildHeaders(),
         signal: createTimeoutSignal(),
@@ -333,7 +341,7 @@ export const apiClient = {
    */
   async delete<T>(url: string): Promise<T> {
     const doFetch = () =>
-      fetch(url, {
+      fetch(`${API_BASE_URL}${url}`, {
         method: 'DELETE',
         headers: buildHeaders(),
         signal: createTimeoutSignal(),
@@ -352,7 +360,7 @@ export const apiClient = {
    */
   async deleteVoid(url: string): Promise<void> {
     const doFetch = () =>
-      fetch(url, {
+      fetch(`${API_BASE_URL}${url}`, {
         method: 'DELETE',
         headers: buildHeaders(),
         signal: createTimeoutSignal(),
