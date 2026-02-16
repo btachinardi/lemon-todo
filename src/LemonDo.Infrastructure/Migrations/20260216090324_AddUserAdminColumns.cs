@@ -15,7 +15,7 @@ namespace LemonDo.Infrastructure.Migrations
                 table: "AspNetUsers",
                 type: "TEXT",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: "0001-01-01T00:00:00.0000000+00:00");
 
             migrationBuilder.AddColumn<bool>(
                 name: "IsDeactivated",
