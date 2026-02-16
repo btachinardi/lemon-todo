@@ -80,11 +80,13 @@ builder.Services.AddAuthorization(options =>
 });
 
 // CORS — allow frontend origin with credentials for cookie-based auth
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? ["https://localhost:5173", "http://localhost:5173"];
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://localhost:5173", "http://localhost:5173")
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
