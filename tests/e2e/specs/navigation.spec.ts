@@ -1,6 +1,7 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { createTask } from '../helpers/api.helpers';
 import { loginViaApi } from '../helpers/auth.helpers';
+import { completeOnboarding } from '../helpers/onboarding.helpers';
 
 let context: BrowserContext;
 let page: Page;
@@ -10,6 +11,7 @@ test.describe.serial('Navigation', () => {
     context = await browser.newContext();
     page = await context.newPage();
     await loginViaApi(page);
+    await completeOnboarding();
     // Seed a task so the board renders columns instead of EmptyBoard
     await createTask({ title: 'Nav seed task' });
   });
@@ -48,9 +50,9 @@ test.describe.serial('Navigation', () => {
 
   test('LemonDo header visible on board and list pages', async () => {
     await page.goto('/board');
-    await expect(page.getByRole('heading', { name: 'LemonDo' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Lemon.DO' })).toBeVisible();
 
     await page.goto('/list');
-    await expect(page.getByRole('heading', { name: 'LemonDo' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Lemon.DO' })).toBeVisible();
   });
 });

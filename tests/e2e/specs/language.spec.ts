@@ -26,8 +26,10 @@ test.describe.serial('Language Switching', () => {
   });
 
   test('switch to Spanish changes UI text', async () => {
-    // Open language switcher dropdown
-    await page.getByRole('button', { name: /Language/i }).click();
+    // Open language switcher dropdown (use exact match to avoid matching task cards)
+    await page.getByRole('button', { name: 'Language', exact: true }).click();
+    // Wait for dropdown menu to render
+    await expect(page.getByText('Español')).toBeVisible({ timeout: 5000 });
     await page.getByText('Español').click();
 
     // Wait for i18n to update — check a known translated element
@@ -41,15 +43,16 @@ test.describe.serial('Language Switching', () => {
   });
 
   test('switch to Portuguese changes UI text', async () => {
-    // Open language switcher dropdown (now shows "Idioma" in PT-BR)
-    await page.getByRole('button', { name: /Language|Idioma/i }).click();
+    // Open language switcher dropdown (in Spanish, sr-only text is still "Language")
+    await page.getByRole('button', { name: 'Language', exact: true }).click();
     await page.getByText('Português (BR)').click();
 
     await expect(page.getByLabel('Título da nova tarefa')).toBeVisible({ timeout: 5000 });
   });
 
   test('switch back to English restores original text', async () => {
-    await page.getByRole('button', { name: /Idioma/i }).click();
+    // In pt-BR, sr-only text is "Idioma"
+    await page.getByRole('button', { name: 'Idioma', exact: true }).click();
     await page.getByText('English').click();
 
     await expect(page.getByLabel('New task title')).toBeVisible({ timeout: 5000 });

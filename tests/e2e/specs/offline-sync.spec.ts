@@ -31,10 +31,8 @@ test.describe.serial('Offline Banner', () => {
     // Simulate going offline
     await context.setOffline(true);
 
-    // Trigger a re-evaluation by navigating
-    await page.goto('/board').catch(() => {
-      // Navigation may fail when offline — that's expected
-    });
+    // Dispatch the offline event explicitly (Playwright's setOffline doesn't always fire the event)
+    await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 
     // Wait for the offline event to be detected
     await page.waitForTimeout(1000);
@@ -47,12 +45,21 @@ test.describe.serial('Offline Banner', () => {
     // Go back online
     await context.setOffline(false);
 
-    // Navigate to trigger re-evaluation
-    await page.goto('/board');
-    await expect(page.getByText('Offline test task')).toBeVisible({ timeout: 10000 });
+    // Dispatch the online event explicitly to trigger banner removal
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
 
-    // Banner should be gone
-    await expect(page.getByRole('alert')).not.toBeVisible();
+    // Wait for the banner to disappear (the OfflineBanner listens to 'online' events)
+    await expect(page.getByRole('alert')).not.toBeVisible({ timeout: 10000 });
+
+    // Reload to verify full functionality with fresh auth
+    const refreshPromise = page.waitForResponse(
+      (resp) => resp.url().includes('/api/auth/refresh'),
+      { timeout: 15000 },
+    ).catch(() => null);
+    await page.reload();
+    await refreshPromise;
+
+    await expect(page.getByText('Offline test task')).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -91,7 +98,22 @@ test.describe.serial('Offline Read Support', () => {
 
   test('back to online restores full functionality', async () => {
     await context.setOffline(false);
-    await page.goto('/board');
+    // Dispatch the online event explicitly
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+
+    // Wait a moment for the network to stabilize
+    await page.waitForTimeout(1000);
+
+    // Reload the page — the AuthHydrationProvider will do a silent refresh
+    const refreshPromise = page.waitForResponse(
+      (resp) => resp.url().includes('/api/auth/refresh'),
+      { timeout: 15000 },
+    ).catch(() => null);
+    await page.reload();
+    await refreshPromise;
+
+    // Wait for the authenticated layout to load
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible', timeout: 10000 });
     await expect(page.getByText('Cached offline task')).toBeVisible({ timeout: 10000 });
   });
 });

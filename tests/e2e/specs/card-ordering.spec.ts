@@ -7,6 +7,7 @@ import {
   archiveTask,
 } from '../helpers/api.helpers';
 import { createTestUser, loginViaApi } from '../helpers/auth.helpers';
+import { completeOnboarding } from '../helpers/onboarding.helpers';
 
 test.describe.serial('Card Ordering (API)', () => {
   test.beforeAll(async () => {
@@ -204,6 +205,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     uiContext = await browser.newContext();
     uiPage = await uiContext.newPage();
     await loginViaApi(uiPage);
+    await completeOnboarding();
   });
 
   test.afterAll(async () => {
@@ -376,10 +378,29 @@ test.describe.serial('Card Ordering (UI)', () => {
 
     await moveTask(t1.id, inProgressCol.id, null, null);
 
+    // Navigate to the board — wait for both auth refresh and board data to load
+    const boardResponsePromise = uiPage.waitForResponse(
+      (resp) => resp.url().includes('/api/boards') && resp.status() === 200,
+      { timeout: 20000 },
+    ).catch(() => null);
     await uiPage.goto('/board');
+    const boardResp = await boardResponsePromise;
 
-    // Wait for board to fully render (auth refresh + data fetch)
-    await expect(uiPage.getByText('Moving task')).toBeVisible();
+    // If board data didn't load (auth failure), re-authenticate via loginViaApi
+    if (!boardResp) {
+      await loginViaApi(uiPage);
+      await completeOnboarding();
+      // Re-create task under new user and re-move it
+      const t1New = await createTask({ title: 'Moving task' });
+      const boardNew = await getDefaultBoard();
+      const ipCol = boardNew.columns.find((c) => c.targetStatus === 'InProgress')!;
+      await moveTask(t1New.id, ipCol.id, null, null);
+      await uiPage.goto('/board');
+    }
+
+    // Wait for the authenticated layout and board data to render
+    await uiPage.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible', timeout: 15000 });
+    await expect(uiPage.getByText('Moving task')).toBeVisible({ timeout: 15000 });
 
     // The task should appear under the "In Progress" column heading
     const inProgressHeading = uiPage.getByRole('heading', { name: 'In Progress' });

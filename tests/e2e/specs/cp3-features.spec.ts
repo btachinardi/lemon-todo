@@ -1,6 +1,7 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { createTask } from '../helpers/api.helpers';
 import { loginViaApi } from '../helpers/auth.helpers';
+import { completeOnboarding } from '../helpers/onboarding.helpers';
 
 // ─── Task Detail Sheet ───────────────────────────────────────────────
 
@@ -12,6 +13,7 @@ test.describe.serial('Task Detail Sheet', () => {
     context = await browser.newContext();
     page = await context.newPage();
     await loginViaApi(page);
+    await completeOnboarding();
     await createTask({ title: 'Detail sheet task', priority: 'High', tags: ['review'] });
   });
 
@@ -107,6 +109,7 @@ test.describe.serial('Filter & Search', () => {
     context = await browser.newContext();
     page = await context.newPage();
     await loginViaApi(page);
+    await completeOnboarding();
 
     // Seed tasks for filtering
     await createTask({ title: 'Buy groceries', priority: 'Low', tags: ['personal'] });
@@ -185,6 +188,7 @@ test.describe.serial('Theme Toggle', () => {
     context = await browser.newContext();
     page = await context.newPage();
     await loginViaApi(page);
+    await completeOnboarding();
   });
 
   test.afterAll(async () => {

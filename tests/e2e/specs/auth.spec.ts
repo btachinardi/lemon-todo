@@ -20,8 +20,12 @@ test.describe('Authentication', () => {
 
     await page.getByLabel('Display name').fill(`Test User ${unique}`);
     await page.getByLabel('Email').fill(`test-${unique}@lemondo.dev`);
-    await page.getByLabel('Password').fill('TestPass123!');
-    await page.getByRole('button', { name: 'Create account' }).click();
+    await page.getByLabel('Password', { exact: true }).fill('TestPass123!');
+    // Wait for password strength meter to render and button to stabilize
+    const createBtn = page.getByRole('button', { name: 'Create account' });
+    await createBtn.waitFor({ state: 'visible' });
+    await expect(createBtn).toBeEnabled();
+    await createBtn.click();
 
     // Should redirect to the board (empty board shows EmptyBoard, not columns)
     await expect(page.getByLabel('New task title')).toBeVisible({ timeout: 10000 });

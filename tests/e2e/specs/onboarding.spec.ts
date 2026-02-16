@@ -59,17 +59,22 @@ test.describe.serial('Onboarding Tour', () => {
   test('clicking Finish completes onboarding with celebration', async () => {
     await page.getByRole('button', { name: 'Got it!' }).click();
 
-    // Wait for celebration and completion
+    // Wait for celebration animation and completion mutation
     await page.waitForTimeout(2000);
 
     // Tour tooltip should be gone
     await expect(page.getByText('Create your first task')).not.toBeVisible();
     await expect(page.getByText('Explore your board!')).not.toBeVisible();
 
-    // Verify server-side completion
-    const status = await getOnboardingStatus();
-    expect(status.completed).toBe(true);
-    expect(status.completedAt).not.toBeNull();
+    // Verify server-side completion (retry because celebration + mutation takes time)
+    let status;
+    for (let i = 0; i < 10; i++) {
+      status = await getOnboardingStatus();
+      if (status.completed) break;
+      await page.waitForTimeout(500);
+    }
+    expect(status!.completed).toBe(true);
+    expect(status!.completedAt).not.toBeNull();
   });
 
   test('tour does not appear on reload after completion', async () => {
@@ -108,8 +113,13 @@ test.describe.serial('Onboarding Skip', () => {
     // Tour should disappear
     await expect(page.getByText('Create your first task')).not.toBeVisible();
 
-    // Server should mark as complete
-    const status = await getOnboardingStatus();
-    expect(status.completed).toBe(true);
+    // Server should mark as complete (retry because mutation takes time)
+    let status;
+    for (let i = 0; i < 10; i++) {
+      status = await getOnboardingStatus();
+      if (status.completed) break;
+      await page.waitForTimeout(500);
+    }
+    expect(status!.completed).toBe(true);
   });
 });

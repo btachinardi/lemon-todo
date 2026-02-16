@@ -76,15 +76,20 @@ test.describe.serial('Notifications', () => {
   });
 
   test('empty state shows when no unread notifications', async () => {
-    // Close and reopen the dropdown to see updated state
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
+    // Wait for the mark-all-read mutation to propagate, then reload to get fresh data
+    await page.waitForTimeout(1000);
 
+    // Close dropdown and reload to ensure fresh data from server
+    await page.keyboard.press('Escape');
+    await page.reload();
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible' });
+
+    // Open the notification dropdown
     const bellButton = page.locator('button').filter({ has: page.locator('svg.lucide-bell') });
     await bellButton.click();
 
     // Mark all read button should be gone now
-    await expect(page.getByRole('button', { name: /Mark all read/i })).not.toBeVisible();
+    await expect(page.getByRole('button', { name: /Mark all read/i })).not.toBeVisible({ timeout: 5000 });
   });
 });
 
