@@ -179,6 +179,8 @@ jobs:
       - name: Build frontend
         run: pnpm install --frozen-lockfile && pnpm build
         working-directory: src/client
+        env:
+          VITE_API_BASE_URL: https://api.lemondo.btas.dev
 
       - name: Deploy frontend to Static Web App
         uses: Azure/static-web-apps-deploy@v1

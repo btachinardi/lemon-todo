@@ -54,3 +54,14 @@ output "app_insights_connection_string" {
   value       = module.monitoring.app_insights_connection_string
   sensitive   = true
 }
+
+# --- Custom Domain DNS Setup Values ---
+output "container_app_ingress_fqdn" {
+  description = "Container App ingress FQDN (use as CNAME target for api custom domain)"
+  value       = module.container_app.ingress_fqdn
+}
+
+output "custom_domain_verification_id" {
+  description = "Verification ID for DNS TXT record (asuid.<subdomain>)"
+  value       = module.container_app.environment_custom_domain_verification_id
+}

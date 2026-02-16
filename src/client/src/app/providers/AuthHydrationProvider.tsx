@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
+import { API_BASE_URL } from '@/lib/api-client';
 
 /** Props for {@link AuthHydrationProvider}. */
 interface AuthHydrationProviderProps {
@@ -21,7 +22,7 @@ export function AuthHydrationProvider({ children }: AuthHydrationProviderProps) 
     const controller = new AbortController();
     const silentRefresh = async () => {
       try {
-        const response = await fetch('/api/auth/refresh', {
+        const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',

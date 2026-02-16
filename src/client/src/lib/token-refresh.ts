@@ -6,6 +6,7 @@
  * On success, updates the in-memory Zustand auth store.
  */
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
+import { API_BASE_URL } from './api-client';
 
 /**
  * Response from the token refresh endpoint.
@@ -38,7 +39,7 @@ export function attemptTokenRefresh(): Promise<RefreshResponse | null> {
 
 async function doRefresh(): Promise<RefreshResponse | null> {
   try {
-    const response = await fetch('/api/auth/refresh', {
+    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
