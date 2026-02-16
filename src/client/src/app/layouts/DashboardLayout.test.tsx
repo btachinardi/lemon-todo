@@ -19,6 +19,11 @@ vi.mock('@/domains/auth/components/DevAccountSwitcher', () => ({
   DevAccountSwitcher: () => <div data-testid="dev-account-switcher" />,
 }));
 
+// Mock OnboardingTour to avoid TanStack Query dependency
+vi.mock('@/domains/onboarding/components/widgets/OnboardingTour', () => ({
+  OnboardingTour: () => null,
+}));
+
 describe('DashboardLayout', () => {
   beforeEach(() => {
     useAuthStore.setState({

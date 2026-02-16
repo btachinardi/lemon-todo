@@ -233,7 +233,7 @@ export function KanbanBoard({
       onDragCancel={handleDragCancel}
     >
       <div className={cn('w-full overflow-x-auto', className)}>
-        <div className="flex snap-x snap-mandatory gap-4 p-4 sm:snap-none sm:p-6">
+        <div className="flex snap-x snap-mandatory gap-4 p-4 sm:snap-none sm:p-6" data-onboarding="board-columns">
           {sortedColumns.map((column, index) => (
               <KanbanColumn
                 key={column.id}

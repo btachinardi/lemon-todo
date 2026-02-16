@@ -426,6 +426,16 @@
       "security": "Security"
     }
   },
+  "onboarding": {
+    "step1Title": "Create your first task",
+    "step1Body": "Type a title in the box above and press Enter or click Add Task.",
+    "step2Title": "Complete your task",
+    "step2Body": "Click the checkbox on your task to mark it as done.",
+    "step3Title": "Explore your board!",
+    "step3Body": "Drag tasks between columns to organize your workflow. You're all set!",
+    "skip": "Skip tour",
+    "finish": "Got it!"
+  },
   "theme": {
     "light": "Light theme",
     "dark": "Dark theme",

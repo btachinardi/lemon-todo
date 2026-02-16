@@ -426,6 +426,16 @@
       "security": "Seguran\u00e7a"
     }
   },
+  "onboarding": {
+    "step1Title": "Crie sua primeira tarefa",
+    "step1Body": "Digite um titulo no campo acima e pressione Enter ou clique em Adicionar Tarefa.",
+    "step2Title": "Complete sua tarefa",
+    "step2Body": "Clique na caixa de selecao da tarefa para marca-la como concluida.",
+    "step3Title": "Explore seu quadro!",
+    "step3Body": "Arraste tarefas entre colunas para organizar seu fluxo de trabalho. Tudo pronto!",
+    "skip": "Pular tour",
+    "finish": "Entendi!"
+  },
   "theme": {
     "light": "Tema claro",
     "dark": "Tema escuro",

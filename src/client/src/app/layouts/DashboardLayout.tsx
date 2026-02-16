@@ -12,6 +12,7 @@ import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
+import { OnboardingTour } from '@/domains/onboarding/components/widgets/OnboardingTour';
 
 /** Props for {@link DashboardLayout}. */
 interface DashboardLayoutProps {
@@ -120,6 +121,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           v{__APP_VERSION__}
         </span>
       </footer>
+      <OnboardingTour />
       <Toaster theme={resolvedTheme} />
     </div>
   );

@@ -426,6 +426,16 @@
       "security": "Seguridad"
     }
   },
+  "onboarding": {
+    "step1Title": "Crea tu primera tarea",
+    "step1Body": "Escribe un titulo en el campo de arriba y presiona Enter o haz clic en Agregar Tarea.",
+    "step2Title": "Completa tu tarea",
+    "step2Body": "Haz clic en la casilla de la tarea para marcarla como completada.",
+    "step3Title": "Explora tu tablero!",
+    "step3Body": "Arrastra tareas entre columnas para organizar tu flujo de trabajo. Listo!",
+    "skip": "Saltar tour",
+    "finish": "Entendido!"
+  },
   "theme": {
     "light": "Tema claro",
     "dark": "Tema oscuro",
