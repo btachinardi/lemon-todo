@@ -1,0 +1,11 @@
+subscription_id     = "00000000-0000-0000-0000-000000000000"
+location            = "eastus2"
+location_short      = "eus2"
+
+sql_admin_login     = "lemondoadmin"
+sql_admin_password  = "CHANGE-ME-strong-password-123!"
+aad_admin_login     = "your-email@domain.com"
+aad_admin_object_id = "00000000-0000-0000-0000-000000000000"
+
+jwt_secret_key      = "CHANGE-ME-at-least-32-characters-long!!"
+encryption_key      = "CHANGE-ME-base64-encoded-32-byte-key=="
