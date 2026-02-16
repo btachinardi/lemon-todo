@@ -13,11 +13,11 @@ function App() {
   return (
     <ErrorBoundaryProvider>
       <ThemeProvider>
-        <OfflineBanner />
-        <PWAInstallPrompt />
-        <PWAUpdatePrompt />
         <AuthHydrationProvider>
           <QueryProvider>
+            <OfflineBanner />
+            <PWAInstallPrompt />
+            <PWAUpdatePrompt />
             <RouterProvider router={router} />
           </QueryProvider>
         </AuthHydrationProvider>
