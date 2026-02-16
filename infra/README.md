@@ -113,7 +113,9 @@ infra/
 | Resource | Abbreviation | Example |
 |----------|-------------|---------|
 | Resource Group | `rg` | `rg-lemondo-mvp-eus2` |
-| App Service | `app` | `app-lemondo-mvp-eus2` |
+| Container App | `ca` | `ca-lemondo-mvp-eus2` |
+| Container App Env | `cae` | `cae-lemondo-mvp-eus2` |
+| Container Registry | `cr` | `crlemondomvpeus2` |
 | SQL Server | `sql` | `sql-lemondo-mvp-eus2` |
 | Key Vault | `kv` | `kv-lemondo-mvp-eus2` |
 | Static Web App | `swa` | `swa-lemondo-mvp-eus2` |
@@ -197,6 +199,11 @@ frontend_custom_domain = "lemondo.btas.dev"
 ```
 
 This binds custom domains, provisions managed TLS certificates, and updates CORS.
+
+**Note**: The Container App custom domain uses `terraform_data` with `local-exec`
+(Azure CLI). On Windows, this requires `bash` in PATH (Git Bash). The provisioner
+includes a polling loop that waits up to 5 minutes for managed certificate
+provisioning before binding.
 
 ### Verification
 

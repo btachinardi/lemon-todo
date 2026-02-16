@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Custom domains** for Azure deployment: `api.lemondo.btas.dev` (API) and `lemondo.btas.dev` (frontend)
+  - Managed TLS certificates via Azure (Container App + Static Web App)
+  - Three-phase DNS setup documented in `infra/README.md`
+  - Dual CORS origins for seamless transition (custom domain primary, Azure default secondary)
+- **Cross-origin API support** via `VITE_API_BASE_URL` environment variable
+  - Frontend `api-client.ts`, `token-refresh.ts`, and `AuthHydrationProvider` updated for absolute URLs
+  - CI/CD pipeline injects API URL during frontend build
+- Static Web App upgraded to **Standard SKU** (required for custom domains)
+
 ## [0.4.0] - 2026-02-16
 
 Checkpoint 4: Production Hardening — observability, security, admin tooling, audit trail, i18n, data encryption, and cloud deployment.
