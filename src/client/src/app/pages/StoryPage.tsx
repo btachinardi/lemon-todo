@@ -2,6 +2,7 @@ import { StoryHeroSection } from '@/domains/landing/components/sections/StoryHer
 import { StoryVisionSection } from '@/domains/landing/components/sections/StoryVisionSection';
 import { StoryJourneySection } from '@/domains/landing/components/sections/StoryJourneySection';
 import { StoryArchSection } from '@/domains/landing/components/sections/StoryArchSection';
+import { StoryDomainsSection } from '@/domains/landing/components/sections/StoryDomainsSection';
 import { StoryTechSection } from '@/domains/landing/components/sections/StoryTechSection';
 import { StoryNumbersSection } from '@/domains/landing/components/sections/StoryNumbersSection';
 
@@ -13,6 +14,7 @@ export function StoryPage() {
       <StoryVisionSection />
       <StoryJourneySection />
       <StoryArchSection />
+      <StoryDomainsSection />
       <StoryTechSection />
       <StoryNumbersSection />
     </>
