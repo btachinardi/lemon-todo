@@ -7,6 +7,15 @@ namespace LemonDo.Domain.Common;
 /// </summary>
 /// <typeparam name="TValue">The type of the success value.</typeparam>
 /// <typeparam name="TError">The type of the failure error (typically <see cref="DomainError"/>).</typeparam>
+/// <example>
+/// <code>
+/// Result&lt;TaskTitle, DomainError&gt; result = TaskTitle.Create("Buy groceries");
+/// if (result.IsSuccess)
+///     Console.WriteLine(result.Value);  // "Buy groceries"
+/// else
+///     Console.WriteLine(result.Error.Message);
+/// </code>
+/// </example>
 public sealed class Result<TValue, TError>
 {
     private readonly TValue? _value;

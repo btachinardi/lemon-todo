@@ -28,7 +28,7 @@ public static class Extensions
     /// Configures the application with Aspire service defaults: OpenTelemetry observability,
     /// health checks, service discovery, and standard HTTP resilience patterns.
     /// </summary>
-    /// <typeparam name="TBuilder">The host application builder type.</typeparam>
+    /// <typeparam name="TBuilder">The host application builder type implementing IHostApplicationBuilder.</typeparam>
     /// <param name="builder">The host application builder to configure.</param>
     /// <returns>The builder instance for method chaining.</returns>
     /// <remarks>
@@ -66,7 +66,7 @@ public static class Extensions
     /// Configures OpenTelemetry logging, metrics, and distributed tracing with instrumentation
     /// for ASP.NET Core, HTTP clients, and runtime metrics.
     /// </summary>
-    /// <typeparam name="TBuilder">The host application builder type.</typeparam>
+    /// <typeparam name="TBuilder">The host application builder type implementing IHostApplicationBuilder.</typeparam>
     /// <param name="builder">The host application builder to configure.</param>
     /// <returns>The builder instance for method chaining.</returns>
     /// <remarks>
@@ -134,7 +134,7 @@ public static class Extensions
     /// Registers a basic liveness health check tagged "live" that always returns Healthy
     /// to confirm the application process is responsive.
     /// </summary>
-    /// <typeparam name="TBuilder">The host application builder type.</typeparam>
+    /// <typeparam name="TBuilder">The host application builder type implementing IHostApplicationBuilder.</typeparam>
     /// <param name="builder">The host application builder to configure.</param>
     /// <returns>The builder instance for method chaining.</returns>
     /// <remarks>

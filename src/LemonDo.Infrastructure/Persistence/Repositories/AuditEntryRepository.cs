@@ -17,6 +17,10 @@ public sealed class AuditEntryRepository(LemonDoDbContext context) : IAuditEntry
     }
 
     /// <inheritdoc />
+    /// <param name="dateFrom">Optional date range filter (inclusive).</param>
+    /// <param name="dateTo">Optional date range filter (inclusive).</param>
+    /// <param name="page">1-based page number.</param>
+    /// <param name="pageSize">Number of items per page (max 100).</param>
     public async Task<PagedResult<AuditEntry>> SearchAsync(
         DateTimeOffset? dateFrom,
         DateTimeOffset? dateTo,

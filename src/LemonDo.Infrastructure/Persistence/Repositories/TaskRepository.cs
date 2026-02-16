@@ -24,6 +24,9 @@ public sealed class TaskRepository(LemonDoDbContext context, IFieldEncryptionSer
     }
 
     /// <inheritdoc/>
+    /// <param name="searchTerm">Optional text to search in title and description. Null or empty returns all.</param>
+    /// <param name="page">1-based page number.</param>
+    /// <param name="pageSize">Items per page.</param>
     public async System.Threading.Tasks.Task<PagedResult<TaskEntity>> ListAsync(
         UserId ownerId,
         Priority? priority = null,
