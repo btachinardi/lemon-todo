@@ -19,6 +19,9 @@ public sealed class User : Entity<UserId>
     /// <summary>Whether the user has been deactivated by an admin.</summary>
     public bool IsDeactivated { get; private set; }
 
+    /// <summary>Timestamp when the user completed the onboarding tour. Null if not yet completed.</summary>
+    public DateTimeOffset? OnboardingCompletedAt { get; private set; }
+
     private User(UserId id, string redactedEmail, string redactedDisplayName)
         : base(id)
     {
@@ -39,8 +42,13 @@ public sealed class User : Entity<UserId>
 
     /// <summary>Reconstructs from persistence. No events raised.</summary>
     public static User Reconstitute(
-        UserId id, string redactedEmail, string redactedDisplayName, bool isDeactivated) =>
-        new(id, redactedEmail, redactedDisplayName) { IsDeactivated = isDeactivated };
+        UserId id, string redactedEmail, string redactedDisplayName,
+        bool isDeactivated, DateTimeOffset? onboardingCompletedAt) =>
+        new(id, redactedEmail, redactedDisplayName)
+        {
+            IsDeactivated = isDeactivated,
+            OnboardingCompletedAt = onboardingCompletedAt,
+        };
 
     /// <summary>Deactivates the user account (admin action).</summary>
     public Result<DomainError> Deactivate()
@@ -51,6 +59,14 @@ public sealed class User : Entity<UserId>
 
         IsDeactivated = true;
         return Result<DomainError>.Success();
+    }
+
+    /// <summary>Marks the onboarding tour as completed. Idempotent — no-ops if already completed.</summary>
+    public void CompleteOnboarding()
+    {
+        if (OnboardingCompletedAt.HasValue) return;
+        OnboardingCompletedAt = DateTimeOffset.UtcNow;
+        RaiseDomainEvent(new OnboardingCompletedEvent(Id));
     }
 
     /// <summary>Reactivates a deactivated user account (admin action).</summary>

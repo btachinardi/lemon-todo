@@ -127,6 +127,9 @@ namespace LemonDo.Migrations.Sqlite.Migrations
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(false);
 
+                    b.Property<string>("OnboardingCompletedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("RedactedDisplayName")
                         .IsRequired()
                         .HasMaxLength(100)

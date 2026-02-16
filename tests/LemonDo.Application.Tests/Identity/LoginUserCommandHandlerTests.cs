@@ -38,7 +38,7 @@ public sealed class LoginUserCommandHandlerTests
             .Returns(Result<UserId, DomainError>.Success(TestUserId));
 
         _userRepository.GetByIdAsync(TestUserId, Arg.Any<CancellationToken>())
-            .Returns(User.Reconstitute(TestUserId, "u***@example.com", "U***r", false));
+            .Returns(User.Reconstitute(TestUserId, "u***@example.com", "U***r", false, null));
 
         _authService.GenerateTokensAsync(TestUserId, Arg.Any<CancellationToken>())
             .Returns(new AuthTokens("access", "refresh", new List<string> { "User" }.AsReadOnly()));

@@ -35,6 +35,8 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.IsDeactivated)
             .HasDefaultValue(false);
 
+        builder.Property(u => u.OnboardingCompletedAt);
+
         builder.Property(u => u.CreatedAt);
         builder.Property(u => u.UpdatedAt);
 
