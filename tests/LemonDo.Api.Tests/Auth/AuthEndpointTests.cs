@@ -182,6 +182,52 @@ public sealed class AuthEndpointTests
     }
 
     [TestMethod]
+    public async Task Should_IncludeRoles_When_LoginResponse()
+    {
+        var request = new LoginRequest(
+            CustomWebApplicationFactory.TestUserEmail,
+            CustomWebApplicationFactory.TestUserPassword);
+
+        var response = await _anonymousClient.PostAsJsonAsync("/api/auth/login", request);
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        var auth = await response.Content.ReadFromJsonAsync<AuthResponse>();
+        Assert.IsNotNull(auth);
+        Assert.IsNotNull(auth.User.Roles);
+        CollectionAssert.Contains(auth.User.Roles.ToList(), "User");
+    }
+
+    [TestMethod]
+    public async Task Should_IncludeRoles_When_MeEndpoint()
+    {
+        using var authedClient = await _factory.CreateAuthenticatedClientAsync();
+
+        var response = await authedClient.GetAsync("/api/auth/me");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        var user = await response.Content.ReadFromJsonAsync<UserResponse>();
+        Assert.IsNotNull(user);
+        Assert.IsNotNull(user.Roles);
+        CollectionAssert.Contains(user.Roles.ToList(), "User");
+    }
+
+    [TestMethod]
+    public async Task Should_IncludeAdminRole_When_AdminLogin()
+    {
+        var request = new LoginRequest(
+            CustomWebApplicationFactory.AdminUserEmail,
+            CustomWebApplicationFactory.AdminUserPassword);
+
+        var response = await _anonymousClient.PostAsJsonAsync("/api/auth/login", request);
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        var auth = await response.Content.ReadFromJsonAsync<AuthResponse>();
+        Assert.IsNotNull(auth);
+        Assert.IsNotNull(auth.User.Roles);
+        CollectionAssert.Contains(auth.User.Roles.ToList(), "Admin");
+    }
+
+    [TestMethod]
     public async Task Should_InvalidateRefreshToken_When_Logout()
     {
         // Login to get tokens + cookie

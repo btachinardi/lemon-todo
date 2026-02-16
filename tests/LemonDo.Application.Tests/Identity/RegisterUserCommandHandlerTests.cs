@@ -28,7 +28,7 @@ public sealed class RegisterUserCommandHandlerTests
         _authService.RegisterAsync(
             Arg.Any<UserId>(), Arg.Any<Email>(), Arg.Any<string>(), Arg.Any<DisplayName>(), Arg.Any<CancellationToken>())
             .Returns(callInfo => Result<AuthResult, DomainError>.Success(
-                new AuthResult(callInfo.ArgAt<UserId>(0).Value, "test@example.com", "Test", "access-token", "refresh-token")));
+                new AuthResult(callInfo.ArgAt<UserId>(0).Value, "test@example.com", "Test", ["User"], "access-token", "refresh-token")));
 
         _handler = new RegisterUserCommandHandler(
             _authService, _boardRepository, _unitOfWork,

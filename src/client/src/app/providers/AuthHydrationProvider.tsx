@@ -30,7 +30,7 @@ export function AuthHydrationProvider({ children }: AuthHydrationProviderProps) 
         if (response.ok) {
           const data = (await response.json()) as {
             accessToken: string;
-            user: { id: string; email: string; displayName: string };
+            user: { id: string; email: string; displayName: string; roles: string[] };
           };
           useAuthStore.getState().setAuth(data.accessToken, data.user);
         }

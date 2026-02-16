@@ -5,5 +5,6 @@ public sealed record AuthResult(
     Guid UserId,
     string Email,
     string DisplayName,
+    IReadOnlyList<string> Roles,
     string AccessToken,
     string RefreshToken);

@@ -8,6 +8,7 @@ import { UserMenu } from '@/domains/auth/components/UserMenu';
 import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
+import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -18,6 +19,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { t } = useTranslation();
   const theme = useThemeStore((s) => s.theme);
   const resolvedTheme = resolveTheme(theme);
+  const roles = useAuthStore((s) => s.user?.roles);
+  const isAdmin = roles?.some((r) => r === 'Admin' || r === 'SystemAdmin') ?? false;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -62,13 +65,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </NavLink>
           </nav>
           <div className="flex items-center gap-1">
-            <NavLink
-              to="/admin/users"
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <ShieldIcon className="size-3" />
-              <span className="hidden sm:inline">{t('nav.admin')}</span>
-            </NavLink>
+            {isAdmin && (
+              <NavLink
+                to="/admin/users"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <ShieldIcon className="size-3" />
+                <span className="hidden sm:inline">{t('nav.admin')}</span>
+              </NavLink>
+            )}
             <LanguageSwitcher />
             <ThemeToggle
               theme={theme}

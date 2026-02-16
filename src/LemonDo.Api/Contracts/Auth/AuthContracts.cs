@@ -10,4 +10,4 @@ public sealed record LoginRequest(string Email, string Password);
 public sealed record AuthResponse(string AccessToken, UserResponse User);
 
 /// <summary>Response containing user profile information.</summary>
-public sealed record UserResponse(Guid Id, string Email, string DisplayName);
+public sealed record UserResponse(Guid Id, string Email, string DisplayName, IReadOnlyList<string> Roles);

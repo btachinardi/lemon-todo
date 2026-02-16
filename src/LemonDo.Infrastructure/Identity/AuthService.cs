@@ -139,6 +139,7 @@ public sealed class AuthService(
             user.Id,
             user.Email!,
             user.DisplayName,
+            roles.AsReadOnly(),
             accessToken,
             refreshToken));
     }

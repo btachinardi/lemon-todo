@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
@@ -28,6 +28,7 @@ import {
 import { UserRow } from '../widgets/UserRow';
 import { RoleAssignmentDialog } from '../widgets/RoleAssignmentDialog';
 import type { AdminUser } from '../../types/admin.types';
+import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
 const ROLES_FILTER = ['All', 'User', 'Admin', 'SystemAdmin'] as const;
 
@@ -39,8 +40,8 @@ export function UserManagementView() {
   const [page, setPage] = useState(1);
   const [assignDialogUser, setAssignDialogUser] = useState<AdminUser | null>(null);
 
-  // Server enforces role-based access; client optimistically shows actions
-  const isSystemAdmin = true;
+  const roles = useAuthStore((s) => s.user?.roles);
+  const isSystemAdmin = useMemo(() => roles?.includes('SystemAdmin') ?? false, [roles]);
 
   const params = {
     search: search || undefined,

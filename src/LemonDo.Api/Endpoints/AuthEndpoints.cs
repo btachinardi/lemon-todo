@@ -99,11 +99,12 @@ public static class AuthEndpoints
         var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
         var email = user.FindFirstValue(ClaimTypes.Email);
         var displayName = user.FindFirstValue("display_name");
+        var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
 
         if (userId is null)
             return Results.Unauthorized();
 
-        return Results.Ok(new UserResponse(Guid.Parse(userId), email ?? "", displayName ?? ""));
+        return Results.Ok(new UserResponse(Guid.Parse(userId), email ?? "", displayName ?? "", roles));
     }
 
     private static IResult SetCookieAndReturnResponse(HttpContext httpContext, AuthResult auth, JwtSettings jwt)
@@ -112,7 +113,7 @@ public static class AuthEndpoints
 
         return Results.Ok(new AuthResponse(
             auth.AccessToken,
-            new UserResponse(auth.UserId, auth.Email, auth.DisplayName)));
+            new UserResponse(auth.UserId, auth.Email, auth.DisplayName, auth.Roles)));
     }
 
     private static void SetRefreshTokenCookie(HttpContext httpContext, string token, int expirationDays)

@@ -26,7 +26,7 @@ public sealed class LoginUserCommandHandlerTests
     {
         _authService.LoginAsync("user@example.com", "Pass123!", Arg.Any<CancellationToken>())
             .Returns(Result<AuthResult, DomainError>.Success(
-                new AuthResult(Guid.NewGuid(), "user@example.com", "User", "access", "refresh")));
+                new AuthResult(Guid.NewGuid(), "user@example.com", "User", ["User"], "access", "refresh")));
 
         var command = new LoginUserCommand("user@example.com", "Pass123!");
         var result = await _handler.HandleAsync(command);
