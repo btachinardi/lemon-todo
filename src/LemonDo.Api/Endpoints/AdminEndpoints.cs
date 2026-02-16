@@ -5,6 +5,7 @@ using LemonDo.Api.Extensions;
 using LemonDo.Application.Administration.Commands;
 using LemonDo.Application.Administration.Queries;
 using LemonDo.Application.Common;
+using LemonDo.Domain.Administration;
 
 /// <summary>Minimal API endpoint definitions for admin operations under <c>/api/admin</c>.</summary>
 public static class AdminEndpoints
@@ -29,6 +30,9 @@ public static class AdminEndpoints
             .RequireAuthorization(Roles.RequireSystemAdmin);
         group.MapPost("/users/{id:guid}/reveal", RevealPii)
             .RequireAuthorization(Roles.RequireSystemAdmin);
+
+        // Audit log
+        group.MapGet("/audit", SearchAuditLog);
 
         return group;
     }
@@ -96,6 +100,22 @@ public static class AdminEndpoints
     {
         var result = await handler.HandleAsync(new ReactivateUserCommand(id), ct);
         return result.ToHttpResult(() => Results.Ok(new { Success = true }), httpContext: httpContext);
+    }
+
+    private static async Task<IResult> SearchAuditLog(
+        SearchAuditLogQueryHandler handler,
+        DateTimeOffset? dateFrom = null,
+        DateTimeOffset? dateTo = null,
+        AuditAction? action = null,
+        Guid? actorId = null,
+        string? resourceType = null,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
+    {
+        var result = await handler.HandleAsync(
+            new SearchAuditLogQuery(dateFrom, dateTo, action, actorId, resourceType, page, pageSize), ct);
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> RevealPii(
