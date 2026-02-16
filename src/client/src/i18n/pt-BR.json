@@ -54,6 +54,19 @@
     "userMenu": {
       "signOut": "Sair",
       "signingOut": "Saindo..."
+    },
+    "devSwitcher": {
+      "title": "Login Rápido",
+      "subtitle": "Contas de desenvolvimento",
+      "switching": "Alternando...",
+      "roles": {
+        "user": "Usuário",
+        "userDesc": "Gerenciamento padrão de tarefas",
+        "admin": "Admin",
+        "adminDesc": "Gerenciamento de usuários e painel admin",
+        "sysadmin": "Admin do Sistema",
+        "sysadminDesc": "Acesso total ao sistema e revelação de dados protegidos"
+      }
     }
   },
   "tasks": {
@@ -135,6 +148,25 @@
       "updateTask": "N\u00e3o foi poss\u00edvel atualizar a tarefa. Tente novamente.",
       "moveTask": "N\u00e3o foi poss\u00edvel mover a tarefa. Tente novamente.",
       "saveTask": "N\u00e3o foi poss\u00edvel salvar a tarefa. Tente novamente."
+    },
+    "sensitiveNote": {
+      "label": "Nota Sens\u00edvel",
+      "placeholder": "Digite informa\u00e7\u00f5es sens\u00edveis (criptografado em repouso)...",
+      "encryptionWarning": "Este conte\u00fado \u00e9 criptografado e s\u00f3 pode ser visualizado com sua senha.",
+      "viewNote": "Ver Nota",
+      "hasNote": "Possui nota criptografada"
+    },
+    "noteRevealDialog": {
+      "title": "Ver Nota Sens\u00edvel",
+      "description": "Digite sua senha para descriptografar e ver esta nota. Esta a\u00e7\u00e3o \u00e9 registrada.",
+      "revealedDescription": "Esta nota ser\u00e1 ocultada automaticamente por seguran\u00e7a.",
+      "password": "Senha",
+      "passwordPlaceholder": "Digite a senha da sua conta",
+      "passwordError": "Senha incorreta. Tente novamente.",
+      "submit": "Ver Nota",
+      "submitting": "Descriptografando...",
+      "autoHide": "Ocultando automaticamente em",
+      "hide": "Ocultar Agora"
     }
   },
   "nav": {
