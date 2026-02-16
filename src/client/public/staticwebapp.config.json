@@ -1,0 +1,12 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/android-chrome-*.png", "/apple-touch-icon.png", "/favicon.ico", "/lemondo-icon.png", "/sw.js", "/workbox-*.js", "/manifest.webmanifest"]
+  },
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  }
+}
