@@ -108,7 +108,9 @@
       "tagPlaceholder": "Add a tag...",
       "removeTag": "Remove tag {{tag}}",
       "deleteTitle": "Delete this task?",
-      "deleteButton": "Delete task"
+      "deleteButton": "Delete task",
+      "saving": "Saving...",
+      "saved": "Saved"
     },
     "filter": {
       "searchPlaceholder": "Search tasks...",

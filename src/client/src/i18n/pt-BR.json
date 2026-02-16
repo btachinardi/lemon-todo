@@ -108,7 +108,9 @@
       "tagPlaceholder": "Adicionar uma tag...",
       "removeTag": "Remover tag {{tag}}",
       "deleteTitle": "Excluir esta tarefa?",
-      "deleteButton": "Excluir tarefa"
+      "deleteButton": "Excluir tarefa",
+      "saving": "Salvando...",
+      "saved": "Salvo"
     },
     "filter": {
       "searchPlaceholder": "Buscar tarefas...",

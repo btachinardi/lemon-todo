@@ -8,6 +8,8 @@ import {
   PlusIcon,
   LockIcon,
   EyeIcon,
+  LoaderCircleIcon,
+  CheckCircle2Icon,
 } from 'lucide-react';
 import {
   Sheet,
@@ -61,6 +63,8 @@ export interface TaskDetailSheetProps {
   onClearSensitiveNote?: () => void;
   /** Called when the user wants to view the decrypted note. */
   onViewNote?: () => void;
+  /** Mutation status for the update-task operation, drives the save indicator. */
+  saveStatus?: 'idle' | 'pending' | 'success' | 'error';
 }
 
 /** Slide-over panel for viewing and editing all fields of a single task. */
@@ -82,18 +86,28 @@ export function TaskDetailSheet({
   onUpdateSensitiveNote,
   onClearSensitiveNote,
   onViewNote,
+  saveStatus = 'idle',
 }: TaskDetailSheetProps) {
   const isOpen = taskId !== null;
 
+  const handleClose = useCallback(() => {
+    // Force-blur the active element so any pending onBlur save handlers fire
+    // before the sheet unmounts (e.g. description textarea).
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    onClose();
+  }, [onClose]);
+
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-lg">
         {taskId && (
           <TaskDetailContent
             task={task}
             isLoading={isLoading}
             isError={isError}
-            onClose={onClose}
+            onClose={handleClose}
             onUpdateTitle={onUpdateTitle}
             onUpdateDescription={onUpdateDescription}
             onUpdatePriority={onUpdatePriority}
@@ -106,6 +120,7 @@ export function TaskDetailSheet({
             onUpdateSensitiveNote={onUpdateSensitiveNote}
             onClearSensitiveNote={onClearSensitiveNote}
             onViewNote={onViewNote}
+            saveStatus={saveStatus}
           />
         )}
       </SheetContent>
@@ -130,6 +145,7 @@ interface TaskDetailContentProps {
   onUpdateSensitiveNote?: (note: string) => void;
   onClearSensitiveNote?: () => void;
   onViewNote?: () => void;
+  saveStatus: 'idle' | 'pending' | 'success' | 'error';
 }
 
 function TaskDetailContent({
@@ -149,6 +165,7 @@ function TaskDetailContent({
   onUpdateSensitiveNote,
   onClearSensitiveNote,
   onViewNote,
+  saveStatus,
 }: TaskDetailContentProps) {
   const { t } = useTranslation();
   const [editingTitle, setEditingTitle] = useState(false);
@@ -296,6 +313,18 @@ function TaskDetailContent({
           </SheetTitle>
         )}
         <SheetDescription className="sr-only">Edit task details</SheetDescription>
+        {saveStatus === 'pending' && (
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
+            <LoaderCircleIcon className="size-3 animate-spin" />
+            {t('tasks.detail.saving')}
+          </p>
+        )}
+        {saveStatus === 'success' && (
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
+            <CheckCircle2Icon className="size-3 text-green-600 dark:text-green-400" />
+            {t('tasks.detail.saved')}
+          </p>
+        )}
       </SheetHeader>
 
       <div className="flex flex-col gap-5 px-6 pb-6">
