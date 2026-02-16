@@ -356,13 +356,13 @@
       "titleLine1": "Your Tasks.",
       "titleLine2": "Your Server.",
       "titleHighlight": "Your Rules.",
-      "subtitle": "The open-source task manager built for teams that can't compromise on data sovereignty. Self-host on your infrastructure, stay compliant, ship faster.",
+      "subtitle": "The open-source task manager with offline support, push notifications, encrypted notes, and full audit trail. Self-host on your infrastructure, stay compliant, ship faster.",
       "ctaPrimary": "Get Started Free",
       "ctaGithub": "View on GitHub"
     },
     "features": {
       "title": "Everything you need to ship",
-      "subtitle": "Powerful features wrapped in a beautiful, dark-first interface designed for focus.",
+      "subtitle": "From offline-first PWA to encrypted notes and push notifications — everything wrapped in a beautiful interface.",
       "highlight": "ship",
       "items": [
         {
@@ -370,24 +370,36 @@
           "description": "Visual task organization with drag & drop. See your workflow at a glance."
         },
         {
+          "title": "Works Offline",
+          "description": "Full PWA with offline reads and a mutation queue. Changes sync automatically when you reconnect."
+        },
+        {
+          "title": "Push Notifications",
+          "description": "In-app notification bell and Web Push alerts for due date reminders. Never miss a deadline."
+        },
+        {
           "title": "Smart Priorities",
           "description": "Focus on what matters with priority levels from low to critical."
         },
         {
-          "title": "Quick Capture",
-          "description": "Add tasks instantly with a single keystroke. Never lose an idea."
+          "title": "Multi-Language",
+          "description": "Available in English, Portuguese, and Spanish. Switch languages instantly."
         },
         {
-          "title": "Flexible Tags",
-          "description": "Organize your way with custom tagging and powerful filtering."
+          "title": "Guided Onboarding",
+          "description": "Interactive tooltip tour walks new users through creating, completing, and organizing tasks."
         },
         {
-          "title": "Audit Trail",
-          "description": "Full activity logging for compliance. Every action tracked and timestamped."
+          "title": "Encrypted Notes",
+          "description": "AES-256 encrypted sensitive notes on tasks. Only you can decrypt them with your password."
+        },
+        {
+          "title": "Mobile Optimized",
+          "description": "Touch-friendly layouts with 44px tap targets, bottom navigation, and responsive card views."
         },
         {
           "title": "Dark-First Design",
-          "description": "Beautiful UI built for focus. Easy on the eyes, day and night."
+          "description": "Beautiful UI with dark, light, and system themes. Easy on the eyes, day and night."
         }
       ]
     },
@@ -531,28 +543,28 @@
         {
           "title": "Rich UX",
           "subtitle": "CP3 — Polish",
-          "description": "Dark mode, priority filters, task detail sheet, drag-and-drop reordering, i18n in 3 languages.",
+          "description": "Dark mode, priority filters, task detail sheet, drag-and-drop reordering, loading skeletons, toast notifications.",
           "decision": "Sparse decimal ranks for O(1) card moves",
           "tests": "434"
         },
         {
           "title": "Production Ready",
           "subtitle": "CP4 — Enterprise",
-          "description": "Audit trail, encrypted notes, admin panel, Azure deployment with Terraform, dual database support.",
-          "decision": "Result pattern over exceptions for domain logic",
+          "description": "Audit trail, AES-256 encryption, admin panel, i18n in 3 languages, Azure deployment, CI/CD, observability.",
+          "decision": "AES-256-GCM field encryption at rest",
           "tests": "668"
         },
         {
           "title": "Delight",
           "subtitle": "CP5 — Experience",
-          "description": "PWA with offline support, onboarding tour, landing pages, push notifications, analytics.",
-          "decision": "Service Worker caching for offline-first reads",
-          "tests": "700+"
+          "description": "PWA with offline mutation queue, onboarding tour, Web Push notifications, analytics, mobile overhaul, landing page.",
+          "decision": "IndexedDB mutation queue for offline sync",
+          "tests": "808"
         }
       ]
     },
     "arch": {
-      "title": "Two Bounded Contexts, Zero Compromises",
+      "title": "Five Bounded Contexts, Zero Compromises",
       "highlight": "Zero Compromises",
       "subtitle": "Clean architecture with strict layer boundaries. Every import direction is intentional.",
       "backendLabel": "Backend Layers",
@@ -572,7 +584,10 @@
       "decisions": [
         "Column determines status — one source of truth",
         "Sparse decimal ranks — O(1) moves, no position drift",
-        "Result pattern, not exceptions — for business logic"
+        "Result pattern, not exceptions — for business logic",
+        "Cookie-based refresh — memory-only access tokens",
+        "AES-256-GCM encryption — protected data at rest",
+        "IndexedDB mutation queue — offline-first sync"
       ]
     },
     "tech": {
@@ -626,6 +641,18 @@
           "name": "Zustand",
           "description": "Lightweight client state"
         },
+        "i18next": {
+          "name": "i18next",
+          "description": "Internationalization framework"
+        },
+        "motion": {
+          "name": "Motion",
+          "description": "Scroll and layout animations"
+        },
+        "dndkit": {
+          "name": "dnd-kit",
+          "description": "Accessible drag-and-drop"
+        },
         "mstest": {
           "name": "MSTest 4",
           "description": "Backend unit and integration tests"
@@ -661,6 +688,10 @@
         "docker": {
           "name": "Docker",
           "description": "Container runtime"
+        },
+        "workbox": {
+          "name": "Workbox",
+          "description": "PWA and offline caching"
         }
       }
     },
@@ -669,7 +700,7 @@
       "highlight": "Numbers",
       "items": [
         {
-          "value": "700+",
+          "value": "808",
           "label": "Tests",
           "detail": "Backend + Frontend + E2E"
         },
@@ -689,9 +720,9 @@
           "detail": "EN, PT-BR, ES"
         },
         {
-          "value": "2",
+          "value": "5",
           "label": "Contexts",
-          "detail": "Task + Board (DDD)"
+          "detail": "Task, Board, Identity, Admin, Notification"
         },
         {
           "value": "3",

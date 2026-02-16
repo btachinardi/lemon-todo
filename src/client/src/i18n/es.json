@@ -356,13 +356,13 @@
       "titleLine1": "Tus Tareas.",
       "titleLine2": "Tu Servidor.",
       "titleHighlight": "Tus Reglas.",
-      "subtitle": "El gestor de tareas open-source para equipos que no pueden comprometer la soberanía de datos. Auto-hospeda en tu infraestructura, cumple normativas, entrega más rápido.",
+      "subtitle": "El gestor de tareas open-source con soporte offline, notificaciones push, notas cifradas y registro de auditoría completo. Auto-hospeda en tu infraestructura, cumple normativas, entrega más rápido.",
       "ctaPrimary": "Empieza Gratis",
       "ctaGithub": "Ver en GitHub"
     },
     "features": {
       "title": "Todo lo que necesitas para entregar",
-      "subtitle": "Funcionalidades potentes en una interfaz hermosa, dark-first, diseñada para el enfoque.",
+      "subtitle": "De PWA offline-first a notas cifradas y notificaciones push — todo en una interfaz hermosa.",
       "highlight": "entregar",
       "items": [
         {
@@ -370,24 +370,36 @@
           "description": "Organización visual de tareas con arrastrar y soltar. Ve tu flujo de trabajo de un vistazo."
         },
         {
+          "title": "Funciona Sin Conexión",
+          "description": "PWA completa con lecturas offline y cola de mutaciones. Los cambios se sincronizan automáticamente al reconectar."
+        },
+        {
+          "title": "Notificaciones Push",
+          "description": "Campana de notificaciones en la app y alertas Web Push para fechas límite. Nunca pierdas un deadline."
+        },
+        {
           "title": "Prioridades Inteligentes",
           "description": "Enfócate en lo importante con niveles de prioridad de baja a crítica."
         },
         {
-          "title": "Captura Rápida",
-          "description": "Agrega tareas instantáneamente con una sola tecla. Nunca pierdas una idea."
+          "title": "Multi-Idioma",
+          "description": "Disponible en inglés, portugués y español. Cambia de idioma al instante."
         },
         {
-          "title": "Etiquetas Flexibles",
-          "description": "Organiza a tu manera con etiquetas personalizadas y filtrado potente."
+          "title": "Onboarding Guiado",
+          "description": "Tour interactivo con tooltips que guía a nuevos usuarios en la creación, completado y organización de tareas."
         },
         {
-          "title": "Registro de Auditoría",
-          "description": "Registro completo de actividades para cumplimiento. Cada acción rastreada y con marca de tiempo."
+          "title": "Notas Cifradas",
+          "description": "Notas sensibles con cifrado AES-256 en las tareas. Solo tú puedes descifrarlas con tu contraseña."
+        },
+        {
+          "title": "Optimizado para Móvil",
+          "description": "Diseños touch-friendly con objetivos de toque de 44px, navegación inferior y tarjetas responsivas."
         },
         {
           "title": "Diseño Dark-First",
-          "description": "Interfaz hermosa hecha para el enfoque. Fácil para la vista, día y noche."
+          "description": "Interfaz hermosa con temas oscuro, claro y del sistema. Fácil para la vista, día y noche."
         }
       ]
     },
@@ -531,28 +543,28 @@
         {
           "title": "UX Rica",
           "subtitle": "CP3 — Pulido",
-          "description": "Modo oscuro, filtros de prioridad, panel de detalles, reordenamiento drag-and-drop, i18n en 3 idiomas.",
+          "description": "Modo oscuro, filtros de prioridad, panel de detalles, reordenamiento drag-and-drop, skeletons de carga, notificaciones toast.",
           "decision": "Ranks decimales dispersos para movimiento O(1)",
           "tests": "434"
         },
         {
           "title": "Listo para Producción",
           "subtitle": "CP4 — Enterprise",
-          "description": "Registro de auditoría, notas cifradas, panel admin, despliegue Azure con Terraform, soporte dual de BD.",
-          "decision": "Patrón Result en vez de excepciones para lógica de dominio",
+          "description": "Registro de auditoría, cifrado AES-256, panel admin, i18n en 3 idiomas, despliegue Azure, CI/CD, observabilidad.",
+          "decision": "Cifrado AES-256-GCM para datos en reposo",
           "tests": "668"
         },
         {
           "title": "Deleite",
           "subtitle": "CP5 — Experiencia",
-          "description": "PWA con soporte offline, tour de onboarding, landing pages, notificaciones push, analytics.",
-          "decision": "Cache via Service Worker para lecturas offline-first",
-          "tests": "700+"
+          "description": "PWA con cola de mutaciones offline, tour de onboarding, notificaciones Web Push, analytics, rediseño mobile, landing page.",
+          "decision": "Cola de mutaciones IndexedDB para sync offline",
+          "tests": "808"
         }
       ]
     },
     "arch": {
-      "title": "Dos Contextos Delimitados, Cero Compromisos",
+      "title": "Cinco Contextos Delimitados, Cero Compromisos",
       "highlight": "Cero Compromisos",
       "subtitle": "Arquitectura limpia con fronteras de capas estrictas. Cada dirección de import es intencional.",
       "backendLabel": "Capas del Backend",
@@ -572,7 +584,10 @@
       "decisions": [
         "La columna determina el estado — una única fuente de verdad",
         "Ranks decimales dispersos — movimiento O(1), sin drift de posición",
-        "Patrón Result, no excepciones — para lógica de negocio"
+        "Patrón Result, no excepciones — para lógica de negocio",
+        "Refresh via cookie — access token solo en memoria",
+        "Cifrado AES-256-GCM — datos protegidos en reposo",
+        "Cola de mutaciones IndexedDB — sync offline-first"
       ]
     },
     "tech": {
@@ -626,6 +641,18 @@
           "name": "Zustand",
           "description": "Estado del cliente ligero"
         },
+        "i18next": {
+          "name": "i18next",
+          "description": "Framework de internacionalización"
+        },
+        "motion": {
+          "name": "Motion",
+          "description": "Animaciones de scroll y layout"
+        },
+        "dndkit": {
+          "name": "dnd-kit",
+          "description": "Drag-and-drop accesible"
+        },
         "mstest": {
           "name": "MSTest 4",
           "description": "Tests unitarios e integración backend"
@@ -661,6 +688,10 @@
         "docker": {
           "name": "Docker",
           "description": "Runtime de contenedores"
+        },
+        "workbox": {
+          "name": "Workbox",
+          "description": "PWA y caché offline"
         }
       }
     },
@@ -669,7 +700,7 @@
       "highlight": "Números",
       "items": [
         {
-          "value": "700+",
+          "value": "808",
           "label": "Tests",
           "detail": "Backend + Frontend + E2E"
         },
@@ -689,9 +720,9 @@
           "detail": "EN, PT-BR, ES"
         },
         {
-          "value": "2",
+          "value": "5",
           "label": "Contextos",
-          "detail": "Task + Board (DDD)"
+          "detail": "Task, Board, Identity, Admin, Notification"
         },
         {
           "value": "3",

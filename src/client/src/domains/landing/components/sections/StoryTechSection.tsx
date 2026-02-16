@@ -21,6 +21,10 @@ import {
   BlocksIcon,
   GitBranchIcon,
   ContainerIcon,
+  LanguagesIcon,
+  Wand2Icon,
+  GripVerticalIcon,
+  WifiOffIcon,
 } from 'lucide-react';
 import { SectionHeading } from '../atoms/SectionHeading';
 import { TechCard } from '../widgets/TechCard';
@@ -49,6 +53,9 @@ const categories: { key: string; items: TechItem[] }[] = [
       { key: 'shadcn', icon: <LayoutGridIcon className="size-4" /> },
       { key: 'tanstack', icon: <RefreshCwIcon className="size-4" /> },
       { key: 'zustand', icon: <BoxIcon className="size-4" /> },
+      { key: 'i18next', icon: <LanguagesIcon className="size-4" /> },
+      { key: 'motion', icon: <Wand2Icon className="size-4" /> },
+      { key: 'dndkit', icon: <GripVerticalIcon className="size-4" /> },
     ],
   },
   {
@@ -68,6 +75,7 @@ const categories: { key: string; items: TechItem[] }[] = [
       { key: 'terraform', icon: <BlocksIcon className="size-4" /> },
       { key: 'ghactions', icon: <GitBranchIcon className="size-4" /> },
       { key: 'docker', icon: <ContainerIcon className="size-4" /> },
+      { key: 'workbox', icon: <WifiOffIcon className="size-4" /> },
     ],
   },
 ];

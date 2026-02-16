@@ -3,10 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { motion, useInView } from 'motion/react';
 import {
   KanbanIcon,
+  WifiOffIcon,
+  BellRingIcon,
   ArrowUpCircleIcon,
-  ZapIcon,
-  TagsIcon,
-  ShieldCheckIcon,
+  GlobeIcon,
+  SparklesIcon,
+  LockKeyholeIcon,
+  SmartphoneIcon,
   MoonStarIcon,
 } from 'lucide-react';
 import { SectionHeading } from '../atoms/SectionHeading';
@@ -14,14 +17,17 @@ import { FeatureCard } from '../widgets/FeatureCard';
 
 const featureIcons = [
   KanbanIcon,
+  WifiOffIcon,
+  BellRingIcon,
   ArrowUpCircleIcon,
-  ZapIcon,
-  TagsIcon,
-  ShieldCheckIcon,
+  GlobeIcon,
+  SparklesIcon,
+  LockKeyholeIcon,
+  SmartphoneIcon,
   MoonStarIcon,
 ];
 
-/** 6-card feature grid highlighting core capabilities. */
+/** 9-card feature grid highlighting core capabilities across all checkpoints. */
 export function FeaturesSection() {
   const { t } = useTranslation();
   const ref = useRef<HTMLElement>(null);

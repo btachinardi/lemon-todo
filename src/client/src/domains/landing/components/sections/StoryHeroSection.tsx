@@ -102,17 +102,17 @@ export function StoryHeroSection() {
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">Backend Tests</span>{' '}
-                <span className="text-primary font-bold">370 passed</span>
+                <span className="text-primary font-bold">375 passed</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">Frontend Tests</span>{' '}
-                <span className="text-primary font-bold">243 passed</span>
+                <span className="text-primary font-bold">337 passed</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">E2E Tests</span>{' '}
-                <span className="text-primary font-bold">55 passed</span>
+                <span className="text-primary font-bold">96 passed</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
