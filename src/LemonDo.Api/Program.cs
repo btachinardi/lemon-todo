@@ -67,7 +67,13 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
             ClockSkew = TimeSpan.Zero,
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Roles.RequireAdminOrAbove, policy =>
+        policy.RequireRole(Roles.Admin, Roles.SystemAdmin));
+    options.AddPolicy(Roles.RequireSystemAdmin, policy =>
+        policy.RequireRole(Roles.SystemAdmin));
+});
 
 // CORS — allow frontend origin with credentials for cookie-based auth
 builder.Services.AddCors(options =>
@@ -119,7 +125,7 @@ try
 
     // Seed roles
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-    string[] roles = ["User", "Admin"];
+    string[] roles = [Roles.User, Roles.Admin, Roles.SystemAdmin];
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))

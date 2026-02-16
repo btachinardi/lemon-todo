@@ -1,5 +1,6 @@
 namespace LemonDo.Api.Tests.Infrastructure;
 
+using LemonDo.Application.Common;
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Identity.ValueObjects;
@@ -22,6 +23,14 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
     public const string TestUserEmail = "test@lemondo.dev";
     public const string TestUserPassword = "TestPass123!";
     public const string TestUserDisplayName = "Test User";
+
+    public const string AdminUserEmail = "admin@lemondo.dev";
+    public const string AdminUserPassword = "AdminPass123!";
+    public const string AdminUserDisplayName = "Admin User";
+
+    public const string SystemAdminUserEmail = "sysadmin@lemondo.dev";
+    public const string SystemAdminUserPassword = "SysAdminPass123!";
+    public const string SystemAdminUserDisplayName = "System Admin";
 
     private static readonly Dictionary<string, string?> TestSettings = new()
     {
@@ -72,35 +81,25 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         var db = scope.ServiceProvider.GetRequiredService<LemonDoDbContext>();
         db.Database.EnsureCreated();
 
-        // Seed roles
+        // Seed all roles
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-        if (!roleManager.RoleExistsAsync("User").GetAwaiter().GetResult())
-            roleManager.CreateAsync(new IdentityRole<Guid>("User")).GetAwaiter().GetResult();
-
-        // Seed test user
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var existingUser = userManager.FindByEmailAsync(TestUserEmail).GetAwaiter().GetResult();
-        if (existingUser is null)
+        string[] roles = [Roles.User, Roles.Admin, Roles.SystemAdmin];
+        foreach (var role in roles)
         {
-            var user = new ApplicationUser
-            {
-                UserName = TestUserEmail,
-                Email = TestUserEmail,
-                DisplayName = TestUserDisplayName,
-            };
-            userManager.CreateAsync(user, TestUserPassword).GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(user, "User").GetAwaiter().GetResult();
-
-            // Create default board for test user
-            var userId = new UserId(user.Id);
-            var boardResult = Board.CreateDefault(userId);
-            if (boardResult.IsSuccess)
-            {
-                var boardRepo = scope.ServiceProvider.GetRequiredService<IBoardRepository>();
-                boardRepo.AddAsync(boardResult.Value).GetAwaiter().GetResult();
-                db.SaveChanges();
-            }
+            if (!roleManager.RoleExistsAsync(role).GetAwaiter().GetResult())
+                roleManager.CreateAsync(new IdentityRole<Guid>(role)).GetAwaiter().GetResult();
         }
+
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        // Seed test user (regular User role)
+        SeedUser(userManager, db, TestUserEmail, TestUserPassword, TestUserDisplayName, Roles.User);
+
+        // Seed admin user
+        SeedUser(userManager, db, AdminUserEmail, AdminUserPassword, AdminUserDisplayName, Roles.Admin);
+
+        // Seed system admin user
+        SeedUser(userManager, db, SystemAdminUserEmail, SystemAdminUserPassword, SystemAdminUserDisplayName, Roles.SystemAdmin);
 
         // Keep legacy default board for backward compat
         var legacyBoardRepo = scope.ServiceProvider.GetRequiredService<IBoardRepository>();
@@ -113,6 +112,37 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         }
 
         return host;
+    }
+
+    private static void SeedUser(
+        UserManager<ApplicationUser> userManager,
+        LemonDoDbContext db,
+        string email,
+        string password,
+        string displayName,
+        string role)
+    {
+        var existingUser = userManager.FindByEmailAsync(email).GetAwaiter().GetResult();
+        if (existingUser is not null) return;
+
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            DisplayName = displayName,
+        };
+        userManager.CreateAsync(user, password).GetAwaiter().GetResult();
+        userManager.AddToRoleAsync(user, role).GetAwaiter().GetResult();
+
+        // Create default board for user
+        var userId = new UserId(user.Id);
+        var boardResult = Board.CreateDefault(userId);
+        if (boardResult.IsSuccess)
+        {
+            var boardRepo = db.Set<Board>();
+            boardRepo.Add(boardResult.Value);
+            db.SaveChanges();
+        }
     }
 
     protected override void Dispose(bool disposing)
