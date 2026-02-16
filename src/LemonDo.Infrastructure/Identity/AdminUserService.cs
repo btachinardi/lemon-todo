@@ -3,6 +3,7 @@ namespace LemonDo.Infrastructure.Identity;
 using LemonDo.Application.Administration.Commands;
 using LemonDo.Domain.Common;
 using LemonDo.Infrastructure.Persistence;
+using LemonDo.Infrastructure.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
@@ -13,6 +14,7 @@ public sealed class AdminUserService(
     UserManager<ApplicationUser> userManager,
     RoleManager<IdentityRole<Guid>> roleManager,
     LemonDoDbContext dbContext,
+    IFieldEncryptionService encryptionService,
     ILogger<AdminUserService> logger) : IAdminUserService
 {
     /// <inheritdoc />
@@ -101,5 +103,26 @@ public sealed class AdminUserService(
         await dbContext.SaveChangesAsync(ct);
 
         return Result<DomainError>.Success();
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<RevealedPiiDto, DomainError>> RevealPiiAsync(Guid userId, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+            return Result<RevealedPiiDto, DomainError>.Failure(
+                DomainError.NotFound("user", userId.ToString()));
+
+        // Prefer decrypted values from encrypted columns; fall back to raw Identity columns
+        var email = !string.IsNullOrEmpty(user.EncryptedEmail)
+            ? encryptionService.Decrypt(user.EncryptedEmail)
+            : user.Email ?? "";
+
+        var displayName = !string.IsNullOrEmpty(user.EncryptedDisplayName)
+            ? encryptionService.Decrypt(user.EncryptedDisplayName)
+            : user.DisplayName;
+
+        return Result<RevealedPiiDto, DomainError>.Success(
+            new RevealedPiiDto(email, displayName));
     }
 }

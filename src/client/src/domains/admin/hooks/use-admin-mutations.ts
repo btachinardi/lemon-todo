@@ -52,3 +52,10 @@ export function useReactivateUser() {
     },
   });
 }
+
+/** Reveals a user's unredacted PII. This action is logged in the audit trail. */
+export function useRevealPii() {
+  return useMutation({
+    mutationFn: (userId: string) => adminApi.revealPii(userId),
+  });
+}

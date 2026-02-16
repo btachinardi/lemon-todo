@@ -62,6 +62,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<RemoveRoleCommandHandler>();
         services.AddScoped<DeactivateUserCommandHandler>();
         services.AddScoped<ReactivateUserCommandHandler>();
+        services.AddScoped<RevealPiiCommandHandler>();
 
         // Audit event handlers
         services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, AuditOnUserRegistered>();

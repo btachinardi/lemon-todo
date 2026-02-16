@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using LemonDo.Api.Tests.Infrastructure;
+using LemonDo.Application.Administration.Commands;
 using LemonDo.Application.Administration.DTOs;
 using LemonDo.Domain.Common;
 
@@ -198,5 +199,66 @@ public sealed class AdminEndpointsTests
         getResponse = await client.GetAsync($"/api/admin/users/{userId}");
         user = await getResponse.Content.ReadFromJsonAsync<AdminUserDto>(TestJsonOptions.Default);
         Assert.IsTrue(user!.IsActive);
+    }
+
+    // --- PII Reveal (SystemAdmin only) ---
+
+    [TestMethod]
+    public async Task Should_Return403_When_AdminTriesToRevealPii()
+    {
+        var client = await _factory.CreateAdminClientAsync();
+
+        var listResponse = await client.GetAsync("/api/admin/users");
+        var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
+        var userId = list!.Items[0].Id;
+
+        var response = await client.PostAsync($"/api/admin/users/{userId}/reveal", null);
+        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Should_ReturnUnredactedPii_When_SystemAdminReveals()
+    {
+        var client = await _factory.CreateSystemAdminClientAsync();
+
+        // Create a user whose PII we'll reveal
+        var email = $"reveal-{Guid.NewGuid():N}@example.com";
+        var displayName = "Reveal Test User";
+        var registerClient = _factory.CreateClient();
+        await registerClient.PostAsJsonAsync("/api/auth/register", new
+        {
+            Email = email,
+            Password = "Test1234!",
+            DisplayName = displayName
+        });
+
+        // Find the user
+        var listResponse = await client.GetAsync("/api/admin/users?search=reveal");
+        var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
+        var userId = list!.Items[0].Id;
+
+        // Verify list shows redacted PII
+        Assert.Contains("***", list.Items[0].Email);
+
+        // Reveal PII
+        var revealResponse = await client.PostAsync($"/api/admin/users/{userId}/reveal", null);
+        Assert.AreEqual(HttpStatusCode.OK, revealResponse.StatusCode);
+
+        var revealed = await revealResponse.Content.ReadFromJsonAsync<RevealedPiiDto>(TestJsonOptions.Default);
+        Assert.IsNotNull(revealed);
+
+        // The revealed email should be unredacted (no encryption was done at registration,
+        // so it falls back to the raw Identity email)
+        Assert.AreEqual(email, revealed.Email);
+        Assert.AreEqual(displayName, revealed.DisplayName);
+    }
+
+    [TestMethod]
+    public async Task Should_Return404_When_SystemAdminRevealsNonExistentUser()
+    {
+        var client = await _factory.CreateSystemAdminClientAsync();
+
+        var response = await client.PostAsync($"/api/admin/users/{Guid.NewGuid()}/reveal", null);
+        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

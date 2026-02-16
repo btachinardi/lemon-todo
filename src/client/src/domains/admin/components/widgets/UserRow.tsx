@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 import {
@@ -6,15 +7,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
-import { MoreHorizontalIcon, ShieldIcon, ShieldOffIcon, UserXIcon, UserCheckIcon } from 'lucide-react';
+import {
+  MoreHorizontalIcon,
+  ShieldIcon,
+  ShieldOffIcon,
+  UserXIcon,
+  UserCheckIcon,
+  EyeIcon,
+} from 'lucide-react';
 import { TableCell, TableRow } from '@/ui/table';
-import type { AdminUser } from '../../types/admin.types';
+import type { AdminUser, RevealedPii } from '../../types/admin.types';
+import { useRevealPii } from '../../hooks/use-admin-mutations';
 
 const roleBadgeVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   User: 'secondary',
   Admin: 'default',
   SystemAdmin: 'destructive',
 };
+
+const REVEAL_DURATION_MS = 30_000;
 
 interface UserRowProps {
   user: AdminUser;
@@ -34,11 +45,37 @@ export function UserRow({
   onDeactivate,
   onReactivate,
 }: UserRowProps) {
+  const [revealedPii, setRevealedPii] = useState<RevealedPii | null>(null);
+  const revealPii = useRevealPii();
+
+  // Auto-hide revealed PII after 30 seconds
+  useEffect(() => {
+    if (!revealedPii) return;
+    const timer = setTimeout(() => setRevealedPii(null), REVEAL_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [revealedPii]);
+
+  const handleReveal = async () => {
+    const result = await revealPii.mutateAsync(user.id);
+    setRevealedPii(result);
+  };
+
+  const displayEmail = revealedPii?.email ?? user.email;
+  const displayName = revealedPii?.displayName ?? user.displayName;
+
   return (
     <TableRow className={!user.isActive ? 'opacity-60' : ''}>
       <TableCell className="font-mono text-xs">{user.id.slice(0, 8)}...</TableCell>
-      <TableCell>{user.email}</TableCell>
-      <TableCell>{user.displayName}</TableCell>
+      <TableCell>
+        <span className={revealedPii ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
+          {displayEmail}
+        </span>
+      </TableCell>
+      <TableCell>
+        <span className={revealedPii ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
+          {displayName}
+        </span>
+      </TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1">
           {user.roles.map((role) => (
@@ -67,6 +104,15 @@ export function UserRow({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {!revealedPii && (
+                <DropdownMenuItem
+                  onClick={handleReveal}
+                  disabled={revealPii.isPending}
+                >
+                  <EyeIcon className="mr-2 size-4" />
+                  Reveal PII
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => onAssignRole(user)}>
                 <ShieldIcon className="mr-2 size-4" />
                 Assign Role

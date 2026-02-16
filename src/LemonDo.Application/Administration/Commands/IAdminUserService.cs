@@ -19,4 +19,7 @@ public interface IAdminUserService
 
     /// <summary>Reactivates a deactivated user account.</summary>
     Task<Result<DomainError>> ReactivateUserAsync(Guid userId, CancellationToken ct = default);
+
+    /// <summary>Reveals a user's decrypted PII (email and display name).</summary>
+    Task<Result<RevealedPiiDto, DomainError>> RevealPiiAsync(Guid userId, CancellationToken ct = default);
 }

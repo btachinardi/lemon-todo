@@ -8,6 +8,12 @@ export interface AdminUser {
   createdAt: string;
 }
 
+/** Unredacted PII returned by the reveal endpoint. */
+export interface RevealedPii {
+  email: string;
+  displayName: string;
+}
+
 /** Paginated result from the admin users endpoint. */
 export interface PagedAdminUsers {
   items: AdminUser[];

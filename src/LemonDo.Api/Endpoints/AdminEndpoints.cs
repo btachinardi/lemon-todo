@@ -27,6 +27,8 @@ public static class AdminEndpoints
             .RequireAuthorization(Roles.RequireSystemAdmin);
         group.MapPost("/users/{id:guid}/reactivate", ReactivateUser)
             .RequireAuthorization(Roles.RequireSystemAdmin);
+        group.MapPost("/users/{id:guid}/reveal", RevealPii)
+            .RequireAuthorization(Roles.RequireSystemAdmin);
 
         return group;
     }
@@ -94,5 +96,15 @@ public static class AdminEndpoints
     {
         var result = await handler.HandleAsync(new ReactivateUserCommand(id), ct);
         return result.ToHttpResult(() => Results.Ok(new { Success = true }), httpContext: httpContext);
+    }
+
+    private static async Task<IResult> RevealPii(
+        RevealPiiCommandHandler handler,
+        Guid id,
+        HttpContext httpContext,
+        CancellationToken ct)
+    {
+        var result = await handler.HandleAsync(new RevealPiiCommand(id), ct);
+        return result.ToHttpResult(dto => Results.Ok(dto), httpContext: httpContext);
     }
 }
