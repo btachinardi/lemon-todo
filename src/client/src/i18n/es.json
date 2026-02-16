@@ -465,7 +465,8 @@
       "tagline": "Gestión de tareas open-source para equipos que controlan sus datos.",
       "features": "Funcionalidades",
       "security": "Seguridad",
-      "story": "Nuestra Historia"
+      "story": "Metodología",
+      "roadmap": "Hoja de Ruta"
     }
   },
   "onboarding": {
@@ -485,7 +486,7 @@
     "toggle": "Actual: {{label}}. Clic para {{next}}"
   },
   "story": {
-    "nav": "Nuestra Historia",
+    "nav": "Metodología",
     "hero": {
       "titleLine1": "De Carpeta Vacía a",
       "titleHighlight": "Producción",
@@ -495,7 +496,7 @@
     "vision": {
       "title": "5 Documentos Antes de Una Línea de Código",
       "highlight": "Una Línea",
-      "subtitle": "Todo gran producto comienza con un plan. Escribimos cinco documentos fundamentales antes de tocar una sola línea de código.",
+      "subtitle": "Todo gran producto comienza con un plan. Este comenzó con cinco documentos fundamentales antes de una sola línea de código.",
       "quote": "Planificar no es tiempo perdido. Es depuración comprimida.",
       "items": [
         {
@@ -765,6 +766,129 @@
       ],
       "ctaPrimary": "Velo en Acción",
       "ctaGithub": "Lee el Código"
+    }
+  },
+  "roadmap": {
+    "nav": "Hoja de Ruta",
+    "hero": {
+      "titleLine1": "Esto Es Solo",
+      "titleHighlight": "El Comienzo.",
+      "subtitle": "808 tests. Desplegado en producción. Cinco checkpoints completados. Esto es lo que viene — desde flujos impulsados por IA hasta cumplimiento empresarial."
+    },
+    "horizons": {
+      "near": {
+        "label": "HORIZONTE CERCANO",
+        "title": "Inteligencia y Conectividad",
+        "subtitle": "IA que gestiona tus tareas, e integraciones que conectan todo tu flujo de trabajo."
+      },
+      "mid": {
+        "label": "HORIZONTE MEDIO",
+        "title": "Equipos, Poder y Herramientas para Desarrolladores",
+        "subtitle": "Colaboración en tiempo real, modelado avanzado de tareas y herramientas construidas para la forma en que los desarrolladores realmente trabajan."
+      },
+      "far": {
+        "label": "HORIZONTE LEJANO",
+        "title": "Plataforma, Crecimiento y Fiabilidad",
+        "subtitle": "Apps nativas, cumplimiento empresarial, perfección UX y la infraestructura para respaldarlo todo."
+      }
+    },
+    "tiers": [
+      {
+        "name": "Ecosistema de IA y Agentes",
+        "tagline": "Tus tareas, gestionadas por IA.",
+        "features": [
+          { "title": "Asistente de IA", "description": "Chatea con tu tablero. Crea tareas, haz preguntas, obtén resúmenes — todo en lenguaje natural." },
+          { "title": "Servidor MCP", "description": "Los agentes de IA gestionan tus tareas a través del Model Context Protocol. Conéctalo a Claude, Copilot o el tuyo." },
+          { "title": "Cliente MCP", "description": "Extrae contexto de calendarios, correo y repositorios de código. Tu IA ve toda tu cadena de herramientas." },
+          { "title": "Categorización Inteligente", "description": "Auto-sugerencia de prioridad, etiquetas y columnas basada en tu historial y patrones de tareas." }
+        ]
+      },
+      {
+        "name": "Integraciones de Terceros",
+        "tagline": "Conecta todo. Automatiza el resto.",
+        "features": [
+          { "title": "Sincronización de Calendario", "description": "Sincronización bidireccional con Google Calendar y Outlook. Las tareas se convierten en eventos, los eventos en tareas." },
+          { "title": "Notificaciones Inteligentes", "description": "Recordatorios por Slack, Teams, WhatsApp y SMS para plazos, menciones y cambios de estado." },
+          { "title": "Email a Tarea", "description": "Reenvía cualquier correo para crear una tarea al instante. El asunto se convierte en el título." },
+          { "title": "Zapier y Make", "description": "Webhooks en cada evento de dominio. Conecta con más de 5,000 servicios sin código." }
+        ]
+      },
+      {
+        "name": "Colaboración y Tiempo Real",
+        "tagline": "Ve una tarea moverse en el momento en que un colega la arrastra.",
+        "features": [
+          { "title": "Tableros en Tiempo Real", "description": "Sincronización en vivo vía SignalR. Observa las tarjetas moverse mientras tu equipo trabaja, en tiempo real." },
+          { "title": "Equipos y Proyectos", "description": "Agrupa tableros bajo proyectos. Asigna miembros. Rastrea la velocidad por equipo." },
+          { "title": "Comentarios y Menciones", "description": "Discusiones en hilo en cualquier tarea. @menciona para incluir a alguien al instante." },
+          { "title": "Feed de Actividad", "description": "Historial por tarea y por tablero. Quién hizo qué, cuándo y por qué." }
+        ]
+      },
+      {
+        "name": "Modelado Avanzado de Tareas",
+        "tagline": "Tareas que entienden relaciones.",
+        "features": [
+          { "title": "Dependencias de Tareas", "description": "Relaciones bloqueado-por con grafos visuales de dependencias y propagación automática de estado." },
+          { "title": "Subtareas y Checklists", "description": "Jerarquías anidadas con seguimiento de progreso. Divide grandes objetivos en pasos atómicos." },
+          { "title": "Tareas Recurrentes", "description": "Generación basada en cron. Configúralo y olvídate. Tu preparación del standup del lunes, automatizada." },
+          { "title": "Campos Personalizados", "description": "Extiende el esquema de tareas por espacio de trabajo. Desplegables, fechas, números — tu modelo de datos." }
+        ]
+      },
+      {
+        "name": "Reportes y Experiencia de Desarrollador",
+        "tagline": "Construido para constructores.",
+        "features": [
+          { "title": "Dashboards", "description": "Gráficos de burndown, seguimiento de velocidad, mapas de calor de carga de trabajo. Productividad basada en datos." },
+          { "title": "API Pública y SDK", "description": "API REST versionada con SDKs auto-generados para TypeScript y C#." },
+          { "title": "Herramienta CLI", "description": "lemondo tasks list --status=todo. Los usuarios avanzados nunca dejan la terminal." },
+          { "title": "Integración con GitHub", "description": "Vincula commits a tareas. Transición automática de estado al hacer merge. Cierra el ciclo." }
+        ]
+      },
+      {
+        "name": "Plataforma y Cumplimiento",
+        "tagline": "Donde sea que estés. Seguro donde sea que vayas.",
+        "features": [
+          { "title": "App de Escritorio", "description": "Escritorio nativo con Tauri. Bandeja del sistema, atajos globales, offline-first." },
+          { "title": "Móvil Nativo", "description": "React Native para iOS y Android. Tipos compartidos, rendimiento nativo." },
+          { "title": "SSO Empresarial", "description": "SAML 2.0 y OIDC. Okta, Azure AD, Auth0. Un inicio de sesión para todo." },
+          { "title": "Cumplimiento Total", "description": "Certificación HIPAA, cumplimiento GDPR, SOC 2 Tipo II. Industrias reguladas bienvenidas." }
+        ]
+      },
+      {
+        "name": "Producto y Crecimiento",
+        "tagline": "De producto a negocio.",
+        "features": [
+          { "title": "Modelo Freemium", "description": "Gratis para individuos. Pro para usuarios avanzados. Team para colaboración. Enterprise para cumplimiento." },
+          { "title": "Galería de Plantillas", "description": "Sprint Planning, GTD, Calendario de Contenido — comienza con estructuras probadas, no tableros vacíos." },
+          { "title": "Analíticas de Conversión", "description": "MRR, ARPU, tasa de churn, LTV. Un dashboard en tiempo real para la salud del negocio." },
+          { "title": "Optimización del Ciclo de Vida", "description": "Embudos de onboarding, prevención de churn, secuencias de re-engagement. Crecimiento basado en datos." }
+        ]
+      },
+      {
+        "name": "Excelencia UX",
+        "tagline": "Los detalles que te enamoran.",
+        "features": [
+          { "title": "Paleta de Comandos", "description": "Cmd+K para todo. Tareas, tableros, acciones, configuración. Máxima velocidad, cero ratón." },
+          { "title": "Deshacer en Todas Partes", "description": "Toast de deshacer de 5 segundos en cada acción destructiva. Más rápido que los diálogos de confirmación." },
+          { "title": "Operaciones en Lote", "description": "Multi-selección, mover en lote, etiquetar en lote, eliminar en lote. Gestiona docenas de tareas en segundos." },
+          { "title": "Valores Predeterminados Inteligentes", "description": "Escribe 'urgente' y la prioridad se establece automáticamente en Crítica. La app aprende tus patrones." }
+        ]
+      },
+      {
+        "name": "Fiabilidad y Operaciones",
+        "tagline": "Lo aburrido que lo hace a prueba de balas.",
+        "features": [
+          { "title": "CDN Global", "description": "Frontend desde más de 100 ubicaciones edge. Tiempos de primer byte sub-50ms, mundial." },
+          { "title": "Despliegues Blue/Green", "description": "Despliegues sin tiempo de inactividad con progresión canary y rollback instantáneo." },
+          { "title": "Feature Flags", "description": "Despliega detrás de flags. Rollouts graduales, kill switches y pruebas A/B integradas." },
+          { "title": "SLA 99.9%", "description": "Presupuestos de error, rotación de guardia, post-mortems sin culpa. Fiabilidad de nivel empresarial." }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "¿Quieres Dar Forma a lo que Viene?",
+      "subtitle": "LemonDo es open source. Dale estrella al repo, haz fork, contribuye. La hoja de ruta es una conversación, no un monólogo.",
+      "ctaPrimary": "Comienza Gratis",
+      "ctaGithub": "Estrella en GitHub"
     }
   }
 }

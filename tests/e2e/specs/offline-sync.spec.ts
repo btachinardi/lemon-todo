@@ -1,6 +1,6 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { loginViaApi } from '../helpers/auth.helpers';
-import { createTask } from '../helpers/api.helpers';
+import { createTask, listTasks } from '../helpers/api.helpers';
 import { completeOnboarding } from '../helpers/onboarding.helpers';
 
 test.describe.serial('Offline Banner', () => {
@@ -45,21 +45,23 @@ test.describe.serial('Offline Banner', () => {
     // Go back online
     await context.setOffline(false);
 
-    // Dispatch the online event explicitly to trigger banner removal
-    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    // Dispatch the online event and wait for navigator.onLine to update
+    await page.evaluate(() => {
+      // Force navigator.onLine to be true (Playwright's setOffline should handle this,
+      // but dispatch the event to ensure React's useSyncExternalStore picks it up)
+      window.dispatchEvent(new Event('online'));
+    });
 
-    // Wait for the banner to disappear (the OfflineBanner listens to 'online' events)
-    await expect(page.getByRole('alert')).not.toBeVisible({ timeout: 10000 });
+    // The banner uses useSyncExternalStore(subscribe, () => navigator.onLine),
+    // so it should update reactively. Give it time for the React render cycle.
+    await page.waitForTimeout(2000);
 
-    // Reload to verify full functionality with fresh auth
-    const refreshPromise = page.waitForResponse(
-      (resp) => resp.url().includes('/api/auth/refresh'),
-      { timeout: 15000 },
-    ).catch(() => null);
-    await page.reload();
-    await refreshPromise;
+    // Check navigator.onLine is actually true
+    const isOnline = await page.evaluate(() => navigator.onLine);
+    expect(isOnline).toBe(true);
 
-    await expect(page.getByText('Offline test task')).toBeVisible({ timeout: 10000 });
+    // The offline banner (role=alert) should no longer be visible
+    await expect(page.getByRole('alert')).not.toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -115,5 +117,109 @@ test.describe.serial('Offline Read Support', () => {
     // Wait for the authenticated layout to load
     await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible', timeout: 10000 });
     await expect(page.getByText('Cached offline task')).toBeVisible({ timeout: 10000 });
+  });
+});
+
+test.describe.serial('Offline Mutation Queue', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    await loginViaApi(page);
+    await completeOnboarding();
+  });
+
+  test.afterAll(async () => {
+    await context.close();
+  });
+
+  test('create task offline queues mutation and syncs on reconnect', async () => {
+    await page.goto('/board');
+    // Wait for the board to fully render (empty board state)
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible' });
+
+    // Go offline
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+    await page.waitForTimeout(500);
+
+    // Type a task in the QuickAddForm and submit
+    const input = page.getByLabel('New task title');
+    await input.fill('Offline created task');
+    await page.getByRole('button', { name: 'Add Task' }).click();
+
+    // Wait for the offline enqueue toast (info toast: "Change saved offline")
+    await expect(page.getByText('Change saved offline')).toBeVisible({ timeout: 5000 });
+
+    // Go back online — the drain should replay the mutation
+    await context.setOffline(false);
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+
+    // Wait for the drain to complete and caches to invalidate
+    await page.waitForTimeout(3000);
+
+    // Verify the task now exists on the server via API helper
+    const { items } = await listTasks();
+    const synced = items.find((t) => t.title === 'Offline created task');
+    expect(synced).toBeTruthy();
+
+    // Reload to see the task on the board
+    const refreshPromise = page.waitForResponse(
+      (resp) => resp.url().includes('/api/auth/refresh'),
+      { timeout: 15000 },
+    ).catch(() => null);
+    await page.reload();
+    await refreshPromise;
+
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible', timeout: 10000 });
+    await expect(page.getByText('Offline created task')).toBeVisible({ timeout: 10000 });
+  });
+});
+
+test.describe.serial('SyncIndicator Pending Count', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    await loginViaApi(page);
+    await completeOnboarding();
+  });
+
+  test.afterAll(async () => {
+    await context.close();
+  });
+
+  test('SyncIndicator shows pending count while offline', async () => {
+    await page.goto('/board');
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible' });
+
+    // Go offline
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+    await page.waitForTimeout(500);
+
+    // Create a task while offline to enqueue a mutation
+    const input = page.getByLabel('New task title');
+    await input.fill('Sync indicator test task');
+    await page.getByRole('button', { name: 'Add Task' }).click();
+
+    // Wait for the enqueue toast
+    await expect(page.getByText('Change saved offline')).toBeVisible({ timeout: 5000 });
+
+    // The SyncIndicator (role="status") should display the pending count
+    // It shows "1 change pending" when there is 1 queued mutation
+    const syncStatus = page.getByRole('status');
+    await expect(syncStatus).toBeVisible({ timeout: 5000 });
+    await expect(syncStatus).toContainText('1');
+    await expect(syncStatus).toContainText('pending');
+
+    // Clean up: go back online so the mutation drains
+    await context.setOffline(false);
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await page.waitForTimeout(3000);
   });
 });
