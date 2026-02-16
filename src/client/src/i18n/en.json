@@ -304,6 +304,12 @@
     "tryAgain": "Try again",
     "reload": "Reload page"
   },
+  "notifications": {
+    "bell": "Notifications ({{count}} unread)",
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications yet"
+  },
   "offline": {
     "banner": "You are offline. Changes will not be saved until your connection is restored."
   },

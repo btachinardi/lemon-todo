@@ -304,6 +304,12 @@
     "tryAgain": "Reintentar",
     "reload": "Recargar p\u00e1gina"
   },
+  "notifications": {
+    "bell": "Notificaciones ({{count}} sin leer)",
+    "title": "Notificaciones",
+    "markAllRead": "Marcar todas como leidas",
+    "empty": "No hay notificaciones aun"
+  },
   "offline": {
     "banner": "Est\u00e1s sin conexi\u00f3n. Los cambios no se guardar\u00e1n hasta que se restablezca tu conexi\u00f3n."
   },

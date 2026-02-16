@@ -12,6 +12,7 @@ import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
+import { NotificationDropdown } from '@/domains/notifications/components/widgets/NotificationDropdown';
 import { OnboardingTour } from '@/domains/onboarding/components/widgets/OnboardingTour';
 
 /** Props for {@link DashboardLayout}. */
@@ -82,6 +83,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <span className="hidden sm:inline">{t('nav.admin')}</span>
               </NavLink>
             )}
+            <NotificationDropdown />
             <LanguageSwitcher />
             <ThemeToggle
               theme={theme}

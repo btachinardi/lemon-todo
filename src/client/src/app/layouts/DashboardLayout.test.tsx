@@ -24,6 +24,11 @@ vi.mock('@/domains/onboarding/components/widgets/OnboardingTour', () => ({
   OnboardingTour: () => null,
 }));
 
+// Mock NotificationDropdown to avoid TanStack Query dependency
+vi.mock('@/domains/notifications/components/widgets/NotificationDropdown', () => ({
+  NotificationDropdown: () => <div data-testid="notification-dropdown" />,
+}));
+
 describe('DashboardLayout', () => {
   beforeEach(() => {
     useAuthStore.setState({
