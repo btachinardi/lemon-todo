@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ export function RoleAssignmentDialog({
   onAssign,
   isPending,
 }: RoleAssignmentDialogProps) {
+  const { t } = useTranslation();
   const [selectedRole, setSelectedRole] = useState<string>('');
 
   const assignableRoles = AVAILABLE_ROLES.filter(
@@ -52,15 +54,15 @@ export function RoleAssignmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Assign Role</DialogTitle>
+          <DialogTitle>{t('admin.roleDialog.title')}</DialogTitle>
           <DialogDescription>
-            Assign a role to {user?.displayName ?? 'this user'}.
+            {t('admin.roleDialog.description', { user: user?.displayName ?? 'this user' })}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <Select value={selectedRole} onValueChange={setSelectedRole}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a role" />
+              <SelectValue placeholder={t('admin.roleDialog.selectRole')} />
             </SelectTrigger>
             <SelectContent>
               {assignableRoles.map((role) => (
@@ -72,19 +74,19 @@ export function RoleAssignmentDialog({
           </Select>
           {assignableRoles.length === 0 && (
             <p className="mt-2 text-sm text-muted-foreground">
-              User already has all available roles.
+              {t('admin.roleDialog.allRolesAssigned')}
             </p>
           )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleAssign}
             disabled={!selectedRole || isPending}
           >
-            {isPending ? 'Assigning...' : 'Assign'}
+            {isPending ? t('admin.roleDialog.submitting') : t('admin.roleDialog.submit')}
           </Button>
         </DialogFooter>
       </DialogContent>

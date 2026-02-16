@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { ApiRequestError } from '@/lib/api-client';
@@ -10,6 +11,7 @@ interface LoginFormProps {
 
 /** Email + password form for user login. */
 export function LoginForm({ onSuccess }: LoginFormProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -27,14 +29,14 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         onError: (err) => {
           if (err instanceof ApiRequestError) {
             if (err.status === 401) {
-              setError('Invalid email or password.');
+              setError(t('auth.login.errorInvalid'));
             } else if (err.status === 429) {
-              setError('Account temporarily locked. Please try again later.');
+              setError(t('auth.login.errorLocked'));
             } else {
               setError(err.apiError.title);
             }
           } else {
-            setError('Something went wrong. Please try again.');
+            setError(t('common.error.generic'));
           }
         },
       },
@@ -50,12 +52,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       )}
       <div className="space-y-2">
         <label htmlFor="login-email" className="text-sm font-medium text-foreground">
-          Email
+          {t('auth.fields.email')}
         </label>
         <Input
           id="login-email"
           type="email"
-          placeholder="you@example.com"
+          placeholder={t('auth.fields.emailPlaceholder')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -65,12 +67,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       </div>
       <div className="space-y-2">
         <label htmlFor="login-password" className="text-sm font-medium text-foreground">
-          Password
+          {t('auth.fields.password')}
         </label>
         <Input
           id="login-password"
           type="password"
-          placeholder="Your password"
+          placeholder={t('auth.fields.passwordPlaceholder')}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -78,7 +80,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         />
       </div>
       <Button type="submit" className="w-full" disabled={login.isPending}>
-        {login.isPending ? 'Signing in...' : 'Sign in'}
+        {login.isPending ? t('auth.login.submitting') : t('auth.login.submit')}
       </Button>
     </form>
   );

@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card';
 import { cn } from '@/lib/utils';
 import type { Task } from '../../types/task.types';
@@ -51,6 +52,7 @@ export const TaskCard = memo(function TaskCard({
   className,
   style,
 }: TaskCardProps) {
+  const { t } = useTranslation();
   const isDone = task.status === TaskStatus.Done;
 
   return (
@@ -69,7 +71,7 @@ export const TaskCard = memo(function TaskCard({
       style={style}
       tabIndex={isDragging ? -1 : 0}
       role="button"
-      aria-label={`Task: ${task.title}`}
+      aria-label={t('tasks.card.ariaLabel', { title: task.title })}
       onClick={() => !isDragging && onSelect?.(task.id)}
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && !isDragging) {

@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { AlertTriangleIcon, CalendarIcon } from 'lucide-react';
 
@@ -16,6 +17,8 @@ interface DueDateLabelProps {
  * Renders nothing when `dueDate` is null.
  */
 export const DueDateLabel = memo(function DueDateLabel({ dueDate, isDone, className }: DueDateLabelProps) {
+  const { t } = useTranslation();
+
   if (!dueDate) return null;
 
   const date = new Date(dueDate);
@@ -29,11 +32,11 @@ export const DueDateLabel = memo(function DueDateLabel({ dueDate, isDone, classN
 
   let label: string;
   if (isToday) {
-    label = 'Today';
+    label = t('tasks.dueDate.today');
   } else if (isTomorrow) {
-    label = 'Tomorrow';
+    label = t('tasks.dueDate.tomorrow');
   } else if (isOverdue) {
-    label = `Overdue: ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+    label = t('tasks.dueDate.overdue', { date: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) });
   } else {
     label = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }

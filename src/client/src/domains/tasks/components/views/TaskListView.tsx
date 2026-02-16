@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/ui/badge';
 import { CheckCircle2Icon, InboxIcon } from 'lucide-react';
@@ -41,6 +42,7 @@ export function TaskListView({
   togglingTaskId,
   className,
 }: TaskListViewProps) {
+  const { t } = useTranslation();
   const totalTasks = groups.reduce((sum, g) => sum + g.tasks.length + g.completedTasks.length, 0);
 
   if (totalTasks === 0) {
@@ -50,8 +52,8 @@ export function TaskListView({
           <InboxIcon className="size-8 text-muted-foreground/50" />
         </div>
         <div className="text-center">
-          <p className="text-lg font-semibold">No tasks yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">Add a task above to get started.</p>
+          <p className="text-lg font-semibold">{t('tasks.empty.listTitle')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('tasks.empty.listSubtitle')}</p>
         </div>
       </div>
     );
@@ -91,7 +93,7 @@ export function TaskListView({
                   <div className="h-px flex-1 border-t border-dashed border-border/50" />
                   <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <CheckCircle2Icon className="size-3" />
-                    Completed ({group.completedTasks.length})
+                    {t('tasks.completed', { count: group.completedTasks.length })}
                   </span>
                   <div className="h-px flex-1 border-t border-dashed border-border/50" />
                 </div>

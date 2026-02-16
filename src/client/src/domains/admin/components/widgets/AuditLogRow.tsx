@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/ui/badge';
 import { TableCell, TableRow } from '@/ui/table';
 import type { AuditEntry } from '../../types/audit.types';
@@ -34,6 +35,8 @@ interface AuditLogRowProps {
 
 /** Single row in the audit log table. */
 export function AuditLogRow({ entry }: AuditLogRowProps) {
+  const { t } = useTranslation();
+
   return (
     <TableRow>
       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
@@ -49,7 +52,7 @@ export function AuditLogRow({ entry }: AuditLogRowProps) {
         {entry.resourceId ? `${entry.resourceId.slice(0, 8)}...` : '-'}
       </TableCell>
       <TableCell className="font-mono text-xs">
-        {entry.actorId ? `${entry.actorId.slice(0, 8)}...` : 'System'}
+        {entry.actorId ? `${entry.actorId.slice(0, 8)}...` : t('admin.audit.system')}
       </TableCell>
       <TableCell className="max-w-xs truncate text-xs text-muted-foreground">
         {entry.details ?? '-'}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 import {
@@ -45,6 +46,7 @@ export function UserRow({
   onDeactivate,
   onReactivate,
 }: UserRowProps) {
+  const { t } = useTranslation();
   const [revealedPii, setRevealedPii] = useState<RevealedPii | null>(null);
   const revealPii = useRevealPii();
 
@@ -91,7 +93,7 @@ export function UserRow({
       </TableCell>
       <TableCell>
         <Badge variant={user.isActive ? 'secondary' : 'destructive'} className="text-xs">
-          {user.isActive ? 'Active' : 'Deactivated'}
+          {user.isActive ? t('admin.users.active') : t('admin.users.deactivated')}
         </Badge>
       </TableCell>
       <TableCell>
@@ -100,7 +102,7 @@ export function UserRow({
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="size-8">
                 <MoreHorizontalIcon className="size-4" />
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">{t('common.actions')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -110,12 +112,12 @@ export function UserRow({
                   disabled={revealPii.isPending}
                 >
                   <EyeIcon className="mr-2 size-4" />
-                  Reveal PII
+                  {t('admin.users.revealPii')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => onAssignRole(user)}>
                 <ShieldIcon className="mr-2 size-4" />
-                Assign Role
+                {t('admin.users.assignRole')}
               </DropdownMenuItem>
               {user.roles.length > 1 && (
                 <DropdownMenuItem
@@ -128,7 +130,7 @@ export function UserRow({
                   }}
                 >
                   <ShieldOffIcon className="mr-2 size-4" />
-                  Remove Role
+                  {t('admin.users.removeRole')}
                 </DropdownMenuItem>
               )}
               {user.isActive ? (
@@ -137,12 +139,12 @@ export function UserRow({
                   className="text-destructive focus:text-destructive"
                 >
                   <UserXIcon className="mr-2 size-4" />
-                  Deactivate
+                  {t('admin.users.deactivate')}
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem onClick={() => onReactivate(user.id)}>
                   <UserCheckIcon className="mr-2 size-4" />
-                  Reactivate
+                  {t('admin.users.reactivate')}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

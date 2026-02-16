@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import {
@@ -32,6 +33,7 @@ const ROLES_FILTER = ['All', 'User', 'Admin', 'SystemAdmin'] as const;
 
 /** Admin user management view with search, role filter, and pagination. */
 export function UserManagementView() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('All');
   const [page, setPage] = useState(1);
@@ -90,7 +92,7 @@ export function UserManagementView() {
         <div className="relative flex-1">
           <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search users..."
+            placeholder={t('admin.users.searchPlaceholder')}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -112,7 +114,7 @@ export function UserManagementView() {
           <SelectContent>
             {ROLES_FILTER.map((role) => (
               <SelectItem key={role} value={role}>
-                {role === 'All' ? 'All Roles' : role}
+                {role === 'All' ? t('admin.users.allRoles') : role}
               </SelectItem>
             ))}
           </SelectContent>
@@ -124,11 +126,11 @@ export function UserManagementView() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-24">ID</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Display Name</TableHead>
-              <TableHead>Roles</TableHead>
-              <TableHead className="w-28">Status</TableHead>
+              <TableHead className="w-24">{t('admin.users.columnId')}</TableHead>
+              <TableHead>{t('admin.users.columnEmail')}</TableHead>
+              <TableHead>{t('admin.users.columnDisplayName')}</TableHead>
+              <TableHead>{t('admin.users.columnRoles')}</TableHead>
+              <TableHead className="w-28">{t('admin.users.columnStatus')}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
@@ -146,7 +148,7 @@ export function UserManagementView() {
             ) : data?.items.length === 0 ? (
               <TableRow>
                 <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                  No users found.
+                  {t('admin.users.noUsers')}
                 </td>
               </TableRow>
             ) : (
@@ -170,7 +172,7 @@ export function UserManagementView() {
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            Page {data.page} of {data.totalPages} ({data.totalCount} users)
+            {t('common.page', { page: data.page, totalPages: data.totalPages, totalCount: data.totalCount, unit: t('nav.users').toLowerCase() })}
           </span>
           <div className="flex gap-2">
             <Button
@@ -180,7 +182,7 @@ export function UserManagementView() {
               onClick={() => setPage((p) => p - 1)}
             >
               <ChevronLeftIcon className="mr-1 size-4" />
-              Previous
+              {t('common.previous')}
             </Button>
             <Button
               variant="outline"
@@ -188,7 +190,7 @@ export function UserManagementView() {
               disabled={!data.hasNextPage}
               onClick={() => setPage((p) => p + 1)}
             >
-              Next
+              {t('common.next')}
               <ChevronRightIcon className="ml-1 size-4" />
             </Button>
           </div>

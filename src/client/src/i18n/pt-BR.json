@@ -1,0 +1,222 @@
+{
+  "brand": {
+    "lemon": "LEMON",
+    "do": "DO",
+    "admin": "ADMIN"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "tryAgain": "Tentar Novamente",
+    "previous": "Anterior",
+    "next": "Pr\u00f3ximo",
+    "add": "Adicionar",
+    "close": "Fechar",
+    "clear": "Limpar",
+    "back": "Voltar",
+    "actions": "A\u00e7\u00f5es",
+    "error": {
+      "generic": "Algo deu errado. Tente novamente.",
+      "connection": "Verifique sua conex\u00e3o e tente novamente."
+    },
+    "page": "P\u00e1gina {{page}} de {{totalPages}} ({{totalCount}} {{unit}})"
+  },
+  "auth": {
+    "login": {
+      "title": "Bem-vindo de volta",
+      "subtitle": "Entre na sua conta",
+      "submit": "Entrar",
+      "submitting": "Entrando...",
+      "noAccount": "N\u00e3o tem uma conta?",
+      "createOne": "Crie uma",
+      "errorInvalid": "E-mail ou senha inv\u00e1lidos.",
+      "errorLocked": "Conta temporariamente bloqueada. Tente novamente mais tarde."
+    },
+    "register": {
+      "title": "Crie sua conta",
+      "subtitle": "Comece a organizar suas tarefas",
+      "submit": "Criar conta",
+      "submitting": "Criando conta...",
+      "hasAccount": "J\u00e1 tem uma conta?",
+      "signIn": "Entrar",
+      "errorExists": "J\u00e1 existe uma conta com este e-mail."
+    },
+    "fields": {
+      "email": "E-mail",
+      "emailPlaceholder": "voce@exemplo.com",
+      "password": "Senha",
+      "passwordPlaceholder": "Sua senha",
+      "passwordHint": "M\u00edn. 8 caracteres",
+      "displayName": "Nome de exibi\u00e7\u00e3o",
+      "displayNamePlaceholder": "Seu nome"
+    },
+    "userMenu": {
+      "signOut": "Sair",
+      "signingOut": "Saindo..."
+    }
+  },
+  "tasks": {
+    "priority": {
+      "none": "Nenhuma",
+      "low": "Baixa",
+      "medium": "M\u00e9dia",
+      "high": "Alta",
+      "critical": "Cr\u00edtica"
+    },
+    "status": {
+      "todo": "A Fazer",
+      "inProgress": "Em Progresso",
+      "done": "Feito"
+    },
+    "dueDate": {
+      "today": "Hoje",
+      "tomorrow": "Amanh\u00e3",
+      "overdue": "Atrasada: {{date}}"
+    },
+    "quickAdd": {
+      "label": "T\u00edtulo da nova tarefa",
+      "placeholder": "O que precisa ser feito?",
+      "submit": "Adicionar Tarefa"
+    },
+    "card": {
+      "ariaLabel": "Tarefa: {{title}}"
+    },
+    "detail": {
+      "loadError": "N\u00e3o foi poss\u00edvel carregar os detalhes da tarefa.",
+      "description": "Descri\u00e7\u00e3o",
+      "descriptionPlaceholder": "Adicione uma descri\u00e7\u00e3o...",
+      "priority": "Prioridade",
+      "noPriority": "Sem prioridade",
+      "dueDate": "Data de Vencimento",
+      "pickDate": "Escolha uma data",
+      "clearDueDate": "Limpar data de vencimento",
+      "tags": "Tags",
+      "tagPlaceholder": "Adicionar uma tag...",
+      "removeTag": "Remover tag {{tag}}",
+      "deleteTitle": "Excluir esta tarefa?",
+      "deleteButton": "Excluir tarefa"
+    },
+    "filter": {
+      "searchPlaceholder": "Buscar tarefas...",
+      "clearSearch": "Limpar busca",
+      "allPriorities": "Todas as prioridades",
+      "allStatuses": "Todos os status"
+    },
+    "listToolbar": {
+      "label": "Op\u00e7\u00f5es de visualiza\u00e7\u00e3o em lista",
+      "groupBy": "Agrupar por",
+      "noGrouping": "Sem agrupamento",
+      "day": "Dia",
+      "week": "Semana",
+      "month": "M\u00eas",
+      "splitDone": "Separar conclu\u00eddas"
+    },
+    "checkbox": {
+      "markIncomplete": "Marcar como incompleta",
+      "markComplete": "Marcar como completa"
+    },
+    "empty": {
+      "boardTitle": "Seu quadro est\u00e1 vazio",
+      "boardSubtitle": "Adicione uma tarefa acima para come\u00e7ar.",
+      "listTitle": "Nenhuma tarefa ainda",
+      "listSubtitle": "Adicione uma tarefa acima para come\u00e7ar.",
+      "searchTitle": "Nenhuma tarefa encontrada",
+      "searchSubtitle": "Tente ajustar seus filtros ou termo de busca.",
+      "clearFilters": "Limpar filtros"
+    },
+    "column": {
+      "noTasks": "Sem tarefas"
+    },
+    "completed": "Conclu\u00eddas ({{count}})",
+    "errors": {
+      "loadBoard": "N\u00e3o foi poss\u00edvel carregar seu quadro",
+      "loadTasks": "N\u00e3o foi poss\u00edvel carregar as tarefas",
+      "updateTask": "N\u00e3o foi poss\u00edvel atualizar a tarefa. Tente novamente.",
+      "moveTask": "N\u00e3o foi poss\u00edvel mover a tarefa. Tente novamente.",
+      "saveTask": "N\u00e3o foi poss\u00edvel salvar a tarefa. Tente novamente."
+    }
+  },
+  "nav": {
+    "viewSwitcher": "Alternar visualiza\u00e7\u00e3o",
+    "board": "Quadro",
+    "list": "Lista",
+    "admin": "Admin",
+    "adminNav": "Navega\u00e7\u00e3o admin",
+    "users": "Usu\u00e1rios",
+    "auditLog": "Log de Auditoria"
+  },
+  "admin": {
+    "users": {
+      "title": "Gerenciamento de Usu\u00e1rios",
+      "subtitle": "Gerencie contas de usu\u00e1rios e fun\u00e7\u00f5es.",
+      "searchPlaceholder": "Buscar usu\u00e1rios...",
+      "allRoles": "Todas as Fun\u00e7\u00f5es",
+      "columnId": "ID",
+      "columnEmail": "E-mail",
+      "columnDisplayName": "Nome de Exibi\u00e7\u00e3o",
+      "columnRoles": "Fun\u00e7\u00f5es",
+      "columnStatus": "Status",
+      "noUsers": "Nenhum usu\u00e1rio encontrado.",
+      "active": "Ativo",
+      "deactivated": "Desativado",
+      "revealPii": "Revelar PII",
+      "assignRole": "Atribuir Fun\u00e7\u00e3o",
+      "removeRole": "Remover Fun\u00e7\u00e3o",
+      "deactivate": "Desativar",
+      "reactivate": "Reativar"
+    },
+    "roleDialog": {
+      "title": "Atribuir Fun\u00e7\u00e3o",
+      "description": "Atribuir uma fun\u00e7\u00e3o a {{user}}.",
+      "selectRole": "Selecione uma fun\u00e7\u00e3o",
+      "allRolesAssigned": "Usu\u00e1rio j\u00e1 possui todas as fun\u00e7\u00f5es dispon\u00edveis.",
+      "submitting": "Atribuindo...",
+      "submit": "Atribuir"
+    },
+    "audit": {
+      "title": "Log de Auditoria",
+      "subtitle": "Visualize a\u00e7\u00f5es relevantes de seguran\u00e7a e eventos do sistema.",
+      "from": "De",
+      "to": "At\u00e9",
+      "action": "A\u00e7\u00e3o",
+      "allActions": "Todas as a\u00e7\u00f5es",
+      "resource": "Recurso",
+      "allResources": "Todos",
+      "columnTimestamp": "Data/Hora",
+      "columnAction": "A\u00e7\u00e3o",
+      "columnResource": "Recurso",
+      "columnResourceId": "ID do Recurso",
+      "columnActor": "Ator",
+      "columnDetails": "Detalhes",
+      "system": "Sistema",
+      "noEntries": "Nenhuma entrada de auditoria encontrada."
+    },
+    "toasts": {
+      "roleAssigned": "Fun\u00e7\u00e3o atribu\u00edda",
+      "roleRemoved": "Fun\u00e7\u00e3o removida",
+      "userDeactivated": "Usu\u00e1rio desativado",
+      "userReactivated": "Usu\u00e1rio reativado"
+    }
+  },
+  "error": {
+    "title": "Algo deu errado",
+    "description": "Ocorreu um erro inesperado. Voc\u00ea pode tentar recarregar a p\u00e1gina ou clicar abaixo para tentar recuperar.",
+    "tryAgain": "Tentar novamente",
+    "reload": "Recarregar p\u00e1gina"
+  },
+  "offline": {
+    "banner": "Voc\u00ea est\u00e1 offline. As altera\u00e7\u00f5es n\u00e3o ser\u00e3o salvas at\u00e9 que sua conex\u00e3o seja restaurada."
+  },
+  "notFound": {
+    "code": "404",
+    "title": "P\u00e1gina n\u00e3o encontrada",
+    "goHome": "Ir para in\u00edcio"
+  },
+  "theme": {
+    "light": "Tema claro",
+    "dark": "Tema escuro",
+    "system": "Tema do sistema",
+    "toggle": "Atual: {{label}}. Clique para {{next}}"
+  }
+}

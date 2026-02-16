@@ -31,7 +31,7 @@ describe('RouteErrorBoundary', () => {
     );
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
     expect(screen.getByText('Try again')).toBeInTheDocument();
-    expect(screen.getByText('Go to Board')).toBeInTheDocument();
+    expect(screen.getByText('Go home')).toBeInTheDocument();
   });
 
   it('should recover when try again is clicked', async () => {

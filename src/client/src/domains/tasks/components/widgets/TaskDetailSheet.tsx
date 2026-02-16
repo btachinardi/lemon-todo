@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
 import {
   CalendarIcon,
@@ -129,6 +130,7 @@ function TaskDetailContent({
   isDeleting,
   allTags,
 }: TaskDetailContentProps) {
+  const { t } = useTranslation();
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(task?.title ?? '');
   const [descDraft, setDescDraft] = useState(task?.description ?? '');
@@ -216,9 +218,9 @@ function TaskDetailContent({
   if (isError || !task) {
     return (
       <div className="flex flex-col items-center gap-4 p-6">
-        <p className="text-sm text-muted-foreground">Could not load task details.</p>
+        <p className="text-sm text-muted-foreground">{t('tasks.detail.loadError')}</p>
         <Button variant="outline" size="sm" onClick={onClose}>
-          Close
+          {t('common.close')}
         </Button>
       </div>
     );
@@ -271,20 +273,20 @@ function TaskDetailContent({
       <div className="flex flex-col gap-5 px-6 pb-6">
         {/* Description */}
         <div className="space-y-1.5">
-          <Label htmlFor="task-description">Description</Label>
+          <Label htmlFor="task-description">{t('tasks.detail.description')}</Label>
           <Textarea
             id="task-description"
             value={descDraft}
             onChange={(e) => setDescDraft(e.target.value)}
             onBlur={handleDescSave}
-            placeholder="Add a description..."
+            placeholder={t('tasks.detail.descriptionPlaceholder')}
             className="min-h-[80px] resize-none"
           />
         </div>
 
         {/* Priority */}
         <div className="space-y-1.5">
-          <Label>Priority</Label>
+          <Label>{t('tasks.detail.priority')}</Label>
           <Select value={task.priority} onValueChange={onUpdatePriority}>
             <SelectTrigger className="w-full" aria-label="Task priority">
               <SelectValue />
@@ -292,7 +294,7 @@ function TaskDetailContent({
             <SelectContent>
               {Object.values(Priority).map((p) => (
                 <SelectItem key={p} value={p}>
-                  {p === 'None' ? 'No priority' : p}
+                  {p === 'None' ? t('tasks.detail.noPriority') : t(`tasks.priority.${p.toLowerCase()}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -301,7 +303,7 @@ function TaskDetailContent({
 
         {/* Due Date */}
         <div className="space-y-1.5">
-          <Label>Due Date</Label>
+          <Label>{t('tasks.detail.dueDate')}</Label>
           <div className="flex items-center gap-2">
             <Popover>
               <PopoverTrigger asChild>
@@ -313,7 +315,7 @@ function TaskDetailContent({
                   )}
                 >
                   <CalendarIcon className="mr-2 size-4" />
-                  {parsedDueDate ? format(parsedDueDate, 'PPP') : 'Pick a date'}
+                  {parsedDueDate ? format(parsedDueDate, 'PPP') : t('tasks.detail.pickDate')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -331,7 +333,7 @@ function TaskDetailContent({
                 size="icon"
                 className="size-8 shrink-0"
                 onClick={() => onUpdateDueDate(undefined)}
-                aria-label="Clear due date"
+                aria-label={t('tasks.detail.clearDueDate')}
               >
                 <XIcon className="size-4" />
               </Button>
@@ -341,7 +343,7 @@ function TaskDetailContent({
 
         {/* Tags */}
         <div className="space-y-1.5">
-          <Label>Tags</Label>
+          <Label>{t('tasks.detail.tags')}</Label>
           <div className="flex flex-wrap gap-1.5">
             {task.tags.map((tag) => (
               <Badge key={tag} variant="secondary" className="gap-1 pr-1">
@@ -349,7 +351,7 @@ function TaskDetailContent({
                 <button
                   onClick={() => onRemoveTag(tag)}
                   className="ml-0.5 rounded-full p-0.5 hover:bg-destructive/20 transition-colors"
-                  aria-label={`Remove tag ${tag}`}
+                  aria-label={t('tasks.detail.removeTag', { tag })}
                 >
                   <XIcon className="size-3" />
                 </button>
@@ -372,7 +374,7 @@ function TaskDetailContent({
                   // Delay hiding so click on suggestion registers first
                   setTimeout(() => setTagInputFocused(false), 150);
                 }}
-                placeholder="Add a tag..."
+                placeholder={t('tasks.detail.tagPlaceholder')}
                 className="h-8 text-sm"
                 aria-label="New tag"
               />
@@ -384,7 +386,7 @@ function TaskDetailContent({
                 disabled={!tagInput.trim()}
               >
                 <PlusIcon className="mr-1 size-3" />
-                Add
+                {t('common.add')}
               </Button>
             </form>
             {tagInputFocused && filteredSuggestions.length > 0 && (
@@ -415,21 +417,21 @@ function TaskDetailContent({
         <div className="border-t border-border/50 pt-4">
           {showDeleteConfirm ? (
             <div className="flex items-center gap-2">
-              <p className="text-sm text-destructive">Delete this task?</p>
+              <p className="text-sm text-destructive">{t('tasks.detail.deleteTitle')}</p>
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={onDelete}
                 disabled={isDeleting}
               >
-                Confirm
+                {t('common.confirm')}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDeleteConfirm(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           ) : (
@@ -440,7 +442,7 @@ function TaskDetailContent({
               onClick={() => setShowDeleteConfirm(true)}
             >
               <Trash2Icon className="mr-1.5 size-4" />
-              Delete task
+              {t('tasks.detail.deleteButton')}
             </Button>
           )}
         </div>

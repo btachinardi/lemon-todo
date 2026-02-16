@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { LoaderIcon, PlusIcon } from 'lucide-react';
@@ -16,6 +17,7 @@ interface QuickAddFormProps {
  * successful submit. The submit button is disabled while empty or loading.
  */
 export function QuickAddForm({ onSubmit, isLoading, className }: QuickAddFormProps) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -31,13 +33,13 @@ export function QuickAddForm({ onSubmit, isLoading, className }: QuickAddFormPro
     <form onSubmit={handleSubmit} className={className}>
       <div className="flex gap-3">
         <label htmlFor="quick-add-input" className="sr-only">
-          New task title
+          {t('tasks.quickAdd.label')}
         </label>
         <Input
           id="quick-add-input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="What needs to be done?"
+          placeholder={t('tasks.quickAdd.placeholder')}
           maxLength={500}
           disabled={isLoading}
           className="h-10 rounded-lg border-border bg-secondary/60 px-4 text-sm placeholder:text-muted-foreground/60 focus-visible:border-primary/40 focus-visible:bg-secondary/80"
@@ -53,7 +55,7 @@ export function QuickAddForm({ onSubmit, isLoading, className }: QuickAddFormPro
           ) : (
             <PlusIcon className="size-4" />
           )}
-          Add Task
+          {t('tasks.quickAdd.submit')}
         </Button>
       </div>
     </form>

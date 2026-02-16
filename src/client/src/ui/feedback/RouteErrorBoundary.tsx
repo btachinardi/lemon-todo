@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import i18next from 'i18next';
 import { AlertCircleIcon } from 'lucide-react';
 import { Button } from '@/ui/button';
 import { captureError } from '@/lib/error-logger';
@@ -45,17 +46,17 @@ export class RouteErrorBoundary extends Component<Props, State> {
             <AlertCircleIcon className="size-8 text-destructive" />
           </div>
           <div className="text-center">
-            <p className="text-lg font-semibold">Something went wrong</p>
+            <p className="text-lg font-semibold">{i18next.t('error.title')}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              This page encountered an error. Try again or go back.
+              {i18next.t('error.description')}
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="default" onClick={this.handleReset}>
-              Try again
+              {i18next.t('error.tryAgain')}
             </Button>
             <Button variant="outline" onClick={() => (window.location.href = '/')}>
-              Go to Board
+              {i18next.t('notFound.goHome')}
             </Button>
           </div>
         </div>
