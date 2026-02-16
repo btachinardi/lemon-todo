@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace LemonDo.Infrastructure.Migrations
+namespace LemonDo.Migrations.Sqlite.Migrations
 {
     /// <inheritdoc />
     public partial class AddAuditEntries : Migration

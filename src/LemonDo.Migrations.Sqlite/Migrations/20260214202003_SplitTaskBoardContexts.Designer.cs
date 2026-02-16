@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace LemonDo.Infrastructure.Migrations
+namespace LemonDo.Migrations.Sqlite.Migrations
 {
     [DbContext(typeof(LemonDoDbContext))]
     [Migration("20260214202003_SplitTaskBoardContexts")]

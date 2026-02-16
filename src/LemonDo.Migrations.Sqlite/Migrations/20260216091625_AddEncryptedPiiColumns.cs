@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace LemonDo.Infrastructure.Migrations
+namespace LemonDo.Migrations.Sqlite.Migrations
 {
     /// <inheritdoc />
     public partial class AddEncryptedPiiColumns : Migration

@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace LemonDo.Infrastructure.Migrations
+namespace LemonDo.Migrations.Sqlite.Migrations
 {
     [DbContext(typeof(LemonDoDbContext))]
-    [Migration("20260216140237_AddTaskSensitiveNote")]
-    partial class AddTaskSensitiveNote
+    [Migration("20260216090324_AddUserAdminColumns")]
+    partial class AddUserAdminColumns
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -101,57 +101,6 @@ namespace LemonDo.Infrastructure.Migrations
                     b.ToTable("Boards", (string)null);
                 });
 
-            modelBuilder.Entity("LemonDo.Domain.Identity.Entities.User", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EmailHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EncryptedDisplayName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("EncryptedEmail")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsDeactivated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("RedactedDisplayName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RedactedEmail")
-                        .IsRequired()
-                        .HasMaxLength(254)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UpdatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmailHash")
-                        .IsUnique();
-
-                    b.ToTable("Users", (string)null);
-                });
-
             modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.Task", b =>
                 {
                     b.Property<Guid>("Id")
@@ -171,10 +120,6 @@ namespace LemonDo.Infrastructure.Migrations
                     b.Property<string>("DueDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("EncryptedSensitiveNote")
-                        .HasMaxLength(15000)
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("IsArchived")
                         .HasColumnType("INTEGER");
 
@@ -187,10 +132,6 @@ namespace LemonDo.Infrastructure.Migrations
                     b.Property<string>("Priority")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RedactedSensitiveNote")
-                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
@@ -231,12 +172,26 @@ namespace LemonDo.Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CreatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeactivated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");

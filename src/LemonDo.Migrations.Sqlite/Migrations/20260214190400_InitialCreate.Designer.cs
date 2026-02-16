@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace LemonDo.Infrastructure.Migrations
+namespace LemonDo.Migrations.Sqlite.Migrations
 {
     [DbContext(typeof(LemonDoDbContext))]
-    [Migration("20260215130256_SparseRankOrdering")]
-    partial class SparseRankOrdering
+    [Migration("20260214190400_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -20,7 +20,7 @@ namespace LemonDo.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
 
-            modelBuilder.Entity("LemonDo.Domain.Boards.Entities.Board", b =>
+            modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.Board", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
@@ -48,9 +48,12 @@ namespace LemonDo.Infrastructure.Migrations
                     b.ToTable("Boards", (string)null);
                 });
 
-            modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.Task", b =>
+            modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.BoardTask", b =>
                 {
                     b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ColumnId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CompletedAt")
@@ -76,6 +79,9 @@ namespace LemonDo.Infrastructure.Migrations
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Priority")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -97,6 +103,8 @@ namespace LemonDo.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ColumnId");
+
                     b.HasIndex("IsDeleted");
 
                     b.HasIndex("OwnerId");
@@ -106,9 +114,9 @@ namespace LemonDo.Infrastructure.Migrations
                     b.ToTable("Tasks", (string)null);
                 });
 
-            modelBuilder.Entity("LemonDo.Domain.Boards.Entities.Board", b =>
+            modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.Board", b =>
                 {
-                    b.OwnsMany("LemonDo.Domain.Boards.Entities.Column", "Columns", b1 =>
+                    b.OwnsMany("LemonDo.Domain.Tasks.Entities.Column", "Columns", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("TEXT");
@@ -123,11 +131,6 @@ namespace LemonDo.Infrastructure.Migrations
                                 .IsRequired()
                                 .HasMaxLength(50)
                                 .HasColumnType("TEXT");
-
-                            b1.Property<decimal>("NextRank")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("TEXT")
-                                .HasDefaultValue(1000m);
 
                             b1.Property<int>("Position")
                                 .HasColumnType("INTEGER");
@@ -147,38 +150,14 @@ namespace LemonDo.Infrastructure.Migrations
                                 .HasForeignKey("BoardId");
                         });
 
-                    b.OwnsMany("LemonDo.Domain.Boards.ValueObjects.TaskCard", "Cards", b1 =>
-                        {
-                            b1.Property<Guid>("BoardId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<Guid>("TaskId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<Guid>("ColumnId")
-                                .HasColumnType("TEXT");
-
-                            b1.Property<decimal>("Rank")
-                                .HasColumnType("TEXT");
-
-                            b1.HasKey("BoardId", "TaskId");
-
-                            b1.ToTable("TaskCards", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("BoardId");
-                        });
-
-                    b.Navigation("Cards");
-
                     b.Navigation("Columns");
                 });
 
-            modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.Task", b =>
+            modelBuilder.Entity("LemonDo.Domain.Tasks.Entities.BoardTask", b =>
                 {
                     b.OwnsMany("LemonDo.Domain.Tasks.ValueObjects.Tag", "Tags", b1 =>
                         {
-                            b1.Property<Guid>("TaskId")
+                            b1.Property<Guid>("BoardTaskId")
                                 .HasColumnType("TEXT");
 
                             b1.Property<string>("Value")
@@ -186,12 +165,12 @@ namespace LemonDo.Infrastructure.Migrations
                                 .HasColumnType("TEXT")
                                 .HasColumnName("Value");
 
-                            b1.HasKey("TaskId", "Value");
+                            b1.HasKey("BoardTaskId", "Value");
 
-                            b1.ToTable("TaskTags", (string)null);
+                            b1.ToTable("BoardTaskTags", (string)null);
 
                             b1.WithOwner()
-                                .HasForeignKey("TaskId");
+                                .HasForeignKey("BoardTaskId");
                         });
 
                     b.Navigation("Tags");

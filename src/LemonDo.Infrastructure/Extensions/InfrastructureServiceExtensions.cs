@@ -26,9 +26,21 @@ public static class InfrastructureServiceExtensions
     /// <summary>Registers <see cref="LemonDoDbContext"/>, repositories, and the domain event dispatcher.</summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<LemonDoDbContext>(options =>
-            options.UseSqlite(configuration.GetConnectionString("DefaultConnection")
-                ?? "Data Source=lemondo.db"));
+        // Use the (sp, options) overload to defer provider selection until resolution time.
+        // This allows WebApplicationFactory test overrides to change DatabaseProvider/ConnectionString
+        // via ConfigureAppConfiguration before the provider is selected.
+        services.AddDbContext<LemonDoDbContext>((sp, options) =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            var connStr = config.GetConnectionString("DefaultConnection")
+                ?? "Data Source=lemondo.db";
+            var provider = config.GetValue<string>("DatabaseProvider") ?? "Sqlite";
+
+            if (provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
+                options.UseSqlServer(connStr, b => b.MigrationsAssembly("LemonDo.Migrations.SqlServer"));
+            else
+                options.UseSqlite(connStr, b => b.MigrationsAssembly("LemonDo.Migrations.Sqlite"));
+        });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<LemonDoDbContext>());
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
