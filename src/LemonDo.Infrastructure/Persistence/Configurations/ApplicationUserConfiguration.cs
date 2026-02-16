@@ -19,5 +19,11 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
 
         builder.Property(u => u.IsDeactivated)
             .HasDefaultValue(false);
+
+        builder.Property(u => u.EncryptedEmail)
+            .HasMaxLength(500);
+
+        builder.Property(u => u.EncryptedDisplayName)
+            .HasMaxLength(500);
     }
 }

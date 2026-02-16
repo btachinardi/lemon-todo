@@ -40,6 +40,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         ["Jwt:AccessTokenExpirationMinutes"] = "60",
         ["Jwt:RefreshTokenExpirationDays"] = "7",
         ["RateLimiting:Auth:PermitLimit"] = "10000",
+        ["Encryption:FieldEncryptionKey"] = "dGVzdC1maWVsZC1lbmNyeXB0aW9uLWtleS0zMmJ5dGU=", // 32-byte test key
     };
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

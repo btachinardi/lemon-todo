@@ -16,4 +16,10 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     /// <summary>Whether the user has been deactivated by an admin (permanent lockout).</summary>
     public bool IsDeactivated { get; set; }
+
+    /// <summary>AES-256-GCM encrypted email. Stored alongside Identity's NormalizedEmail for lookups.</summary>
+    public string? EncryptedEmail { get; set; }
+
+    /// <summary>AES-256-GCM encrypted display name.</summary>
+    public string? EncryptedDisplayName { get; set; }
 }

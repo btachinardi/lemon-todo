@@ -4,6 +4,7 @@ using LemonDo.Application.Administration.Commands;
 using LemonDo.Application.Administration.Queries;
 using LemonDo.Application.Common;
 using LemonDo.Application.Identity;
+using LemonDo.Infrastructure.Security;
 using LemonDo.Domain.Administration.Repositories;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Tasks.Repositories;
@@ -60,6 +61,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IAdminUserQuery, AdminUserQuery>();
         services.AddScoped<IAdminUserService, AdminUserService>();
         services.AddHostedService<RefreshTokenCleanupService>();
+
+        // Field encryption for PII data at rest
+        services.AddSingleton<IFieldEncryptionService, AesFieldEncryptionService>();
 
         return services;
     }
