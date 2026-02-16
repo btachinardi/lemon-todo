@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-02-16
+
+Custom domains for Azure deployment with managed TLS certificates.
+
 ### Added
 
 - **Custom domains** for Azure deployment: `api.lemondo.btas.dev` (API) and `lemondo.btas.dev` (frontend)
@@ -252,7 +256,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/btachinardi/lemon-todo/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/btachinardi/lemon-todo/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/btachinardi/lemon-todo/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/btachinardi/lemon-todo/compare/v0.1.0...v0.2.0

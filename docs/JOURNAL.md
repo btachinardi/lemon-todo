@@ -1603,6 +1603,29 @@ The refresh token cookie uses `SameSite=Strict` and `Path=/api/auth`. Since `lem
 
 ---
 
+## Release: v0.4.1 — Custom Domains
+
+**Date: February 16, 2026**
+
+Hotfix release adding custom domain support for the Azure deployment. This is the first hotfix release, branching from `main` (not `develop`) per gitflow hotfix process.
+
+### What Shipped
+
+- Custom domains: `api.lemondo.btas.dev` (API) and `lemondo.btas.dev` (frontend)
+- Managed TLS certificates via Azure (auto-provisioned and auto-renewed)
+- Frontend cross-origin API support via `VITE_API_BASE_URL` env var
+- Static Web App upgraded from Free to Standard SKU
+- Dual CORS origins for seamless transition
+- CI/CD pipeline updated with `VITE_API_BASE_URL` for production builds
+
+### Hotfix Lessons
+
+1. **Terraform `local-exec` on Windows defaults to `cmd.exe`** — bash-style `\` continuations break. Always set `interpreter = ["bash", "-c"]`.
+2. **Azure Container App custom domains can't use `azapi_update_resource`** — it does a full PUT requiring all secrets. Azure CLI commands are the only viable automation path.
+3. **Managed certificate provisioning needs polling** — cert goes from Pending to Succeeded in ~60 seconds; attempting to bind before that fails.
+
+---
+
 ## What's Next
 
 ### Checkpoint 5: Advanced & Delight
