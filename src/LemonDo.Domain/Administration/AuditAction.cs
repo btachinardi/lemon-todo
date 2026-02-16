@@ -1,8 +1,11 @@
 namespace LemonDo.Domain.Administration;
 
+using System.Text.Json.Serialization;
+
 /// <summary>
 /// Categorizes security-relevant actions recorded in the audit trail.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum AuditAction
 {
     /// <summary>A new user account was created.</summary>

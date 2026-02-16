@@ -86,7 +86,7 @@ export function AuditLogView() {
               <SelectItem value="__all__">{t('admin.audit.allActions')}</SelectItem>
               {AUDIT_ACTIONS.map((action) => (
                 <SelectItem key={action} value={action}>
-                  {action}
+                  {t(`admin.audit.actions.${action}`)}
                 </SelectItem>
               ))}
             </SelectContent>

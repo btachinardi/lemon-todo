@@ -190,7 +190,50 @@
       "columnActor": "Actor",
       "columnDetails": "Details",
       "system": "System",
-      "noEntries": "No audit entries found."
+      "noEntries": "No audit entries found.",
+      "actions": {
+        "UserRegistered": "User Registered",
+        "UserLoggedIn": "User Logged In",
+        "UserLoggedOut": "User Logged Out",
+        "RoleAssigned": "Role Assigned",
+        "RoleRemoved": "Role Removed",
+        "PiiRevealed": "PII Revealed",
+        "TaskCreated": "Task Created",
+        "TaskCompleted": "Task Completed",
+        "TaskDeleted": "Task Deleted",
+        "UserDeactivated": "User Deactivated",
+        "UserReactivated": "User Reactivated"
+      }
+    },
+    "piiRevealDialog": {
+      "title": "Reveal Personal Information",
+      "description": "This action reveals sensitive PII and is recorded in the audit trail. Enter a justification and verify your identity to proceed.",
+      "reason": "Reason",
+      "reasonPlaceholder": "Select a reason",
+      "reasons": {
+        "SupportTicket": "Support Ticket",
+        "LegalRequest": "Legal Request",
+        "AccountRecovery": "Account Recovery",
+        "SecurityInvestigation": "Security Investigation",
+        "DataSubjectRequest": "Data Subject Request (GDPR/HIPAA)",
+        "ComplianceAudit": "Compliance Audit",
+        "Other": "Other"
+      },
+      "reasonDetails": "Reason Details",
+      "reasonDetailsPlaceholder": "Explain why this PII access is needed...",
+      "reasonDetailsRequired": "Details are required when reason is 'Other'.",
+      "comments": "Additional Comments",
+      "commentsPlaceholder": "Any additional context (optional)...",
+      "password": "Your Password",
+      "passwordPlaceholder": "Enter your account password",
+      "passwordError": "Invalid password. Please try again.",
+      "auditWarning": "This action is permanently recorded in the audit trail.",
+      "submit": "Reveal PII",
+      "submitting": "Verifying..."
+    },
+    "secureViewer": {
+      "hide": "Hide",
+      "secondsRemaining": "{{seconds}}s"
     },
     "toasts": {
       "roleAssigned": "Role assigned",

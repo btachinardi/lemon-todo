@@ -190,7 +190,50 @@
       "columnActor": "Ator",
       "columnDetails": "Detalhes",
       "system": "Sistema",
-      "noEntries": "Nenhuma entrada de auditoria encontrada."
+      "noEntries": "Nenhuma entrada de auditoria encontrada.",
+      "actions": {
+        "UserRegistered": "Usuário Registrado",
+        "UserLoggedIn": "Usuário Logado",
+        "UserLoggedOut": "Usuário Desconectado",
+        "RoleAssigned": "Função Atribuída",
+        "RoleRemoved": "Função Removida",
+        "PiiRevealed": "PII Revelada",
+        "TaskCreated": "Tarefa Criada",
+        "TaskCompleted": "Tarefa Concluída",
+        "TaskDeleted": "Tarefa Excluída",
+        "UserDeactivated": "Usuário Desativado",
+        "UserReactivated": "Usuário Reativado"
+      }
+    },
+    "piiRevealDialog": {
+      "title": "Revelar Informa\u00e7\u00f5es Pessoais",
+      "description": "Esta a\u00e7\u00e3o revela PII sens\u00edvel e \u00e9 registrada no log de auditoria. Insira uma justificativa e verifique sua identidade para prosseguir.",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Selecione um motivo",
+      "reasons": {
+        "SupportTicket": "Ticket de Suporte",
+        "LegalRequest": "Solicita\u00e7\u00e3o Legal",
+        "AccountRecovery": "Recupera\u00e7\u00e3o de Conta",
+        "SecurityInvestigation": "Investiga\u00e7\u00e3o de Seguran\u00e7a",
+        "DataSubjectRequest": "Solicita\u00e7\u00e3o do Titular (LGPD/HIPAA)",
+        "ComplianceAudit": "Auditoria de Conformidade",
+        "Other": "Outro"
+      },
+      "reasonDetails": "Detalhes do Motivo",
+      "reasonDetailsPlaceholder": "Explique por que este acesso \u00e0 PII \u00e9 necess\u00e1rio...",
+      "reasonDetailsRequired": "Detalhes s\u00e3o obrigat\u00f3rios quando o motivo \u00e9 'Outro'.",
+      "comments": "Coment\u00e1rios Adicionais",
+      "commentsPlaceholder": "Qualquer contexto adicional (opcional)...",
+      "password": "Sua Senha",
+      "passwordPlaceholder": "Digite sua senha da conta",
+      "passwordError": "Senha inv\u00e1lida. Tente novamente.",
+      "auditWarning": "Esta a\u00e7\u00e3o \u00e9 registrada permanentemente no log de auditoria.",
+      "submit": "Revelar PII",
+      "submitting": "Verificando..."
+    },
+    "secureViewer": {
+      "hide": "Ocultar",
+      "secondsRemaining": "{{seconds}}s"
     },
     "toasts": {
       "roleAssigned": "Fun\u00e7\u00e3o atribu\u00edda",

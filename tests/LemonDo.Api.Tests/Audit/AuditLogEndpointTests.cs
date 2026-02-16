@@ -2,6 +2,7 @@ namespace LemonDo.Api.Tests.Audit;
 
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using LemonDo.Api.Tests.Infrastructure;
 using LemonDo.Application.Administration.DTOs;
 using LemonDo.Domain.Common;
@@ -78,5 +79,27 @@ public sealed class AuditLogEndpointTests
         {
             Assert.AreEqual("TaskCreated", entry.Action.ToString());
         }
+    }
+
+    [TestMethod]
+    public async Task Should_SerializeActionAsString_When_ReturningAuditEntries()
+    {
+        // Create a task to ensure at least one audit entry exists
+        var taskClient = await _factory.CreateAuthenticatedClientAsync();
+        await taskClient.PostAsJsonAsync("/api/tasks", new { Title = "Serialization test task" });
+
+        // Fetch audit log and inspect raw JSON
+        var adminClient = await _factory.CreateAdminClientAsync();
+        var response = await adminClient.GetAsync("/api/admin/audit?resourceType=Task");
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        var items = doc.RootElement.GetProperty("items");
+        Assert.IsGreaterThan(0, items.GetArrayLength());
+
+        var firstAction = items[0].GetProperty("action");
+        Assert.AreEqual(JsonValueKind.String, firstAction.ValueKind,
+            $"Expected action to be a JSON string, but got {firstAction.ValueKind} with value '{firstAction}'");
     }
 }

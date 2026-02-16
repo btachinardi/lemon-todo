@@ -44,7 +44,7 @@ export function AuditLogRow({ entry }: AuditLogRowProps) {
       </TableCell>
       <TableCell>
         <Badge variant={actionVariant[entry.action] ?? 'outline'} className="text-xs">
-          {entry.action}
+          {t(`admin.audit.actions.${entry.action}`)}
         </Badge>
       </TableCell>
       <TableCell className="text-xs">{entry.resourceType}</TableCell>
