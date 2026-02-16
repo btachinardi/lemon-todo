@@ -1514,6 +1514,24 @@ API verified healthy at `https://ca-lemondo-mvp-eus2.greenground-1ee8436d.eastus
 
 ---
 
+### Release v0.4.0
+
+**Date**: 2026-02-16
+
+Released Checkpoint 4 (Production Hardening) as v0.4.0 via gitflow.
+
+**Release Highlights:**
+- Observability: Serilog structured logging with PII masking, W3C traceparent propagation
+- Security: AES-256-GCM field encryption, SystemAdmin role, protected data redaction
+- Admin: User management panel + audit log viewer with filters and pagination
+- i18n: English + Portuguese (Brazil) with 158 translation keys
+- Task Sensitive Notes: encrypted free-text with break-the-glass admin reveal
+- Infrastructure: Terraform Azure (Container Apps, ACR, SQL, Key Vault), CI/CD pipeline, Dockerfile
+- Developer CLI: `./dev` unified script for all development commands
+- 668 tests total (370 backend + 243 frontend + 55 E2E)
+
+---
+
 ## What's Next
 
 ### Checkpoint 5: Advanced & Delight

@@ -278,6 +278,7 @@
 | 2026-02-16 | Container Apps over App Service | Azure Free Trial and Pay-As-You-Go both had 0 VM quota for App Service (all tiers, all regions). Container Apps use consumption model — no VM quota needed, built-in auto-scaling, cheaper for MVP. |
 | 2026-02-16 | Docker push + `az containerapp update` over ZIP deploy | Container Apps don't support ZIP deploy. CI/CD builds Docker image, pushes to ACR with commit SHA tag, then updates Container App image reference. |
 | 2026-02-16 | `./dev infra` CLI commands | Terraform operations need Azure CLI in PATH, `MSYS_NO_PATHCONV=1` for Git Bash, and stage selection. CLI wraps all this, making `./dev infra plan stage1-mvp` as simple as `./dev test`. |
+| 2026-02-16 | v0.4.0 release via gitflow | CP4 (Production Hardening) release. 668 tests (370 backend + 243 frontend + 55 E2E). Observability, security, admin, audit, i18n, encryption, Azure deployment. |
 
 ---
 
