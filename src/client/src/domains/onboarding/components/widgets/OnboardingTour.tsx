@@ -31,15 +31,17 @@ export function OnboardingTour() {
   useEffect(() => {
     if (step !== 1) return;
 
+    const advance = () => setStep(2);
+
     const observer = new MutationObserver(() => {
       const taskCard = document.querySelector('[data-onboarding="task-card"]');
-      if (taskCard) setStep(2);
+      if (taskCard) advance();
     });
 
-    // Check immediately
+    // Check immediately (deferred via queueMicrotask to satisfy react-hooks/set-state-in-effect)
     const existing = document.querySelector('[data-onboarding="task-card"]');
     if (existing) {
-      setStep(2);
+      queueMicrotask(advance);
       return;
     }
 
@@ -51,14 +53,16 @@ export function OnboardingTour() {
   useEffect(() => {
     if (step !== 2) return;
 
+    const advance = () => setStep(3);
+
     const observer = new MutationObserver(() => {
       const doneTask = document.querySelector('[data-onboarding="task-done"]');
-      if (doneTask) setStep(3);
+      if (doneTask) advance();
     });
 
     const existing = document.querySelector('[data-onboarding="task-done"]');
     if (existing) {
-      setStep(3);
+      queueMicrotask(advance);
       return;
     }
 

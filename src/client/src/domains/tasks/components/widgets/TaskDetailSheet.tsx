@@ -205,12 +205,14 @@ function TaskDetailContent({
 
   // --- Debounced auto-save for description ---
   // Use refs so the flush function is stable and always reads the latest values.
+  // Ref updates must happen inside effects to satisfy react-hooks/refs.
   const descDraftRef = useRef(descDraft);
-  descDraftRef.current = descDraft;
   const taskRef = useRef(task);
-  taskRef.current = task;
   const onUpdateDescriptionRef = useRef(onUpdateDescription);
-  onUpdateDescriptionRef.current = onUpdateDescription;
+
+  useEffect(() => { descDraftRef.current = descDraft; }, [descDraft]);
+  useEffect(() => { taskRef.current = task; }, [task]);
+  useEffect(() => { onUpdateDescriptionRef.current = onUpdateDescription; }, [onUpdateDescription]);
 
   // Track the last description value we've sent to the server, to avoid
   // duplicate saves when both the debounce timer and blur fire in sequence.
@@ -218,11 +220,13 @@ function TaskDetailContent({
 
   // Update the "last saved" baseline when the server data changes
   // (e.g. after a mutation round-trip).
-  if (task && (task.description ?? null) !== lastSavedDescRef.current) {
-    lastSavedDescRef.current = task.description ?? null;
-  }
+  useEffect(() => {
+    if (task && (task.description ?? null) !== lastSavedDescRef.current) {
+      lastSavedDescRef.current = task.description ?? null;
+    }
+  }, [task]);
 
-  const descTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const descTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Stable flush function — cancels any pending debounce and saves immediately
   // if the current draft differs from the last saved value.

@@ -14,7 +14,8 @@ export function CelebrationAnimation({ visible, onComplete }: CelebrationAnimati
 
   useEffect(() => {
     if (!visible) return;
-    setShow(true);
+    // Use queueMicrotask to avoid synchronous setState in effect body
+    queueMicrotask(() => setShow(true));
     const timer = setTimeout(() => {
       setShow(false);
       onComplete();

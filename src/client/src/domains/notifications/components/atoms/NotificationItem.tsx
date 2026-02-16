@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { BellIcon, CalendarClockIcon, AlertTriangleIcon, SparklesIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Notification } from '../../types/notification.types';
@@ -16,10 +15,9 @@ const typeIcons: Record<string, typeof BellIcon> = {
 
 /** Single notification row in the dropdown. */
 export function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps) {
-  const { t } = useTranslation();
   const Icon = typeIcons[notification.type] ?? BellIcon;
 
-  const timeAgo = getRelativeTime(notification.createdAt, t);
+  const timeAgo = getRelativeTime(notification.createdAt);
 
   return (
     <button
@@ -51,7 +49,7 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
   );
 }
 
-function getRelativeTime(dateStr: string, _t: ReturnType<typeof useTranslation>['t']): string {
+function getRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();

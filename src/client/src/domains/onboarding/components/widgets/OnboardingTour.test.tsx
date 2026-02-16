@@ -58,7 +58,7 @@ describe('OnboardingTour', () => {
   it('should render nothing when onboarding is completed', async () => {
     mockGetStatus.mockResolvedValue({ completed: true, completedAt: '2025-01-01T00:00:00Z' });
 
-    const { container } = render(createElement(OnboardingTour), { wrapper: createWrapper() });
+    render(createElement(OnboardingTour), { wrapper: createWrapper() });
 
     await vi.waitFor(() => {
       // Only the backdrop div or nothing — no tooltip content

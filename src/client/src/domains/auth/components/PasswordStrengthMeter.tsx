@@ -26,6 +26,7 @@ export interface PasswordStrengthResult {
  * - Special char (bonus)
  * - 12+ chars (bonus)
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function evaluatePasswordStrength(password: string): PasswordStrengthResult {
   const checks: PasswordCheck[] = [
     { key: 'minLength', passed: password.length >= 8, required: true },

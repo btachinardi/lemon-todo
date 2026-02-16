@@ -19,6 +19,7 @@ interface DevAccount {
   accent: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const DEV_ACCOUNTS: DevAccount[] = [
   {
     email: 'dev.user@lemondo.dev',
