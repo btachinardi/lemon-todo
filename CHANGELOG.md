@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Checkpoint 4: Production Hardening — observability, security, admin tooling, audit trail, i18n, and data encryption.
+
+### Added
+
+- **Serilog structured logging** with PII destructuring policy and correlation ID enrichment
+  - Automatic masking of email, password, and display name properties in logs
+  - Console + OpenTelemetry sinks for unified observability
+- **SystemAdmin role** with `RequireAdminOrAbove` and `RequireSystemAdmin` authorization policies
+  - Three-tier role hierarchy: User < Admin < SystemAdmin
+- **Audit trail** via new Administration bounded context
+  - `AuditEntry` entity tracking security-relevant actions (login, register, task CRUD, role changes, PII reveals)
+  - Domain event handlers auto-create audit entries on key mutations
+  - `IRequestContext` captures IP address and user agent per request
+  - Paginated, filterable search query (date range, action type, actor, resource)
+- **Admin panel** for user management
+  - Paginated user list with search and role filter
+  - Role assignment and removal (SystemAdmin only)
+  - User deactivation and reactivation (SystemAdmin only)
+  - `AdminRoute` guard checking Admin/SystemAdmin roles
+  - `AdminLayout` with sidebar navigation (Users, Audit Log)
+- **AES-256-GCM field encryption** for PII data at rest
+  - `EncryptedEmail` and `EncryptedDisplayName` columns on `AspNetUsers`
+  - Random 12-byte IV per encryption, tamper detection via authentication tag
+  - Identity continues using `NormalizedEmail` for lookups (no breaking changes)
+- **PII redaction in admin views** — emails and names masked by default
+  - `PiiRedactor` utility for consistent masking (`j***@example.com`)
+  - SystemAdmin "Reveal" action decrypts real values with audit trail entry
+  - 30-second auto-hide with amber highlight in UI
+- **Admin audit log viewer** with filters (date range, action, resource type) and pagination
+  - Color-coded action badges for visual scanning
+- **i18n** with i18next supporting English and Portuguese (Brazil)
+  - 158 translation keys across all frontend components
+  - `LanguageSwitcher` dropdown with browser language auto-detection
+  - localStorage persistence for language preference
+- **W3C traceparent propagation** from frontend to backend
+  - Every API request includes a `traceparent` header for distributed tracing
+  - Zero new npm dependencies (uses native `crypto.getRandomValues`)
+- **485 tests** total (321 backend + 164 frontend), up from 478
+  - 59 new backend tests (encryption, PII redaction, audit, admin endpoints)
+  - 3 new frontend tests (traceparent format validation)
+
+### Changed
+
+- All frontend components now use `useTranslation()` + `t()` for user-facing strings
+- Admin user list shows PII-redacted values by default
+- API client sends `traceparent` and `X-Correlation-Id` headers on every request
+
 ## [0.3.0] - 2026-02-15
 
 Checkpoint 3: Rich UX — dark mode, filter bar, task detail sheet, loading skeletons, empty states, error boundaries, and enhanced interactions.
