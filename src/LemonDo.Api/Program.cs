@@ -4,6 +4,7 @@ using LemonDo.Api.Auth;
 using LemonDo.Api.Endpoints;
 using LemonDo.Api.Logging;
 using LemonDo.Api.Middleware;
+using LemonDo.Api.Services;
 using LemonDo.Application.Common;
 using LemonDo.Application.Extensions;
 using LemonDo.Domain.Boards.Entities;
@@ -45,6 +46,7 @@ builder.Services.AddHealthChecks()
 // JWT Authentication
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IRequestContext, HttpRequestContext>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer();

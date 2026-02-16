@@ -1,6 +1,7 @@
 namespace LemonDo.Infrastructure.Persistence;
 
 using LemonDo.Application.Common;
+using LemonDo.Domain.Administration.Entities;
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Common;
 using LemonDo.Infrastructure.Events;
@@ -42,6 +43,9 @@ public sealed class LemonDoDbContext : IdentityDbContext<ApplicationUser, Identi
 
     /// <summary>Gets the DbSet for refresh tokens used in JWT authentication.</summary>
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    /// <summary>Gets the DbSet for audit trail entries.</summary>
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
 
     /// <summary>Applies Identity schema and all EF Core entity configurations from this assembly.</summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)

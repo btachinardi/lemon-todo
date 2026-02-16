@@ -2,6 +2,7 @@ namespace LemonDo.Infrastructure.Extensions;
 
 using LemonDo.Application.Common;
 using LemonDo.Application.Identity;
+using LemonDo.Domain.Administration.Repositories;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Infrastructure.Events;
@@ -28,6 +29,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IBoardRepository, BoardRepository>();
+        services.AddScoped<IAuditEntryRepository, AuditEntryRepository>();
 
         // JWT token services
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
