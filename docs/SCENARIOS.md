@@ -325,7 +325,7 @@ Step 1: Diana logs in with her SystemAdmin account
 
 Step 2: Diana opens the Admin panel
   -> Tabs: Users | Audit Log | System Health
-  -> User list shows names with PII REDACTED by default (emails masked: s***@example.com)
+  -> User list shows names with PROTECTED DATA REDACTED by default (emails masked: s***@example.com)
   -> She can click "Reveal" on individual fields (logged as audit event)
   [analytics: admin_panel_opened]
 
@@ -333,19 +333,19 @@ Step 3: Diana searches the audit log
   -> Filters: Date range, User, Action type, Resource
   -> Searches for "all data access events in January 2026"
   -> Results show: who accessed what, when, from what IP
-  -> PII in results is redacted (user names/emails masked)
+  -> Protected data in results is redacted (user names/emails masked)
   [analytics: audit_log_searched]
 
-Step 4: Diana reveals specific PII for the report
+Step 4: Diana reveals specific protected data for the report
   -> She clicks "Reveal" next to a masked email
-  -> A confirmation prompt: "Revealing PII will be logged. Continue?"
+  -> A confirmation prompt: "Revealing protected data will be logged. Continue?"
   -> She confirms -> email is shown -> event is logged
-  [analytics: pii_revealed, field: email]
+  [analytics: protected_data_revealed, field: email]
 
 Step 5: Diana reviews system health
   -> Dashboard: active users, API response times, error rates
   -> All metrics from OpenTelemetry/Aspire dashboard
-  -> No PII visible in health metrics
+  -> No protected data visible in health metrics
   [analytics: system_health_viewed]
 ```
 
@@ -523,7 +523,7 @@ Month 2: Power User
 | Retention | `session_started` (D1, D7, D30) | Measure stickiness |
 | Feature Adoption | `view_switched`, `pwa_installed`, `theme_toggled` | Measure discovery |
 | Churn Prevention | `churn_email_sent`, `re_engagement_success` | Measure recovery |
-| Compliance | `admin_panel_opened`, `pii_revealed`, `audit_log_searched` | Measure admin usage |
+| Compliance | `admin_panel_opened`, `protected_data_revealed`, `audit_log_searched` | Measure admin usage |
 
 ---
 
@@ -564,4 +564,4 @@ Events follow a consistent schema:
 }
 ```
 
-Note: All PII is hashed or excluded from analytics events per HIPAA requirements.
+Note: All protected data is hashed or excluded from analytics events per HIPAA requirements.

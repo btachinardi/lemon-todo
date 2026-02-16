@@ -27,12 +27,13 @@ const AUDIT_ACTIONS: AuditAction[] = [
   'UserLoggedOut',
   'RoleAssigned',
   'RoleRemoved',
-  'PiiRevealed',
+  'ProtectedDataRevealed',
   'TaskCreated',
   'TaskCompleted',
   'TaskDeleted',
   'UserDeactivated',
   'UserReactivated',
+  'SensitiveNoteRevealed',
 ];
 
 const RESOURCE_TYPES = ['User', 'Task'];

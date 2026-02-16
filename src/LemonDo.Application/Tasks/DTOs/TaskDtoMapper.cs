@@ -17,6 +17,7 @@ public static class TaskDtoMapper
         Tags = task.Tags.Select(t => t.Value).ToList(),
         IsArchived = task.IsArchived,
         IsDeleted = task.IsDeleted,
+        SensitiveNote = task.RedactedSensitiveNote,
         CompletedAt = task.CompletedAt,
         CreatedAt = task.CreatedAt,
         UpdatedAt = task.UpdatedAt

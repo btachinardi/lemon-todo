@@ -43,6 +43,12 @@ public sealed class Task : Entity<TaskId>
     /// <summary>Timestamp when the task was last marked as Done. Null if never completed or currently not Done.</summary>
     public DateTimeOffset? CompletedAt { get; private set; }
 
+    /// <summary>
+    /// Redacted placeholder for the sensitive note, or <c>null</c> if no note is set.
+    /// The actual encrypted content is stored as an EF shadow property and never loaded onto the entity.
+    /// </summary>
+    public string? RedactedSensitiveNote { get; private set; }
+
     private readonly List<Tag> _tags = [];
 
     /// <summary>Collection of tags attached to this task. Tags are case-insensitive and normalized to lowercase.</summary>
@@ -55,7 +61,8 @@ public sealed class Task : Entity<TaskId>
         TaskDescription? description,
         Priority priority,
         DateTimeOffset? dueDate,
-        IEnumerable<Tag>? tags) : base(id)
+        IEnumerable<Tag>? tags,
+        SensitiveNote? sensitiveNote) : base(id)
     {
         OwnerId = ownerId;
         Title = title;
@@ -65,6 +72,7 @@ public sealed class Task : Entity<TaskId>
         DueDate = dueDate;
         IsArchived = false;
         IsDeleted = false;
+        RedactedSensitiveNote = sensitiveNote is not null ? SensitiveNote.RedactedValue : null;
 
         if (tags is not null)
             _tags.AddRange(tags);
@@ -85,11 +93,12 @@ public sealed class Task : Entity<TaskId>
         TaskDescription? description = null,
         Priority priority = Priority.None,
         DateTimeOffset? dueDate = null,
-        IEnumerable<Tag>? tags = null)
+        IEnumerable<Tag>? tags = null,
+        SensitiveNote? sensitiveNote = null)
     {
         var id = TaskId.New();
         return Result<Task, DomainError>.Success(
-            new Task(id, ownerId, title, description, priority, dueDate, tags));
+            new Task(id, ownerId, title, description, priority, dueDate, tags, sensitiveNote));
     }
 
     /// <summary>
@@ -231,6 +240,22 @@ public sealed class Task : Entity<TaskId>
         UpdatedAt = DateTimeOffset.UtcNow;
 
         RaiseDomainEvent(new TaskTagRemovedEvent(Id, tag));
+        return Result<DomainError>.Success();
+    }
+
+    /// <summary>
+    /// Sets or clears the sensitive note. Pass <c>null</c> to remove it.
+    /// Only stores the redacted marker on the entity; the actual content
+    /// is encrypted by the repository via shadow properties.
+    /// </summary>
+    public Result<DomainError> UpdateSensitiveNote(SensitiveNote? note)
+    {
+        if (IsDeleted)
+            return Result<DomainError>.Failure(
+                DomainError.BusinessRule("task.deleted", "Cannot edit a deleted task."));
+
+        RedactedSensitiveNote = note is not null ? SensitiveNote.RedactedValue : null;
+        UpdatedAt = DateTimeOffset.UtcNow;
         return Result<DomainError>.Success();
     }
 

@@ -62,7 +62,7 @@ public sealed class MoveTaskCommandHandler(
         if (statusResult.IsFailure)
             return statusResult;
 
-        await taskRepository.UpdateAsync(task, ct);
+        await taskRepository.UpdateAsync(task, ct: ct);
         await boardRepository.UpdateAsync(board, ct);
         await unitOfWork.SaveChangesAsync(ct);
         metrics.TaskMoved();

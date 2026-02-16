@@ -53,7 +53,7 @@ public sealed class UncompleteTaskCommandHandler(
         if (moveResult.IsFailure)
             return Result<DomainError>.Failure(moveResult.Error);
 
-        await taskRepository.UpdateAsync(task, ct);
+        await taskRepository.UpdateAsync(task, ct: ct);
         await boardRepository.UpdateAsync(board, ct);
         await unitOfWork.SaveChangesAsync(ct);
 

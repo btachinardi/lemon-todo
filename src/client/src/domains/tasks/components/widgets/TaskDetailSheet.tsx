@@ -6,6 +6,8 @@ import {
   Trash2Icon,
   XIcon,
   PlusIcon,
+  LockIcon,
+  EyeIcon,
 } from 'lucide-react';
 import {
   Sheet,
@@ -53,6 +55,12 @@ export interface TaskDetailSheetProps {
   isDeleting?: boolean;
   /** All distinct tags across all tasks, used for autocomplete suggestions. */
   allTags?: string[];
+  /** Called when the user saves a new or replacement sensitive note. */
+  onUpdateSensitiveNote?: (note: string) => void;
+  /** Called when the user clears the encrypted sensitive note. */
+  onClearSensitiveNote?: () => void;
+  /** Called when the user wants to view the decrypted note. */
+  onViewNote?: () => void;
 }
 
 /** Slide-over panel for viewing and editing all fields of a single task. */
@@ -71,6 +79,9 @@ export function TaskDetailSheet({
   onDelete,
   isDeleting,
   allTags,
+  onUpdateSensitiveNote,
+  onClearSensitiveNote,
+  onViewNote,
 }: TaskDetailSheetProps) {
   const isOpen = taskId !== null;
 
@@ -92,6 +103,9 @@ export function TaskDetailSheet({
             onDelete={onDelete}
             isDeleting={isDeleting}
             allTags={allTags}
+            onUpdateSensitiveNote={onUpdateSensitiveNote}
+            onClearSensitiveNote={onClearSensitiveNote}
+            onViewNote={onViewNote}
           />
         )}
       </SheetContent>
@@ -113,6 +127,9 @@ interface TaskDetailContentProps {
   onDelete: () => void;
   isDeleting?: boolean;
   allTags?: string[];
+  onUpdateSensitiveNote?: (note: string) => void;
+  onClearSensitiveNote?: () => void;
+  onViewNote?: () => void;
 }
 
 function TaskDetailContent({
@@ -129,6 +146,9 @@ function TaskDetailContent({
   onDelete,
   isDeleting,
   allTags,
+  onUpdateSensitiveNote,
+  onClearSensitiveNote,
+  onViewNote,
 }: TaskDetailContentProps) {
   const { t } = useTranslation();
   const [editingTitle, setEditingTitle] = useState(false);
@@ -137,6 +157,7 @@ function TaskDetailContent({
   const [tagInput, setTagInput] = useState('');
   const [tagInputFocused, setTagInputFocused] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Sync drafts when task data changes -- uses the React-approved "adjust
@@ -184,6 +205,13 @@ function TaskDetailContent({
     onAddTag(tag);
     setTagInput('');
   }, [task, tagInput, onAddTag]);
+
+  const handleSaveNote = useCallback(() => {
+    const trimmed = noteDraft.trim();
+    if (!trimmed || !onUpdateSensitiveNote) return;
+    onUpdateSensitiveNote(trimmed);
+    setNoteDraft('');
+  }, [noteDraft, onUpdateSensitiveNote]);
 
   const handleSelectSuggestion = useCallback(
     (tag: string) => {
@@ -409,6 +437,59 @@ function TaskDetailContent({
                   </li>
                 ))}
               </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Sensitive Note */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <LockIcon className="size-3.5 text-amber-500" />
+            {t('tasks.sensitiveNote.label')}
+          </Label>
+
+          {task.sensitiveNote && (
+            <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+              <span className="text-sm text-amber-700 dark:text-amber-300">
+                {t('tasks.sensitiveNote.hasNote')}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto gap-1.5"
+                onClick={onViewNote}
+              >
+                <EyeIcon className="size-3.5" />
+                {t('tasks.sensitiveNote.viewNote')}
+              </Button>
+            </div>
+          )}
+
+          <Textarea
+            value={noteDraft}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            placeholder={t('tasks.sensitiveNote.placeholder')}
+            className="min-h-[60px] resize-none"
+          />
+          <p className="text-xs text-muted-foreground">
+            {t('tasks.sensitiveNote.encryptionWarning')}
+          </p>
+
+          <div className="flex gap-2">
+            {noteDraft.trim() && (
+              <Button size="sm" onClick={handleSaveNote}>
+                {t('tasks.sensitiveNote.save')}
+              </Button>
+            )}
+            {task.sensitiveNote && onClearSensitiveNote && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={onClearSensitiveNote}
+              >
+                {t('common.clear')}
+              </Button>
             )}
           </div>
         </div>

@@ -5,12 +5,13 @@ export type AuditAction =
   | 'UserLoggedOut'
   | 'RoleAssigned'
   | 'RoleRemoved'
-  | 'PiiRevealed'
+  | 'ProtectedDataRevealed'
   | 'TaskCreated'
   | 'TaskCompleted'
   | 'TaskDeleted'
   | 'UserDeactivated'
-  | 'UserReactivated';
+  | 'UserReactivated'
+  | 'SensitiveNoteRevealed';
 
 /** A single audit trail entry. */
 export interface AuditEntry {

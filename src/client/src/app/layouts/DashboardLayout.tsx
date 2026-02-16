@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { KanbanIcon, ListIcon, ShieldIcon } from 'lucide-react';
+import { FlaskConicalIcon, KanbanIcon, ListIcon, ShieldIcon } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Button } from '@/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 import { UserMenu } from '@/domains/auth/components/UserMenu';
+import { DevAccountSwitcher } from '@/domains/auth/components/DevAccountSwitcher';
 import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
@@ -89,6 +92,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1">{children}</main>
+      {import.meta.env.DEV && (
+        <div className="fixed bottom-3 left-3 z-50">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-dashed border-amber-500/30 bg-amber-500/5 text-amber-500 shadow-lg hover:bg-amber-500/10 hover:text-amber-400"
+              >
+                <FlaskConicalIcon className="size-3.5" />
+                <span className="text-xs">Dev</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="start" className="w-72 p-3">
+              <DevAccountSwitcher />
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
       <footer className="pointer-events-none fixed bottom-2 right-3">
         <span className="text-[10px] text-muted-foreground/40 select-none">
           v{__APP_VERSION__}

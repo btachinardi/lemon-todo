@@ -35,7 +35,7 @@ public sealed class AddTagToTaskCommandHandler(ITaskRepository repository, IUnit
         if (result.IsFailure)
             return result;
 
-        await repository.UpdateAsync(task, ct);
+        await repository.UpdateAsync(task, ct: ct);
         await unitOfWork.SaveChangesAsync(ct);
 
         logger.LogInformation("Tag {Tag} added to task {TaskId} successfully", command.Tag, command.TaskId);

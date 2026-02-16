@@ -50,10 +50,16 @@
 - **Account Lockout**: Configurable lockout on failed attempts
 - **Social OAuth**: Google, Microsoft, GitHub, Facebook providers
 - **Source**: [Microsoft Learn - ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity)
-- **CP2 Usage**: `Microsoft.AspNetCore.Identity.EntityFrameworkCore` in Infrastructure, `Microsoft.AspNetCore.Authentication.JwtBearer` in Api
-- **CP2 Architecture**: `ApplicationUser : IdentityUser<Guid>` in Infrastructure (EF-aware), `User` entity in Domain (pure). Deferred JWT bearer options via `AddOptions<JwtBearerOptions>().Configure<IOptions<JwtSettings>>()` for test compatibility.
-- **CP2 Gotcha**: Eager JWT config read in `Program.cs` runs before test factory config overrides → use deferred options pattern
-- **CP2 Security Hardening**: Refresh tokens moved from JSON response body to HttpOnly cookies (`SameSite=Strict`, `Path=/api/auth`, `Secure` in production). Access tokens returned in JSON body only, stored in JS memory (Zustand, no persistence). Silent refresh on page load via cookie. Background `RefreshTokenCleanupService` (hosted service, 6h interval) prevents unbounded table growth.
+
+**CP2 Usage**: `Microsoft.AspNetCore.Identity.EntityFrameworkCore` in Infrastructure, `Microsoft.AspNetCore.Authentication.JwtBearer` in Api
+
+**CP2 Architecture**: `ApplicationUser : IdentityUser<Guid>` in Infrastructure (EF-aware), `User` entity in Domain (pure). Deferred JWT bearer options via `AddOptions<JwtBearerOptions>().Configure<IOptions<JwtSettings>>()` for test compatibility.
+
+**CP2 Gotcha**: Eager JWT config read in `Program.cs` runs before test factory config overrides → use deferred options pattern
+
+**CP2 Security Hardening**: Refresh tokens moved from JSON response body to HttpOnly cookies (`SameSite=Strict`, `Path=/api/auth`, `Secure` in production). Access tokens returned in JSON body only, stored in JS memory (Zustand, no persistence). Silent refresh on page load via cookie. Background `RefreshTokenCleanupService` (hosted service, 6h interval) prevents unbounded table growth.
+
+**CP4 Identity/Domain Separation**: `ApplicationUser` stripped to credential shell (no custom properties). Domain `User` entity now persisted to separate `Users` table with shadow properties (`EmailHash`, `EncryptedEmail`, `EncryptedDisplayName`). Identity's `UserName` field repurposed to store SHA-256 email hash for login lookups via `FindByNameAsync(emailHash)`. `IAuthService` interface split into credential-focused methods (`CreateCredentialsAsync`, `AuthenticateAsync`, `GenerateTokensAsync`). `IUserRepository` handles transparent protected data encryption during `AddAsync(user, email, displayName)`. Admin search now requires exact email (hash match) or partial redacted display name.
 
 ### 1.4 Entity Framework Core 10
 

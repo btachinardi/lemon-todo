@@ -4,10 +4,10 @@ using Serilog.Events;
 namespace LemonDo.Api.Logging;
 
 /// <summary>
-/// Serilog destructuring policy that automatically masks PII properties
+/// Serilog destructuring policy that automatically masks protected data properties
 /// (email, displayName, password) in structured log events.
 /// </summary>
-public sealed class PiiDestructuringPolicy : IDestructuringPolicy
+public sealed class ProtectedDataDestructuringPolicy : IDestructuringPolicy
 {
     private static readonly HashSet<string> SensitivePropertyNames = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -34,7 +34,7 @@ public sealed class PiiDestructuringPolicy : IDestructuringPolicy
     }
 
     /// <summary>
-    /// Masks a scalar value if the property name matches a known PII field.
+    /// Masks a scalar value if the property name matches a known protected data field.
     /// Returns the original value if the property name is not sensitive.
     /// </summary>
     public static LogEventPropertyValue MaskIfSensitive(string propertyName, LogEventPropertyValue value)

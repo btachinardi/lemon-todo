@@ -31,7 +31,7 @@ public sealed class ArchiveTaskCommandHandler(ITaskRepository repository, IUnitO
         if (result.IsFailure)
             return result;
 
-        await repository.UpdateAsync(task, ct);
+        await repository.UpdateAsync(task, ct: ct);
         await unitOfWork.SaveChangesAsync(ct);
 
         logger.LogInformation("Task {TaskId} archived successfully", command.TaskId);

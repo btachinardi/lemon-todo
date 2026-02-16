@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { LoginForm } from '@/domains/auth/components/LoginForm';
+import { DevAccountSwitcher } from '@/domains/auth/components/DevAccountSwitcher';
 
 /** Login page with link to register. */
 export function LoginPage() {
@@ -20,6 +21,7 @@ export function LoginPage() {
           {t('auth.login.createOne')}
         </Link>
       </p>
+      <DevAccountSwitcher />
     </div>
   );
 }

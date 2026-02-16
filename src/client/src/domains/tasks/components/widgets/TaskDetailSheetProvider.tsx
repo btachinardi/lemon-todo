@@ -1,9 +1,11 @@
-import { useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { toastApiError } from '@/lib/toast-helpers';
 import { useTaskQuery, useTasksQuery } from '../../hooks/use-tasks-query';
 import { useUpdateTask, useDeleteTask, useAddTag, useRemoveTag } from '../../hooks/use-task-mutations';
+import { useViewTaskNote } from '../../hooks/use-view-task-note';
 import { TaskDetailSheet } from './TaskDetailSheet';
+import { TaskNoteRevealDialog } from './TaskNoteRevealDialog';
 
 interface TaskDetailSheetProviderProps {
   taskId: string | null;
@@ -22,6 +24,8 @@ export function TaskDetailSheetProvider({ taskId, onClose }: TaskDetailSheetProv
   const deleteTask = useDeleteTask();
   const addTag = useAddTag();
   const removeTag = useRemoveTag();
+  const viewNote = useViewTaskNote();
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
 
   const task = taskQuery.data;
 
@@ -115,22 +119,74 @@ export function TaskDetailSheetProvider({ taskId, onClose }: TaskDetailSheetProv
     });
   }, [task, deleteTask, onClose]);
 
+  const handleUpdateSensitiveNote = useCallback(
+    (note: string) => {
+      if (!task) return;
+      updateTask.mutate(
+        { id: task.id, request: { sensitiveNote: note } },
+        { onError: (e: Error) => toastApiError(e, 'Could not save note.') },
+      );
+    },
+    [task, updateTask],
+  );
+
+  const handleClearSensitiveNote = useCallback(() => {
+    if (!task) return;
+    updateTask.mutate(
+      { id: task.id, request: { clearSensitiveNote: true } },
+      { onError: (e: Error) => toastApiError(e, 'Could not clear note.') },
+    );
+  }, [task, updateTask]);
+
+  const handleViewNote = useCallback(() => {
+    setNoteDialogOpen(true);
+  }, []);
+
+  const handleRevealNote = useCallback(
+    (password: string) => {
+      if (!task) return;
+      viewNote.mutate({ id: task.id, password });
+    },
+    [task, viewNote],
+  );
+
+  const handleNoteDialogOpenChange = useCallback(
+    (open: boolean) => {
+      setNoteDialogOpen(open);
+      if (!open) viewNote.reset();
+    },
+    [viewNote],
+  );
+
   return (
-    <TaskDetailSheet
-      taskId={taskId}
-      onClose={onClose}
-      task={task}
-      isLoading={taskQuery.isLoading}
-      isError={taskQuery.isError}
-      onUpdateTitle={handleUpdateTitle}
-      onUpdateDescription={handleUpdateDescription}
-      onUpdatePriority={handleUpdatePriority}
-      onUpdateDueDate={handleUpdateDueDate}
-      onAddTag={handleAddTag}
-      onRemoveTag={handleRemoveTag}
-      onDelete={handleDelete}
-      isDeleting={deleteTask.isPending}
-      allTags={allTags}
-    />
+    <>
+      <TaskDetailSheet
+        taskId={taskId}
+        onClose={onClose}
+        task={task}
+        isLoading={taskQuery.isLoading}
+        isError={taskQuery.isError}
+        onUpdateTitle={handleUpdateTitle}
+        onUpdateDescription={handleUpdateDescription}
+        onUpdatePriority={handleUpdatePriority}
+        onUpdateDueDate={handleUpdateDueDate}
+        onAddTag={handleAddTag}
+        onRemoveTag={handleRemoveTag}
+        onDelete={handleDelete}
+        isDeleting={deleteTask.isPending}
+        allTags={allTags}
+        onUpdateSensitiveNote={handleUpdateSensitiveNote}
+        onClearSensitiveNote={handleClearSensitiveNote}
+        onViewNote={handleViewNote}
+      />
+      <TaskNoteRevealDialog
+        open={noteDialogOpen}
+        onOpenChange={handleNoteDialogOpenChange}
+        onReveal={handleRevealNote}
+        isPending={viewNote.isPending}
+        error={viewNote.error}
+        revealedNote={viewNote.data?.note ?? null}
+      />
+    </>
   );
 }

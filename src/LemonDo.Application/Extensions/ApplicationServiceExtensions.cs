@@ -5,6 +5,7 @@ using LemonDo.Application.Administration.Commands;
 using LemonDo.Application.Administration.EventHandlers;
 using LemonDo.Application.Administration.Queries;
 using LemonDo.Application.Boards.Commands;
+using LemonDo.Application.Boards.EventHandlers;
 using LemonDo.Application.Common;
 using LemonDo.Application.Identity.Commands;
 using LemonDo.Application.Tasks.Commands;
@@ -34,6 +35,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<RemoveTagFromTaskCommandHandler>();
         services.AddScoped<ArchiveTaskCommandHandler>();
         services.AddScoped<BulkCompleteTasksCommandHandler>();
+        services.AddScoped<ViewTaskNoteCommandHandler>();
 
         // Board command handlers
         services.AddScoped<AddColumnCommandHandler>();
@@ -62,7 +64,11 @@ public static class ApplicationServiceExtensions
         services.AddScoped<RemoveRoleCommandHandler>();
         services.AddScoped<DeactivateUserCommandHandler>();
         services.AddScoped<ReactivateUserCommandHandler>();
-        services.AddScoped<RevealPiiCommandHandler>();
+        services.AddScoped<RevealProtectedDataCommandHandler>();
+        services.AddScoped<RevealTaskNoteCommandHandler>();
+
+        // Board event handlers (downstream context reacting to upstream events)
+        services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, CreateDefaultBoardOnUserRegistered>();
 
         // Audit event handlers
         services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, AuditOnUserRegistered>();

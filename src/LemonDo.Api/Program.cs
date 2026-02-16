@@ -9,7 +9,9 @@ using LemonDo.Application.Common;
 using LemonDo.Application.Extensions;
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Boards.Repositories;
+using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
+using LemonDo.Application.Identity.Commands;
 using LemonDo.Infrastructure.Extensions;
 using LemonDo.Infrastructure.Identity;
 using LemonDo.Infrastructure.Persistence;
@@ -33,8 +35,8 @@ builder.Services.AddSerilog(configuration => configuration
     .Enrich.WithProperty("Application", "LemonDo.Api")
     .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
     .Enrich.WithProperty("MachineName", System.Environment.MachineName)
-    .Enrich.With<PiiMaskingEnricher>()
-    .Destructure.With<PiiDestructuringPolicy>());
+    .Enrich.With<ProtectedDataMaskingEnricher>()
+    .Destructure.With<ProtectedDataDestructuringPolicy>());
 
 builder.AddServiceDefaults();
 builder.Services.AddOpenApi();
@@ -161,6 +163,7 @@ try
     // Seed development test accounts (one per role)
     if (app.Environment.IsDevelopment())
     {
+        var registerHandler = scope.ServiceProvider.GetRequiredService<RegisterUserCommandHandler>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
         (string Email, string Password, string DisplayName, string Role)[] devAccounts =
@@ -172,37 +175,32 @@ try
 
         foreach (var (email, password, displayName, role) in devAccounts)
         {
-            if (await userManager.FindByEmailAsync(email) is not null)
+            // Check if user already exists via email hash
+            var emailHash = ProtectedDataHasher.HashEmail(email);
+            if (await userManager.FindByNameAsync(emailHash) is not null)
                 continue;
 
-            var appUser = new ApplicationUser
-            {
-                Id = Guid.NewGuid(),
-                UserName = email,
-                Email = email,
-                DisplayName = displayName,
-            };
+            // RegisterUserCommandHandler creates credentials + domain User + board (via event)
+            var command = new RegisterUserCommand(email, password, displayName);
+            var registerResult = await registerHandler.HandleAsync(command);
 
-            var createResult = await userManager.CreateAsync(appUser, password);
-            if (createResult.Succeeded)
+            if (registerResult.IsSuccess)
             {
-                await userManager.AddToRoleAsync(appUser, Roles.User);
+                // Assign additional role beyond "User" if needed
                 if (role != Roles.User)
-                    await userManager.AddToRoleAsync(appUser, role);
-
-                // Create a default board for the dev user
-                var devBoard = Board.CreateDefault(UserId.Reconstruct(appUser.Id));
-                await boardRepo.AddAsync(devBoard.Value);
-                await db.SaveChangesAsync();
+                {
+                    var appUser = await userManager.FindByNameAsync(emailHash);
+                    if (appUser is not null)
+                        await userManager.AddToRoleAsync(appUser, role);
+                }
 
                 startupLogger.LogInformation(
-                    "Seeded dev account {Email} with role {Role}", email, role);
+                    "Seeded dev account with role {Role}", role);
             }
             else
             {
                 startupLogger.LogWarning(
-                    "Failed to seed dev account {Email}: {Errors}",
-                    email, string.Join(", ", createResult.Errors.Select(e => e.Description)));
+                    "Failed to seed dev account: {Error}", registerResult.Error.Code);
             }
         }
     }

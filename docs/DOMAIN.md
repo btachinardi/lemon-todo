@@ -37,7 +37,7 @@
 | **Identity** | Core | User registration, authentication, authorization, roles |
 | **Task** | Core | Task lifecycle, status management, metadata (title, description, priority, tags, due date) |
 | **Board** | Core | Kanban boards, columns, card placement, spatial ordering of tasks |
-| **Administration** | Supporting | Audit logs, user management, system health, PII handling |
+| **Administration** | Supporting | Audit logs, user management, system health, protected data handling |
 | **Onboarding** | Supporting | User journey tracking, guided tours, progress tracking |
 | **Analytics** | Generic | Event collection, funnel tracking, metrics aggregation |
 | **Notification** | Generic | Email sending, in-app notifications, push notifications |
@@ -61,77 +61,93 @@
 
 ## 2. Identity Context
 
-### 2.1 Entities
+### 2.1 Architecture Split
 
-#### User (Aggregate Root)
+**As of CP4 (v0.4.0)**, Identity is split into two tables with shared IDs:
+
+**AspNetUsers** (ASP.NET Identity — credentials + lockout + roles):
+- Managed by `UserManager<ApplicationUser>`, `SignInManager`, `RoleManager`
+- Handles: password hashing, account lockout, failed login tracking, role membership
+- `UserName` stores SHA-256 email hash for login lookups
+- No custom user profile data
+
+**Users** (Domain — profile + protected data + business state):
+- Managed by `IUserRepository` in domain layer
+- Stores: redacted display values, encrypted protected data shadow properties, deactivation state
+- `EmailHash` unique index for exact-email admin searches
+- All business logic (deactivate/reactivate, profile updates)
+
+### 2.2 Entities
+
+#### User (Aggregate Root, Domain Layer)
 
 ```
 User
-├── Id: UserId (value object)
-├── Email: Email (value object)
-├── DisplayName: DisplayName (value object)
-├── PasswordHash: string (nullable, for email auth)
-├── Roles: IReadOnlyList<Role>
-├── MfaEnabled: bool
-├── MfaSecret: string? (encrypted)
-├── IsEmailVerified: bool
-├── IsActive: bool
-├── LockoutEnd: DateTimeOffset?
-├── FailedLoginAttempts: int
+├── Id: UserId (value object, shared with AspNetUsers.Id)
+├── RedactedEmail: string (display value, e.g., "j***@example.com")
+├── RedactedDisplayName: string (display value, e.g., "J***n")
+├── IsDeactivated: bool
 ├── CreatedAt: DateTimeOffset
 ├── UpdatedAt: DateTimeOffset
-├── LastLoginAt: DateTimeOffset?
+│
+├── Shadow Properties (via UserRepository):
+│   ├── EmailHash: string (SHA-256 of normalized email)
+│   ├── EncryptedEmail: string (AES-256-GCM ciphertext)
+│   └── EncryptedDisplayName: string (AES-256-GCM ciphertext)
 │
 ├── Methods:
-│   ├── Register(email, displayName, passwordHash?) -> UserRegisteredEvent
-│   ├── VerifyEmail() -> EmailVerifiedEvent
-│   ├── Login(passwordHash) -> Result<LoginSucceededEvent, LoginFailedEvent>
-│   ├── AssignRole(role) -> RoleAssignedEvent
-│   ├── RemoveRole(role) -> RoleRemovedEvent
-│   ├── EnableMfa(secret) -> MfaEnabledEvent
-│   ├── DisableMfa() -> MfaDisabledEvent
-│   ├── Deactivate() -> UserDeactivatedEvent
-│   ├── Reactivate() -> UserReactivatedEvent
-│   ├── RecordFailedLogin() -> AccountLockedEvent?
-│   └── ResetPassword(newPasswordHash) -> PasswordResetEvent
+│   ├── Create(email: Email, displayName: DisplayName) -> UserRegisteredEvent
+│   │       (validates VOs, stores redacted forms, raises event)
+│   ├── Reconstitute(id, redactedEmail, redactedDisplayName, isDeactivated)
+│   │       (for persistence reload, bypasses validation)
+│   ├── Deactivate() -> Result<DomainError>
+│   │       (business rule: cannot deactivate already-deactivated user)
+│   └── Reactivate() -> Result<DomainError>
+│       (business rule: cannot reactivate active user)
 │
 └── Invariants:
-    ├── Email must be valid format
-    ├── DisplayName must be 1-100 characters
-    ├── Cannot assign duplicate roles
-    ├── Cannot login if deactivated
-    ├── Lockout after 5 failed attempts for 15 minutes
-    └── MFA secret must be set before enabling MFA
+    ├── Email must be valid format (validated during Create via Email VO)
+    ├── DisplayName must be 2-100 characters (validated during Create via DisplayName VO)
+    ├── RedactedEmail/RedactedDisplayName are always derived from validated VOs
+    ├── Cannot deactivate twice or reactivate twice
+    └── Encrypted shadow properties managed by repository (domain unaware)
 ```
 
-#### Role (Entity)
+#### ApplicationUser (Infrastructure Layer, ASP.NET Identity)
 
 ```
-Role
-├── Id: RoleId
-├── Name: RoleName (value object: User, Admin, SystemAdmin)
-├── Permissions: IReadOnlySet<Permission>
-│
-└── Invariants:
-    ├── Name must be one of predefined values
-    └── SystemAdmin inherits all Admin permissions
+ApplicationUser : IdentityUser<Guid>
+├── Id: Guid (shared with domain User.Id)
+├── UserName: string (stores SHA-256 email hash)
+├── PasswordHash: string (Identity-managed)
+├── SecurityStamp: string (Identity-managed)
+├── LockoutEnd: DateTimeOffset? (Identity-managed)
+├── AccessFailedCount: int (Identity-managed)
+└── [All other Identity built-in fields]
+
+No custom properties. Credentials and lockout ONLY.
 ```
 
-### 2.2 Value Objects
+### 2.3 Value Objects
 
 ```
 UserId          -> Guid wrapper
-Email           -> Validated email string (RFC 5322)
-DisplayName     -> Non-empty string, 1-100 chars, trimmed
-RoleName        -> Enum: User, Admin, SystemAdmin
-Permission      -> Enum: ManageTasks, ViewAuditLog, ManageUsers, RevealPii, ViewSystemHealth
-RefreshToken    -> Token string + expiration
+Email           -> Validated email string (RFC 5322), implements IProtectedData
+                   Redacted property: "j***@example.com" (first char + domain)
+DisplayName     -> Non-empty string, 2-100 chars, trimmed, implements IProtectedData
+                   Redacted property: "J***n" (first + last char)
+ProtectedDataRevealReason -> Enum: SupportTicket, LegalRequest, AccountRecovery,
+                                   SecurityInvestigation, DataSubjectRequest,
+                                   ComplianceAudit, Other
+SystemProtectedDataAccessReason -> Enum: TransactionalEmail, PasswordResetEmail,
+                                         AccountVerificationEmail, DataExport, SystemMigration
 ```
 
-### 2.3 Domain Events
+### 2.4 Domain Events
 
 ```
-UserRegisteredEvent         { UserId, Email, Method: Email|Google|GitHub }
+UserRegisteredEvent         { UserId }
+                            (No protected data — event handlers load user data via repository if needed)
 EmailVerifiedEvent          { UserId }
 LoginSucceededEvent         { UserId, Method, IpAddress }
 LoginFailedEvent            { Email, IpAddress, Reason }
@@ -141,18 +157,30 @@ RoleRemovedEvent            { UserId, RoleName, RemovedBy }
 MfaEnabledEvent             { UserId }
 MfaDisabledEvent            { UserId }
 UserDeactivatedEvent        { UserId, DeactivatedBy }
+UserReactivatedEvent        { UserId, ReactivatedBy }
 PasswordResetEvent          { UserId }
 ```
 
-### 2.4 Use Cases
+### 2.5 Use Cases
 
 ```
 Commands:
-├── RegisterUserCommand          { Email, DisplayName, Password?, OAuthProvider? }
-├── VerifyEmailCommand           { Token }
-├── LoginCommand                 { Email, Password }
-├── LoginWithOAuthCommand        { Provider, OAuthCode }
+├── RegisterUserCommand          { Email, DisplayName, Password }
+│       → Validates Email/DisplayName VOs, creates domain User,
+│         creates Identity credentials (emailHash + password),
+│         stores User with encrypted protected data, creates default board,
+│         returns AuthResult with redacted values
+├── LoginUserCommand             { Email, Password }
+│       → Authenticates via Identity (hash-based lookup),
+│         loads domain User for profile, generates tokens,
+│         returns AuthResult with redacted values
 ├── RefreshTokenCommand          { RefreshToken }
+│       → Validates refresh token via Identity,
+│         loads domain User for profile, generates new tokens,
+│         returns AuthResult with redacted values
+├── LogoutCommand                { RefreshToken }
+│       → Revokes refresh token in Identity
+├── VerifyEmailCommand           { Token }
 ├── RequestPasswordResetCommand  { Email }
 ├── ResetPasswordCommand         { Token, NewPassword }
 ├── AssignRoleCommand            { UserId, RoleName }  [SystemAdmin only]
@@ -160,25 +188,96 @@ Commands:
 ├── EnableMfaCommand             { UserId, TotpCode }
 ├── DisableMfaCommand            { UserId, TotpCode }
 ├── DeactivateUserCommand        { UserId }            [SystemAdmin only]
+│       → Domain User.Deactivate() + Identity lockout (DateTimeOffset.MaxValue)
+└── ReactivateUserCommand        { UserId }            [SystemAdmin only]
+        → Domain User.Reactivate() + Identity lockout cleared
 
 Queries:
-├── GetCurrentUserQuery          {} -> UserDto
+├── GetCurrentUserQuery          {} -> UserDto (loads from IUserRepository)
 ├── GetUserByIdQuery             { UserId } -> UserDto  [Admin+]
-├── ListUsersQuery               { Page, PageSize, Search? } -> PagedResult<UserDto>  [Admin+]
+├── ListUsersAdminQuery          { Page, PageSize, Search?, Role? } -> PagedResult<AdminUserDto>  [Admin+]
+│       (Search: exact email via hash match, or partial redacted display name)
 └── ValidateMfaCodeQuery         { UserId, TotpCode } -> bool
 ```
 
-### 2.5 Repository Interface
+### 2.6 Repository Interface
 
 ```csharp
+/// <summary>
+/// Repository for domain User entity. Handles transparent protected data encryption via EF shadow properties.
+/// </summary>
 public interface IUserRepository
 {
+    /// <summary>Loads user by ID. Returns null if not found.</summary>
     Task<User?> GetByIdAsync(UserId id, CancellationToken ct);
-    Task<User?> GetByEmailAsync(Email email, CancellationToken ct);
-    Task<IReadOnlyList<User>> ListAsync(int page, int pageSize, string? search, CancellationToken ct);
-    Task<int> CountAsync(string? search, CancellationToken ct);
-    Task AddAsync(User user, CancellationToken ct);
+
+    /// <summary>
+    /// Persists a new domain User with encrypted protected data.
+    /// Repository computes EmailHash, encrypts plaintext VOs, stores shadow properties.
+    /// </summary>
+    Task AddAsync(User user, Email email, DisplayName displayName, CancellationToken ct);
+
+    /// <summary>Updates an existing user (for deactivation/reactivation).</summary>
     Task UpdateAsync(User user, CancellationToken ct);
+}
+```
+
+### 2.7 Anti-Corruption Layer (IAuthService)
+
+```csharp
+/// <summary>
+/// ACL port for credential operations. Handles ONLY authentication and authorization.
+/// User profile data is managed by IUserRepository.
+/// </summary>
+public interface IAuthService
+{
+    /// <summary>Creates Identity credentials (password hash + lockout config). No user data.</summary>
+    Task<Result<DomainError>> CreateCredentialsAsync(
+        UserId userId, string emailHash, string password, CancellationToken ct);
+
+    /// <summary>Authenticates by email (hashed internally) and password. Returns UserId on success.</summary>
+    Task<Result<UserId, DomainError>> AuthenticateAsync(
+        string email, string password, CancellationToken ct);
+
+    /// <summary>Generates JWT access + refresh token for a user. Loads roles from Identity.</summary>
+    Task<AuthTokens> GenerateTokensAsync(UserId userId, CancellationToken ct);
+
+    /// <summary>Validates refresh token, returns UserId + new token pair.</summary>
+    Task<Result<(UserId, AuthTokens), DomainError>> RefreshTokenAsync(
+        string refreshToken, CancellationToken ct);
+
+    /// <summary>Revokes a refresh token (idempotent).</summary>
+    Task<Result<DomainError>> RevokeRefreshTokenAsync(
+        string refreshToken, CancellationToken ct);
+
+    /// <summary>Verifies a user's password (for break-the-glass re-authentication).</summary>
+    Task<Result<DomainError>> VerifyPasswordAsync(
+        Guid userId, string password, CancellationToken ct);
+}
+```
+
+### 2.8 Protected Data Access Service
+
+```csharp
+/// <summary>
+/// Port for audited protected data decryption. Every call records an audit entry.
+/// This is the ONLY authorized path for decrypting encrypted protected data fields.
+/// </summary>
+public interface IProtectedDataAccessService
+{
+    /// <summary>
+    /// Decrypts protected data for system operations (transactional emails, data export).
+    /// Records audit with AuditAction.ProtectedDataAccessed and null actor (system).
+    /// </summary>
+    Task<Result<DecryptedProtectedData, DomainError>> AccessForSystemAsync(
+        Guid userId, SystemProtectedDataAccessReason reason, string? details, CancellationToken ct);
+
+    /// <summary>
+    /// Decrypts protected data for admin break-the-glass reveal.
+    /// Caller records admin-specific audit with justification + re-auth proof.
+    /// </summary>
+    Task<Result<DecryptedProtectedData, DomainError>> RevealForAdminAsync(
+        Guid userId, CancellationToken ct);
 }
 ```
 
@@ -208,13 +307,14 @@ Task
 ├── DueDate: DateTimeOffset?
 ├── Tags: IReadOnlyList<Tag>
 ├── IsArchived: bool (visibility flag, orthogonal to status)
+├── RedactedSensitiveNote: string? (redacted placeholder "[PROTECTED]" or null)
 ├── IsDeleted: bool (soft delete flag)
 ├── CompletedAt: DateTimeOffset? (set when status becomes Done)
 ├── CreatedAt: DateTimeOffset
 ├── UpdatedAt: DateTimeOffset
 │
 ├── Methods:
-│   ├── Create(ownerId, title, description?, priority?, dueDate?, tags?)
+│   ├── Create(ownerId, title, description?, priority?, dueDate?, tags?, sensitiveNote?)
 │   │       -> TaskCreatedEvent (defaults to TaskStatus.Todo)
 │   ├── SetStatus(status) -> TaskStatusChangedEvent
 │   │       (manages CompletedAt: set when transitioning to Done, cleared when leaving Done)
@@ -228,6 +328,7 @@ Task
 │   ├── SetDueDate(dueDate) -> TaskDueDateChangedEvent
 │   ├── AddTag(tag) -> TaskTagAddedEvent
 │   ├── RemoveTag(tag) -> TaskTagRemovedEvent
+│   ├── UpdateSensitiveNote(note?) -> (note encrypted at rest; only redacted value stored on entity)
 │   ├── Archive() -> TaskArchivedEvent (any status)
 │   ├── Unarchive() -> TaskUnarchivedEvent
 │   └── Delete() -> TaskDeletedEvent (soft delete)
@@ -237,6 +338,7 @@ Task
     ├── Description must be 0-10000 characters
     ├── Cannot archive a deleted task
     ├── Cannot edit a deleted task
+    ├── SensitiveNote max 10,000 chars; encrypted at rest via AES-256-GCM
     ├── Tags are unique per task (no duplicates)
     ├── OwnerId cannot change after creation
     ├── CompletedAt is set when status transitions to Done
@@ -249,6 +351,8 @@ Task
 TaskId          -> Guid wrapper
 TaskTitle       -> Non-empty string, 1-500 chars, trimmed
 TaskDescription -> String, 0-10000 chars
+SensitiveNote   -> Non-empty string, 1-10000 chars, trimmed, implements IProtectedData
+                   Encrypted at rest via AES-256-GCM shadow property; only redacted value on entity
 Tag             -> Non-empty string, 1-50 chars, lowercase, trimmed
 Priority        -> Enum: None, Low, Medium, High, Critical
 TaskStatus      -> Enum: Todo, InProgress, Done (NO Archived — archive is a visibility flag)
@@ -273,10 +377,10 @@ TaskDeletedEvent            { TaskId, DeletedAt }
 
 ```
 Commands:
-├── CreateTaskCommand            { Title, Description?, Priority?, DueDate?, Tags? }
+├── CreateTaskCommand            { Title, Description?, Priority?, DueDate?, Tags?, SensitiveNote? }
 │       → Creates Task (defaults to Todo), then coordinates with Board context
 │         to place card on default board's initial column
-├── UpdateTaskCommand            { TaskId, Title?, Description?, Priority?, DueDate? }
+├── UpdateTaskCommand            { TaskId, Title?, Description?, Priority?, DueDate?, SensitiveNote?, ClearSensitiveNote? }
 ├── AddTagToTaskCommand          { TaskId, Tag }
 ├── RemoveTagFromTaskCommand     { TaskId, Tag }
 ├── CompleteTaskCommand          { TaskId }
@@ -287,8 +391,14 @@ Commands:
 │         to move card to Todo column
 ├── ArchiveTaskCommand           { TaskId }
 ├── DeleteTaskCommand            { TaskId }
-└── BulkCompleteTasksCommand     { TaskIds }
-        → Same as CompleteTaskCommand in a loop
+├── BulkCompleteTasksCommand     { TaskIds }
+│       → Same as CompleteTaskCommand in a loop
+├── ViewTaskNoteCommand          { TaskId, Password }
+│       → Owner re-authenticates to decrypt and view their own sensitive note
+│         Audited as SensitiveNoteRevealed
+└── RevealTaskNoteCommand        { TaskId, Reason, ReasonDetails?, Comments?, AdminPassword }
+        → Admin break-the-glass to decrypt any user's sensitive note
+          Requires justification + password re-auth; audited with full details
 
 Queries:
 ├── GetTaskByIdQuery             { TaskId } -> TaskDto (no columnId/position)
@@ -305,8 +415,10 @@ public interface ITaskRepository
     Task<PagedResult<Task>> ListAsync(
         UserId ownerId, Priority? priority, TaskStatus? status,
         string? searchTerm, int page, int pageSize, CancellationToken ct);
-    Task AddAsync(Task task, CancellationToken ct);
-    Task UpdateAsync(Task task, CancellationToken ct);
+    Task AddAsync(Task task, SensitiveNote? sensitiveNote = null, CancellationToken ct = default);
+    Task UpdateAsync(Task task, SensitiveNote? sensitiveNote = null,
+        bool clearSensitiveNote = false, CancellationToken ct = default);
+    Task<Result<string, DomainError>> GetDecryptedSensitiveNoteAsync(TaskId taskId, CancellationToken ct);
 }
 ```
 
@@ -474,28 +586,30 @@ AuditEntry
 ├── Action: AuditAction (value object / enum)
 ├── ResourceType: string (e.g., "User", "Task")
 ├── ResourceId: string
-├── Details: string (JSON, PII-redacted)
+├── Details: string (JSON, protected-data-redacted)
 ├── IpAddress: string
 ├── UserAgent: string
 │
 └── Invariants:
     ├── Timestamp cannot be in the future
     ├── ActorId must be a valid user
-    └── Details must not contain unredacted PII
+    └── Details must not contain unredacted protected data
 ```
 
 ### 5.2 Value Objects
 
 ```
 AuditEntryId    -> Guid wrapper
-AuditAction     -> Enum: UserRegistered, UserLoggedIn, UserDeactivated,
-                         RoleAssigned, RoleRemoved, PiiRevealed,
+AuditAction     -> Enum: UserRegistered, UserLoggedIn, UserDeactivated, UserReactivated,
+                         RoleAssigned, RoleRemoved, ProtectedDataRevealed, ProtectedDataAccessed,
                          TaskCreated, TaskCompleted, TaskDeleted,
                          DataExported, SettingsChanged
-PiiRevealReason -> Enum: SupportTicket, LegalRequest, AccountRecovery,
-                         SecurityInvestigation, DataSubjectRequest,
-                         ComplianceAudit, Other
-RedactedString  -> Wrapper that stores original (encrypted) + masked version
+ProtectedDataRevealReason -> Enum: SupportTicket, LegalRequest, AccountRecovery,
+                                   SecurityInvestigation, DataSubjectRequest,
+                                   ComplianceAudit, Other
+SystemProtectedDataAccessReason -> Enum: TransactionalEmail, PasswordResetEmail,
+                                         AccountVerificationEmail, DataExport, SystemMigration
+IProtectedData  -> Marker interface with Redacted property (implemented by Email, DisplayName)
 ```
 
 ### 5.3 Use Cases
@@ -503,27 +617,41 @@ RedactedString  -> Wrapper that stores original (encrypted) + masked version
 ```
 Commands:
 ├── RecordAuditEntryCommand      { ActorId, Action, ResourceType, ResourceId, Details, IpAddress }
-├── RevealPiiCommand             { UserId, Reason, ReasonDetails?, Comments?, AdminPassword }
+├── RevealProtectedDataCommand    { UserId, Reason, ReasonDetails?, Comments?, AdminPassword }
 │                                  [SystemAdmin only, break-the-glass]
 │                                  Flow: validate reason → re-authenticate via password →
-│                                        reveal PII → record structured audit (JSON details)
+│                                        reveal protected data → record structured audit (JSON details)
 │                                  If Reason=Other, ReasonDetails is required.
 
 Queries:
 ├── SearchAuditLogQuery          { DateFrom?, DateTo?, ActorId?, Action?, ResourceType?, Page, PageSize }
-├── ListUsersAdminQuery          { Page, PageSize, Search?, Role? } -> PagedResult<AdminUserDto> (PII redacted)
+├── ListUsersAdminQuery          { Page, PageSize, Search?, Role? } -> PagedResult<AdminUserDto> (protected data redacted)
 ├── GetSystemHealthQuery         {} -> SystemHealthDto
 └── GetUserActivityReportQuery   { UserId, DateFrom, DateTo } -> UserActivityDto
 ```
 
-### 5.4 PII Redaction Service
+### 5.4 Protected Data Handling Services
 
 ```
-IPiiRedactionService
-├── RedactEmail(email) -> "s***@example.com"
-├── RedactName(name) -> "S*** L***"
-├── RedactForLog(object) -> object with all PII fields redacted
-├── RevealField(encryptedValue, adminId) -> string + AuditEntry
+IProtectedDataAccessService
+├── AccessForSystemAsync(userId, reason, details?) -> DecryptedProtectedData
+│       → Decrypts encrypted columns from Users table
+│       → Records AuditAction.ProtectedDataAccessed with null actor (system operation)
+│       → Use cases: transactional emails, password resets, data export
+├── RevealForAdminAsync(userId) -> DecryptedProtectedData
+        → Decrypts encrypted columns from Users table
+        → Caller (RevealProtectedDataCommandHandler) records admin-specific audit
+        → Requires justification reason + admin password re-auth
+
+ProtectedDataHasher (static utility)
+└── HashEmail(email) -> SHA-256 hex string (64 chars uppercase)
+        → Normalizes: trim + ToUpperInvariant
+        → Used for Identity.UserName (login lookups) and Users.EmailHash (admin searches)
+
+IProtectedData (marker interface)
+└── Redacted { get; } property
+        → Implemented by Email VO: "j***@example.com" (first char + domain)
+        → Implemented by DisplayName VO: "J***n" (first + last char, or "***" if ≤2 chars)
 ```
 
 ---
@@ -621,7 +749,7 @@ UserNotification
 ├── Channel: NotificationChannel
 ├── SentAt: DateTimeOffset
 ├── ReadAt: DateTimeOffset?
-├── Data: Dictionary<string, string> (template variables, PII-redacted)
+├── Data: Dictionary<string, string> (template variables, protected-data-redacted)
 ```
 
 ### 8.2 Use Cases
@@ -773,9 +901,9 @@ POST   /api/boards/{id}/columns/reorder Reorder columns
 ### Administration Endpoints
 
 ```
-GET    /api/admin/users                List users (PII redacted)    [Admin+]
-GET    /api/admin/users/{id}           Get user detail (redacted)    [Admin+]
-POST   /api/admin/users/{id}/reveal    Reveal PII field             [SystemAdmin]
+GET    /api/admin/users                List users (protected data redacted)    [Admin+]
+GET    /api/admin/users/{id}           Get user detail (redacted)              [Admin+]
+POST   /api/admin/users/{id}/reveal    Reveal protected data field             [SystemAdmin]
 POST   /api/admin/users/{id}/roles     Assign role                  [SystemAdmin]
 DELETE /api/admin/users/{id}/roles/{r}  Remove role                  [SystemAdmin]
 POST   /api/admin/users/{id}/deactivate Deactivate user             [SystemAdmin]
@@ -828,17 +956,17 @@ FluentValidation for all commands. Validation errors return 400 with structured 
 
 All mutations publish domain events. An event handler persists audit entries asynchronously.
 
-### 12.5 PII / PHI Handling
+### 12.5 Protected Data Handling
 
 - All DTOs returned to admin endpoints use `RedactedString` fields by default
-- **Break-the-glass PII reveal** (HIPAA-modeled):
-  - Mandatory justification (`PiiRevealReason` enum + optional comments)
+- **Break-the-glass protected data reveal** (HIPAA-modeled):
+  - Mandatory justification (`ProtectedDataRevealReason` enum + optional comments)
   - Password re-authentication before reveal (MFA step-up planned for future)
   - Structured audit trail with JSON details (reason, details, comments)
   - Time-limited reveal (30 seconds) with client-side countdown UX
 - Task titles and descriptions treated as potential PHI — stripped from audit log entries
-- Tags are categorical labels, not treated as PII/PHI
-- Logs use Serilog destructuring policy to redact PII
+- Tags are categorical labels, not treated as protected data
+- Logs use Serilog destructuring policy to redact protected data
 - Analytics events hash user identifiers
 
 ### 12.6 Error Handling

@@ -2,7 +2,7 @@ namespace LemonDo.Infrastructure.Security;
 
 /// <summary>
 /// Service for encrypting and decrypting individual field values.
-/// Used for PII data at rest (email, display name).
+/// Used for protected data at rest (email, display name).
 /// </summary>
 public interface IFieldEncryptionService
 {

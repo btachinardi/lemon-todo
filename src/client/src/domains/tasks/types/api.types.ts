@@ -8,6 +8,8 @@ export interface CreateTaskRequest {
   /** ISO 8601 date string (date only). */
   dueDate?: string | null;
   tags?: string[];
+  /** Plaintext sensitive note — encrypted at rest by the backend. */
+  sensitiveNote?: string | null;
 }
 
 /**
@@ -22,6 +24,20 @@ export interface UpdateTaskRequest {
   dueDate?: string | null;
   /** Explicitly remove the due date (takes precedence over `dueDate`). */
   clearDueDate?: boolean;
+  /** Plaintext sensitive note — encrypted at rest by the backend. */
+  sensitiveNote?: string | null;
+  /** Explicitly remove the sensitive note. */
+  clearSensitiveNote?: boolean;
+}
+
+/** Payload for `POST /api/tasks/:id/view-note`. */
+export interface ViewTaskNoteRequest {
+  password: string;
+}
+
+/** Response from `POST /api/tasks/:id/view-note`. */
+export interface ViewTaskNoteResponse {
+  note: string;
 }
 
 /** Payload for `POST /api/tasks/:id/move`. Relocates a card on the board. */

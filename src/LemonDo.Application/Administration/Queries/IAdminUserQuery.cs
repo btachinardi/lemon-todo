@@ -9,10 +9,10 @@ using LemonDo.Domain.Common;
 /// </summary>
 public interface IAdminUserQuery
 {
-    /// <summary>Lists users with optional search/role filter, paginated, PII redacted.</summary>
+    /// <summary>Lists users with optional search/role filter, paginated, protected data redacted.</summary>
     Task<PagedResult<AdminUserDto>> ListUsersAsync(
         string? search, string? role, int page, int pageSize, CancellationToken ct = default);
 
-    /// <summary>Gets a single user by ID with redacted PII.</summary>
+    /// <summary>Gets a single user by ID with redacted protected data.</summary>
     Task<Result<AdminUserDto, DomainError>> GetUserByIdAsync(Guid userId, CancellationToken ct = default);
 }

@@ -1,10 +1,10 @@
 namespace LemonDo.Application.Common;
 
 /// <summary>
-/// Utility for redacting PII fields in admin views.
+/// Utility for redacting protected data fields in admin views.
 /// Provides consistent masking for email addresses and names.
 /// </summary>
-public static class PiiRedactor
+public static class ProtectedDataRedactor
 {
     /// <summary>Masks an email address, e.g. "john@example.com" → "j***@example.com".</summary>
     public static string RedactEmail(string email)

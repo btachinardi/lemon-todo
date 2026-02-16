@@ -12,8 +12,11 @@ public sealed class JwtTokenService(IOptions<JwtSettings> settings)
 {
     private readonly JwtSettings _settings = settings.Value;
 
-    /// <summary>Generates a signed JWT access token for the given user data.</summary>
-    public string GenerateAccessToken(Guid userId, string email, string displayName, IList<string> roles)
+    /// <summary>
+    /// Generates a signed JWT access token containing only the user ID and roles.
+    /// No protected data (email, display name) is included in the token.
+    /// </summary>
+    public string GenerateAccessToken(Guid userId, IList<string> roles)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -22,8 +25,6 @@ public sealed class JwtTokenService(IOptions<JwtSettings> settings)
         {
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(ClaimTypes.NameIdentifier, userId.ToString()),
-            new(ClaimTypes.Email, email),
-            new("display_name", displayName),
         };
 
         foreach (var role in roles)

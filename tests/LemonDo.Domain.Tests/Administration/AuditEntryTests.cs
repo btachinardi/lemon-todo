@@ -51,7 +51,7 @@ public sealed class AuditEntryTests
     public void Should_StoreIpAndUserAgent_When_Provided()
     {
         var entry = AuditEntry.Create(
-            Guid.NewGuid(), AuditAction.PiiRevealed, "User", "user-456",
+            Guid.NewGuid(), AuditAction.ProtectedDataRevealed, "User", "user-456",
             ipAddress: "192.168.1.1", userAgent: "Mozilla/5.0");
 
         Assert.AreEqual("192.168.1.1", entry.IpAddress);

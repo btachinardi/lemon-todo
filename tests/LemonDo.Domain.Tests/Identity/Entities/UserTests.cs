@@ -16,8 +16,9 @@ public sealed class UserTests
         var result = User.Create(email, displayName);
 
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual("user@example.com", result.Value.Email.Value);
-        Assert.AreEqual("John Doe", result.Value.DisplayName.Value);
+        Assert.AreEqual(email.Redacted, result.Value.RedactedEmail);
+        Assert.AreEqual(displayName.Redacted, result.Value.RedactedDisplayName);
+        Assert.IsFalse(result.Value.IsDeactivated);
         Assert.AreNotEqual(Guid.Empty, result.Value.Id.Value);
     }
 
@@ -37,8 +38,6 @@ public sealed class UserTests
 
         var registeredEvent = (UserRegisteredEvent)domainEvent;
         Assert.AreEqual(result.Value.Id, registeredEvent.UserId);
-        Assert.AreEqual("user@example.com", registeredEvent.Email);
-        Assert.AreEqual("John Doe", registeredEvent.DisplayName);
     }
 
     [TestMethod]
@@ -58,14 +57,64 @@ public sealed class UserTests
     public void Should_Reconstitute_When_ValidData()
     {
         var id = UserId.New();
-        var email = Email.Create("restored@example.com").Value;
-        var displayName = DisplayName.Create("Restored User").Value;
 
-        var user = User.Reconstitute(id, email, displayName);
+        var user = User.Reconstitute(id, "r***@example.com", "R***d", false);
 
         Assert.AreEqual(id, user.Id);
-        Assert.AreEqual("restored@example.com", user.Email.Value);
-        Assert.AreEqual("Restored User", user.DisplayName.Value);
+        Assert.AreEqual("r***@example.com", user.RedactedEmail);
+        Assert.AreEqual("R***d", user.RedactedDisplayName);
+        Assert.IsFalse(user.IsDeactivated);
         Assert.IsEmpty(user.DomainEvents);
+    }
+
+    [TestMethod]
+    public void Should_Deactivate_When_Active()
+    {
+        var user = CreateActiveUser();
+
+        var result = user.Deactivate();
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsTrue(user.IsDeactivated);
+    }
+
+    [TestMethod]
+    public void Should_FailDeactivation_When_AlreadyDeactivated()
+    {
+        var user = User.Reconstitute(UserId.New(), "t***@example.com", "T***t", isDeactivated: true);
+
+        var result = user.Deactivate();
+
+        Assert.IsTrue(result.IsFailure);
+        Assert.AreEqual("user.deactivation", result.Error.Code);
+    }
+
+    [TestMethod]
+    public void Should_Reactivate_When_Deactivated()
+    {
+        var user = User.Reconstitute(UserId.New(), "t***@example.com", "T***t", isDeactivated: true);
+
+        var result = user.Reactivate();
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsFalse(user.IsDeactivated);
+    }
+
+    [TestMethod]
+    public void Should_FailReactivation_When_NotDeactivated()
+    {
+        var user = CreateActiveUser();
+
+        var result = user.Reactivate();
+
+        Assert.IsTrue(result.IsFailure);
+        Assert.AreEqual("user.reactivation", result.Error.Code);
+    }
+
+    private static User CreateActiveUser()
+    {
+        var email = Email.Create("test@example.com").Value;
+        var displayName = DisplayName.Create("Test User").Value;
+        return User.Create(email, displayName).Value;
     }
 }

@@ -51,7 +51,7 @@ describe('AuditLogRow', () => {
       'UserLoggedOut',
       'RoleAssigned',
       'RoleRemoved',
-      'PiiRevealed',
+      'ProtectedDataRevealed',
       'TaskCreated',
       'TaskCompleted',
       'TaskDeleted',

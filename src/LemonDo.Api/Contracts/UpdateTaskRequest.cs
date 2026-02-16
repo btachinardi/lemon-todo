@@ -6,4 +6,6 @@ public sealed record UpdateTaskRequest(
     string? Description = null,
     string? Priority = null,
     DateTimeOffset? DueDate = null,
-    bool ClearDueDate = false);
+    bool ClearDueDate = false,
+    string? SensitiveNote = null,
+    bool ClearSensitiveNote = false);

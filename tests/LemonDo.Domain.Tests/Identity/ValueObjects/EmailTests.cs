@@ -110,4 +110,42 @@ public sealed class EmailTests
         var email = Email.Create("test@example.com").Value;
         Assert.AreEqual("test@example.com", email.ToString());
     }
+
+    // --- Redacted ---
+
+    [TestMethod]
+    public void Should_RedactEmail_When_StandardFormat()
+    {
+        var email = Email.Create("john@example.com").Value;
+        Assert.AreEqual("j***@example.com", email.Redacted);
+    }
+
+    [TestMethod]
+    public void Should_RedactEmail_When_SingleCharLocalPart()
+    {
+        var email = Email.Create("a@example.com").Value;
+        Assert.AreEqual("***@***", email.Redacted);
+    }
+
+    [TestMethod]
+    public void Should_RedactEmail_When_TwoCharLocalPart()
+    {
+        var email = Email.Create("ab@example.com").Value;
+        Assert.AreEqual("a***@example.com", email.Redacted);
+    }
+
+    [TestMethod]
+    public void Should_PreserveDomain_When_Redacting()
+    {
+        var email = Email.Create("user@long-domain.co.uk").Value;
+        Assert.AreEqual("u***@long-domain.co.uk", email.Redacted);
+    }
+
+    [TestMethod]
+    public void Should_RedactConsistently_When_SameEmail()
+    {
+        var email1 = Email.Create("test@example.com").Value;
+        var email2 = Email.Create("test@example.com").Value;
+        Assert.AreEqual(email1.Redacted, email2.Redacted);
+    }
 }

@@ -19,9 +19,9 @@ import {
 } from 'lucide-react';
 import { TableCell, TableRow } from '@/ui/table';
 import { Progress } from '@/ui/progress';
-import type { AdminUser, RevealedPii, RevealPiiRequest } from '../../types/admin.types';
-import { useRevealPii } from '../../hooks/use-admin-mutations';
-import { PiiRevealDialog } from './PiiRevealDialog';
+import type { AdminUser, RevealedProtectedData, RevealProtectedDataRequest } from '../../types/admin.types';
+import { useRevealProtectedData } from '../../hooks/use-admin-mutations';
+import { ProtectedDataRevealDialog } from './ProtectedDataRevealDialog';
 
 const roleBadgeVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   User: 'secondary',
@@ -40,7 +40,7 @@ interface UserRowProps {
   onReactivate: (userId: string) => void;
 }
 
-/** Single row in the admin user management table with break-the-glass PII reveal. */
+/** Single row in the admin user management table with break-the-glass protected data reveal. */
 export function UserRow({
   user,
   isSystemAdmin,
@@ -51,19 +51,19 @@ export function UserRow({
 }: UserRowProps) {
   const { t } = useTranslation();
   const [revealDialogOpen, setRevealDialogOpen] = useState(false);
-  const [revealedPii, setRevealedPii] = useState<RevealedPii | null>(null);
+  const [revealedData, setRevealedData] = useState<RevealedProtectedData | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState(0);
-  const revealPii = useRevealPii();
+  const revealProtectedData = useRevealProtectedData();
 
-  // Countdown timer: tick every second while PII is revealed
+  // Countdown timer: tick every second while protected data is revealed
   useEffect(() => {
-    if (!revealedPii) return;
+    if (!revealedData) return;
 
     const interval = setInterval(() => {
       setSecondsRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          setRevealedPii(null);
+          setRevealedData(null);
           return 0;
         }
         return prev - 1;
@@ -71,29 +71,29 @@ export function UserRow({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [revealedPii]);
+  }, [revealedData]);
 
-  const handleRevealConfirm = (request: RevealPiiRequest) => {
-    revealPii.mutate(
+  const handleRevealConfirm = (request: RevealProtectedDataRequest) => {
+    revealProtectedData.mutate(
       { userId: user.id, request },
       {
         onSuccess: (data) => {
-          setRevealedPii(data);
+          setRevealedData(data);
           setSecondsRemaining(REVEAL_DURATION_S);
           setRevealDialogOpen(false);
-          revealPii.reset();
+          revealProtectedData.reset();
         },
       },
     );
   };
 
   const handleHide = () => {
-    setRevealedPii(null);
+    setRevealedData(null);
     setSecondsRemaining(0);
   };
 
-  const displayEmail = revealedPii?.email ?? user.email;
-  const displayName = revealedPii?.displayName ?? user.displayName;
+  const displayEmail = revealedData?.email ?? user.email;
+  const displayName = revealedData?.displayName ?? user.displayName;
   const progressPercent = (secondsRemaining / REVEAL_DURATION_S) * 100;
 
   return (
@@ -102,19 +102,19 @@ export function UserRow({
         <TableCell className="font-mono text-xs">{user.id.slice(0, 8)}...</TableCell>
         <TableCell>
           <div>
-            <span className={revealedPii ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
+            <span className={revealedData ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
               {displayEmail}
             </span>
-            {revealedPii && <Progress value={progressPercent} className="mt-1 h-0.5" />}
+            {revealedData && <Progress value={progressPercent} className="mt-1 h-0.5" />}
           </div>
         </TableCell>
         <TableCell>
           <div>
             <div className="flex items-center gap-2">
-              <span className={revealedPii ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
+              <span className={revealedData ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
                 {displayName}
               </span>
-              {revealedPii && (
+              {revealedData && (
                 <div className="flex items-center gap-1">
                   <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700">
                     {t('admin.secureViewer.secondsRemaining', { seconds: secondsRemaining })}
@@ -131,7 +131,7 @@ export function UserRow({
                 </div>
               )}
             </div>
-            {revealedPii && <Progress value={progressPercent} className="mt-1 h-0.5" />}
+            {revealedData && <Progress value={progressPercent} className="mt-1 h-0.5" />}
           </div>
         </TableCell>
         <TableCell>
@@ -162,10 +162,10 @@ export function UserRow({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {!revealedPii && (
+                {!revealedData && (
                   <DropdownMenuItem onClick={() => setRevealDialogOpen(true)}>
                     <EyeIcon className="mr-2 size-4" />
-                    {t('admin.users.revealPii')}
+                    {t('admin.users.revealProtectedData')}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={() => onAssignRole(user)}>
@@ -206,12 +206,12 @@ export function UserRow({
         </TableCell>
       </TableRow>
 
-      <PiiRevealDialog
+      <ProtectedDataRevealDialog
         open={revealDialogOpen}
         onOpenChange={setRevealDialogOpen}
         onReveal={handleRevealConfirm}
-        isPending={revealPii.isPending}
-        error={revealPii.error}
+        isPending={revealProtectedData.isPending}
+        error={revealProtectedData.error}
       />
     </>
   );

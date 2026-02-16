@@ -102,4 +102,42 @@ public sealed class DisplayNameTests
         var name = DisplayName.Create("Test User").Value;
         Assert.AreEqual("Test User", name.ToString());
     }
+
+    // --- Redacted ---
+
+    [TestMethod]
+    public void Should_RedactDisplayName_When_StandardName()
+    {
+        var name = DisplayName.Create("John Doe").Value;
+        Assert.AreEqual("J***e", name.Redacted);
+    }
+
+    [TestMethod]
+    public void Should_RedactDisplayName_When_MinLength()
+    {
+        var name = DisplayName.Create("AB").Value;
+        Assert.AreEqual("***", name.Redacted);
+    }
+
+    [TestMethod]
+    public void Should_RedactDisplayName_When_ThreeChars()
+    {
+        var name = DisplayName.Create("Bob").Value;
+        Assert.AreEqual("B***b", name.Redacted);
+    }
+
+    [TestMethod]
+    public void Should_RedactDisplayName_When_LongName()
+    {
+        var name = DisplayName.Create("Alexander Hamilton").Value;
+        Assert.AreEqual("A***n", name.Redacted);
+    }
+
+    [TestMethod]
+    public void Should_RedactConsistently_When_SameName()
+    {
+        var name1 = DisplayName.Create("Test User").Value;
+        var name2 = DisplayName.Create("Test User").Value;
+        Assert.AreEqual(name1.Redacted, name2.Redacted);
+    }
 }

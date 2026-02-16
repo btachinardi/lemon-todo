@@ -59,7 +59,7 @@ src/
 ├── LemonDo.ServiceDefaults/      # Shared Aspire defaults
 ├── LemonDo.Api/                  # ASP.NET Core API
 │   ├── Endpoints/                # Minimal API endpoint definitions
-│   ├── Middleware/               # Auth, error handling, PII redaction
+│   ├── Middleware/               # Auth, error handling, protected data redaction
 │   └── Program.cs                # App configuration
 ├── LemonDo.Application/          # Use cases layer
 │   ├── Identity/
@@ -89,7 +89,7 @@ src/
 │   │   ├── Configurations/       # EF Core entity configs
 │   │   ├── Repositories/         # Repository implementations
 │   │   └── Migrations/
-│   ├── Services/                 # Email, PII encryption, etc.
+│   ├── Services/                 # Email, protected data encryption, etc.
 │   └── Extensions/               # DI registration
 ```
 
@@ -839,7 +839,7 @@ State management is split by state ownership:
 
 ## 7. Security Guidelines
 
-- Never log passwords, tokens, or PII unredacted
+- Never log passwords, tokens, or protected data unredacted
 - Always validate input at API boundaries
 - Use parameterized queries (EF Core handles this)
 - Set CORS to explicit origins only

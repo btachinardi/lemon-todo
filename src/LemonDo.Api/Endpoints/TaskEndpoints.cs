@@ -26,6 +26,7 @@ public static class TaskEndpoints
         group.MapPost("/{id:guid}/move", MoveTask);
         group.MapPost("/{id:guid}/tags", AddTag);
         group.MapDelete("/{id:guid}/tags/{tag}", RemoveTag);
+        group.MapPost("/{id:guid}/view-note", ViewTaskNote);
         group.MapPost("/bulk/complete", BulkComplete);
 
         return group;
@@ -69,7 +70,8 @@ public static class TaskEndpoints
             request.Description,
             priority,
             request.DueDate,
-            request.Tags);
+            request.Tags,
+            request.SensitiveNote);
 
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(dto => Results.Created($"/api/tasks/{dto.Id}", dto), httpContext: httpContext);
@@ -102,7 +104,9 @@ public static class TaskEndpoints
             request.Description,
             priority,
             request.DueDate,
-            request.ClearDueDate);
+            request.ClearDueDate,
+            request.SensitiveNote,
+            request.ClearSensitiveNote);
 
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(httpContext: httpContext);
@@ -182,6 +186,18 @@ public static class TaskEndpoints
         var command = new RemoveTagFromTaskCommand(id, tag);
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(() => Results.Ok(new { Id = id }), httpContext: httpContext);
+    }
+
+    private static async Task<IResult> ViewTaskNote(
+        ViewTaskNoteCommandHandler handler,
+        Guid id,
+        ViewTaskNoteRequest request,
+        HttpContext httpContext,
+        CancellationToken ct)
+    {
+        var command = new ViewTaskNoteCommand(id, request.Password);
+        var result = await handler.HandleAsync(command, ct);
+        return result.ToHttpResult(note => Results.Ok(new { Note = note }), httpContext: httpContext);
     }
 
     private static async Task<IResult> BulkComplete(

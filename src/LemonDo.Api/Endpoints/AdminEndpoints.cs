@@ -28,7 +28,11 @@ public static class AdminEndpoints
             .RequireAuthorization(Roles.RequireSystemAdmin);
         group.MapPost("/users/{id:guid}/reactivate", ReactivateUser)
             .RequireAuthorization(Roles.RequireSystemAdmin);
-        group.MapPost("/users/{id:guid}/reveal", RevealPii)
+        group.MapPost("/users/{id:guid}/reveal", RevealProtectedData)
+            .RequireAuthorization(Roles.RequireSystemAdmin);
+
+        // Task sensitive note reveal (admin break-the-glass)
+        group.MapPost("/tasks/{taskId:guid}/reveal-note", RevealTaskNote)
             .RequireAuthorization(Roles.RequireSystemAdmin);
 
         // Audit log
@@ -118,17 +122,32 @@ public static class AdminEndpoints
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> RevealPii(
-        RevealPiiCommandHandler handler,
-        Guid id,
-        RevealPiiRequest request,
+    private static async Task<IResult> RevealTaskNote(
+        RevealTaskNoteCommandHandler handler,
+        Guid taskId,
+        RevealTaskNoteRequest request,
         HttpContext httpContext,
         CancellationToken ct)
     {
-        if (!Enum.TryParse<PiiRevealReason>(request.Reason, ignoreCase: true, out var reason))
+        if (!Enum.TryParse<ProtectedDataRevealReason>(request.Reason, ignoreCase: true, out var reason))
             return Results.BadRequest(new { Error = $"Invalid reason: '{request.Reason}'." });
 
-        var command = new RevealPiiCommand(id, reason, request.ReasonDetails, request.Comments, request.Password);
+        var command = new RevealTaskNoteCommand(taskId, reason, request.ReasonDetails, request.Comments, request.Password);
+        var result = await handler.HandleAsync(command, ct);
+        return result.ToHttpResult(note => Results.Ok(new { Note = note }), httpContext: httpContext);
+    }
+
+    private static async Task<IResult> RevealProtectedData(
+        RevealProtectedDataCommandHandler handler,
+        Guid id,
+        RevealProtectedDataRequest request,
+        HttpContext httpContext,
+        CancellationToken ct)
+    {
+        if (!Enum.TryParse<ProtectedDataRevealReason>(request.Reason, ignoreCase: true, out var reason))
+            return Results.BadRequest(new { Error = $"Invalid reason: '{request.Reason}'." });
+
+        var command = new RevealProtectedDataCommand(id, reason, request.ReasonDetails, request.Comments, request.Password);
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(dto => Results.Ok(dto), httpContext: httpContext);
     }

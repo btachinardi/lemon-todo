@@ -35,7 +35,7 @@ public sealed class RemoveTagFromTaskCommandHandler(ITaskRepository repository, 
         if (result.IsFailure)
             return result;
 
-        await repository.UpdateAsync(task, ct);
+        await repository.UpdateAsync(task, ct: ct);
         await unitOfWork.SaveChangesAsync(ct);
 
         logger.LogInformation("Tag {Tag} removed from task {TaskId} successfully", command.Tag, command.TaskId);

@@ -14,6 +14,11 @@ vi.mock('@/domains/auth/components/UserMenu', () => ({
   UserMenu: () => <div data-testid="user-menu" />,
 }));
 
+// Mock DevAccountSwitcher to avoid auth API dependencies
+vi.mock('@/domains/auth/components/DevAccountSwitcher', () => ({
+  DevAccountSwitcher: () => <div data-testid="dev-account-switcher" />,
+}));
+
 describe('DashboardLayout', () => {
   beforeEach(() => {
     useAuthStore.setState({
@@ -75,5 +80,46 @@ describe('DashboardLayout', () => {
     );
 
     expect(screen.getByText('Admin')).toBeInTheDocument();
+  });
+
+  it('should render dev account switcher trigger in development mode', () => {
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Dev')).toBeInTheDocument();
+  });
+
+  it('should hide dev account switcher trigger in production mode', () => {
+    vi.stubEnv('DEV', false);
+
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText('Dev')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('dev-account-switcher')).not.toBeInTheDocument();
+
+    vi.unstubAllEnvs();
   });
 });
