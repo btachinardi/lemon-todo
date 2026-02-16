@@ -48,11 +48,11 @@ jobs:
         image: mcr.microsoft.com/mssql/server:2022-latest
         env:
           ACCEPT_EULA: "Y"
-          MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+          MSSQL_SA_PASSWORD: "YourStr0ngPassw0rd"
         ports:
           - 1433:1433
         options: >-
-          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong!Passw0rd' -Q 'SELECT 1' -C -b"
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStr0ngPassw0rd' -Q 'SELECT 1' -C -b"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -74,7 +74,7 @@ jobs:
       - name: Test with SQL Server
         env:
           TEST_DATABASE_PROVIDER: SqlServer
-          TEST_SQLSERVER_CONNECTION_STRING: "Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
+          TEST_SQLSERVER_CONNECTION_STRING: "Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStr0ngPassw0rd;TrustServerCertificate=True;"
         run: dotnet test --solution src/LemonDo.slnx --no-build -c Release
 
   # ──────────────────────────────────────────────

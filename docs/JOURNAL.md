@@ -1333,7 +1333,7 @@ Each has its own `IDesignTimeDbContextFactory` for `dotnet ef` commands.
 
 2. **Environment variable for SQL Server migration generation**: `dotnet ef` starts Program.cs which defaults to SQLite. Setting `DatabaseProvider=SqlServer` makes the runtime path select the correct provider. The design-time factory alone doesn't suffice because EF tools find both factories (from both assemblies loaded via Api's references) and fall back to the host builder.
 
-3. **Single-quote connection strings in bash**: The `!` in `YourStrong!Passw0rd` triggers bash history expansion inside double quotes. We updated README examples to use `export` with single quotes.
+3. **Avoid `!` in SQL Server passwords on Windows/MSYS2**: The `!` in `YourStrong!Passw0rd` causes login failures when the connection string is passed through bash scripts on Git Bash/MSYS2. Changed to `YourStr0ngPassw0rd` to avoid shell escaping issues entirely.
 
 4. **EF Core Design package stays in Api**: The startup project needs `Microsoft.EntityFrameworkCore.Design` for `dotnet ef` to work, even though the migration projects also have it.
 
@@ -1379,8 +1379,65 @@ A single `./dev` bash script at the project root that wraps all common operation
 1. **Bash over Makefile**: More portable on Windows (Git Bash), better error handling, colored output
 2. **Subcommands with colon-separated variants**: `test backend:sql` reads naturally, avoids flag parsing complexity
 3. **Auto-detect SQL Server**: `./dev docker up` checks if container already exists before starting
-4. **Connection string defaults**: Hardcoded `sa/YourStrong!Passw0rd` with `TEST_SQLSERVER_CONNECTION_STRING` override for CI/custom setups
+4. **Connection string defaults**: Hardcoded `sa/YourStr0ngPassw0rd` with `TEST_SQLSERVER_CONNECTION_STRING` override for CI/custom setups
 5. **Pass-through args**: Extra arguments after the target are forwarded to the underlying tool (e.g., `./dev test backend -- --filter "TaskTitle"`)
+
+---
+
+### CP4 Infrastructure Completion
+
+**Date**: 2026-02-16
+
+Finalized the three remaining infrastructure tasks for CP4:
+
+#### Terraform Azure Infrastructure (CP4.13)
+
+Complete IaC with progressive enhancement across three deployment stages:
+
+| Stage | Cost | What You Get |
+|-------|------|-------------|
+| **MVP** | ~$18/mo | B1 App Service, Basic SQL, Free Static Web App, App Insights |
+| **Resilience** | ~$180/mo | S1 App Service + staging slot, S1 SQL + geo-backup, VNet + private endpoints, Front Door + WAF |
+| **Scale** | ~$1.7K/mo | P2v3 App Service + auto-scale (2-10), P1 SQL + read replica, Premium Redis, CDN |
+
+Nine reusable modules: `app-service`, `sql-database`, `key-vault`, `static-web-app`, `monitoring`, `networking`, `frontdoor`, `redis`, `cdn`. Bootstrap script initializes Azure remote state backend.
+
+#### CI/CD Pipeline (CP4.14)
+
+Six-job GitHub Actions workflow:
+1. **backend-test** — Build + test on SQLite
+2. **backend-test-sqlserver** — Test with SQL Server service container
+3. **frontend-test** — pnpm install + lint + test + build
+4. **docker-build** — Validates Dockerfile builds successfully
+5. **deploy-staging** — On develop push, deploys API to App Service staging slot + frontend to Static Web App
+6. **deploy-production** — On main push, deploys to production with environment approval gate
+
+#### Dockerfile (CP4.15)
+
+Multi-stage build:
+- **Build stage**: SDK image, layer-cached restore, includes all migration assemblies
+- **Runtime stage**: aspnet image, non-root user, curl healthcheck on `/alive`, port 8080
+
+#### Bug Fixes
+
+- **Password normalization**: `YourStrong!Passw0rd` → `YourStr0ngPassw0rd` across all files (deploy.yml, dev CLI, README, test infrastructure). The `!` character caused login failures when passed through Git Bash/MSYS2 scripts.
+- **In-memory SQLite EnsureCreated**: Added `EnsureCreated()` safety net for in-memory SQLite test databases (ephemeral connections don't persist MigrateAsync schema).
+- **Dockerfile migration assemblies**: Added missing `LemonDo.Migrations.Sqlite` and `LemonDo.Migrations.SqlServer` to Docker build (required by API project references).
+- **Dockerfile curl**: Installed curl in runtime image for HEALTHCHECK command.
+
+---
+
+### CP4 Verification Results
+
+| Check | Result |
+|-------|--------|
+| **Backend Build** | 11/11 projects, 0 warnings, 0 errors |
+| **Backend Tests** | 370 passed, 0 failed, 0 skipped |
+| **Frontend Tests** | 243 passed, 0 failed |
+| **Frontend Lint** | Clean |
+| **Frontend Build** | 4 files, 797 KB JS + 71 KB CSS |
+
+**All 16 CP4 tasks complete.**
 
 ---
 

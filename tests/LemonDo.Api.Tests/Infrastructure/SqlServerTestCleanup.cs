@@ -22,7 +22,7 @@ public sealed class SqlServerTestCleanup
         try
         {
             var baseConnStr = Environment.GetEnvironmentVariable("TEST_SQLSERVER_CONNECTION_STRING")
-                ?? "Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;";
+                ?? "Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStr0ngPassw0rd;TrustServerCertificate=True;";
 
             var connBuilder = new SqlConnectionStringBuilder(baseConnStr) { InitialCatalog = "master" };
 

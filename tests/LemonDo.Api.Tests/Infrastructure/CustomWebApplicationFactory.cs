@@ -60,7 +60,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         if (_instanceConnectionString is not null) return _instanceConnectionString;
 
         var baseConnStr = Environment.GetEnvironmentVariable("TEST_SQLSERVER_CONNECTION_STRING")
-            ?? "Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;";
+            ?? "Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStr0ngPassw0rd;TrustServerCertificate=True;";
         var builder = new SqlConnectionStringBuilder(baseConnStr) { InitialCatalog = _instanceDbName };
         _instanceConnectionString = builder.ConnectionString;
         return _instanceConnectionString;
@@ -115,9 +115,14 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         using var scope = host.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<LemonDoDbContext>();
 
-        // Both providers: Program.cs applies migrations via MigrateAsync().
-        // SQLite in-memory gets the schema from the Migrations.Sqlite assembly.
-        // SQL Server gets it from the Migrations.SqlServer assembly.
+        // Program.cs calls MigrateAsync() during host startup, which works for
+        // file-based SQLite and SQL Server. But for in-memory SQLite (test-only),
+        // the connection is ephemeral so we also call EnsureCreated() as a safety net.
+        // EnsureCreated is idempotent — it does nothing if the schema already exists.
+        if (!UseSqlServer)
+        {
+            db.Database.EnsureCreated();
+        }
 
         // Seed all roles
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();

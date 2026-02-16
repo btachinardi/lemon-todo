@@ -144,7 +144,7 @@ The `./dev` CLI handles all SQL Server connection wiring automatically:
 ./dev docker down
 ```
 
-> The default connection uses `sa/YourStrong!Passw0rd` on `localhost:1433`. Override with `TEST_SQLSERVER_CONNECTION_STRING` env var.
+> The default connection uses `sa/YourStr0ngPassw0rd` on `localhost:1433`. Override with `TEST_SQLSERVER_CONNECTION_STRING` env var.
 
 ### Database Migrations
 

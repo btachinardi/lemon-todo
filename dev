@@ -15,7 +15,7 @@ MIGRATIONS_SQLITE="$ROOT_DIR/src/LemonDo.Migrations.Sqlite"
 MIGRATIONS_SQLSERVER="$ROOT_DIR/src/LemonDo.Migrations.SqlServer"
 
 # Default SQL Server connection for local Docker
-DEFAULT_SQL_CONN='Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;'
+DEFAULT_SQL_CONN='Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStr0ngPassw0rd;TrustServerCertificate=True;'
 
 # ── Colors ────────────────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -42,7 +42,7 @@ ensure_sql_server() {
     echo "Start it with:"
     echo "  docker run -d --name lemondo-sqlserver \\"
     echo "    -e 'ACCEPT_EULA=Y' \\"
-    echo "    -e 'MSSQL_SA_PASSWORD=YourStrong!Passw0rd' \\"
+    echo "    -e 'MSSQL_SA_PASSWORD=YourStr0ngPassw0rd' \\"
     echo "    -p 1433:1433 \\"
     echo "    mcr.microsoft.com/mssql/server:2022-latest"
     exit 1
@@ -282,7 +282,7 @@ cmd_docker() {
       else
         docker run -d --name lemondo-sqlserver \
           -e 'ACCEPT_EULA=Y' \
-          -e 'MSSQL_SA_PASSWORD=YourStrong!Passw0rd' \
+          -e 'MSSQL_SA_PASSWORD=YourStr0ngPassw0rd' \
           -p 1433:1433 \
           mcr.microsoft.com/mssql/server:2022-latest
         success "SQL Server started on localhost:1433"

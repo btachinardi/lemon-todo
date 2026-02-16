@@ -162,9 +162,9 @@
 | CP4.10 | Data encryption at rest (PII fields) | DONE | AES-256-GCM field encryption, EncryptedEmail + EncryptedDisplayName columns |
 | CP4.11 | Dual-provider SQL Server support | DONE | DatabaseProvider config, SqlServerTestCleanup, EnsureCreated for SQL Server, 370 tests pass on both |
 | CP4.12 | Dual EF Core migration assemblies | DONE | Migrations.Sqlite + Migrations.SqlServer projects, unconditional MigrateAsync for both providers |
-| CP4.13 | Terraform Azure infrastructure | IN PROGRESS | Bootstrap + 3 stages (MVP, Resilience, Scale), 9 reusable modules |
-| CP4.14 | CI/CD pipeline (GitHub Actions) | IN PROGRESS | Build, test (SQLite + SQL Server), deploy to Azure |
-| CP4.15 | Dockerfile + containerization | IN PROGRESS | Multi-stage Dockerfile for API |
+| CP4.13 | Terraform Azure infrastructure | DONE | Bootstrap + 3 stages (MVP ~$18/mo, Resilience ~$180/mo, Scale ~$1.7K/mo), 9 reusable modules, deployment scripts |
+| CP4.14 | CI/CD pipeline (GitHub Actions) | DONE | 6-job workflow: backend tests (SQLite + SQL Server), frontend (lint + test + build), Docker build, staging + production deploy |
+| CP4.15 | Dockerfile + containerization | DONE | Multi-stage build, non-root user, curl healthcheck, migration assemblies, .dockerignore |
 | CP4.16 | Developer CLI (`./dev`) | DONE | Unified bash script: build, test (SQLite/SQL Server/E2E), lint, start, migrate, docker, verify |
 | | **Deliverable** | | Production-hardened app with observability, compliance, and cloud deployment |
 
@@ -306,7 +306,7 @@
   - Micro-animations: fade-in for kanban cards, draw-check + bounce for completion checkbox
   - New Shadcn/ui primitives: Sheet, Calendar, Popover, Label
   - E2E: 13 new tests (detail sheet, filters, theme toggle) + 5 existing tests fixed for CP3 changes
-- **Checkpoint 4**: IN PROGRESS (Production Hardening)
+- **Checkpoint 4**: DONE (Production Hardening - 370 backend + 243 frontend + 55 E2E = 668 tests)
   - Observability: Serilog structured logging, PII masking, W3C traceparent propagation
   - Security: AES-256-GCM field encryption for PII, SystemAdmin role with authorization policies
   - Audit: Administration bounded context with AuditEntry entity and domain event handlers
@@ -314,7 +314,8 @@
   - PII redaction: Default-masked in admin views, SystemAdmin reveal with audit trail
   - i18n: i18next with en + pt-BR (158 translation keys), LanguageSwitcher component
   - Dual database: SQLite + SQL Server with separate migration assemblies, MigrateAsync for both
-  - Infrastructure: Terraform Azure (bootstrap + 3 stages), CI/CD, Docker
+  - Infrastructure: Terraform Azure (bootstrap + 3 stages, 9 modules), GitHub Actions CI/CD (6 jobs), Docker
+  - Developer CLI: `./dev` script with build, test, lint, start, migrate, docker, verify commands
 - **Checkpoint 5**: NOT STARTED (Advanced & Delight)
 
 ---
