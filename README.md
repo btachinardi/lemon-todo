@@ -58,6 +58,18 @@ dotnet run --project src/LemonDo.AppHost
 
 The Aspire Dashboard URL (with login token) will appear in the console output. From there you can see all service URLs, logs, traces, and metrics.
 
+### Development Test Accounts
+
+In **Development** mode, three test accounts are seeded automatically (one per role):
+
+| Role | Email | Password |
+|------|-------|----------|
+| User | `dev.user@lemondo.dev` | `User1234` |
+| Admin | `dev.admin@lemondo.dev` | `Admin1234` |
+| SystemAdmin | `dev.sysadmin@lemondo.dev` | `SysAdmin1234` |
+
+> These accounts are **only** created when `ASPNETCORE_ENVIRONMENT=Development` (the default for `dotnet run`). They are never seeded in production.
+
 **Running services individually** (if Aspire has issues):
 
 ```bash

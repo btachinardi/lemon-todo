@@ -152,6 +152,55 @@ try
     {
         startupLogger.LogDebug("Default board already exists, skipping seed");
     }
+
+    // Seed development test accounts (one per role)
+    if (app.Environment.IsDevelopment())
+    {
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        (string Email, string Password, string DisplayName, string Role)[] devAccounts =
+        [
+            ("dev.user@lemondo.dev", "User1234", "Dev User", Roles.User),
+            ("dev.admin@lemondo.dev", "Admin1234", "Dev Admin", Roles.Admin),
+            ("dev.sysadmin@lemondo.dev", "SysAdmin1234", "Dev SysAdmin", Roles.SystemAdmin),
+        ];
+
+        foreach (var (email, password, displayName, role) in devAccounts)
+        {
+            if (await userManager.FindByEmailAsync(email) is not null)
+                continue;
+
+            var appUser = new ApplicationUser
+            {
+                Id = Guid.NewGuid(),
+                UserName = email,
+                Email = email,
+                DisplayName = displayName,
+            };
+
+            var createResult = await userManager.CreateAsync(appUser, password);
+            if (createResult.Succeeded)
+            {
+                await userManager.AddToRoleAsync(appUser, Roles.User);
+                if (role != Roles.User)
+                    await userManager.AddToRoleAsync(appUser, role);
+
+                // Create a default board for the dev user
+                var devBoard = Board.CreateDefault(UserId.Reconstruct(appUser.Id));
+                await boardRepo.AddAsync(devBoard.Value);
+                await db.SaveChangesAsync();
+
+                startupLogger.LogInformation(
+                    "Seeded dev account {Email} with role {Role}", email, role);
+            }
+            else
+            {
+                startupLogger.LogWarning(
+                    "Failed to seed dev account {Email}: {Errors}",
+                    email, string.Join(", ", createResult.Errors.Select(e => e.Description)));
+            }
+        }
+    }
 }
 catch (Exception ex)
 {
