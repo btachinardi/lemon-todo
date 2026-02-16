@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
+/** Props for {@link AuthHydrationProvider}. */
 interface AuthHydrationProviderProps {
   children: ReactNode;
 }
@@ -30,7 +31,7 @@ export function AuthHydrationProvider({ children }: AuthHydrationProviderProps) 
         if (response.ok) {
           const data = (await response.json()) as {
             accessToken: string;
-            user: { id: string; email: string; displayName: string };
+            user: { id: string; email: string; displayName: string; roles: string[] };
           };
           useAuthStore.getState().setAuth(data.accessToken, data.user);
         }

@@ -1,12 +1,19 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/ui/badge';
 import { cn } from '@/lib/utils';
 import { TaskStatus } from '../../types/task.types';
 
-const statusConfig: Record<TaskStatus, { label: string; className: string }> = {
-  [TaskStatus.Todo]: { label: 'To Do', className: 'bg-status-todo text-status-todo-foreground' },
-  [TaskStatus.InProgress]: { label: 'In Progress', className: 'bg-status-in-progress text-status-in-progress-foreground' },
-  [TaskStatus.Done]: { label: 'Done', className: 'bg-status-done text-status-done-foreground' },
+const statusStyles: Record<TaskStatus, string> = {
+  [TaskStatus.Todo]: 'bg-status-todo text-status-todo-foreground',
+  [TaskStatus.InProgress]: 'bg-status-in-progress text-status-in-progress-foreground',
+  [TaskStatus.Done]: 'bg-status-done text-status-done-foreground',
+};
+
+const statusKeys: Record<TaskStatus, string> = {
+  [TaskStatus.Todo]: 'tasks.status.todo',
+  [TaskStatus.InProgress]: 'tasks.status.inProgress',
+  [TaskStatus.Done]: 'tasks.status.done',
 };
 
 interface TaskStatusChipProps {
@@ -14,13 +21,16 @@ interface TaskStatusChipProps {
   className?: string;
 }
 
-/** Colored badge displaying the current task lifecycle status. */
+/**
+ * Colored badge displaying the current task lifecycle status.
+ * Memoized — rendered in task card lists.
+ */
 export const TaskStatusChip = memo(function TaskStatusChip({ status, className }: TaskStatusChipProps) {
-  const config = statusConfig[status];
+  const { t } = useTranslation();
 
   return (
-    <Badge variant="outline" className={cn(config.className, className)}>
-      {config.label}
+    <Badge variant="outline" className={cn(statusStyles[status], className)}>
+      {t(statusKeys[status])}
     </Badge>
   );
 });

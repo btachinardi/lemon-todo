@@ -1,8 +1,10 @@
 namespace LemonDo.Infrastructure.Persistence;
 
 using LemonDo.Application.Common;
+using LemonDo.Domain.Administration.Entities;
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Common;
+using LemonDo.Domain.Identity.Entities;
 using LemonDo.Infrastructure.Events;
 using LemonDo.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -40,8 +42,17 @@ public sealed class LemonDoDbContext : IdentityDbContext<ApplicationUser, Identi
     /// <summary>Gets the DbSet for Board entities, including columns and task cards when queried via repository.</summary>
     public DbSet<Board> Boards => Set<Board>();
 
+    /// <summary>
+    /// Gets the DbSet for domain User entities (profile data, separate from Identity).
+    /// Hides <see cref="IdentityDbContext{TUser,TRole,TKey}"/>'s <c>Users</c> which returns Identity's <c>AspNetUsers</c>.
+    /// </summary>
+    public new DbSet<User> Users => Set<User>();
+
     /// <summary>Gets the DbSet for refresh tokens used in JWT authentication.</summary>
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    /// <summary>Gets the DbSet for audit trail entries.</summary>
+    public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
 
     /// <summary>Applies Identity schema and all EF Core entity configurations from this assembly.</summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -55,10 +66,14 @@ public sealed class LemonDoDbContext : IdentityDbContext<ApplicationUser, Identi
     {
         // SQLite doesn't natively support DateTimeOffset. Store as ISO 8601 strings
         // which sort lexicographically correctly and support ORDER BY.
-        configurationBuilder.Properties<DateTimeOffset>()
-            .HaveConversion<string>();
-        configurationBuilder.Properties<DateTimeOffset?>()
-            .HaveConversion<string>();
+        // SQL Server handles DateTimeOffset natively — skip conversion.
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+        {
+            configurationBuilder.Properties<DateTimeOffset>()
+                .HaveConversion<string>();
+            configurationBuilder.Properties<DateTimeOffset?>()
+                .HaveConversion<string>();
+        }
     }
 
     /// <summary>

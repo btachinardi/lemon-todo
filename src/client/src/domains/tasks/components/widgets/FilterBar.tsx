@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SearchIcon, XIcon } from 'lucide-react';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
@@ -36,6 +37,7 @@ export function FilterBar({
   onFilterTagChange,
   onResetFilters,
 }: FilterBarProps) {
+  const { t } = useTranslation();
   const [localSearch, setLocalSearch] = useState(searchTerm);
 
   // Debounce search input (300ms)
@@ -67,7 +69,7 @@ export function FilterBar({
         <Input
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
-          placeholder="Search tasks..."
+          placeholder={t('tasks.filter.searchPlaceholder')}
           className="h-9 pl-9 text-sm"
           aria-label="Search tasks"
         />
@@ -78,7 +80,7 @@ export function FilterBar({
               setLocalSearch('');
               onSearchTermChange('');
             }}
-            aria-label="Clear search"
+            aria-label={t('tasks.filter.clearSearch')}
           >
             <XIcon className="size-3.5" />
           </button>
@@ -93,12 +95,12 @@ export function FilterBar({
           <SelectValue placeholder="Priority" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">All priorities</SelectItem>
+          <SelectItem value="__all__">{t('tasks.filter.allPriorities')}</SelectItem>
           {Object.values(Priority)
             .filter((p) => p !== 'None')
             .map((p) => (
               <SelectItem key={p} value={p}>
-                {p}
+                {t(`tasks.priority.${p.toLowerCase()}`)}
               </SelectItem>
             ))}
         </SelectContent>
@@ -112,10 +114,10 @@ export function FilterBar({
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">All statuses</SelectItem>
+          <SelectItem value="__all__">{t('tasks.filter.allStatuses')}</SelectItem>
           {Object.values(TaskStatus).map((s) => (
             <SelectItem key={s} value={s}>
-              {s === 'InProgress' ? 'In Progress' : s}
+              {t(`tasks.status.${s === 'InProgress' ? 'inProgress' : s.toLowerCase()}`)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -142,7 +144,7 @@ export function FilterBar({
           onClick={handleReset}
         >
           <XIcon className="size-3.5" />
-          Clear
+          {t('common.clear')}
           <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px]">
             {activeFilterCount}
           </Badge>

@@ -16,6 +16,7 @@ export interface UserProfile {
   id: string;
   email: string;
   displayName: string;
+  roles: string[];
 }
 
 /** Response from login, register, and refresh endpoints. Access token in body, refresh token in HttpOnly cookie. */

@@ -12,13 +12,14 @@ using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
-/// <summary>Command to create a new task with optional description, priority, due date, and tags.</summary>
+/// <summary>Command to create a new task with optional description, priority, due date, tags, and sensitive note.</summary>
 public sealed record CreateTaskCommand(
     string Title,
     string? Description,
     Priority Priority = Priority.None,
     DateTimeOffset? DueDate = null,
-    IReadOnlyList<string>? Tags = null);
+    IReadOnlyList<string>? Tags = null,
+    string? SensitiveNote = null);
 
 /// <summary>
 /// Creates a task and places it on the user's default board in the initial (Todo) column.
@@ -32,7 +33,7 @@ public sealed class CreateTaskCommandHandler(
     ILogger<CreateTaskCommandHandler> logger,
     ApplicationMetrics metrics)
 {
-    /// <inheritdoc/>
+    /// <summary>Validates all fields, creates the task entity with optional tags and encrypted sensitive note, places it on the initial board column, and persists all changes atomically.</summary>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(CreateTaskCommand command, CancellationToken ct = default)
     {
         using var activity = ApplicationActivitySource.Source.StartActivity("CreateTask");
@@ -63,6 +64,16 @@ public sealed class CreateTaskCommandHandler(
             }
         }
 
+        // Validate sensitive note if provided
+        SensitiveNote? sensitiveNote = null;
+        if (command.SensitiveNote is not null)
+        {
+            var noteResult = SensitiveNote.Create(command.SensitiveNote);
+            if (noteResult.IsFailure)
+                return Result<TaskDto, DomainError>.Failure(noteResult.Error);
+            sensitiveNote = noteResult.Value;
+        }
+
         // Create task (defaults to Todo status)
         var taskResult = TaskEntity.Create(
             currentUser.UserId,
@@ -70,7 +81,8 @@ public sealed class CreateTaskCommandHandler(
             descResult.Value,
             command.Priority,
             command.DueDate,
-            tags);
+            tags,
+            sensitiveNote);
 
         if (taskResult.IsFailure)
             return Result<TaskDto, DomainError>.Failure(taskResult.Error);
@@ -89,7 +101,7 @@ public sealed class CreateTaskCommandHandler(
         if (placeResult.IsFailure)
             return Result<TaskDto, DomainError>.Failure(placeResult.Error);
 
-        await taskRepository.AddAsync(task, ct);
+        await taskRepository.AddAsync(task, sensitiveNote, ct);
         await boardRepository.UpdateAsync(board, ct);
         await unitOfWork.SaveChangesAsync(ct);
         metrics.TaskCreated();

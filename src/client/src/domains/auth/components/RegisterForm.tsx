@@ -1,15 +1,18 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { ApiRequestError } from '@/lib/api-client';
 import { useRegister } from '../hooks/use-auth-mutations';
 
 interface RegisterFormProps {
+  /** Called after successful authentication and token storage. */
   onSuccess: () => void;
 }
 
 /** Registration form with email, password, and display name. */
 export function RegisterForm({ onSuccess }: RegisterFormProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -28,7 +31,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         onError: (err) => {
           if (err instanceof ApiRequestError) {
             if (err.status === 409) {
-              setError('An account with this email already exists.');
+              setError(t('auth.register.errorExists'));
             } else if (err.apiError.errors) {
               const messages = Object.values(err.apiError.errors).flat();
               setError(messages.join(' '));
@@ -36,7 +39,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
               setError(err.apiError.title);
             }
           } else {
-            setError('Something went wrong. Please try again.');
+            setError(t('common.error.generic'));
           }
         },
       },
@@ -52,12 +55,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       )}
       <div className="space-y-2">
         <label htmlFor="register-name" className="text-sm font-medium text-foreground">
-          Display name
+          {t('auth.fields.displayName')}
         </label>
         <Input
           id="register-name"
           type="text"
-          placeholder="Your name"
+          placeholder={t('auth.fields.displayNamePlaceholder')}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           required
@@ -67,12 +70,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       </div>
       <div className="space-y-2">
         <label htmlFor="register-email" className="text-sm font-medium text-foreground">
-          Email
+          {t('auth.fields.email')}
         </label>
         <Input
           id="register-email"
           type="email"
-          placeholder="you@example.com"
+          placeholder={t('auth.fields.emailPlaceholder')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -81,12 +84,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       </div>
       <div className="space-y-2">
         <label htmlFor="register-password" className="text-sm font-medium text-foreground">
-          Password
+          {t('auth.fields.password')}
         </label>
         <Input
           id="register-password"
           type="password"
-          placeholder="Min. 8 characters"
+          placeholder={t('auth.fields.passwordHint')}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -95,7 +98,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         />
       </div>
       <Button type="submit" className="w-full" disabled={register.isPending}>
-        {register.isPending ? 'Creating account...' : 'Create account'}
+        {register.isPending ? t('auth.register.submitting') : t('auth.register.submit')}
       </Button>
     </form>
   );

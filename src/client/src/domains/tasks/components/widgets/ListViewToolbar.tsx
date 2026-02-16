@@ -1,4 +1,5 @@
 import { CalendarDaysIcon, SplitIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import {
@@ -18,10 +19,10 @@ interface ListViewToolbarProps {
 }
 
 const groupByOptions = [
-  { value: GroupBy.None, label: 'No grouping' },
-  { value: GroupBy.Day, label: 'Day' },
-  { value: GroupBy.Week, label: 'Week' },
-  { value: GroupBy.Month, label: 'Month' },
+  { value: GroupBy.None, key: 'tasks.listToolbar.noGrouping' },
+  { value: GroupBy.Day, key: 'tasks.listToolbar.day' },
+  { value: GroupBy.Week, key: 'tasks.listToolbar.week' },
+  { value: GroupBy.Month, key: 'tasks.listToolbar.month' },
 ] as const;
 
 export function ListViewToolbar({
@@ -30,21 +31,22 @@ export function ListViewToolbar({
   onGroupByChange,
   onSplitCompletedChange,
 }: ListViewToolbarProps) {
+  const { t } = useTranslation();
   return (
     <div
       role="toolbar"
-      aria-label="List view options"
+      aria-label={t('tasks.listToolbar.label')}
       className="flex items-center gap-2"
     >
       <Select value={groupBy} onValueChange={(v) => onGroupByChange(v as GroupBy)}>
-        <SelectTrigger size="sm" aria-label="Group by" className="gap-1.5">
+        <SelectTrigger size="sm" aria-label={t('tasks.listToolbar.groupBy')} className="gap-1.5">
           <CalendarDaysIcon className="size-3.5 text-muted-foreground" />
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {groupByOptions.map((opt) => (
             <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
+              {t(opt.key)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -53,7 +55,7 @@ export function ListViewToolbar({
       <Button
         variant="outline"
         size="sm"
-        aria-label="Split done"
+        aria-label={t('tasks.listToolbar.splitDone')}
         aria-pressed={splitCompleted}
         onClick={() => onSplitCompletedChange(!splitCompleted)}
         className={cn(
@@ -62,7 +64,7 @@ export function ListViewToolbar({
         )}
       >
         <SplitIcon className="size-3.5" />
-        Split done
+        {t('tasks.listToolbar.splitDone')}
       </Button>
     </div>
   );

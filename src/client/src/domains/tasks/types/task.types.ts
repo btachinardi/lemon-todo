@@ -53,6 +53,8 @@ export interface Task {
   isArchived: boolean;
   /** Soft-delete flag -- deleted tasks are excluded from all queries. */
   isDeleted: boolean;
+  /** Redacted placeholder "[PROTECTED]" if a sensitive note exists, or null. */
+  sensitiveNote: string | null;
   /** Set when status transitions to `Done`; cleared on uncomplete. */
   completedAt: string | null;
   createdAt: string;

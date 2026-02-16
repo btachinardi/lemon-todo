@@ -13,7 +13,7 @@ public sealed record RenameColumnCommand(Guid BoardId, Guid ColumnId, string Nam
 /// <summary>Validates the new name and delegates to <see cref="LemonDo.Domain.Boards.Entities.Board.RenameColumn"/>.</summary>
 public sealed class RenameColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork, ILogger<RenameColumnCommandHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Validates the new name, loads the board, renames the column, and persists the change.</summary>
     public async Task<Result<ColumnDto, DomainError>> HandleAsync(RenameColumnCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Renaming column {ColumnId} to {ColumnName} on board {BoardId}", command.ColumnId, command.Name, command.BoardId);

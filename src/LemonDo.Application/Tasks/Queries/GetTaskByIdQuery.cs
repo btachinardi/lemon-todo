@@ -14,7 +14,7 @@ public sealed record GetTaskByIdQuery(Guid TaskId);
 /// <summary>Returns the task as a DTO, or a not-found error.</summary>
 public sealed class GetTaskByIdQueryHandler(ITaskRepository repository, ILogger<GetTaskByIdQueryHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Loads the task and maps it to a DTO, or returns a not-found error if the task doesn't exist.</summary>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(GetTaskByIdQuery query, CancellationToken ct = default)
     {
         logger.LogInformation("Fetching task {TaskId}", query.TaskId);

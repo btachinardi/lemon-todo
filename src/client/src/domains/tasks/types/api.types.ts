@@ -1,6 +1,9 @@
 import type { Priority } from './task.types';
 
-/** Payload for `POST /api/tasks`. Only `title` is required by the backend. */
+/**
+ * Payload for `POST /api/tasks`. Creates a new task and places it on the default board.
+ * Only `title` is required by the backend.
+ */
 export interface CreateTaskRequest {
   title: string;
   description?: string | null;
@@ -8,6 +11,8 @@ export interface CreateTaskRequest {
   /** ISO 8601 date string (date only). */
   dueDate?: string | null;
   tags?: string[];
+  /** Plaintext sensitive note — encrypted at rest by the backend. */
+  sensitiveNote?: string | null;
 }
 
 /**
@@ -22,6 +27,26 @@ export interface UpdateTaskRequest {
   dueDate?: string | null;
   /** Explicitly remove the due date (takes precedence over `dueDate`). */
   clearDueDate?: boolean;
+  /** Plaintext sensitive note — encrypted at rest by the backend. */
+  sensitiveNote?: string | null;
+  /** Explicitly remove the sensitive note. */
+  clearSensitiveNote?: boolean;
+}
+
+/**
+ * Payload for `POST /api/tasks/:id/view-note`.
+ * Re-authenticates the user before decrypting the sensitive note.
+ */
+export interface ViewTaskNoteRequest {
+  password: string;
+}
+
+/**
+ * Response from `POST /api/tasks/:id/view-note`.
+ * Contains the decrypted plaintext note.
+ */
+export interface ViewTaskNoteResponse {
+  note: string;
 }
 
 /** Payload for `POST /api/tasks/:id/move`. Relocates a card on the board. */
@@ -33,12 +58,18 @@ export interface MoveTaskRequest {
   nextTaskId: string | null;
 }
 
-/** Payload for `POST /api/tasks/:id/tags`. */
+/**
+ * Payload for `POST /api/tasks/:id/tags`.
+ * Appends a tag to the task. Silently succeeds if the tag already exists.
+ */
 export interface AddTagRequest {
   tag: string;
 }
 
-/** Payload for `POST /api/tasks/bulk/complete`. */
+/**
+ * Payload for `POST /api/tasks/bulk/complete`.
+ * Marks multiple tasks as complete in a single request.
+ */
 export interface BulkCompleteRequest {
   taskIds: string[];
 }

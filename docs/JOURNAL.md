@@ -1040,11 +1040,499 @@ Third release, covering Checkpoint 3. The app now has dark mode, a filter bar, t
 
 ---
 
+## Checkpoint 4: Production Hardening
+
+**Date: February 16, 2026**
+
+All 10 CP4 items implemented across 10 atomic commits on `feature/cp4-production-hardening`, adding 59 new backend tests and 3 new frontend tests.
+
+### 4.1 What Was Built
+
+**Serilog Structured Logging (CP4.2)**: Replaced built-in logging with Serilog. Added `PiiMaskingEnricher` that auto-masks properties named `Email`, `Password`, `DisplayName` etc. Correlation ID pushed to `LogContext` via middleware. Console + OpenTelemetry sinks configured.
+
+**SystemAdmin Role (CP4.7)**: Third role tier with two authorization policies: `RequireAdminOrAbove` (Admin | SystemAdmin) and `RequireSystemAdmin` (SystemAdmin only). Roles seeded on startup alongside User and Admin.
+
+**Audit Trail (CP4.4)**: New Administration bounded context with `AuditEntry` entity tracking security-relevant actions. Domain event handlers create audit entries for user registration, login, task creation/deletion/completion, role changes, and PII reveals. `IRequestContext` captures IP address and user agent per HTTP request. Paginated `SearchAuditLogQuery` with filters.
+
+**Admin Panel (CP4.5)**: Backend admin endpoints for user management (list, search, assign/remove roles, deactivate/reactivate). Frontend `AdminLayout` with sidebar navigation, `UserManagementView` with paginated table, role badges, action dropdowns, and `RoleAssignmentDialog`. `AdminRoute` guard checks Admin/SystemAdmin roles.
+
+**Data Encryption at Rest (CP4.10)**: `AesFieldEncryptionService` implementing AES-256-GCM with random 12-byte IV prepended to ciphertext. `EncryptedEmail` and `EncryptedDisplayName` columns added to `AspNetUsers` alongside Identity's existing columns (Identity uses `NormalizedEmail` for lookups, so no breaking changes). Key from configuration (`Encryption:FieldEncryptionKey`).
+
+**PII Redaction (CP4.3)**: `PiiRedactor` utility masks emails (`j***@example.com`) and names in admin views by default. SystemAdmin can reveal real values via `POST /api/admin/users/{id}/reveal`, which decrypts encrypted columns and creates a `PiiRevealed` audit entry. UI shows revealed values with amber highlight and 30-second auto-hide.
+
+**Audit Log Viewer (CP4.6)**: `GET /api/admin/audit` endpoint with date range, action type, actor, and resource type filters. Frontend `AuditLogView` with Shadcn Select/Input/Table components and color-coded action badges (green for creates, red for deletes, amber for role changes, purple for PII reveals).
+
+**i18n (CP4.8)**: i18next with `i18next-browser-languagedetector` for automatic language detection. 158 translation keys in `en.json` and `pt-BR.json` organized by domain (`auth.login.title`, `tasks.filter.search`, `admin.users.title`, etc.). All 40+ frontend components updated with `useTranslation()` + `t()`. `LanguageSwitcher` dropdown in dashboard footer. Test setup uses dedicated `i18n-setup.ts` without browser detection.
+
+**Frontend OTel (CP4.1b)**: W3C `traceparent` header (`00-{traceId(32hex)}-{parentId(16hex)}-01`) generated on every API request via `generateTraceparent()` in a dedicated `traceparent.ts` module. Uses native `crypto.getRandomValues()` — zero new npm dependencies.
+
+### 4.2 New Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `Serilog.AspNetCore` | latest | Structured logging framework |
+| `Serilog.Sinks.Console` | latest | Console output with JSON formatting |
+| `Serilog.Sinks.OpenTelemetry` | latest | OTel log pipeline integration |
+| `i18next` | 25.x | Frontend internationalization framework |
+| `react-i18next` | 16.x | React bindings for i18next |
+| `i18next-browser-languagedetector` | 8.x | Browser language auto-detection |
+
+### 4.3 Architecture Additions
+
+**Administration Bounded Context**: New domain context (`LemonDo.Domain.Administration`) with `AuditEntry` entity, `AuditAction` enum, and `IAuditEntryRepository`. Application layer has event handlers (`AuditOnUserRegistered`, `AuditOnTaskCreated`, etc.) and `SearchAuditLogQuery`. This context is read-heavy (audit log search) with append-only writes (event handlers).
+
+**IRequestContext**: Abstracts HTTP request metadata (UserId, IpAddress, UserAgent) for audit entries. Implemented by `HttpRequestContext` in the API layer, injected into command/event handlers.
+
+**Field Encryption Service**: `IFieldEncryptionService` with `Encrypt(plaintext)` / `Decrypt(ciphertext)`. AES-256-GCM implementation with 12-byte random IV + 16-byte authentication tag. Output format: `Base64(IV[12] + Tag[16] + Ciphertext[N])`.
+
+### 4.4 Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Separate encrypted columns (not replacing Identity columns) | Identity uses NormalizedEmail for lookups — encrypting the source column would break authentication |
+| AES-256-GCM over AES-CBC | GCM provides authenticated encryption (tamper detection), CBC requires separate HMAC |
+| Admin views show redacted PII by default | HIPAA-ready: minimum necessary access principle. Reveal is explicit and audited |
+| i18next over react-intl | Simpler API, first-class namespace support, wider ecosystem (language detector, ICU) |
+| Manual traceparent over OTel Browser SDK | OTel Browser SDK adds 200KB+ bundle; manual W3C header is 20 lines and correlates traces end-to-end |
+| Administration as separate bounded context | Audit + admin concerns are orthogonal to Task/Board contexts; separate context prevents coupling |
+
+### 4.5 Gotchas & Lessons
+
+1. **AuthenticationTagMismatchException in .NET 10**: AES-GCM throws `AuthenticationTagMismatchException` (subclass of `CryptographicException`) for tampered data. MSTest 4's `Assert.ThrowsExactly<T>` checks exact type, so `ThrowsExactly<CryptographicException>` fails for tamper tests.
+
+2. **i18next-browser-languagedetector (not languagedetection)**: The npm package name is `i18next-browser-languagedetector` (ends in "or", not "ion").
+
+3. **AuditLogFilters type vs Record<string, ParamValue>**: TypeScript interfaces don't have index signatures. API client's `get()` expects `Record<string, ParamValue>`. Fix: type assertion at the call site.
+
+4. **i18n test setup**: The production i18n config includes browser language detection, which fails in JSDOM (no `navigator.languages`). Tests use a dedicated `i18n-setup.ts` with English-only config and no detection plugins.
+
+### 4.6 Verification
+
+| Check | Result |
+|---|---|
+| **Backend Build** | 9/9 projects, 0 warnings, 0 errors (5.7s) |
+| **Frontend Build** | 2954 modules, 780 KB JS + 68 KB CSS (3.6s) |
+| **Backend Tests** | 321 passed, 0 failed, 0 skipped |
+| **Frontend Tests** | 164 passed, 0 failed (26 test files) |
+| **Frontend Lint** | Clean, no issues |
+
+---
+
+## PII/PHI Break-the-Glass Enhancement
+
+> **Date**: 2026-02-16
+> **Branch**: `develop`
+
+### What Was Built
+
+Added HIPAA-modeled break-the-glass controls to the PII reveal flow. Previously, SystemAdmins could reveal PII with a bare API call and no justification. Now the flow requires:
+
+1. **Mandatory justification**: `PiiRevealReason` enum with 7 values (SupportTicket, LegalRequest, AccountRecovery, SecurityInvestigation, DataSubjectRequest, ComplianceAudit, Other). "Other" requires free-text details.
+2. **Password re-authentication**: Admin must re-enter their account password before PII is revealed. Uses `UserManager.CheckPasswordAsync` (not sign-in) to avoid triggering lockout counters.
+3. **Structured audit trail**: Audit details are stored as JSON (`PiiRevealAuditDetails` record) with reason, details, and comments — enabling compliance reporting and analytics.
+4. **Time-limited secure viewer**: Revealed PII auto-hides after 30 seconds with a visual countdown (progress bar + seconds badge). "Hide" button for early dismissal.
+5. **PHI-safe audit logging**: Task titles (potential PHI) stripped from `AuditOnTaskCreated` handler — only task ID and priority are logged.
+
+### Key Decisions
+
+- **Password re-auth over MFA**: MFA not yet implemented; password provides "something you know" as second factor beyond the session. MFA step-up added to roadmap.
+- **Task titles as PHI**: Completely stripped from audit logs. Hashing isn't useful for audit review, and redaction patterns leak partial info. Task ID in the audit entry allows authorized lookup if needed.
+- **Tags not PHI**: Categorical labels (e.g., "medical") don't identify a person — the association with a user's task creates PHI, already protected behind auth.
+- **30s hardcoded timer**: Security policy should not be user-adjustable. Server is stateless (returns PII once); server-enforced TTL would require time-limited encrypted tokens — deferred.
+
+### Gotchas
+
+- **Rate limiter eager config read**: `builder.Configuration.GetValue()` in Program.cs reads before `WebApplicationFactory` config overrides are applied (same pattern as JWT deferred config issue). Fixed by switching from `AddFixedWindowLimiter` to `AddPolicy` with deferred `IConfiguration` read from `context.RequestServices`.
+- **Radix Select in jsdom**: Radix UI Select portals don't work in jsdom (`target.hasPointerCapture is not a function`). Frontend tests avoid direct Select dropdown interaction — test form state and rendering instead.
+
+---
+
+---
+
+## Identity/Domain Separation: PII Zero-Trust Architecture
+
+**Date**: 2026-02-16
+**Branch**: `feature/pii-zero-trust`
+
+### The Problem
+
+After completing CP4, the architecture had a critical flaw: ASP.NET Identity (`ApplicationUser`) owned ALL user data — `DisplayName`, `CreatedAt`, `IsDeactivated`, `EncryptedEmail`, and `EncryptedDisplayName` lived on the Identity entity. Meanwhile, the domain `User` entity was ephemeral — created during registration but never persisted. It raised `UserRegisteredEvent`, but the event was silently dropped because the entity never reached EF Core's change tracker.
+
+This violated DDD's separation of concerns: Identity should handle **credentials and authorization only**, while the domain layer should own **user profile data and business state**.
+
+### The Architecture Redesign
+
+We split responsibilities across two tables with a shared ID:
+
+**AspNetUsers** (Identity — credentials only):
+- `Id` (PK)
+- `UserName` (stores SHA-256 email hash for lookups)
+- `PasswordHash`, `SecurityStamp`, `LockoutEnd`, `AccessFailedCount` (Identity's built-in fields)
+- All custom user data fields **removed**
+
+**Users** (Domain — profile + PII):
+- `Id` (PK, matches AspNetUsers.Id)
+- `RedactedEmail`, `RedactedDisplayName` (stored, used for display)
+- `EmailHash` (unique index, for hash-based lookups)
+- `EncryptedEmail`, `EncryptedDisplayName` (EF shadow properties, AES-256-GCM ciphertext)
+- `IsDeactivated`, `CreatedAt`, `UpdatedAt` (business state)
+
+### Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **User entity stores redacted strings, not VOs** | `RedactedEmail: string` vs `Email: Email` — storing `"j***@example.com"` in an `Email` VO creates semantic confusion. VOs used during `Create()` for validation, then `.Redacted` values extracted and stored. |
+| **UserRepository handles encryption transparently** | `AddAsync(user, email, displayName)` receives validated VOs, computes hash/redacted/encrypted forms, stores via EF shadow properties. Callers don't see encryption details. |
+| **IAuthService becomes credential-focused** | Removed `RegisterAsync` (returned AuthResult with user data). Now: `CreateCredentialsAsync(userId, emailHash, password)` → no user profile. Handlers orchestrate Identity + domain User separately. |
+| **AuthTokens record separates tokens from user data** | New `AuthTokens(AccessToken, RefreshToken, Roles)` record. Handlers load domain User, generate tokens, combine into `AuthResult` at the last mile. |
+| **Identity.UserName stores email hash** | Identity's `FindByNameAsync(emailHash)` provides O(1) login lookup. No need for a separate `EmailHash` column on `AspNetUsers` — we repurposed an existing indexed field. |
+| **Admin search via exact email hash** | Admin search by partial string no longer works (was searching redacted values). Now: search by exact email (hashed) or partial redacted display name. |
+| **ISensitivePii marker on VOs** | `Email` and `DisplayName` VOs implement `ISensitivePii` with a `Redacted` property. This makes PII awareness a domain-level concern, not an infrastructure detail. |
+| **CreateDefaultBoardOnUserRegistered event handler** | Domain User is now persisted, so `UserRegisteredEvent` is dispatched via `SaveChangesAsync`. Event handler creates default board for new users. |
+
+### Migration Strategy
+
+**EF Migration**: `20260216125919_SeparateUserFromIdentity`
+1. Drop custom columns from `AspNetUsers` (DisplayName, EncryptedEmail, EncryptedDisplayName, CreatedAt, IsDeactivated)
+2. Create `Users` table with all domain user columns plus shadow properties
+3. Add unique index on `Users.EmailHash`
+
+**No data migration needed** — this was implemented fresh on the `feature/pii-zero-trust` branch before any production users existed. In a production rollout scenario, an app-startup migration service would:
+1. Read plaintext columns from existing `AspNetUsers` rows
+2. Encrypt them to populate `Users.EncryptedEmail/EncryptedDisplayName`
+3. Compute `EmailHash` and redacted forms
+4. Insert into `Users` table
+5. Drop the old columns once migration is verified
+
+### Implementation Phases
+
+**Phase 1 (Domain)**: Enhanced `User` entity with `RedactedEmail`/`RedactedDisplayName` (strings), `Deactivate()`/`Reactivate()` methods, `Reconstitute()` for persistence. Created `IUserRepository` with `AddAsync(user, email, displayName)`. Added `ISensitivePii` interface to `Email`/`DisplayName` VOs with `Redacted` property. Created `PiiHasher.HashEmail()` utility.
+
+**Phase 2 (Application)**: Split `IAuthService` into credential-focused methods. Created `AuthTokens` record. Rewrote `RegisterUserCommandHandler` (orchestrates Identity credentials + domain User + board creation), `LoginUserCommandHandler` (auth → load user → tokens), `RefreshTokenCommandHandler` (refresh → load user → tokens). Created `IPiiAccessService` for audited decryption.
+
+**Phase 3 (Infrastructure)**: Stripped `ApplicationUser` to credential shell. Created `UserConfiguration` with shadow properties for `EmailHash`, `EncryptedEmail`, `EncryptedDisplayName`. Implemented `UserRepository` with transparent encryption. Rewrote `AuthService` for hash-based login (`FindByNameAsync(emailHash)`). Rewrote `AdminUserQuery` to join `Users` + Identity. Implemented `PiiAccessService` with `AccessForSystemAsync` (system decryption with audit) and `RevealForAdminAsync` (admin break-the-glass).
+
+**Phase 4 (API + Migration)**: EF migration created. Updated `AuthEndpoints.GetMe` to load from `IUserRepository`. Updated dev seed in `Program.cs` to create dual records (Identity credentials + domain User).
+
+**Phase 5 (Tests)**: Added 22 new tests covering all the new surface area:
+- **P1 unit tests**: `Email.Redacted` (5), `DisplayName.Redacted` (5), `PiiHasher.HashEmail` (5), `RefreshTokenCommandHandler` (3), `CreateDefaultBoardOnUserRegistered` (2)
+- **P2 scenario tests**: Deactivated user login rejection (1), PII reveal audit trail verification (1)
+- **P3 E2E**: Admin PII reveal flow via browser (1 spec file)
+
+Deleted 2 obsolete tests (`CreatedAtMigrationTests.cs`) for a migration workaround that no longer applies.
+
+### Files Changed Summary
+
+**49 files changed** (+2,125 insertions, -460 deletions):
+- 13 new files (IPiiAccessService, IUserRepository, UserRepository, UserConfiguration, PiiAccessService, PiiHasher, ISensitivePii, SystemPiiAccessReason, CreateDefaultBoardOnUserRegistered, AuthTokens, 3 test files, 2 migration files)
+- 24 modified source files (User entity, Email/DisplayName VOs, IAuthService, AuthService, command handlers, AdminUserService, ApplicationUser, JwtTokenService, etc.)
+- 11 modified test files (UserTests, EmailTests, DisplayNameTests, RegisterUserCommandHandlerTests, LoginUserCommandHandlerTests, AdminEndpointsTests, AuthEndpointTests, CustomWebApplicationFactory, etc.)
+- 1 deleted test file (CreatedAtMigrationTests.cs)
+
+### Test Coverage
+
+| Check | Result |
+|-------|--------|
+| **Backend Tests** | **355 passed** (up from 333), 0 failed |
+| **Frontend Tests** | **187 passed**, 0 failed |
+| **E2E Tests** | **56 passed** (up from 55), 0 failed |
+| **Total** | **598 tests** |
+
+### Lessons Learned
+
+1. **Identity owns credentials, domain owns data** — ASP.NET Identity is designed for authentication, not business data. Overloading it with profile fields, PII encryption, and business flags creates coupling and violates the Single Responsibility Principle. The separation makes each layer clearer: Identity handles lockout/passwords/roles, domain User handles lifecycle/deactivation/profile.
+
+2. **EF migration snapshots can interfere with EnsureCreated()** — In theory, `EnsureCreated()` uses the compiled model from `DbContext.OnModelCreating()`, not migration snapshots. In practice, stale migration snapshots caused 84 test failures with "NOT NULL constraint failed: AspNetUsers.CreatedAt" even though `ApplicationUser` had no `CreatedAt` property. Removing the stale migration via `dotnet ef migrations remove` and regenerating resolved it. This may be a .NET 10 behavior change.
+
+3. **Hash-based admin search is a paradigm shift** — Admin search previously used partial plaintext matches (`?search=alice` matched `alice@example.com`). Hash-based lookup requires exact email match (`?search=alice@example.com`). Partial redacted display name search still works (`?search=Ali` matches `A***e`). Tests must store the exact registration email and use it for admin queries.
+
+4. **Shadow properties isolate protected data implementation from domain** — The domain `User` entity has no knowledge of encryption, hashing, or protected data storage details. `UserRepository` uses EF shadow properties (`EmailHash`, `EncryptedEmail`, `EncryptedDisplayName`) to store sensitive data without coupling the domain model to encryption concerns. This preserves domain purity while enabling zero-trust protected data handling. The same pattern was later applied to `TaskRepository` with `EncryptedSensitiveNote`.
+
+5. **IProtectedData makes sensitivity awareness domain-level** — Instead of infrastructure or application layers "knowing" which fields are sensitive and applying redaction/hashing/encryption ad-hoc, the domain VOs themselves declare "I am protected data" via the marker interface and provide their own redaction logic. This centralizes the policy and makes it impossible to forget redaction when adding new protected data fields (e.g., `SensitiveNote` on tasks).
+
+---
+
+## Terminology Rename: PII → ProtectedData
+
+**Date**: 2026-02-16
+**Branch**: `feature/pii-zero-trust`
+
+### Motivation
+
+The term "PII" (Personally Identifiable Information) was too narrow. The same encryption, redaction, and break-the-glass reveal system protects PII, PHI (Protected Health Information), and other sensitive data categories. Renaming to "ProtectedData" makes the system generic and extensible.
+
+### Scope
+
+Pure terminology rename with zero functional changes:
+
+- **Domain**: `ISensitivePii` → `IProtectedData`, `PiiHasher` → `ProtectedDataHasher`, `PiiRevealReason` → `ProtectedDataRevealReason`, `SystemPiiAccessReason` → `SystemProtectedDataAccessReason`, `AuditAction.PiiRevealed` → `ProtectedDataRevealed`
+- **Application**: `IPiiAccessService` → `IProtectedDataAccessService`, `RevealPiiCommand` → `RevealProtectedDataCommand`, `PiiRedactor` → `ProtectedDataRedactor`
+- **Infrastructure**: `PiiAccessService` → `ProtectedDataAccessService`
+- **API**: `PiiDestructuringPolicy` → `ProtectedDataDestructuringPolicy`, `PiiMaskingEnricher` → `ProtectedDataMaskingEnricher`
+- **Frontend**: `PiiRevealDialog` → `ProtectedDataRevealDialog`, i18n keys `piiRevealDialog.*` → `protectedDataRevealDialog.*`
+- **Tests**: All test files renamed to match
+- **Docs**: CHANGELOG, GUIDELINES, DOMAIN, SCENARIOS updated
+- **E2E**: `admin-pii-reveal.spec.ts` updated (file kept, content renamed)
+
+Migration files left untouched (historical records).
+
+---
+
+## Task SensitiveNote Feature
+
+**Date**: 2026-02-16
+**Branch**: `feature/pii-zero-trust`
+
+### Motivation
+
+Tasks often contain sensitive information (medical notes, legal references, confidential details) that shouldn't be visible at rest. The existing ProtectedData infrastructure (AES-256-GCM encryption, break-the-glass reveals, audit trail) provides the perfect foundation for extending encryption to task-level content.
+
+### Design Decisions
+
+1. **Reuse existing encryption infrastructure** — `IFieldEncryptionService` already handles AES-256-GCM encryption/decryption. Tasks reuse the same service rather than duplicating encryption logic.
+
+2. **Shadow property pattern** — Same as User protected data: the domain `Task` entity only stores `RedactedSensitiveNote` (the string `"[PROTECTED]"` or null). The actual encrypted content lives in an EF Core shadow property `EncryptedSensitiveNote`, managed entirely by `TaskRepository`.
+
+3. **Two decryption paths** — Owner re-authentication (password required, audited) via `ViewTaskNoteCommand`, and admin break-the-glass (justification + password required, fully audited) via `RevealTaskNoteCommand`. Both produce `SensitiveNoteRevealed` audit entries.
+
+4. **IProtectedData marker** — `SensitiveNote` implements `IProtectedData` like `Email` and `DisplayName`, making it automatically eligible for the redaction and logging policies.
+
+5. **Frontend: explicit save for notes** — Unlike description (blur-to-save), the sensitive note uses an explicit "Save Note" button since writing encrypted content is a deliberate action. The note textarea is always empty (never shows `[PROTECTED]`) — users write new content to replace, or click "Clear" to remove.
+
+### Implementation Highlights
+
+- **Domain**: `SensitiveNote` value object (max 10K chars), `Task.UpdateSensitiveNote()` mutation, `ITaskRepository` extended with encryption parameters
+- **Infrastructure**: `TaskRepository` encrypts/decrypts via shadow property, new `GetDecryptedSensitiveNoteAsync` method
+- **Application**: `ViewTaskNoteCommand` (owner), `RevealTaskNoteCommand` (admin), updated create/update commands
+- **API**: `POST /api/tasks/:id/view-note`, `POST /api/admin/tasks/:id/reveal-note`, updated create/update contracts
+- **Frontend**: `TaskNoteRevealDialog` (password + 30s countdown), task detail sheet with note section, lock icon on cards
+- **Tests**: 370 backend + 223 frontend = 593 total
+
+---
+
+## CP4 Infrastructure: Dual EF Core Migrations
+
+**Date: February 16, 2026**
+
+### The Problem
+
+When we added SQL Server support in CP4, we used `EnsureCreatedAsync()` for SQL Server and `MigrateAsync()` for SQLite — a pragmatic hack. But `EnsureCreated` doesn't support incremental schema changes, so any future migration would break SQL Server deployments.
+
+### The Solution: Separate Migration Assemblies
+
+EF Core allows only one `ModelSnapshot` per `DbContext` per assembly, and SQLite and SQL Server produce different column types (e.g., `TEXT` vs `datetimeoffset`). We created dedicated migration assemblies:
+
+- **`LemonDo.Migrations.Sqlite`** — houses all 11 SQLite migrations (moved from Infrastructure)
+- **`LemonDo.Migrations.SqlServer`** — houses a single `InitialCreate` migration covering the full schema
+
+Each has its own `IDesignTimeDbContextFactory` for `dotnet ef` commands.
+
+### Key Decisions
+
+1. **Separate assemblies over shared migrations**: EF Core's `ModelSnapshot` is provider-specific. A single assembly would produce SQLite-typed snapshots when adding SQL Server migrations (or vice versa).
+
+2. **Environment variable for SQL Server migration generation**: `dotnet ef` starts Program.cs which defaults to SQLite. Setting `DatabaseProvider=SqlServer` makes the runtime path select the correct provider. The design-time factory alone doesn't suffice because EF tools find both factories (from both assemblies loaded via Api's references) and fall back to the host builder.
+
+3. **Avoid `!` in SQL Server passwords on Windows/MSYS2**: The `!` in `YourStrong!Passw0rd` causes login failures when the connection string is passed through bash scripts on Git Bash/MSYS2. Changed to `YourStr0ngPassw0rd` to avoid shell escaping issues entirely.
+
+4. **EF Core Design package stays in Api**: The startup project needs `Microsoft.EntityFrameworkCore.Design` for `dotnet ef` to work, even though the migration projects also have it.
+
+### Changes Summary
+
+- **New**: `src/LemonDo.Migrations.Sqlite/` (csproj + design-time factory + 23 migration files moved from Infrastructure)
+- **New**: `src/LemonDo.Migrations.SqlServer/` (csproj + design-time factory + generated InitialCreate)
+- **Deleted**: `src/LemonDo.Infrastructure/Migrations/` (moved to Sqlite project)
+- **Deleted**: `src/LemonDo.Infrastructure/Persistence/DesignTimeDbContextFactory.cs`
+- **Modified**: `InfrastructureServiceExtensions.cs` — `MigrationsAssembly(...)` on both provider calls
+- **Modified**: `Program.cs` — unconditional `MigrateAsync()` (removed `EnsureCreatedAsync` hack)
+- **Modified**: Test factory — `MigrationsAssembly` on SQLite re-registration, removed `EnsureCreated`
+- **Result**: 370 backend tests pass on both SQLite and SQL Server; 55/56 E2E pass (1 pre-existing failure)
+
+---
+
+## CP4 Infrastructure: Developer CLI (`./dev`)
+
+**Date: February 16, 2026**
+
+### The Problem
+
+Every common operation required remembering long, provider-specific commands:
+- `dotnet clean src/LemonDo.slnx -v quiet && dotnet build src/LemonDo.slnx`
+- `export TEST_DATABASE_PROVIDER=SqlServer && export TEST_SQLSERVER_CONNECTION_STRING='...' && dotnet test --solution src/LemonDo.slnx`
+- `DatabaseProvider=SqlServer dotnet ef migrations add <Name> --project src/LemonDo.Migrations.SqlServer --startup-project src/LemonDo.Api`
+
+Connection string escaping (`!` in passwords triggers bash history expansion), multiple directory changes for frontend commands, and dual-provider migration generation all added friction.
+
+### The Solution
+
+A single `./dev` bash script at the project root that wraps all common operations:
+
+- **`./dev build`** — clean + build all 11 projects
+- **`./dev test backend:sql`** — automatically sets env vars, checks Docker container, runs tests
+- **`./dev test e2e:sql`** — E2E with SQL Server backend, connection wired automatically
+- **`./dev migrate add <Name>`** — generates migrations for BOTH providers in one command
+- **`./dev verify`** — full verification gate (build + frontend build + all tests + lint)
+- **`./dev docker up/down`** — manages the SQL Server container
+
+### Design Decisions
+
+1. **Bash over Makefile**: More portable on Windows (Git Bash), better error handling, colored output
+2. **Subcommands with colon-separated variants**: `test backend:sql` reads naturally, avoids flag parsing complexity
+3. **Auto-detect SQL Server**: `./dev docker up` checks if container already exists before starting
+4. **Connection string defaults**: Hardcoded `sa/YourStr0ngPassw0rd` with `TEST_SQLSERVER_CONNECTION_STRING` override for CI/custom setups
+5. **Pass-through args**: Extra arguments after the target are forwarded to the underlying tool (e.g., `./dev test backend -- --filter "TaskTitle"`)
+
+---
+
+### CP4 Infrastructure Completion
+
+**Date**: 2026-02-16
+
+Finalized the three remaining infrastructure tasks for CP4:
+
+#### Terraform Azure Infrastructure (CP4.13)
+
+Complete IaC with progressive enhancement across three deployment stages:
+
+| Stage | Cost | What You Get |
+|-------|------|-------------|
+| **MVP** | ~$18/mo | B1 App Service, Basic SQL, Free Static Web App, App Insights |
+| **Resilience** | ~$180/mo | S1 App Service + staging slot, S1 SQL + geo-backup, VNet + private endpoints, Front Door + WAF |
+| **Scale** | ~$1.7K/mo | P2v3 App Service + auto-scale (2-10), P1 SQL + read replica, Premium Redis, CDN |
+
+Nine reusable modules: `app-service`, `sql-database`, `key-vault`, `static-web-app`, `monitoring`, `networking`, `frontdoor`, `redis`, `cdn`. Bootstrap script initializes Azure remote state backend.
+
+#### CI/CD Pipeline (CP4.14)
+
+Six-job GitHub Actions workflow:
+1. **backend-test** — Build + test on SQLite
+2. **backend-test-sqlserver** — Test with SQL Server service container
+3. **frontend-test** — pnpm install + lint + test + build
+4. **docker-build** — Validates Dockerfile builds successfully
+5. **deploy-staging** — On develop push, deploys API to App Service staging slot + frontend to Static Web App
+6. **deploy-production** — On main push, deploys to production with environment approval gate
+
+#### Dockerfile (CP4.15)
+
+Multi-stage build:
+- **Build stage**: SDK image, layer-cached restore, includes all migration assemblies
+- **Runtime stage**: aspnet image, non-root user, curl healthcheck on `/alive`, port 8080
+
+#### Bug Fixes
+
+- **Password normalization**: `YourStrong!Passw0rd` → `YourStr0ngPassw0rd` across all files (deploy.yml, dev CLI, README, test infrastructure). The `!` character caused login failures when passed through Git Bash/MSYS2 scripts.
+- **In-memory SQLite EnsureCreated**: Added `EnsureCreated()` safety net for in-memory SQLite test databases (ephemeral connections don't persist MigrateAsync schema).
+- **Dockerfile migration assemblies**: Added missing `LemonDo.Migrations.Sqlite` and `LemonDo.Migrations.SqlServer` to Docker build (required by API project references).
+- **Dockerfile curl**: Installed curl in runtime image for HEALTHCHECK command.
+
+---
+
+### CP4 Verification Results
+
+| Check | Result |
+|-------|--------|
+| **Backend Build** | 11/11 projects, 0 warnings, 0 errors |
+| **Backend Tests** | 370 passed, 0 failed, 0 skipped |
+| **Frontend Tests** | 243 passed, 0 failed |
+| **Frontend Lint** | Clean |
+| **Frontend Build** | 4 files, 797 KB JS + 71 KB CSS |
+
+**All 16 CP4 tasks complete.**
+
+---
+
+### Azure Deployment: App Service → Container Apps Migration
+
+**Date**: 2026-02-16
+
+#### The Quota Problem
+
+After bootstrapping the Terraform state backend and deploying 12 of 14 resources successfully, the App Service Plan consistently failed — Azure reported **0 VM quota** for all tiers (Basic, Standard, and even Free) in East US 2. We upgraded from Free Trial to Pay-As-You-Go, but quota requests were denied.
+
+#### The Solution: Azure Container Apps
+
+Container Apps run on a consumption-based model that **doesn't require VM quotas**. Key advantages over B1 App Service for our MVP:
+
+| Capability | App Service (B1) | Container Apps |
+|------------|------------------|----------------|
+| Auto-scaling | No (fixed 1 instance) | Yes (0-N replicas) |
+| Health probes | Health check path | Liveness + Readiness + Startup |
+| Zero-downtime deploy | Only with slots (Stage 2+) | Built-in via revisions |
+| Cost | ~$13/month fixed | Pay-per-use (cheaper for MVP) |
+| Observability | App Insights | App Insights + Log Analytics |
+
+#### Infrastructure Changes
+
+Created `infra/modules/container-app/` with:
+- **Azure Container Registry (Basic)** — stores Docker images
+- **Container App Environment** — managed Kubernetes with Log Analytics integration
+- **Container App** — runs the API with secrets, health probes, and managed identity
+
+Updated all three stages to use `container_app` module instead of `app_service`. Stage 2 and 3 have TODOs for networking module adaptation (Container Apps use VNet integration differently than App Service).
+
+#### CI/CD Changes
+
+Replaced ZIP deploy with Docker-based deployment:
+1. `az acr login` — authenticate to Container Registry
+2. `docker build + push` — build and push image tagged with commit SHA
+3. `az containerapp update` — deploy new image to Container App
+
+Deploy only triggers on push to `main` (develop only runs tests). Removed the staging deploy job since Stage 1 doesn't have a staging environment.
+
+#### Developer CLI (`./dev infra`)
+
+Added infrastructure management commands with dynamic Azure CLI detection:
+- `./dev infra bootstrap` — one-time state backend setup
+- `./dev infra init` / `plan` / `apply` / `destroy` — stage lifecycle
+- `./dev infra output` / `status` / `unlock` — operational commands
+- Automatic `MSYS_NO_PATHCONV=1` for Git Bash/MSYS2 path conversion fix
+
+#### Deployed Resources (15 total)
+
+| Resource | Name |
+|----------|------|
+| Container App | `ca-lemondo-mvp-eus2` |
+| Container Registry | `crlemondomvpeus2` |
+| Container App Environment | `cae-lemondo-mvp-eus2` |
+| SQL Server | `sql-lemondo-mvp-eus2` |
+| SQL Database | `sqldb-lemondo-mvp` |
+| Key Vault | `kv-lemondo-mvp-eus2` |
+| App Insights | `appi-lemondo-mvp-eus2` |
+| Log Analytics | `log-lemondo-mvp-eus2` |
+| Static Web App | `swa-lemondo-mvp-eus2` |
+| Resource Group | `rg-lemondo-mvp-eus2` |
+
+API verified healthy at `https://ca-lemondo-mvp-eus2.greenground-1ee8436d.eastus2.azurecontainerapps.io`.
+
+#### Lessons Learned
+
+1. **Azure Free Trial VM quotas are 0** for App Service in some regions — upgrading to Pay-As-You-Go doesn't immediately fix it
+2. **Container Apps are a better MVP choice** — consumption pricing, no quota issues, built-in auto-scaling
+3. **Push Docker image before Terraform apply** — Container Apps validates image existence during provisioning
+4. **MSYS2 path conversion** — `/subscriptions/...` gets mangled to `C:/Program Files/Git/subscriptions/...`; fix with `MSYS_NO_PATHCONV=1`
+5. **Failed Container Apps can't be imported** — must delete from Azure first, then re-create via Terraform
+
+---
+
+### Release v0.4.0
+
+**Date**: 2026-02-16
+
+Released Checkpoint 4 (Production Hardening) as v0.4.0 via gitflow.
+
+**Release Highlights:**
+- Observability: Serilog structured logging with PII masking, W3C traceparent propagation
+- Security: AES-256-GCM field encryption, SystemAdmin role, protected data redaction
+- Admin: User management panel + audit log viewer with filters and pagination
+- i18n: English + Portuguese (Brazil) with 158 translation keys
+- Task Sensitive Notes: encrypted free-text with break-the-glass admin reveal
+- Infrastructure: Terraform Azure (Container Apps, ACR, SQL, Key Vault), CI/CD pipeline, Dockerfile
+- Developer CLI: `./dev` unified script for all development commands
+- 668 tests total (370 backend + 243 frontend + 55 E2E)
+
+---
+
 ## What's Next
-
-### Checkpoint 4: Production Hardening
-
-*Planned: OpenTelemetry + Serilog observability, PII redaction in admin views, audit trail, admin panel, SystemAdmin role, i18n (en + pt-BR), data encryption at rest.*
 
 ### Checkpoint 5: Advanced & Delight
 

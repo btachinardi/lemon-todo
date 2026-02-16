@@ -8,7 +8,11 @@ using LemonDo.Application.Tasks.Queries;
 /// <summary>Minimal API endpoint definitions for the <c>/api/boards</c> route group.</summary>
 public static class BoardEndpoints
 {
-    /// <summary>Maps board query and column management endpoints under <c>/api/boards</c>.</summary>
+    /// <summary>
+    /// Maps board query and column management endpoints under <c>/api/boards</c> including
+    /// default board retrieval, board lookup, and column operations (add, rename, remove, reorder).
+    /// </summary>
+    /// <returns>The route group builder for method chaining.</returns>
     public static RouteGroupBuilder MapBoardEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/boards").WithTags("Boards").RequireAuthorization();

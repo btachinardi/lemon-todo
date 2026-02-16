@@ -1,0 +1,614 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────
+# LemonDo Developer CLI
+# Usage: ./dev <command> [options]
+# ─────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SLN="$ROOT_DIR/src/LemonDo.slnx"
+CLIENT_DIR="$ROOT_DIR/src/client"
+E2E_DIR="$ROOT_DIR/tests/e2e"
+API_PROJECT="$ROOT_DIR/src/LemonDo.Api"
+APPHOST_PROJECT="$ROOT_DIR/src/LemonDo.AppHost"
+MIGRATIONS_SQLITE="$ROOT_DIR/src/LemonDo.Migrations.Sqlite"
+MIGRATIONS_SQLSERVER="$ROOT_DIR/src/LemonDo.Migrations.SqlServer"
+INFRA_DIR="$ROOT_DIR/infra"
+DEFAULT_STAGE="stage1-mvp"
+
+# Default SQL Server connection for local Docker
+DEFAULT_SQL_CONN='Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStr0ngPassw0rd;TrustServerCertificate=True;'
+
+# ── Colors ────────────────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+header()  { echo -e "\n${CYAN}${BOLD}=== $1 ===${NC}\n"; }
+success() { echo -e "${GREEN}$1${NC}"; }
+warn()    { echo -e "${YELLOW}$1${NC}"; }
+err()     { echo -e "${RED}$1${NC}" >&2; }
+
+# ── Tool detection helpers ───────────────────────────────────────────
+# Dynamically locate Azure CLI — checks PATH first, then common install locations
+find_az() {
+  if command -v az &>/dev/null; then
+    echo "az"
+    return
+  fi
+
+  local candidates=(
+    "/c/Program Files/Microsoft SDKs/Azure/CLI2/wbin/az.cmd"
+    "/c/Program Files (x86)/Microsoft SDKs/Azure/CLI2/wbin/az.cmd"
+    "$HOME/.local/bin/az"
+    "/usr/local/bin/az"
+    "/opt/homebrew/bin/az"
+  )
+
+  for candidate in "${candidates[@]}"; do
+    if [ -f "$candidate" ]; then
+      echo "$candidate"
+      return
+    fi
+  done
+
+  err "Azure CLI (az) not found."
+  echo "  Install: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli"
+  exit 1
+}
+
+find_terraform() {
+  if command -v terraform &>/dev/null; then
+    echo "terraform"
+    return
+  fi
+
+  local candidates=(
+    "/c/ProgramData/chocolatey/bin/terraform.exe"
+    "$HOME/.local/bin/terraform"
+    "/usr/local/bin/terraform"
+    "/opt/homebrew/bin/terraform"
+  )
+
+  for candidate in "${candidates[@]}"; do
+    if [ -f "$candidate" ]; then
+      echo "$candidate"
+      return
+    fi
+  done
+
+  err "Terraform not found."
+  echo "  Install: https://developer.hashicorp.com/terraform/install"
+  exit 1
+}
+
+# Run terraform with MSYS2 path conversion disabled (prevents /subscriptions/ → C:/Program Files/Git/...)
+run_terraform() {
+  local tf
+  tf="$(find_terraform)"
+  MSYS_NO_PATHCONV=1 "$tf" "$@"
+}
+
+# Ensure Azure CLI is authenticated
+ensure_az_login() {
+  local az_cmd
+  az_cmd="$(find_az)"
+  if ! "$az_cmd" account show &>/dev/null; then
+    err "Not logged into Azure. Run:"
+    echo "  az login"
+    exit 1
+  fi
+}
+
+# Add Azure CLI to PATH if not already there (for tools like terraform that shell out to az)
+setup_az_path() {
+  if command -v az &>/dev/null; then
+    return
+  fi
+
+  local az_cmd
+  az_cmd="$(find_az)"
+  local az_dir
+  az_dir="$(dirname "$az_cmd")"
+  export PATH="$az_dir:$PATH"
+}
+
+# ── SQL Server helpers ────────────────────────────────────────────────
+sql_conn() {
+  echo "${TEST_SQLSERVER_CONNECTION_STRING:-$DEFAULT_SQL_CONN}"
+}
+
+ensure_sql_server() {
+  if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'lemondo-sqlserver'; then
+    err "SQL Server container 'lemondo-sqlserver' is not running."
+    echo ""
+    echo "Start it with:"
+    echo "  docker run -d --name lemondo-sqlserver \\"
+    echo "    -e 'ACCEPT_EULA=Y' \\"
+    echo "    -e 'MSSQL_SA_PASSWORD=YourStr0ngPassw0rd' \\"
+    echo "    -p 1433:1433 \\"
+    echo "    mcr.microsoft.com/mssql/server:2022-latest"
+    exit 1
+  fi
+}
+
+# ── Commands ──────────────────────────────────────────────────────────
+
+cmd_build() {
+  header "Clean + Build (all projects)"
+  dotnet clean "$SLN" -v quiet 2>/dev/null
+  dotnet build "$SLN"
+}
+
+cmd_test() {
+  local target="${1:-all}"
+  shift 2>/dev/null || true
+
+  case "$target" in
+    all)
+      cmd_test backend "$@"
+      cmd_test frontend "$@"
+      ;;
+    backend)
+      header "Backend Tests (SQLite)"
+      dotnet test --solution "$SLN" "$@"
+      ;;
+    backend:sql)
+      header "Backend Tests (SQL Server)"
+      ensure_sql_server
+      export TEST_DATABASE_PROVIDER=SqlServer
+      export TEST_SQLSERVER_CONNECTION_STRING
+      TEST_SQLSERVER_CONNECTION_STRING="$(sql_conn)"
+      dotnet test --solution "$SLN" "$@"
+      ;;
+    backend:both)
+      cmd_test backend "$@"
+      cmd_test backend:sql "$@"
+      ;;
+    frontend)
+      header "Frontend Tests (Vitest)"
+      (cd "$CLIENT_DIR" && pnpm test "$@")
+      ;;
+    e2e)
+      header "E2E Tests (Playwright — SQLite)"
+      (cd "$E2E_DIR" && pnpm test "$@")
+      ;;
+    e2e:sql)
+      header "E2E Tests (Playwright — SQL Server)"
+      ensure_sql_server
+      # Override playwright webServer env to use SQL Server
+      export DatabaseProvider=SqlServer
+      export ConnectionStrings__DefaultConnection
+      ConnectionStrings__DefaultConnection="$(sql_conn | sed 's/LemonDoTests/LemonDoE2E/')"
+      (cd "$E2E_DIR" && pnpm test "$@")
+      ;;
+    e2e:headed)
+      header "E2E Tests (Playwright — headed)"
+      (cd "$E2E_DIR" && pnpm test:headed "$@")
+      ;;
+    e2e:ui)
+      header "E2E Tests (Playwright — UI mode)"
+      (cd "$E2E_DIR" && pnpm test:ui "$@")
+      ;;
+    *)
+      err "Unknown test target: $target"
+      echo "Usage: ./dev test [all|backend|backend:sql|backend:both|frontend|e2e|e2e:sql|e2e:headed|e2e:ui]"
+      exit 1
+      ;;
+  esac
+}
+
+cmd_lint() {
+  header "Frontend Lint (ESLint)"
+  (cd "$CLIENT_DIR" && pnpm lint "$@")
+}
+
+cmd_start() {
+  local target="${1:-all}"
+
+  case "$target" in
+    all)
+      header "Starting Full Stack (Aspire)"
+      dotnet run --project "$APPHOST_PROJECT"
+      ;;
+    api)
+      header "Starting API"
+      dotnet run --project "$API_PROJECT"
+      ;;
+    frontend)
+      header "Starting Frontend"
+      (cd "$CLIENT_DIR" && pnpm dev)
+      ;;
+    *)
+      err "Unknown start target: $target"
+      echo "Usage: ./dev start [all|api|frontend]"
+      exit 1
+      ;;
+  esac
+}
+
+cmd_migrate() {
+  local action="${1:-}"
+  local name="${2:-}"
+
+  case "$action" in
+    add)
+      if [ -z "$name" ]; then
+        err "Migration name required."
+        echo "Usage: ./dev migrate add <MigrationName>"
+        exit 1
+      fi
+      header "Adding SQLite Migration: $name"
+      dotnet ef migrations add "$name" \
+        --project "$MIGRATIONS_SQLITE" \
+        --startup-project "$API_PROJECT"
+
+      header "Adding SQL Server Migration: $name"
+      DatabaseProvider=SqlServer dotnet ef migrations add "$name" \
+        --project "$MIGRATIONS_SQLSERVER" \
+        --startup-project "$API_PROJECT"
+
+      success "Migrations added to both providers."
+      ;;
+    list)
+      local provider="${name:-sqlite}"
+      case "$provider" in
+        sqlite)
+          header "SQLite Migrations"
+          dotnet ef migrations list \
+            --project "$MIGRATIONS_SQLITE" \
+            --startup-project "$API_PROJECT"
+          ;;
+        sqlserver|sql)
+          header "SQL Server Migrations"
+          DatabaseProvider=SqlServer dotnet ef migrations list \
+            --project "$MIGRATIONS_SQLSERVER" \
+            --startup-project "$API_PROJECT"
+          ;;
+        *)
+          err "Unknown provider: $provider"
+          echo "Usage: ./dev migrate list [sqlite|sqlserver]"
+          exit 1
+          ;;
+      esac
+      ;;
+    remove)
+      local provider="${name:-}"
+      if [ -z "$provider" ]; then
+        err "Provider required for remove."
+        echo "Usage: ./dev migrate remove <sqlite|sqlserver>"
+        exit 1
+      fi
+      case "$provider" in
+        sqlite)
+          header "Removing Last SQLite Migration"
+          dotnet ef migrations remove \
+            --project "$MIGRATIONS_SQLITE" \
+            --startup-project "$API_PROJECT"
+          ;;
+        sqlserver|sql)
+          header "Removing Last SQL Server Migration"
+          DatabaseProvider=SqlServer dotnet ef migrations remove \
+            --project "$MIGRATIONS_SQLSERVER" \
+            --startup-project "$API_PROJECT"
+          ;;
+        *)
+          err "Unknown provider: $provider"
+          exit 1
+          ;;
+      esac
+      ;;
+    *)
+      err "Unknown migrate action: $action"
+      echo "Usage: ./dev migrate <add|list|remove> [args]"
+      exit 1
+      ;;
+  esac
+}
+
+cmd_verify() {
+  header "Full Verification Gate"
+  local failed=0
+
+  echo -e "${BOLD}[1/5] Backend Build${NC}"
+  if dotnet clean "$SLN" -v quiet 2>/dev/null && dotnet build "$SLN"; then
+    success "  PASS"
+  else
+    err "  FAIL"; failed=1
+  fi
+
+  echo -e "\n${BOLD}[2/5] Frontend Build${NC}"
+  if (cd "$CLIENT_DIR" && pnpm build 2>&1); then
+    success "  PASS"
+  else
+    err "  FAIL"; failed=1
+  fi
+
+  echo -e "\n${BOLD}[3/5] Backend Tests${NC}"
+  if dotnet test --solution "$SLN"; then
+    success "  PASS"
+  else
+    err "  FAIL"; failed=1
+  fi
+
+  echo -e "\n${BOLD}[4/5] Frontend Tests${NC}"
+  if (cd "$CLIENT_DIR" && pnpm test); then
+    success "  PASS"
+  else
+    err "  FAIL"; failed=1
+  fi
+
+  echo -e "\n${BOLD}[5/5] Frontend Lint${NC}"
+  if (cd "$CLIENT_DIR" && pnpm lint); then
+    success "  PASS"
+  else
+    err "  FAIL"; failed=1
+  fi
+
+  echo ""
+  if [ $failed -eq 0 ]; then
+    success "All verification checks passed!"
+  else
+    err "Some checks failed. See output above."
+    exit 1
+  fi
+}
+
+cmd_infra() {
+  local action="${1:-help}"
+  shift 2>/dev/null || true
+
+  # Show help without requiring Azure login
+  if [ "$action" = "help" ] || [ "$action" = "--help" ] || [ "$action" = "-h" ]; then
+    cmd_infra_help
+    return
+  fi
+
+  setup_az_path
+  ensure_az_login
+
+  case "$action" in
+    bootstrap)
+      header "Bootstrapping Terraform State Backend"
+      (cd "$INFRA_DIR/bootstrap" && run_terraform init && run_terraform apply "$@")
+      ;;
+    init)
+      local stage="${1:-$DEFAULT_STAGE}"
+      header "Initializing Stage: $stage"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      if [ ! -d "$stage_dir" ]; then
+        err "Stage directory not found: $stage_dir"
+        echo "Available stages:"
+        ls -1 "$INFRA_DIR/stages/"
+        exit 1
+      fi
+      (cd "$stage_dir" && run_terraform init "$@")
+      ;;
+    plan)
+      local stage="${1:-$DEFAULT_STAGE}"
+      shift 2>/dev/null || true
+      header "Planning Stage: $stage"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      if [ ! -d "$stage_dir" ]; then
+        err "Stage directory not found: $stage_dir"
+        echo "Available stages:"
+        ls -1 "$INFRA_DIR/stages/"
+        exit 1
+      fi
+      (cd "$stage_dir" && run_terraform plan "$@")
+      ;;
+    apply)
+      local stage="${1:-$DEFAULT_STAGE}"
+      shift 2>/dev/null || true
+      header "Applying Stage: $stage"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      if [ ! -d "$stage_dir" ]; then
+        err "Stage directory not found: $stage_dir"
+        echo "Available stages:"
+        ls -1 "$INFRA_DIR/stages/"
+        exit 1
+      fi
+      (cd "$stage_dir" && run_terraform apply "$@")
+      ;;
+    destroy)
+      local stage="${1:-$DEFAULT_STAGE}"
+      shift 2>/dev/null || true
+      header "Destroying Stage: $stage"
+      warn "WARNING: This will destroy ALL resources in stage '$stage'!"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      if [ ! -d "$stage_dir" ]; then
+        err "Stage directory not found: $stage_dir"
+        exit 1
+      fi
+      (cd "$stage_dir" && run_terraform destroy "$@")
+      ;;
+    output)
+      local stage="${1:-$DEFAULT_STAGE}"
+      shift 2>/dev/null || true
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      (cd "$stage_dir" && run_terraform output "$@")
+      ;;
+    unlock)
+      local stage="${1:-}"
+      local lock_id="${2:-}"
+      if [ -z "$stage" ] || [ -z "$lock_id" ]; then
+        err "Usage: ./dev infra unlock <stage> <lock-id>"
+        exit 1
+      fi
+      header "Force-unlocking Stage: $stage (Lock: $lock_id)"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      (cd "$stage_dir" && run_terraform force-unlock -force "$lock_id")
+      ;;
+    status)
+      local stage="${1:-$DEFAULT_STAGE}"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      header "State for Stage: $stage"
+      (cd "$stage_dir" && run_terraform state list 2>/dev/null) || warn "No state found for $stage"
+      ;;
+    *)
+      err "Unknown infra action: $action"
+      cmd_infra_help
+      exit 1
+      ;;
+  esac
+}
+
+cmd_infra_help() {
+  cat <<'EOF'
+
+  Usage: ./dev infra <action> [stage] [options]
+
+  Actions:
+    bootstrap                   Create Terraform state backend in Azure
+    init [stage]                Initialize Terraform for a stage
+    plan [stage]                Plan infrastructure changes
+    apply [stage]               Apply infrastructure changes
+    destroy [stage]             Destroy all resources in a stage
+    output [stage]              Show Terraform outputs
+    status [stage]              List resources in state
+    unlock <stage> <lock-id>    Force-unlock a stuck state lock
+
+  Stages: stage1-mvp (default), stage2-resilience, stage3-scale
+
+  Prerequisites:
+    - Azure CLI (az) — auto-detected from PATH or common install locations
+    - Terraform (>= 1.5) — auto-detected from PATH or common install locations
+    - Logged into Azure: az login
+
+  Examples:
+    ./dev infra plan                   Plan stage1-mvp
+    ./dev infra apply stage1-mvp       Apply stage1-mvp
+    ./dev infra output stage1-mvp      Show outputs
+    ./dev infra status                 List deployed resources
+    ./dev infra destroy stage2-resilience
+
+EOF
+}
+
+cmd_docker() {
+  local action="${1:-up}"
+
+  case "$action" in
+    up)
+      header "Starting SQL Server Docker Container"
+      if docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'lemondo-sqlserver'; then
+        warn "Container 'lemondo-sqlserver' already running."
+      else
+        docker run -d --name lemondo-sqlserver \
+          -e 'ACCEPT_EULA=Y' \
+          -e 'MSSQL_SA_PASSWORD=YourStr0ngPassw0rd' \
+          -p 1433:1433 \
+          mcr.microsoft.com/mssql/server:2022-latest
+        success "SQL Server started on localhost:1433"
+        echo "Waiting for SQL Server to be ready..."
+        sleep 5
+      fi
+      ;;
+    down)
+      header "Stopping SQL Server Docker Container"
+      docker stop lemondo-sqlserver 2>/dev/null && docker rm lemondo-sqlserver 2>/dev/null
+      success "SQL Server stopped and removed."
+      ;;
+    *)
+      err "Unknown docker action: $action"
+      echo "Usage: ./dev docker [up|down]"
+      exit 1
+      ;;
+  esac
+}
+
+cmd_help() {
+  cat <<'EOF'
+
+  LemonDo Developer CLI
+
+  Usage: ./dev <command> [options]
+
+  Commands:
+
+    build                     Clean + build all projects (0 warnings gate)
+    verify                    Full verification gate (build + tests + lint)
+
+    test [target]             Run tests
+      all                     Backend (SQLite) + Frontend (default)
+      backend                 Backend tests (SQLite)
+      backend:sql             Backend tests (SQL Server)
+      backend:both            Backend tests (SQLite then SQL Server)
+      frontend                Frontend tests (Vitest)
+      e2e                     E2E tests (Playwright, SQLite)
+      e2e:sql                 E2E tests (Playwright, SQL Server)
+      e2e:headed              E2E tests with browser visible
+      e2e:ui                  E2E Playwright UI mode
+
+    lint                      Frontend ESLint
+
+    start [target]            Start services
+      all                     Full stack via Aspire (default)
+      api                     API only
+      frontend                Frontend dev server only
+
+    migrate <action> [args]   EF Core migrations
+      add <name>              Add migration to BOTH providers
+      list [sqlite|sqlserver] List migrations for a provider
+      remove <sqlite|sql>     Remove last migration for a provider
+
+    docker [action]           SQL Server Docker container
+      up                      Start container (default)
+      down                    Stop and remove container
+
+    infra <action> [stage]    Azure infrastructure (Terraform)
+      bootstrap               Create state backend in Azure
+      init [stage]            Initialize Terraform for a stage
+      plan [stage]            Plan infrastructure changes
+      apply [stage]           Apply infrastructure changes
+      destroy [stage]         Destroy all resources in a stage
+      output [stage]          Show Terraform outputs
+      status [stage]          List resources in state
+      unlock <stage> <id>     Force-unlock a stuck state lock
+
+    help                      Show this help
+
+  Stages: stage1-mvp (default), stage2-resilience, stage3-scale
+
+  Examples:
+    ./dev build
+    ./dev test backend
+    ./dev test backend:sql
+    ./dev test e2e
+    ./dev test e2e:headed
+    ./dev start
+    ./dev start api
+    ./dev migrate add AddNewColumn
+    ./dev migrate list sqlserver
+    ./dev verify
+    ./dev docker up
+    ./dev infra plan
+    ./dev infra apply stage1-mvp
+    ./dev infra output
+
+EOF
+}
+
+# ── Main dispatch ─────────────────────────────────────────────────────
+command="${1:-help}"
+shift 2>/dev/null || true
+
+case "$command" in
+  build)       cmd_build "$@" ;;
+  test)        cmd_test "$@" ;;
+  lint)        cmd_lint "$@" ;;
+  start)       cmd_start "$@" ;;
+  migrate)     cmd_migrate "$@" ;;
+  verify)      cmd_verify "$@" ;;
+  docker)      cmd_docker "$@" ;;
+  infra)       cmd_infra "$@" ;;
+  help|--help|-h)  cmd_help ;;
+  *)
+    err "Unknown command: $command"
+    cmd_help
+    exit 1
+    ;;
+esac

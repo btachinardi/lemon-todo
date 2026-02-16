@@ -19,11 +19,11 @@ After creating detailed user scenarios and personas (SCENARIOS.md), several insi
 
 3. **Onboarding must be emotionally rewarding**: The create-then-complete loop in onboarding needs micro-celebrations (animations, feedback) to establish positive association.
 
-4. **PII redaction is the default, not the exception**: Diana's admin workflow shows that revealing PII should require explicit action. Default to redacted everywhere.
+4. **Protected data redaction is the default, not the exception**: Diana's admin workflow shows that revealing protected data should require explicit action. Default to redacted everywhere.
 
 5. **Offline-first is table stakes for mobile**: Sarah's flight scenario proves PWA offline must work for core operations (view, create, complete tasks).
 
-6. **Analytics must be privacy-first**: HIPAA requires all analytics events to hash or exclude PII. Our analytics architecture must be designed with this constraint from day one.
+6. **Analytics must be privacy-first**: HIPAA requires all analytics events to hash or exclude protected data. Our analytics architecture must be designed with this constraint from day one.
 
 ---
 
@@ -38,9 +38,9 @@ No changes from initial PRD. The scenario analysis confirms all requirements.
 **Added**:
 | ID | Requirement | Priority |
 |----|-------------|----------|
-| FR-002.7 | PII reveal action requires SystemAdmin role and creates audit event | P0 |
+| FR-002.7 | Protected data reveal action requires SystemAdmin role and creates audit event | P0 |
 
-**Rationale**: Scenario S05 (Diana) shows that PII reveal is a privileged action that must be tracked.
+**Rationale**: Scenario S05 (Diana) shows that protected data reveal is a privileged action that must be tracked.
 
 ### FR-003: Task Management (Refined)
 
@@ -73,20 +73,20 @@ No changes needed.
 **Added**:
 | ID | Requirement | Priority | Change |
 |----|-------------|----------|--------|
-| FR-006.7 | PII default-redacted in all admin views | P0 | NEW |
+| FR-006.7 | Protected data default-redacted in all admin views | P0 | NEW |
 | FR-006.8 | "Reveal" button per field with confirmation dialog | P0 | NEW |
-| FR-006.9 | PII reveal logged as audit event | P0 | NEW |
+| FR-006.9 | Protected data reveal logged as audit event | P0 | NEW |
 
-**Rationale**: Scenario S05 (Diana) establishes that PII must be hidden by default even for admins.
+**Rationale**: Scenario S05 (Diana) establishes that protected data must be hidden by default even for admins.
 
 ### FR-007: HIPAA Compliance (Refined)
 
 **Added**:
 | ID | Requirement | Priority | Change |
 |----|-------------|----------|--------|
-| FR-007.9 | Analytics events must hash all PII | P0 | NEW |
-| FR-007.10 | No PII in structured log messages | P0 | NEW |
-| FR-007.11 | PII reveal audit trail with IP, timestamp, admin ID | P0 | NEW |
+| FR-007.9 | Analytics events must hash all protected data | P0 | NEW |
+| FR-007.10 | No protected data in structured log messages | P0 | NEW |
+| FR-007.11 | Protected data reveal audit trail with IP, timestamp, admin ID | P0 | NEW |
 
 ### FR-008: Onboarding System (Refined)
 
@@ -106,7 +106,7 @@ No changes needed.
 |----|-------------|----------|--------|
 | FR-009.6 | Deep links in emails open directly to user's board | P0 | NEW |
 | FR-009.7 | "Welcome back!" toast on re-engagement | P1 | NEW |
-| FR-009.8 | Emails show top 3 pending tasks (no PII) | P1 | NEW |
+| FR-009.8 | Emails show top 3 pending tasks (no protected data) | P1 | NEW |
 
 **Rationale**: Scenario S08 shows deep links and contextual email content drive re-engagement.
 
@@ -182,7 +182,7 @@ Full-Form Path (Marcus):
 Privacy-first analytics (HIPAA):
 - Frontend: Custom analytics service wrapping events
 - Backend: Domain events published to analytics processor
-- Storage: Separate analytics database (no PII)
+- Storage: Separate analytics database (no protected data)
 - All user identifiers are hashed (SHA-256)
 - All task identifiers are hashed
 - No task content (titles, descriptions) in analytics
@@ -202,7 +202,7 @@ Sync Strategy:
   - Visual indicator: "syncing..." -> "synced"
 ```
 
-### 3.4 PII Handling Strategy
+### 3.4 Protected Data Handling Strategy
 
 ```
 At Rest:
@@ -211,10 +211,10 @@ At Rest:
 
 In Transit:
   - HTTPS only
-  - No PII in URL parameters
+  - No protected data in URL parameters
 
 In Logs:
-  - Structured logging with PII redaction middleware
+  - Structured logging with protected data redaction middleware
   - Email: s***@example.com
   - Names: S*** L***
   - Custom Serilog destructuring policy
@@ -243,7 +243,7 @@ Based on scenario analysis, we refine our success metrics:
 | Quick-add usage | Not defined | > 70% of tasks via quick-add | S02: quick capture dominance |
 | Mobile session share | Not defined | > 40% of sessions | S02, S06: mobile-first thesis |
 | Offline operations per week | Not defined | Measured (baseline) | S06: offline usage tracking |
-| PII reveal frequency | Not defined | < 10% of admin sessions | S05: minimal PII exposure |
+| Protected data reveal frequency | Not defined | < 10% of admin sessions | S05: minimal protected data exposure |
 
 ---
 

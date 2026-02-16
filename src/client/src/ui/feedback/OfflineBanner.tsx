@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useNetworkStatus } from '@/hooks/use-network-status';
 
 /**
@@ -5,6 +6,7 @@ import { useNetworkStatus } from '@/hooks/use-network-status';
  * Automatically hides when connectivity is restored.
  */
 export function OfflineBanner() {
+  const { t } = useTranslation();
   const isOnline = useNetworkStatus();
 
   if (isOnline) return null;
@@ -14,7 +16,7 @@ export function OfflineBanner() {
       role="alert"
       className="fixed top-0 inset-x-0 z-50 bg-destructive text-destructive-foreground px-4 py-2 text-center text-sm font-medium"
     >
-      You are offline. Changes will not be saved until your connection is restored.
+      {t('offline.banner')}
     </div>
   );
 }

@@ -60,6 +60,18 @@ describe('TaskCard', () => {
     expect(onSelect).toHaveBeenCalledWith('task-2');
   });
 
+  it('shows lock icon when task has a sensitive note', () => {
+    const task = createTask({ sensitiveNote: '[PROTECTED]' });
+    render(<TaskCard task={task} />);
+    expect(screen.getByLabelText('Has encrypted note')).toBeInTheDocument();
+  });
+
+  it('does not show lock icon when task has no sensitive note', () => {
+    const task = createTask({ sensitiveNote: null });
+    render(<TaskCard task={task} />);
+    expect(screen.queryByLabelText('Has encrypted note')).not.toBeInTheDocument();
+  });
+
   it('does not call onSelect when complete button is clicked', async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();

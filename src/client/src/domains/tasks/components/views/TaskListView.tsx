@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/ui/badge';
 import { CheckCircle2Icon, InboxIcon } from 'lucide-react';
@@ -21,9 +22,13 @@ const priorityBorder: Record<Priority, string> = {
 
 interface TaskListViewProps {
   groups: TaskGroup[];
+  /** When true, renders group headers with labels and counts. @defaultValue false */
   showGroupHeaders?: boolean;
+  /** Called when the user toggles a task's completion checkbox. */
   onCompleteTask?: (id: string) => void;
+  /** Called when the user clicks a task row to view details. */
   onSelectTask?: (id: string) => void;
+  /** ID of the task currently being toggled (shows spinner). */
   togglingTaskId?: string | null;
   className?: string;
 }
@@ -41,6 +46,7 @@ export function TaskListView({
   togglingTaskId,
   className,
 }: TaskListViewProps) {
+  const { t } = useTranslation();
   const totalTasks = groups.reduce((sum, g) => sum + g.tasks.length + g.completedTasks.length, 0);
 
   if (totalTasks === 0) {
@@ -50,8 +56,8 @@ export function TaskListView({
           <InboxIcon className="size-8 text-muted-foreground/50" />
         </div>
         <div className="text-center">
-          <p className="text-lg font-semibold">No tasks yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">Add a task above to get started.</p>
+          <p className="text-lg font-semibold">{t('tasks.empty.listTitle')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('tasks.empty.listSubtitle')}</p>
         </div>
       </div>
     );
@@ -91,7 +97,7 @@ export function TaskListView({
                   <div className="h-px flex-1 border-t border-dashed border-border/50" />
                   <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <CheckCircle2Icon className="size-3" />
-                    Completed ({group.completedTasks.length})
+                    {t('tasks.completed', { count: group.completedTasks.length })}
                   </span>
                   <div className="h-px flex-1 border-t border-dashed border-border/50" />
                 </div>
@@ -114,11 +120,20 @@ export function TaskListView({
   );
 }
 
+/**
+ * Props for a single task list item row.
+ * @internal
+ */
 interface TaskListItemProps {
+  /** The task to render. */
   task: Task;
+  /** Position in the list, used for staggered animation. */
   index: number;
+  /** ID of the task currently being toggled (shows spinner). */
   togglingTaskId?: string | null;
+  /** Called when the user toggles the completion checkbox. */
   onCompleteTask?: (id: string) => void;
+  /** Called when the user clicks the row. */
   onSelectTask?: (id: string) => void;
 }
 

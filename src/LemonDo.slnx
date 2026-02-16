@@ -7,5 +7,7 @@
   <Project Path="LemonDo.Application/LemonDo.Application.csproj" />
   <Project Path="LemonDo.Domain/LemonDo.Domain.csproj" />
   <Project Path="LemonDo.Infrastructure/LemonDo.Infrastructure.csproj" />
+  <Project Path="LemonDo.Migrations.Sqlite/LemonDo.Migrations.Sqlite.csproj" />
+  <Project Path="LemonDo.Migrations.SqlServer/LemonDo.Migrations.SqlServer.csproj" />
   <Project Path="LemonDo.ServiceDefaults/LemonDo.ServiceDefaults.csproj" />
 </Solution>

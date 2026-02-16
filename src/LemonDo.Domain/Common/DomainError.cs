@@ -9,6 +9,18 @@ namespace LemonDo.Domain.Common;
 /// <c>.conflict</c> to 409, <c>.rate_limited</c> to 429, and all others to 422.
 /// Use the factory methods below or the constructor directly for custom codes.
 /// </remarks>
+/// <example>
+/// <code>
+/// // Validation → code = "title.validation"
+/// DomainError.Validation("title", "Title cannot be empty");
+///
+/// // NotFound → code = "task.not_found"
+/// DomainError.NotFound("task", taskId);
+///
+/// // BusinessRule → code used as-is
+/// DomainError.BusinessRule("task.already_completed", "Task is already done");
+/// </code>
+/// </example>
 public sealed record DomainError(string Code, string Message)
 {
     /// <summary>

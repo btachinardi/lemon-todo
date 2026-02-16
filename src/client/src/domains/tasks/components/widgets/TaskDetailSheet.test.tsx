@@ -30,6 +30,7 @@ function renderSheet(overrides: Partial<React.ComponentProps<typeof TaskDetailSh
     onRemoveTag: vi.fn(),
     onDelete: vi.fn(),
     isDeleting: false,
+    saveStatus: 'idle',
     ...overrides,
   };
   return { ...render(<TaskDetailSheet {...defaultProps} />), props: defaultProps };
@@ -143,6 +144,81 @@ describe('TaskDetailSheet', () => {
     expect(dueDateTrigger.className).not.toContain('w-full');
   });
 
+  describe('sensitive note', () => {
+    it('should show encrypted note indicator when task has a sensitive note', () => {
+      renderSheet({
+        task: createTask({ sensitiveNote: '[PROTECTED]' }),
+      });
+      expect(screen.getByText('Has encrypted note')).toBeInTheDocument();
+    });
+
+    it('should show View Note button when task has a sensitive note', () => {
+      renderSheet({
+        task: createTask({ sensitiveNote: '[PROTECTED]' }),
+        onViewNote: vi.fn(),
+      });
+      expect(screen.getByRole('button', { name: /view note/i })).toBeInTheDocument();
+    });
+
+    it('should call onViewNote when View Note button is clicked', async () => {
+      const onViewNote = vi.fn();
+      const user = userEvent.setup();
+      renderSheet({
+        task: createTask({ sensitiveNote: '[PROTECTED]' }),
+        onViewNote,
+      });
+
+      await user.click(screen.getByRole('button', { name: /view note/i }));
+      expect(onViewNote).toHaveBeenCalledOnce();
+    });
+
+    it('should not show encrypted note indicator when no sensitive note', () => {
+      renderSheet({
+        task: createTask({ sensitiveNote: null }),
+      });
+      expect(screen.queryByText('Has encrypted note')).not.toBeInTheDocument();
+    });
+
+    it('should show Save Note button after typing in sensitive note textarea', async () => {
+      const user = userEvent.setup();
+      renderSheet();
+
+      const textarea = screen.getByPlaceholderText('Enter sensitive information (encrypted at rest)...');
+      await user.type(textarea, 'My secret data');
+
+      expect(screen.getByRole('button', { name: /save note/i })).toBeInTheDocument();
+    });
+
+    it('should call onUpdateSensitiveNote when Save Note is clicked', async () => {
+      const onUpdateSensitiveNote = vi.fn();
+      const user = userEvent.setup();
+      renderSheet({ onUpdateSensitiveNote });
+
+      const textarea = screen.getByPlaceholderText('Enter sensitive information (encrypted at rest)...');
+      await user.type(textarea, 'My secret data');
+      await user.click(screen.getByRole('button', { name: /save note/i }));
+
+      expect(onUpdateSensitiveNote).toHaveBeenCalledWith('My secret data');
+    });
+
+    it('should call onClearSensitiveNote when Clear button is clicked', async () => {
+      const onClearSensitiveNote = vi.fn();
+      const user = userEvent.setup();
+      renderSheet({
+        task: createTask({ sensitiveNote: '[PROTECTED]' }),
+        onClearSensitiveNote,
+      });
+
+      await user.click(screen.getByRole('button', { name: /^clear$/i }));
+      expect(onClearSensitiveNote).toHaveBeenCalledOnce();
+    });
+
+    it('should show encryption warning text', () => {
+      renderSheet();
+      expect(screen.getByText('This content is encrypted and can only be viewed with your password.')).toBeInTheDocument();
+    });
+  });
+
   describe('tag suggestions', () => {
     const allTags = ['shopping', 'urgent', 'work', 'personal', 'errands'];
 
@@ -241,6 +317,58 @@ describe('TaskDetailSheet', () => {
       await user.click(tagInput);
 
       expect(screen.queryByRole('option')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('flush on close', () => {
+    it('should flush pending description changes when sheet closes via Escape', async () => {
+      const onUpdateDescription = vi.fn();
+      const onClose = vi.fn();
+      const user = userEvent.setup();
+      renderSheet({ onUpdateDescription, onClose });
+
+      // Modify description without blurring
+      const textarea = screen.getByDisplayValue('Milk, eggs, bread');
+      await user.clear(textarea);
+      await user.type(textarea, 'Updated grocery list');
+
+      // Escape closes the sheet — should flush pending description
+      await user.keyboard('{Escape}');
+
+      expect(onUpdateDescription).toHaveBeenCalledWith('Updated grocery list');
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it('should not call onUpdateDescription on close when description has not changed', async () => {
+      const onUpdateDescription = vi.fn();
+      const onClose = vi.fn();
+      const user = userEvent.setup();
+      renderSheet({ onUpdateDescription, onClose });
+
+      // Focus the textarea but don't change its value
+      await user.click(screen.getByDisplayValue('Milk, eggs, bread'));
+      await user.keyboard('{Escape}');
+
+      expect(onUpdateDescription).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  describe('save indicator', () => {
+    it('should show saving indicator when saveStatus is pending', () => {
+      renderSheet({ saveStatus: 'pending' });
+      expect(screen.getByText('Saving...')).toBeInTheDocument();
+    });
+
+    it('should show saved indicator when saveStatus is success', () => {
+      renderSheet({ saveStatus: 'success' });
+      expect(screen.getByText('Saved')).toBeInTheDocument();
+    });
+
+    it('should not show save indicator when saveStatus is idle', () => {
+      renderSheet({ saveStatus: 'idle' });
+      expect(screen.queryByText('Saving...')).not.toBeInTheDocument();
+      expect(screen.queryByText('Saved')).not.toBeInTheDocument();
     });
   });
 });

@@ -1,0 +1,303 @@
+{
+  "brand": {
+    "lemon": "LEMON",
+    "do": "DO",
+    "admin": "ADMIN"
+  },
+  "common": {
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "tryAgain": "Try Again",
+    "previous": "Previous",
+    "next": "Next",
+    "add": "Add",
+    "close": "Close",
+    "clear": "Clear",
+    "back": "Back",
+    "actions": "Actions",
+    "error": {
+      "generic": "Something went wrong. Please try again.",
+      "connection": "Check your connection and try again."
+    },
+    "page": "Page {{page}} of {{totalPages}} ({{totalCount}} {{unit}})"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your account",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "createOne": "Create one",
+      "errorInvalid": "Invalid email or password.",
+      "errorLocked": "Account temporarily locked. Please try again later."
+    },
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Start organizing your tasks",
+      "submit": "Create account",
+      "submitting": "Creating account...",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "errorExists": "An account with this email already exists."
+    },
+    "fields": {
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Your password",
+      "passwordHint": "Min. 8 characters",
+      "displayName": "Display name",
+      "displayNamePlaceholder": "Your name"
+    },
+    "userMenu": {
+      "signOut": "Sign out",
+      "signingOut": "Signing out..."
+    },
+    "devSwitcher": {
+      "title": "Quick Login",
+      "subtitle": "Development accounts",
+      "switching": "Switching...",
+      "roles": {
+        "user": "User",
+        "userDesc": "Standard task management",
+        "admin": "Admin",
+        "adminDesc": "User management & admin panel",
+        "sysadmin": "System Admin",
+        "sysadminDesc": "Full system access & protected data reveal"
+      }
+    }
+  },
+  "tasks": {
+    "priority": {
+      "none": "None",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "status": {
+      "todo": "To Do",
+      "inProgress": "In Progress",
+      "done": "Done"
+    },
+    "dueDate": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "overdue": "Overdue: {{date}}"
+    },
+    "quickAdd": {
+      "label": "New task title",
+      "placeholder": "What needs to be done?",
+      "submit": "Add Task"
+    },
+    "card": {
+      "ariaLabel": "Task: {{title}}"
+    },
+    "detail": {
+      "loadError": "Could not load task details.",
+      "description": "Description",
+      "descriptionPlaceholder": "Add a description...",
+      "priority": "Priority",
+      "noPriority": "No priority",
+      "dueDate": "Due Date",
+      "pickDate": "Pick a date",
+      "clearDueDate": "Clear due date",
+      "tags": "Tags",
+      "tagPlaceholder": "Add a tag...",
+      "removeTag": "Remove tag {{tag}}",
+      "deleteTitle": "Delete this task?",
+      "deleteButton": "Delete task",
+      "saving": "Saving...",
+      "saved": "Saved"
+    },
+    "filter": {
+      "searchPlaceholder": "Search tasks...",
+      "clearSearch": "Clear search",
+      "allPriorities": "All priorities",
+      "allStatuses": "All statuses"
+    },
+    "listToolbar": {
+      "label": "List view options",
+      "groupBy": "Group by",
+      "noGrouping": "No grouping",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "splitDone": "Split done"
+    },
+    "checkbox": {
+      "markIncomplete": "Mark as incomplete",
+      "markComplete": "Mark as complete"
+    },
+    "empty": {
+      "boardTitle": "Your board is empty",
+      "boardSubtitle": "Add a task above to get started.",
+      "listTitle": "No tasks yet",
+      "listSubtitle": "Add a task above to get started.",
+      "searchTitle": "No matching tasks",
+      "searchSubtitle": "Try adjusting your filters or search term.",
+      "clearFilters": "Clear filters"
+    },
+    "column": {
+      "noTasks": "No tasks"
+    },
+    "completed": "Completed ({{count}})",
+    "errors": {
+      "loadBoard": "Could not load your board",
+      "loadTasks": "Could not load tasks",
+      "updateTask": "Could not update task. Try again.",
+      "moveTask": "Could not move task. Try again.",
+      "saveTask": "Could not save task. Try again."
+    },
+    "sensitiveNote": {
+      "label": "Sensitive Note",
+      "placeholder": "Enter sensitive information (encrypted at rest)...",
+      "encryptionWarning": "This content is encrypted and can only be viewed with your password.",
+      "viewNote": "View Note",
+      "hasNote": "Has encrypted note",
+      "save": "Save Note"
+    },
+    "noteRevealDialog": {
+      "title": "View Sensitive Note",
+      "description": "Enter your password to decrypt and view this note. This action is logged.",
+      "revealedDescription": "This note will auto-hide for security.",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your account password",
+      "passwordError": "Incorrect password. Please try again.",
+      "genericError": "Something went wrong. Please try again.",
+      "submit": "View Note",
+      "submitting": "Decrypting...",
+      "autoHide": "Auto-hiding in",
+      "hide": "Hide Now"
+    }
+  },
+  "nav": {
+    "viewSwitcher": "View switcher",
+    "board": "Board",
+    "list": "List",
+    "admin": "Admin",
+    "adminNav": "Admin navigation",
+    "users": "Users",
+    "auditLog": "Audit Log"
+  },
+  "admin": {
+    "users": {
+      "title": "User Management",
+      "subtitle": "Manage user accounts and roles.",
+      "searchPlaceholder": "Search users...",
+      "allRoles": "All Roles",
+      "columnId": "ID",
+      "columnEmail": "Email",
+      "columnDisplayName": "Display Name",
+      "columnRoles": "Roles",
+      "columnStatus": "Status",
+      "noUsers": "No users found.",
+      "active": "Active",
+      "deactivated": "Deactivated",
+      "revealProtectedData": "Reveal Protected Data",
+      "assignRole": "Assign Role",
+      "removeRole": "Remove Role",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate"
+    },
+    "roleDialog": {
+      "title": "Assign Role",
+      "description": "Assign a role to {{user}}.",
+      "selectRole": "Select a role",
+      "allRolesAssigned": "User already has all available roles.",
+      "submitting": "Assigning...",
+      "submit": "Assign"
+    },
+    "audit": {
+      "title": "Audit Log",
+      "subtitle": "View security-relevant actions and system events.",
+      "from": "From",
+      "to": "To",
+      "action": "Action",
+      "allActions": "All actions",
+      "resource": "Resource",
+      "allResources": "All",
+      "columnTimestamp": "Timestamp",
+      "columnAction": "Action",
+      "columnResource": "Resource",
+      "columnResourceId": "Resource ID",
+      "columnActor": "Actor",
+      "columnDetails": "Details",
+      "system": "System",
+      "noEntries": "No audit entries found.",
+      "actions": {
+        "UserRegistered": "User Registered",
+        "UserLoggedIn": "User Logged In",
+        "UserLoggedOut": "User Logged Out",
+        "RoleAssigned": "Role Assigned",
+        "RoleRemoved": "Role Removed",
+        "ProtectedDataRevealed": "Protected Data Revealed",
+        "TaskCreated": "Task Created",
+        "TaskCompleted": "Task Completed",
+        "TaskDeleted": "Task Deleted",
+        "UserDeactivated": "User Deactivated",
+        "UserReactivated": "User Reactivated",
+        "SensitiveNoteRevealed": "Sensitive Note Revealed"
+      }
+    },
+    "protectedDataRevealDialog": {
+      "title": "Reveal Protected Data",
+      "description": "This action reveals sensitive protected data and is recorded in the audit trail. Enter a justification and verify your identity to proceed.",
+      "reason": "Reason",
+      "reasonPlaceholder": "Select a reason",
+      "reasons": {
+        "SupportTicket": "Support Ticket",
+        "LegalRequest": "Legal Request",
+        "AccountRecovery": "Account Recovery",
+        "SecurityInvestigation": "Security Investigation",
+        "DataSubjectRequest": "Data Subject Request (GDPR/HIPAA)",
+        "ComplianceAudit": "Compliance Audit",
+        "Other": "Other"
+      },
+      "reasonDetails": "Reason Details",
+      "reasonDetailsPlaceholder": "Explain why this protected data access is needed...",
+      "reasonDetailsRequired": "Details are required when reason is 'Other'.",
+      "comments": "Additional Comments",
+      "commentsPlaceholder": "Any additional context (optional)...",
+      "password": "Your Password",
+      "passwordPlaceholder": "Enter your account password",
+      "passwordError": "Invalid password. Please try again.",
+      "genericError": "Something went wrong. Please try again.",
+      "auditWarning": "This action is permanently recorded in the audit trail.",
+      "submit": "Reveal Protected Data",
+      "submitting": "Verifying..."
+    },
+    "secureViewer": {
+      "hide": "Hide",
+      "secondsRemaining": "{{seconds}}s"
+    },
+    "toasts": {
+      "roleAssigned": "Role assigned",
+      "roleRemoved": "Role removed",
+      "userDeactivated": "User deactivated",
+      "userReactivated": "User reactivated"
+    }
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. You can try reloading the page or click below to attempt recovery.",
+    "tryAgain": "Try again",
+    "reload": "Reload page"
+  },
+  "offline": {
+    "banner": "You are offline. Changes will not be saved until your connection is restored."
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Page not found",
+    "goHome": "Go home"
+  },
+  "theme": {
+    "light": "Light theme",
+    "dark": "Dark theme",
+    "system": "System theme",
+    "toggle": "Current: {{label}}. Click for {{next}}"
+  }
+}

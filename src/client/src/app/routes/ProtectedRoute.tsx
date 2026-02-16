@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate } from 'react-router';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
+/** Props for {@link ProtectedRoute}. */
 interface ProtectedRouteProps {
   children: ReactNode;
 }

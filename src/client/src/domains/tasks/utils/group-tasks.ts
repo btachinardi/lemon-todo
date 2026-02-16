@@ -9,6 +9,8 @@ import type { TaskGroup } from '../types/grouping.types';
  *
  * When `splitCompleted` is true, Done tasks are moved to `completedTasks`
  * within each group instead of appearing in the main `tasks` array.
+ *
+ * @returns Array of task groups with computed labels, ordered newest first
  */
 export function groupTasksByDate(
   tasks: Task[],
@@ -45,10 +47,12 @@ export function groupTasksByDate(
   });
 }
 
+/** Wraps all tasks into a single ungrouped TaskGroup. */
 function buildFlatGroup(tasks: Task[], splitCompleted: boolean): TaskGroup {
   return partition('all', 'All Tasks', tasks, splitCompleted);
 }
 
+/** Splits tasks into active and completed arrays based on status. */
 function partition(
   key: string,
   label: string,
@@ -71,6 +75,7 @@ function partition(
   return { key, label, tasks: active, completedTasks: done };
 }
 
+/** Converts an ISO timestamp to a grouping key (YYYY-MM-DD, YYYY-Www, or YYYY-MM). */
 function extractKey(isoDate: string, groupBy: GroupBy): string {
   const date = new Date(isoDate);
 
@@ -86,6 +91,7 @@ function extractKey(isoDate: string, groupBy: GroupBy): string {
   }
 }
 
+/** Converts a grouping key to a human-readable label for display. */
 function formatLabel(key: string, groupBy: GroupBy): string {
   switch (groupBy) {
     case GroupBy.Day: {
@@ -131,7 +137,7 @@ function formatISODate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-/** Returns "YYYY-Www" ISO week key. Monday is day 1. */
+/** Calculates ISO week number and returns "YYYY-Www" key. Monday is day 1. */
 function formatISOWeekKey(date: Date): string {
   const monday = getMonday(date);
   const year = monday.getUTCFullYear();
@@ -152,7 +158,7 @@ function getMonday(date: Date): Date {
   return d;
 }
 
-/** Parses "YYYY-Www" back to the Monday Date. */
+/** Parses "YYYY-Www" ISO week key back to the Monday Date (UTC). */
 function mondayFromWeekKey(key: string): Date {
   const [yearStr, weekStr] = key.split('-W');
   const year = Number(yearStr);

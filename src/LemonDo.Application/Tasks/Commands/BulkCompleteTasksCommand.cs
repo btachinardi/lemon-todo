@@ -24,7 +24,7 @@ public sealed class BulkCompleteTasksCommandHandler(
     ICurrentUserService currentUser,
     ILogger<BulkCompleteTasksCommandHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Loads all tasks, completes each one, moves their cards to Done column, and persists all changes atomically (fails fast on first error).</summary>
     public async Task<Result<DomainError>> HandleAsync(BulkCompleteTasksCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Bulk completing {TaskCount} tasks", command.TaskIds.Count);
@@ -54,7 +54,7 @@ public sealed class BulkCompleteTasksCommandHandler(
             if (moveResult.IsFailure)
                 return Result<DomainError>.Failure(moveResult.Error);
 
-            await taskRepository.UpdateAsync(task, ct);
+            await taskRepository.UpdateAsync(task, ct: ct);
         }
 
         await boardRepository.UpdateAsync(board, ct);

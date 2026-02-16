@@ -179,51 +179,63 @@
 }
 
 /* ========================================
-   LEMON LIGHT THEME — Inverted lightness
-   Primary darkened to maintain contrast on white BG
+   LEMON LIGHT THEME — Matching lemon.io computed styles
+   lemon.io uses VIBRANT lime #DCFF02 even on white backgrounds
+   with BLACK text on top. Purple #832CE0 as accent text.
+   Backgrounds: #ffffff / #f5f5f5
+   Text: #000000 / #212121 / #666666
    ======================================== */
 .light {
-  --background: oklch(0.98 0 0);
-  --foreground: oklch(0.12 0 0);
+  /* Surfaces — lemon.io: #ffffff white sections, #f5f5f5 alternating */
+  --background: oklch(0.97 0 0);
+  --foreground: oklch(0 0 0);
   --card: oklch(1.00 0 0);
-  --card-foreground: oklch(0.12 0 0);
+  --card-foreground: oklch(0 0 0);
   --popover: oklch(1.00 0 0);
-  --popover-foreground: oklch(0.12 0 0);
+  --popover-foreground: oklch(0 0 0);
 
-  /* Primary = Darkened lemon for white-BG contrast (WCAG AA) */
-  --primary: oklch(0.55 0.20 116);
-  --primary-foreground: oklch(0.98 0 0);
+  /* Primary = VIBRANT lemon lime #DCFF02 — same as dark theme!
+     lemon.io uses full-saturation lime on white BGs for buttons/CTAs
+     with BLACK text on top (17:1 contrast ratio) */
+  --primary: oklch(0.94 0.24 116);
+  --primary-foreground: oklch(0.12 0 0);
 
-  --secondary: oklch(0.95 0 0);
-  --secondary-foreground: oklch(0.25 0 0);
-  --muted: oklch(0.95 0 0);
-  --muted-foreground: oklch(0.45 0 0);
+  /* Secondary — lemon.io: #f5f5f5 bg, #212121 text */
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.20 0 0);
+  --muted: oklch(0.96 0 0);
+  /* Muted text — lemon.io: #666666 */
+  --muted-foreground: oklch(0.47 0 0);
 
-  --accent: oklch(0.93 0.02 116);
-  --accent-foreground: oklch(0.40 0.16 116);
+  /* Accent — subtle lime-tinted hover (lemon.io hover states) */
+  --accent: oklch(0.96 0.03 116);
+  --accent-foreground: oklch(0.20 0 0);
 
   --destructive: oklch(0.55 0.22 25);
 
-  --border: oklch(0.88 0 0);
-  --input: oklch(0.93 0 0);
-  --ring: oklch(0.55 0.20 116);
+  /* Borders — lemon.io uses bold black borders; we use bolder gray
+     than before to match their high-contrast aesthetic */
+  --border: oklch(0.82 0 0);
+  --input: oklch(0.92 0 0);
+  /* Ring = vibrant lime for visible focus states */
+  --ring: oklch(0.94 0.24 116);
 
-  /* Charts */
+  /* Charts — lemon.io palette: lime, teal, amber, purple #832CE0, coral */
   --chart-1: oklch(0.55 0.20 116);
   --chart-2: oklch(0.55 0.14 162);
   --chart-3: oklch(0.60 0.16 70);
-  --chart-4: oklch(0.50 0.22 304);
+  --chart-4: oklch(0.47 0.27 303);
   --chart-5: oklch(0.50 0.20 16);
 
   /* Sidebar */
   --sidebar: oklch(0.97 0 0);
-  --sidebar-foreground: oklch(0.15 0 0);
-  --sidebar-primary: oklch(0.55 0.20 116);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.93 0.02 116);
-  --sidebar-accent-foreground: oklch(0.15 0 0);
-  --sidebar-border: oklch(0.90 0 0);
-  --sidebar-ring: oklch(0.55 0.20 116);
+  --sidebar-foreground: oklch(0.10 0 0);
+  --sidebar-primary: oklch(0.94 0.24 116);
+  --sidebar-primary-foreground: oklch(0.12 0 0);
+  --sidebar-accent: oklch(0.96 0.03 116);
+  --sidebar-accent-foreground: oklch(0.10 0 0);
+  --sidebar-border: oklch(0.88 0 0);
+  --sidebar-ring: oklch(0.94 0.24 116);
 
   /* Semantic */
   --success: oklch(0.93 0.04 155);
@@ -251,8 +263,11 @@
   --status-done: oklch(0.93 0.04 155);
   --status-done-foreground: oklch(0.35 0.10 155);
 
-  /* Lemon brand (darker for light BG) */
-  --lemon: oklch(0.55 0.20 116);
+  /* Lemon brand — readable dark lime for text-on-white contexts
+     lemon.io uses purple #832CE0 for accent text on white;
+     we use a vivid dark lime that stays "lemon" branded.
+     WCAG AA on white: ~5.5:1 contrast ratio */
+  --lemon: oklch(0.52 0.22 120);
   --lemon-foreground: oklch(0.98 0 0);
 }
 

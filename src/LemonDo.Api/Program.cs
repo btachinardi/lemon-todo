@@ -2,12 +2,16 @@ using System.Reflection;
 using System.Text;
 using LemonDo.Api.Auth;
 using LemonDo.Api.Endpoints;
+using LemonDo.Api.Logging;
 using LemonDo.Api.Middleware;
+using LemonDo.Api.Services;
 using LemonDo.Application.Common;
 using LemonDo.Application.Extensions;
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Boards.Repositories;
+using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
+using LemonDo.Application.Identity.Commands;
 using LemonDo.Infrastructure.Extensions;
 using LemonDo.Infrastructure.Identity;
 using LemonDo.Infrastructure.Persistence;
@@ -18,9 +22,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using Serilog;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog — uses AddSerilog (not UseSerilog) to avoid static Log.Logger
+// mutation that breaks WebApplicationFactory-based tests ("logger already frozen").
+builder.Services.AddSerilog(configuration => configuration
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Application", "LemonDo.Api")
+    .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+    .Enrich.WithProperty("MachineName", System.Environment.MachineName)
+    .Enrich.With<ProtectedDataMaskingEnricher>()
+    .Destructure.With<ProtectedDataDestructuringPolicy>());
 
 builder.AddServiceDefaults();
 builder.Services.AddOpenApi();
@@ -32,6 +48,7 @@ builder.Services.AddHealthChecks()
 // JWT Authentication
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IRequestContext, HttpRequestContext>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer();
@@ -54,30 +71,43 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
             ClockSkew = TimeSpan.Zero,
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Roles.RequireAdminOrAbove, policy =>
+        policy.RequireRole(Roles.Admin, Roles.SystemAdmin));
+    options.AddPolicy(Roles.RequireSystemAdmin, policy =>
+        policy.RequireRole(Roles.SystemAdmin));
+});
 
 // CORS — allow frontend origin with credentials for cookie-based auth
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? ["https://localhost:5173", "http://localhost:5173"];
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://localhost:5173", "http://localhost:5173")
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
 });
 
-// Rate limiting
-var authRateLimit = builder.Configuration.GetValue("RateLimiting:Auth:PermitLimit", 20);
+// Rate limiting — uses AddPolicy with deferred IConfiguration read so that
+// WebApplicationFactory config overrides (e.g., PermitLimit=10000) are applied.
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter("auth", limiter =>
+    options.AddPolicy("auth", context =>
     {
-        limiter.PermitLimit = authRateLimit;
-        limiter.Window = TimeSpan.FromMinutes(1);
-        limiter.QueueLimit = 0;
+        var config = context.RequestServices.GetRequiredService<IConfiguration>();
+        var permitLimit = config.GetValue("RateLimiting:Auth:PermitLimit", 20);
+        return RateLimitPartition.GetFixedWindowLimiter("auth", _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = permitLimit,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        });
     });
 });
 
@@ -90,7 +120,7 @@ _ = app.Services.GetRequiredService<IOptions<JwtSettings>>().Value;
 var startupLogger = app.Services.GetRequiredService<ILoggerFactory>()
     .CreateLogger("LemonDo.Api.Startup");
 
-var version = typeof(LemonDo.Api.Endpoints.TaskEndpoints).Assembly
+var version = typeof(TaskEndpoints).Assembly
     .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
 startupLogger.LogInformation("LemonDo API v{Version} starting", version);
 
@@ -106,7 +136,7 @@ try
 
     // Seed roles
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-    string[] roles = ["User", "Admin"];
+    string[] roles = [Roles.User, Roles.Admin, Roles.SystemAdmin];
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
@@ -131,6 +161,51 @@ try
     {
         startupLogger.LogDebug("Default board already exists, skipping seed");
     }
+
+    // Seed development test accounts (one per role)
+    if (app.Environment.IsDevelopment())
+    {
+        var registerHandler = scope.ServiceProvider.GetRequiredService<RegisterUserCommandHandler>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        (string Email, string Password, string DisplayName, string Role)[] devAccounts =
+        [
+            ("dev.user@lemondo.dev", "User1234", "Dev User", Roles.User),
+            ("dev.admin@lemondo.dev", "Admin1234", "Dev Admin", Roles.Admin),
+            ("dev.sysadmin@lemondo.dev", "SysAdmin1234", "Dev SysAdmin", Roles.SystemAdmin),
+        ];
+
+        foreach (var (email, password, displayName, role) in devAccounts)
+        {
+            // Check if user already exists via email hash
+            var emailHash = ProtectedDataHasher.HashEmail(email);
+            if (await userManager.FindByNameAsync(emailHash) is not null)
+                continue;
+
+            // RegisterUserCommandHandler creates credentials + domain User + board (via event)
+            var command = new RegisterUserCommand(email, password, displayName);
+            var registerResult = await registerHandler.HandleAsync(command);
+
+            if (registerResult.IsSuccess)
+            {
+                // Assign additional role beyond "User" if needed
+                if (role != Roles.User)
+                {
+                    var appUser = await userManager.FindByNameAsync(emailHash);
+                    if (appUser is not null)
+                        await userManager.AddToRoleAsync(appUser, role);
+                }
+
+                startupLogger.LogInformation(
+                    "Seeded dev account with role {Role}", role);
+            }
+            else
+            {
+                startupLogger.LogWarning(
+                    "Failed to seed dev account: {Error}", registerResult.Error.Code);
+            }
+        }
+    }
 }
 catch (Exception ex)
 {
@@ -139,14 +214,16 @@ catch (Exception ex)
 }
 
 // Middleware pipeline order:
-// 1. Security headers (early — adds headers on every response)
-// 2. Correlation ID (request tracing)
-// 3. Error handling (catches exceptions from downstream)
-// 4. HSTS + HTTPS redirect (non-dev only)
-// 5. CORS (credentials support for cookies)
-// 6. Rate limiter (auth endpoint protection)
-// 7. Authentication (JWT validation)
-// 8. Authorization (route protection)
+// 1. Serilog request logging (HTTP-level structured logs)
+// 2. Security headers (early — adds headers on every response)
+// 3. Correlation ID (request tracing via Serilog LogContext)
+// 4. Error handling (catches exceptions from downstream)
+// 5. HSTS + HTTPS redirect (non-dev only)
+// 6. CORS (credentials support for cookies)
+// 7. Rate limiter (auth endpoint protection)
+// 8. Authentication (JWT validation)
+// 9. Authorization (route protection)
+app.UseSerilogRequestLogging();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
@@ -168,6 +245,7 @@ app.MapScalarApiReference();
 app.MapAuthEndpoints();
 app.MapTaskEndpoints();
 app.MapBoardEndpoints();
+app.MapAdminEndpoints();
 
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));
 

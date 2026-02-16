@@ -9,7 +9,10 @@ interface TagListProps {
   onRemove?: (tag: string) => void;
 }
 
-/** Horizontal list of tag badges. Renders nothing when `tags` is empty. */
+/**
+ * Horizontal list of tag badges. Renders nothing when `tags` is empty.
+ * Memoized — rendered in task card lists.
+ */
 export const TagList = memo(function TagList({ tags, className, onRemove }: TagListProps) {
   if (tags.length === 0) return null;
 

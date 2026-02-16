@@ -10,7 +10,12 @@ using LemonDo.Domain.Tasks.ValueObjects;
 /// <summary>Minimal API endpoint definitions for the <c>/api/tasks</c> route group.</summary>
 public static class TaskEndpoints
 {
-    /// <summary>Maps all task CRUD, lifecycle, and tag endpoints under <c>/api/tasks</c>.</summary>
+    /// <summary>
+    /// Maps all task endpoints under <c>/api/tasks</c> including CRUD operations, lifecycle
+    /// transitions (complete, uncomplete, archive), spatial positioning (move), tag management,
+    /// sensitive note viewing, and bulk operations.
+    /// </summary>
+    /// <returns>The route group builder for method chaining.</returns>
     public static RouteGroupBuilder MapTaskEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/tasks").WithTags("Tasks").RequireAuthorization();
@@ -26,6 +31,7 @@ public static class TaskEndpoints
         group.MapPost("/{id:guid}/move", MoveTask);
         group.MapPost("/{id:guid}/tags", AddTag);
         group.MapDelete("/{id:guid}/tags/{tag}", RemoveTag);
+        group.MapPost("/{id:guid}/view-note", ViewTaskNote);
         group.MapPost("/bulk/complete", BulkComplete);
 
         return group;
@@ -69,7 +75,8 @@ public static class TaskEndpoints
             request.Description,
             priority,
             request.DueDate,
-            request.Tags);
+            request.Tags,
+            request.SensitiveNote);
 
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(dto => Results.Created($"/api/tasks/{dto.Id}", dto), httpContext: httpContext);
@@ -102,7 +109,9 @@ public static class TaskEndpoints
             request.Description,
             priority,
             request.DueDate,
-            request.ClearDueDate);
+            request.ClearDueDate,
+            request.SensitiveNote,
+            request.ClearSensitiveNote);
 
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(httpContext: httpContext);
@@ -182,6 +191,18 @@ public static class TaskEndpoints
         var command = new RemoveTagFromTaskCommand(id, tag);
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(() => Results.Ok(new { Id = id }), httpContext: httpContext);
+    }
+
+    private static async Task<IResult> ViewTaskNote(
+        ViewTaskNoteCommandHandler handler,
+        Guid id,
+        ViewTaskNoteRequest request,
+        HttpContext httpContext,
+        CancellationToken ct)
+    {
+        var command = new ViewTaskNoteCommand(id, request.Password);
+        var result = await handler.HandleAsync(command, ct);
+        return result.ToHttpResult(note => Results.Ok(new { Note = note }), httpContext: httpContext);
     }
 
     private static async Task<IResult> BulkComplete(

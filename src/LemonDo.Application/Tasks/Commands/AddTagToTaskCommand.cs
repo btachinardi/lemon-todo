@@ -8,13 +8,13 @@ using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
-/// <summary>Command to add a tag to an existing task.</summary>
+/// <summary>Categorizes a task with an additional tag. The tag is normalized (trimmed, lowercased).</summary>
 public sealed record AddTagToTaskCommand(Guid TaskId, string Tag);
 
 /// <summary>Validates the tag and delegates to <see cref="LemonDo.Domain.Tasks.Entities.Task.AddTag"/>.</summary>
 public sealed class AddTagToTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<AddTagToTaskCommandHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Validates the tag, loads the task, adds the normalized tag, and persists the change.</summary>
     public async Task<Result<DomainError>> HandleAsync(AddTagToTaskCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Adding tag {Tag} to task {TaskId}", command.Tag, command.TaskId);
@@ -35,7 +35,7 @@ public sealed class AddTagToTaskCommandHandler(ITaskRepository repository, IUnit
         if (result.IsFailure)
             return result;
 
-        await repository.UpdateAsync(task, ct);
+        await repository.UpdateAsync(task, ct: ct);
         await unitOfWork.SaveChangesAsync(ct);
 
         logger.LogInformation("Tag {Tag} added to task {TaskId} successfully", command.Tag, command.TaskId);

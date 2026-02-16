@@ -14,7 +14,7 @@ public sealed record RemoveTagFromTaskCommand(Guid TaskId, string Tag);
 /// <summary>Validates the tag and delegates to <see cref="LemonDo.Domain.Tasks.Entities.Task.RemoveTag"/>.</summary>
 public sealed class RemoveTagFromTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<RemoveTagFromTaskCommandHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Validates the tag, loads the task, removes the tag, and persists the change.</summary>
     public async Task<Result<DomainError>> HandleAsync(RemoveTagFromTaskCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Removing tag {Tag} from task {TaskId}", command.Tag, command.TaskId);
@@ -35,7 +35,7 @@ public sealed class RemoveTagFromTaskCommandHandler(ITaskRepository repository, 
         if (result.IsFailure)
             return result;
 
-        await repository.UpdateAsync(task, ct);
+        await repository.UpdateAsync(task, ct: ct);
         await unitOfWork.SaveChangesAsync(ct);
 
         logger.LogInformation("Tag {Tag} removed from task {TaskId} successfully", command.Tag, command.TaskId);

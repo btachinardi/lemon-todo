@@ -49,7 +49,7 @@ public sealed class CreateTaskCommandHandlerTests
         Assert.AreEqual("Buy groceries", result.Value.Title);
         Assert.AreEqual("Milk and eggs", result.Value.Description);
         Assert.AreEqual("High", result.Value.Priority);
-        await _taskRepository.Received(1).AddAsync(Arg.Any<TaskEntity>(), Arg.Any<CancellationToken>());
+        await _taskRepository.Received(1).AddAsync(Arg.Any<TaskEntity>(), Arg.Any<SensitiveNote?>(), Arg.Any<CancellationToken>());
         await _boardRepository.Received(1).UpdateAsync(Arg.Any<Board>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -118,7 +118,7 @@ public sealed class CreateTaskCommandHandlerTests
         var result = await _handler.HandleAsync(command);
 
         Assert.IsTrue(result.IsFailure);
-        await _taskRepository.DidNotReceive().AddAsync(Arg.Any<TaskEntity>(), Arg.Any<CancellationToken>());
+        await _taskRepository.DidNotReceive().AddAsync(Arg.Any<TaskEntity>(), Arg.Any<SensitiveNote?>(), Arg.Any<CancellationToken>());
     }
 
     [TestMethod]

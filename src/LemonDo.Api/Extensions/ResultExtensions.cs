@@ -18,11 +18,15 @@ public static class ResultExtensions
     /// Failure returns a problem details response with status code based on error classification:
     /// 404 for not_found errors, 400 for validation errors, 422 for business rule violations.
     /// </summary>
-    /// <typeparam name="TValue">The success value type.</typeparam>
+    /// <typeparam name="TValue">The success value type from the domain Result.</typeparam>
     /// <param name="result">The domain result to convert.</param>
     /// <param name="onSuccess">Optional custom success response factory. Defaults to Ok(value).</param>
     /// <param name="httpContext">Optional HTTP context used to log domain errors for observability.</param>
     /// <returns>An <see cref="IResult"/> representing the HTTP response.</returns>
+    /// <remarks>
+    /// Side effect: domain errors are logged with request context (method, path) when httpContext
+    /// is provided, enabling observability of domain error trends.
+    /// </remarks>
     public static IResult ToHttpResult<TValue>(this Result<TValue, DomainError> result, Func<TValue, IResult>? onSuccess = null, HttpContext? httpContext = null)
     {
         if (result.IsSuccess)

@@ -53,39 +53,147 @@ cd lemon-todo
 cd src/client && pnpm install && cd ../..
 
 # Run with Aspire (orchestrates API + frontend together)
-dotnet run --project src/LemonDo.AppHost
+./dev start
 ```
 
 The Aspire Dashboard URL (with login token) will appear in the console output. From there you can see all service URLs, logs, traces, and metrics.
 
-**Running services individually** (if Aspire has issues):
+### Developer CLI
+
+All common commands are available via the `./dev` script:
 
 ```bash
-# Terminal 1: Backend API
-dotnet run --project src/LemonDo.Api
+./dev help                  # Show all commands
 
-# Terminal 2: Frontend dev server
-cd src/client && pnpm dev
+# Build
+./dev build                 # Clean + build all 11 projects
+
+# Tests
+./dev test                  # Backend (SQLite) + Frontend
+./dev test backend          # Backend only (SQLite)
+./dev test backend:sql      # Backend only (SQL Server)
+./dev test backend:both     # Backend on both providers
+./dev test frontend         # Frontend (Vitest)
+./dev test e2e              # E2E (Playwright, SQLite backend)
+./dev test e2e:sql          # E2E (Playwright, SQL Server backend)
+./dev test e2e:headed       # E2E with browser visible
+./dev test e2e:ui           # Playwright UI mode
+
+# Lint
+./dev lint                  # Frontend ESLint
+
+# Start services
+./dev start                 # Full stack via Aspire
+./dev start api             # API only
+./dev start frontend        # Frontend dev server only
+
+# Migrations (adds to BOTH providers at once)
+./dev migrate add <Name>    # Add migration to SQLite + SQL Server
+./dev migrate list sqlite   # List SQLite migrations
+./dev migrate list sql      # List SQL Server migrations
+
+# SQL Server Docker
+./dev docker up             # Start SQL Server container
+./dev docker down           # Stop and remove container
+
+# Azure Infrastructure (Terraform)
+./dev infra plan            # Plan stage1-mvp (default)
+./dev infra apply           # Apply stage1-mvp
+./dev infra output          # Show deployed resource URLs
+./dev infra status          # List resources in state
+./dev infra destroy         # Tear down infrastructure
+
+# Full verification gate (build + all tests + lint)
+./dev verify
+```
+
+### Development Test Accounts
+
+In **Development** mode, three test accounts are seeded automatically (one per role):
+
+| Role | Email | Password |
+|------|-------|----------|
+| User | `dev.user@lemondo.dev` | `User1234` |
+| Admin | `dev.admin@lemondo.dev` | `Admin1234` |
+| SystemAdmin | `dev.sysadmin@lemondo.dev` | `SysAdmin1234` |
+
+> These accounts are **only** created when `ASPNETCORE_ENVIRONMENT=Development` (the default for `dotnet run`). They are never seeded in production.
+
+### Running Services Individually
+
+If Aspire has issues, start services separately:
+
+```bash
+./dev start api        # Terminal 1
+./dev start frontend   # Terminal 2
 ```
 
 > **Note**: When running via Aspire, ports are dynamically assigned. When running individually, the API defaults to `http://localhost:5155` and the frontend to `http://localhost:5173`.
 
-### Running Tests
+### Testing with SQL Server
+
+The `./dev` CLI handles all SQL Server connection wiring automatically:
 
 ```bash
-# Backend tests (MSTest 4 + MTP)
-dotnet test --solution src/LemonDo.slnx
+# Start SQL Server (if not already running)
+./dev docker up
 
-# Frontend tests (Vitest)
-cd src/client && pnpm test
+# Run backend tests against SQL Server
+./dev test backend:sql
 
-# E2E tests (Playwright — auto-starts API + frontend)
-cd tests/e2e && pnpm test
+# Run E2E tests against SQL Server
+./dev test e2e:sql
 
-# With coverage
-dotnet test --solution src/LemonDo.slnx --collect:"XPlat Code Coverage"
-cd src/client && pnpm test:coverage
+# Run backend on both providers sequentially
+./dev test backend:both
+
+# Tear down
+./dev docker down
 ```
+
+> The default connection uses `sa/YourStr0ngPassw0rd` on `localhost:1433`. Override with `TEST_SQLSERVER_CONNECTION_STRING` env var.
+
+### Database Migrations
+
+The project uses separate migration assemblies per provider (`LemonDo.Migrations.Sqlite` + `LemonDo.Migrations.SqlServer`), enabling `MigrateAsync()` for both.
+
+```bash
+# Add a migration to BOTH providers at once
+./dev migrate add AddNewColumn
+
+# List migrations
+./dev migrate list sqlite
+./dev migrate list sql
+
+# Remove last migration (one provider at a time)
+./dev migrate remove sqlite
+./dev migrate remove sql
+```
+
+### Azure Infrastructure
+
+The project includes a 3-stage Terraform infrastructure for Azure deployment. Stage 1 (MVP) is the default.
+
+**Prerequisites**: Azure CLI (`az`) and Terraform (>= 1.5) — both are auto-detected from PATH or common install locations.
+
+```bash
+# First-time setup: bootstrap the Terraform state backend
+az login
+./dev infra bootstrap
+
+# Initialize and deploy Stage 1 MVP (~$55/month)
+./dev infra init
+./dev infra plan
+./dev infra apply
+
+# View deployed resource URLs
+./dev infra output
+
+# Other stages: stage2-resilience, stage3-scale
+./dev infra plan stage2-resilience
+```
+
+The CI/CD pipeline (`.github/workflows/deploy.yml`) runs tests on all pushes and deploys to Azure on push to `main`.
 
 ### API Documentation
 
@@ -150,7 +258,7 @@ Highlights:
 | **Backend** | .NET 10 LTS | 10.0 |
 | **Orchestration** | Aspire 13 | 13.1 |
 | **ORM** | Entity Framework Core 10 | 10.0 |
-| **Database** | SQLite | 3.x |
+| **Database** | SQLite (dev) / Azure SQL (cloud) | 3.x / 12.x |
 | **API Docs** | Scalar | 2.x |
 | **Frontend** | React 19 + TypeScript 5.9 | 19.2 |
 | **Build** | Vite 7 | 7.3 |
@@ -169,6 +277,8 @@ Highlights:
 
 ```
 lemon-todo/
+├── .github/workflows/             # CI/CD pipeline
+│   └── deploy.yml                 # Build, test, deploy (SQLite + SQL Server)
 ├── docs/                          # Design documents
 │   ├── PRD.md                     # Product requirements (official)
 │   ├── PRD.draft.md               # Initial draft PRD (historical)
@@ -179,20 +289,27 @@ lemon-todo/
 │   ├── RELEASING.md               # Release process guide
 │   ├── ROADMAP.md                 # Future roadmap (Tiers 1-9)
 │   └── TRADEOFFS.md               # Trade-offs and assumptions
+├── infra/                         # Terraform Azure infrastructure
+│   ├── bootstrap/                 # One-time state backend setup
+│   ├── modules/                   # Reusable Terraform modules (9)
+│   ├── stages/                    # MVP → Resilience → Scale
+│   └── scripts/                   # Bootstrap, deploy, cost-estimate
 ├── src/                           # Source code
 │   ├── Directory.Build.props      # Centralized .NET versioning
 │   ├── LemonDo.slnx              # Solution file (.NET 10 XML format)
 │   ├── LemonDo.AppHost/           # Aspire orchestrator
 │   ├── LemonDo.ServiceDefaults/   # Shared Aspire configuration
-│   ├── LemonDo.Api/               # ASP.NET Core minimal API
+│   ├── LemonDo.Api/               # ASP.NET Core minimal API (+Dockerfile)
 │   ├── LemonDo.Application/       # Use cases (commands + queries)
 │   ├── LemonDo.Domain/            # Pure domain (entities, VOs, events)
-│   ├── LemonDo.Infrastructure/    # EF Core, external services
+│   ├── LemonDo.Infrastructure/    # EF Core (SQLite + SQL Server), external services
+│   ├── LemonDo.Migrations.Sqlite/ # EF Core migrations for SQLite provider
+│   ├── LemonDo.Migrations.SqlServer/ # EF Core migrations for SQL Server provider
 │   └── client/                    # Vite + React frontend
 ├── tests/                         # Test projects
 │   ├── LemonDo.Domain.Tests/      # Domain unit + property tests
 │   ├── LemonDo.Application.Tests/ # Use case tests
-│   ├── LemonDo.Api.Tests/         # API integration tests
+│   ├── LemonDo.Api.Tests/         # API integration tests (SQLite + SQL Server)
 │   └── e2e/                       # Playwright E2E tests (standalone pnpm project)
 ├── CHANGELOG.md                   # Release history (Keep a Changelog)
 ├── TASKS.md                       # Project task tracker

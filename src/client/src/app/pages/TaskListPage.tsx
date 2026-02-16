@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertCircleIcon } from 'lucide-react';
 import { toastApiError } from '@/lib/toast-helpers';
 import { Button } from '@/ui/button';
@@ -15,8 +16,12 @@ import { TaskStatus } from '@/domains/tasks/types/task.types';
 import { GroupBy } from '@/domains/tasks/types/grouping.types';
 import { groupTasksByDate } from '@/domains/tasks/utils/group-tasks';
 
-/** List page with grouping toolbar, quick-add form, and toggle-complete support. */
+/**
+ * List page with grouping toolbar, quick-add form, and toggle-complete support.
+ * Supports grouping by due date, priority, or status, with optional split view for completed tasks.
+ */
 export function TaskListPage() {
+  const { t } = useTranslation();
   const tasksQuery = useTasksQuery();
   const createTask = useCreateTask();
   const completeTask = useCompleteTask();
@@ -43,19 +48,19 @@ export function TaskListPage() {
       setTogglingTaskId(id);
       const mutation = task.status === TaskStatus.Done ? uncompleteTask : completeTask;
       mutation.mutate(id, {
-        onError: (error: Error) => toastApiError(error, 'Could not update task. Try again.'),
+        onError: (error: Error) => toastApiError(error, t('tasks.errors.updateTask')),
         onSettled: () => setTogglingTaskId(null),
       });
     },
-    [tasks, completeTask, uncompleteTask],
+    [tasks, completeTask, uncompleteTask, t],
   );
 
   const handleCreateTask = useCallback(
     (request: CreateTaskRequest) =>
       createTask.mutate(request, {
-        onError: (error: Error) => toastApiError(error, 'Could not save task. Try again.'),
+        onError: (error: Error) => toastApiError(error, t('tasks.errors.saveTask')),
       }),
-    [createTask],
+    [createTask, t],
   );
 
   const handleCloseDetail = useCallback(() => setSelectedTaskId(null), []);
@@ -71,11 +76,11 @@ export function TaskListPage() {
           <AlertCircleIcon className="size-8 text-destructive" />
         </div>
         <div className="text-center">
-          <p className="text-lg font-semibold">Could not load tasks</p>
-          <p className="mt-1 text-sm text-muted-foreground">Check your connection and try again.</p>
+          <p className="text-lg font-semibold">{t('tasks.errors.loadTasks')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('common.error.connection')}</p>
         </div>
         <Button variant="outline" onClick={() => tasksQuery.refetch()}>
-          Try Again
+          {t('common.tryAgain')}
         </Button>
       </div>
     );

@@ -4,12 +4,16 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Domain.Tasks.ValueObjects;
+using LemonDo.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
-/// <summary>EF Core implementation of <see cref="ITaskRepository"/>. Eagerly loads tags.</summary>
-public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
+/// <summary>
+/// EF Core implementation of <see cref="ITaskRepository"/>. Eagerly loads tags.
+/// Handles transparent encryption of sensitive notes via shadow properties.
+/// </summary>
+public sealed class TaskRepository(LemonDoDbContext context, IFieldEncryptionService encryptionService) : ITaskRepository
 {
     /// <inheritdoc/>
     public async System.Threading.Tasks.Task<TaskEntity?> GetByIdAsync(TaskId id, CancellationToken ct = default)
@@ -20,6 +24,14 @@ public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
     }
 
     /// <inheritdoc/>
+    /// <param name="ownerId">The task owner to filter by.</param>
+    /// <param name="priority">Optional priority filter.</param>
+    /// <param name="status">Optional status filter.</param>
+    /// <param name="searchTerm">Optional text to search in title and description. Null or empty returns all.</param>
+    /// <param name="tag">Optional tag filter (exact match, case-insensitive).</param>
+    /// <param name="page">1-based page number.</param>
+    /// <param name="pageSize">Items per page.</param>
+    /// <param name="ct">Cancellation token.</param>
     public async System.Threading.Tasks.Task<PagedResult<TaskEntity>> ListAsync(
         UserId ownerId,
         Priority? priority = null,
@@ -71,15 +83,48 @@ public sealed class TaskRepository(LemonDoDbContext context) : ITaskRepository
     }
 
     /// <inheritdoc/>
-    public async System.Threading.Tasks.Task AddAsync(TaskEntity task, CancellationToken ct = default)
+    public async System.Threading.Tasks.Task AddAsync(TaskEntity task, SensitiveNote? sensitiveNote = null, CancellationToken ct = default)
     {
         await context.Tasks.AddAsync(task, ct);
+
+        if (sensitiveNote is not null)
+        {
+            var entry = context.Entry(task);
+            entry.Property("EncryptedSensitiveNote").CurrentValue = encryptionService.Encrypt(sensitiveNote.Value);
+        }
     }
 
     /// <inheritdoc/>
-    public System.Threading.Tasks.Task UpdateAsync(TaskEntity task, CancellationToken ct = default)
+    public System.Threading.Tasks.Task UpdateAsync(TaskEntity task, SensitiveNote? sensitiveNote = null, bool clearSensitiveNote = false, CancellationToken ct = default)
     {
         context.Tasks.Update(task);
+
+        if (clearSensitiveNote)
+        {
+            var entry = context.Entry(task);
+            entry.Property("EncryptedSensitiveNote").CurrentValue = null;
+        }
+        else if (sensitiveNote is not null)
+        {
+            var entry = context.Entry(task);
+            entry.Property("EncryptedSensitiveNote").CurrentValue = encryptionService.Encrypt(sensitiveNote.Value);
+        }
+
         return System.Threading.Tasks.Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public async System.Threading.Tasks.Task<Result<string, DomainError>> GetDecryptedSensitiveNoteAsync(TaskId taskId, CancellationToken ct = default)
+    {
+        var task = await context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId, ct);
+        if (task is null)
+            return Result<string, DomainError>.Failure(DomainError.NotFound("Task", taskId.Value.ToString()));
+
+        var encrypted = context.Entry(task).Property<string?>("EncryptedSensitiveNote").CurrentValue;
+        if (encrypted is null)
+            return Result<string, DomainError>.Failure(
+                DomainError.NotFound("SensitiveNote", taskId.Value.ToString()));
+
+        return Result<string, DomainError>.Success(encryptionService.Decrypt(encrypted));
     }
 }

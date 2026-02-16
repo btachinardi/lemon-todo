@@ -15,7 +15,7 @@ public sealed record ListTasksQuery(TaskListFilter Filter);
 /// <summary>Returns a paginated result of task DTOs matching the filter criteria.</summary>
 public sealed class ListTasksQueryHandler(ITaskRepository repository, ICurrentUserService currentUser, ILogger<ListTasksQueryHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Queries tasks matching the filter criteria (priority, status, search term, tag) and returns a paginated result.</summary>
     public async Task<PagedResult<TaskDto>> HandleAsync(ListTasksQuery query, CancellationToken ct = default)
     {
         var filter = query.Filter;

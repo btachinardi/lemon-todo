@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { LogOutIcon } from 'lucide-react';
 import { Button } from '@/ui/button';
 import {
@@ -13,6 +14,7 @@ import { useLogout } from '../hooks/use-auth-mutations';
 
 /** Header dropdown menu showing user info and sign-out action. */
 export function UserMenu() {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
 
@@ -33,7 +35,7 @@ export function UserMenu() {
           size="sm"
           className="gap-2 text-muted-foreground hover:text-foreground"
         >
-          <span className="flex size-7 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-primary">
+          <span className="flex size-7 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-lemon">
             {initials}
           </span>
           <span className="hidden text-sm sm:inline">{user.displayName}</span>
@@ -53,7 +55,7 @@ export function UserMenu() {
           className="text-destructive focus:text-destructive"
         >
           <LogOutIcon className="mr-2 size-4" />
-          {logout.isPending ? 'Signing out...' : 'Sign out'}
+          {logout.isPending ? t('auth.userMenu.signingOut') : t('auth.userMenu.signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

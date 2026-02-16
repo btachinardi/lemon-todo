@@ -7,6 +7,92 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-16
+
+Checkpoint 4: Production Hardening — observability, security, admin tooling, audit trail, i18n, data encryption, and cloud deployment.
+
+### Added
+
+- **Serilog structured logging** with protected data destructuring policy and correlation ID enrichment
+  - Automatic masking of email, password, and display name properties in logs
+  - Console + OpenTelemetry sinks for unified observability
+- **SystemAdmin role** with `RequireAdminOrAbove` and `RequireSystemAdmin` authorization policies
+  - Three-tier role hierarchy: User < Admin < SystemAdmin
+- **Audit trail** via new Administration bounded context
+  - `AuditEntry` entity tracking security-relevant actions (login, register, task CRUD, role changes, protected data reveals)
+  - Domain event handlers auto-create audit entries on key mutations
+  - `IRequestContext` captures IP address and user agent per request
+  - Paginated, filterable search query (date range, action type, actor, resource)
+- **Admin panel** for user management
+  - Paginated user list with search and role filter
+  - Role assignment and removal (SystemAdmin only)
+  - User deactivation and reactivation (SystemAdmin only)
+  - `AdminRoute` guard checking Admin/SystemAdmin roles
+  - `AdminLayout` with sidebar navigation (Users, Audit Log)
+- **AES-256-GCM field encryption** for protected data at rest
+  - `EncryptedEmail` and `EncryptedDisplayName` columns on `AspNetUsers`
+  - Random 12-byte IV per encryption, tamper detection via authentication tag
+  - Identity continues using `NormalizedEmail` for lookups (no breaking changes)
+- **Protected data redaction in admin views** — emails and names masked by default
+  - `ProtectedDataRedactor` utility for consistent masking (`j***@example.com`)
+  - SystemAdmin "Reveal" action decrypts real values with audit trail entry
+  - 30-second auto-hide with amber highlight in UI
+- **Admin audit log viewer** with filters (date range, action, resource type) and pagination
+  - Color-coded action badges for visual scanning
+- **i18n** with i18next supporting English and Portuguese (Brazil)
+  - 158 translation keys across all frontend components
+  - `LanguageSwitcher` dropdown with browser language auto-detection
+  - localStorage persistence for language preference
+- **W3C traceparent propagation** from frontend to backend
+  - Every API request includes a `traceparent` header for distributed tracing
+  - Zero new npm dependencies (uses native `crypto.getRandomValues`)
+- **Task Sensitive Note** — encrypted free-text field on tasks for storing sensitive information
+  - `SensitiveNote` value object (max 10,000 chars) with AES-256-GCM encryption at rest
+  - Owner can view their own note via password re-authentication (`POST /api/tasks/:id/view-note`)
+  - SystemAdmin break-the-glass reveal with justification + audit trail (`POST /api/admin/tasks/:id/reveal-note`)
+  - Task detail sheet with encrypted note section: add/replace textarea, "View Note" dialog with 30s auto-hide
+  - Lock icon badge on task cards when a sensitive note exists
+  - `SensitiveNoteRevealed` audit action for both owner and admin access
+- **Dual database support** — SQLite (development) + SQL Server (production)
+  - `DatabaseProvider` configuration key for provider selection
+  - Separate EF Core migration assemblies (`Migrations.Sqlite` + `Migrations.SqlServer`)
+  - `DesignTimeDbContextFactory` per provider for `dotnet ef` tooling
+  - Unconditional `MigrateAsync()` on startup for both providers
+- **Azure infrastructure** via Terraform with 3 progressive stages
+  - Stage 1 MVP: Container App, ACR, SQL Database, Key Vault, Static Web App, App Insights, Log Analytics (~$18/mo)
+  - Stage 2 Resilience: + Front Door with WAF, VNet, private endpoints (~$180/mo)
+  - Stage 3 Scale: + Redis Cache, CDN, premium Container Apps with auto-scaling (~$1.7K/mo)
+  - 10 reusable Terraform modules (container-app, sql-database, key-vault, monitoring, static-web-app, networking, frontdoor, cdn, redis, app-service)
+  - Remote state backend (Azure Storage) with bootstrap script
+- **CI/CD pipeline** via GitHub Actions
+  - 4-job test matrix: backend (SQLite), backend (SQL Server), frontend (lint + test + build), E2E
+  - Docker build and push to Azure Container Registry with commit SHA tags
+  - Container App deployment via `az containerapp update`
+  - Static Web App deployment via `azure/static-web-apps-deploy`
+- **Multi-stage Dockerfile** for API containerization
+  - Non-root user, curl healthcheck, migration assemblies included
+  - `.dockerignore` for minimal image size
+- **Developer CLI** (`./dev`) — unified bash script for all development commands
+  - `build`, `test` (backend/frontend/e2e with SQLite/SQL Server variants), `lint`, `start`, `verify`
+  - `migrate add/list/remove` (dual-provider), `docker up/down`
+  - `infra bootstrap/init/plan/apply/destroy/output/status/unlock`
+- **668 tests** total (370 backend + 243 frontend + 55 E2E), up from 478
+
+### Changed
+
+- All frontend components now use `useTranslation()` + `t()` for user-facing strings
+- Admin user list shows protected-data-redacted values by default
+- API client sends `traceparent` and `X-Correlation-Id` headers on every request
+- Renamed "PII" terminology to "Protected Data" across entire codebase (zero functional changes)
+- Azure deployment uses Container Apps instead of App Service (VM quota unavailable)
+
+### Fixed
+
+- Admin pagination controls not shown on single-page results
+- Missing LanguageSwitcher in AdminLayout header
+- Wrong password in note reveal dialog not showing error feedback
+- Unsaved description changes lost when closing task detail sheet
+
 ## [0.3.0] - 2026-02-15
 
 Checkpoint 3: Rich UX — dark mode, filter bar, task detail sheet, loading skeletons, empty states, error boundaries, and enhanced interactions.
@@ -70,7 +156,7 @@ Checkpoint 2: Authentication & Authorization — secure multi-user support with 
 - **Security hardening**
   - `SecurityHeadersMiddleware` — X-Content-Type-Options, X-Frame-Options, CSP, Referrer-Policy
   - Account lockout after 5 failed login attempts (15min lockout)
-  - PII masking in structured logs
+  - Protected data masking in structured logs
   - CORS configured with `AllowCredentials()` for cookie-based auth
 - **Frontend auth system**
   - Login and Register pages with form validation and error handling
@@ -155,7 +241,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/btachinardi/lemon-todo/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/btachinardi/lemon-todo/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/btachinardi/lemon-todo/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/btachinardi/lemon-todo/releases/tag/v0.1.0

@@ -4,28 +4,33 @@ import { Dialog as SheetPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/** Slide-out panel root component. Similar to dialog but slides from screen edge. */
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
 }
 
+/** Trigger button that opens the sheet when clicked. */
 function SheetTrigger({
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
   return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
 }
 
+/** Close button for dismissing the sheet. */
 function SheetClose({
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Close>) {
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
 }
 
+/** Portal wrapper that renders sheet content into document.body. */
 function SheetPortal({
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
   return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
 }
 
+/** Backdrop overlay behind the sheet content, darkens the page. */
 function SheetOverlay({
   className,
   ...props
@@ -42,6 +47,12 @@ function SheetOverlay({
   )
 }
 
+/**
+ * Main sheet content panel, slides in from specified edge with overlay.
+ *
+ * @param side - Edge to slide from: top, right (default), bottom, or left.
+ * @param showCloseButton - When true (default), renders an X icon button at top-right for closing the sheet.
+ */
 function SheetContent({
   className,
   children,
@@ -83,6 +94,7 @@ function SheetContent({
   )
 }
 
+/** Header region for sheet title and description. */
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -93,6 +105,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** Footer region at the bottom of the sheet, pushed to the end via mt-auto. Typically contains actions. */
 function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -103,6 +116,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** Primary heading for the sheet. Required for accessibility. */
 function SheetTitle({
   className,
   ...props
@@ -116,6 +130,7 @@ function SheetTitle({
   )
 }
 
+/** Descriptive text explaining the sheet purpose. Recommended for accessibility. */
 function SheetDescription({
   className,
   ...props

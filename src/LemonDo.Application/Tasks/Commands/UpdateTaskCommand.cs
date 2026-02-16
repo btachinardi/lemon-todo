@@ -9,19 +9,25 @@ using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
-/// <summary>Command to partially update a task's scalar fields (title, description, priority, due date).</summary>
+/// <summary>Command to partially update a task's scalar fields (title, description, priority, due date, sensitive note).</summary>
+/// <remarks>
+/// Only provided fields are modified. To explicitly remove the due date, set ClearDueDate to true (the DueDate value is ignored when true).
+/// Same for ClearSensitiveNote: set to true to remove the sensitive note (the SensitiveNote value is ignored when true).
+/// </remarks>
 public sealed record UpdateTaskCommand(
     Guid TaskId,
     string? Title = null,
     string? Description = null,
     Priority? Priority = null,
     DateTimeOffset? DueDate = null,
-    bool ClearDueDate = false);
+    bool ClearDueDate = false,
+    string? SensitiveNote = null,
+    bool ClearSensitiveNote = false);
 
 /// <summary>Applies partial updates to a task. Only non-null fields are changed.</summary>
 public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<UpdateTaskCommandHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Loads the task, applies partial updates to provided fields, validates all changes, and persists the modified task.</summary>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(UpdateTaskCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Updating task {TaskId}", command.TaskId);
@@ -76,7 +82,27 @@ public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOf
                 return Result<TaskDto, DomainError>.Failure(dueDateResult.Error);
         }
 
-        await repository.UpdateAsync(task, ct);
+        SensitiveNote? sensitiveNote = null;
+        var clearNote = command.ClearSensitiveNote;
+        if (clearNote)
+        {
+            var noteResult = task.UpdateSensitiveNote(null);
+            if (noteResult.IsFailure)
+                return Result<TaskDto, DomainError>.Failure(noteResult.Error);
+        }
+        else if (command.SensitiveNote is not null)
+        {
+            var noteResult = SensitiveNote.Create(command.SensitiveNote);
+            if (noteResult.IsFailure)
+                return Result<TaskDto, DomainError>.Failure(noteResult.Error);
+            sensitiveNote = noteResult.Value;
+
+            var updateNoteResult = task.UpdateSensitiveNote(sensitiveNote);
+            if (updateNoteResult.IsFailure)
+                return Result<TaskDto, DomainError>.Failure(updateNoteResult.Error);
+        }
+
+        await repository.UpdateAsync(task, sensitiveNote, clearNote, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
         logger.LogInformation("Task {TaskId} updated successfully", command.TaskId);

@@ -1,0 +1,189 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  NODE_VERSION: "24"
+  PNPM_VERSION: "10"
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Backend: Build + Test (SQLite)
+  # ──────────────────────────────────────────────
+  backend-test:
+    name: Backend Tests (SQLite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore src/LemonDo.slnx
+
+      - name: Build
+        run: dotnet build src/LemonDo.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test --solution src/LemonDo.slnx --no-build -c Release
+
+  # ──────────────────────────────────────────────
+  # Backend: Integration Tests (SQL Server)
+  # ──────────────────────────────────────────────
+  backend-test-sqlserver:
+    name: Backend Tests (SQL Server)
+    runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "YourStr0ngPassw0rd"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStr0ngPassw0rd' -Q 'SELECT 1' -C -b"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore src/LemonDo.slnx
+
+      - name: Build
+        run: dotnet build src/LemonDo.slnx --no-restore -c Release
+
+      - name: Test with SQL Server
+        env:
+          TEST_DATABASE_PROVIDER: SqlServer
+          TEST_SQLSERVER_CONNECTION_STRING: "Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStr0ngPassw0rd;TrustServerCertificate=True;"
+        run: dotnet test --solution src/LemonDo.slnx --no-build -c Release
+
+  # ──────────────────────────────────────────────
+  # Frontend: Build + Test
+  # ──────────────────────────────────────────────
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+          cache-dependency-path: src/client/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: src/client
+
+      - name: Lint
+        run: pnpm lint
+        working-directory: src/client
+
+      - name: Test
+        run: pnpm test
+        working-directory: src/client
+
+      - name: Build
+        run: pnpm build
+        working-directory: src/client
+
+  # ──────────────────────────────────────────────
+  # Docker: Build API image
+  # ──────────────────────────────────────────────
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build -f src/LemonDo.Api/Dockerfile -t lemondo-api:${{ github.sha }} .
+
+  # ──────────────────────────────────────────────
+  # Deploy to Azure (on push to main only)
+  # ──────────────────────────────────────────────
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+    needs: [backend-test, backend-test-sqlserver, frontend-test, docker-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # --- API: Build & push Docker image to ACR, deploy to Container App ---
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ vars.AZURE_ACR_NAME }}
+
+      - name: Build and push API image
+        run: |
+          IMAGE="${{ vars.AZURE_ACR_LOGIN_SERVER }}/lemondo-api:${{ github.sha }}"
+          docker build -f src/LemonDo.Api/Dockerfile -t "$IMAGE" .
+          docker tag "$IMAGE" "${{ vars.AZURE_ACR_LOGIN_SERVER }}/lemondo-api:latest"
+          docker push "$IMAGE"
+          docker push "${{ vars.AZURE_ACR_LOGIN_SERVER }}/lemondo-api:latest"
+
+      - name: Deploy to Container App
+        run: |
+          az containerapp update \
+            --name ${{ vars.AZURE_CONTAINER_APP_NAME }} \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --image "${{ vars.AZURE_ACR_LOGIN_SERVER }}/lemondo-api:${{ github.sha }}"
+
+      # --- Frontend: Build & deploy to Static Web App ---
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build frontend
+        run: pnpm install --frozen-lockfile && pnpm build
+        working-directory: src/client
+
+      - name: Deploy frontend to Static Web App
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.SWA_DEPLOYMENT_TOKEN }}
+          action: upload
+          app_location: src/client/dist
+          skip_app_build: true

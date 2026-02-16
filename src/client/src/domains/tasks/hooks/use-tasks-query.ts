@@ -23,7 +23,10 @@ export function useTasksQuery(params?: ListTasksParams) {
   });
 }
 
-/** Fetches a single task by ID. Disabled when `id` is falsy. */
+/**
+ * Fetches a single task by ID. Disabled when `id` is falsy.
+ * @param id - Unique task identifier
+ */
 export function useTaskQuery(id: string) {
   return useQuery({
     queryKey: taskKeys.detail(id),

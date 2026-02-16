@@ -26,7 +26,7 @@ public sealed class CompleteTaskCommandHandler(
     ILogger<CompleteTaskCommandHandler> logger,
     ApplicationMetrics metrics)
 {
-    /// <inheritdoc/>
+    /// <summary>Loads the task, marks it as complete, moves its card to the Done column, and persists both changes atomically.</summary>
     public async Task<Result<DomainError>> HandleAsync(CompleteTaskCommand command, CancellationToken ct = default)
     {
         using var activity = ApplicationActivitySource.Source.StartActivity("CompleteTask");
@@ -58,7 +58,7 @@ public sealed class CompleteTaskCommandHandler(
         if (moveResult.IsFailure)
             return Result<DomainError>.Failure(moveResult.Error);
 
-        await taskRepository.UpdateAsync(task, ct);
+        await taskRepository.UpdateAsync(task, ct: ct);
         await boardRepository.UpdateAsync(board, ct);
         await unitOfWork.SaveChangesAsync(ct);
         metrics.TaskCompleted();

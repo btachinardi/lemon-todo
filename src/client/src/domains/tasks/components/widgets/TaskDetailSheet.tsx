@@ -1,10 +1,15 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
 import {
   CalendarIcon,
   Trash2Icon,
   XIcon,
   PlusIcon,
+  LockIcon,
+  EyeIcon,
+  LoaderCircleIcon,
+  CheckCircle2Icon,
 } from 'lucide-react';
 import {
   Sheet,
@@ -52,6 +57,14 @@ export interface TaskDetailSheetProps {
   isDeleting?: boolean;
   /** All distinct tags across all tasks, used for autocomplete suggestions. */
   allTags?: string[];
+  /** Called when the user saves a new or replacement sensitive note. */
+  onUpdateSensitiveNote?: (note: string) => void;
+  /** Called when the user clears the encrypted sensitive note. */
+  onClearSensitiveNote?: () => void;
+  /** Called when the user wants to view the decrypted note. */
+  onViewNote?: () => void;
+  /** Mutation status for the update-task operation, drives the save indicator. */
+  saveStatus?: 'idle' | 'pending' | 'success' | 'error';
 }
 
 /** Slide-over panel for viewing and editing all fields of a single task. */
@@ -70,18 +83,31 @@ export function TaskDetailSheet({
   onDelete,
   isDeleting,
   allTags,
+  onUpdateSensitiveNote,
+  onClearSensitiveNote,
+  onViewNote,
+  saveStatus = 'idle',
 }: TaskDetailSheetProps) {
   const isOpen = taskId !== null;
 
+  const handleClose = useCallback(() => {
+    // Force-blur the active element so any pending onBlur save handlers fire
+    // before the sheet unmounts (e.g. description textarea).
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    onClose();
+  }, [onClose]);
+
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-lg">
         {taskId && (
           <TaskDetailContent
             task={task}
             isLoading={isLoading}
             isError={isError}
-            onClose={onClose}
+            onClose={handleClose}
             onUpdateTitle={onUpdateTitle}
             onUpdateDescription={onUpdateDescription}
             onUpdatePriority={onUpdatePriority}
@@ -91,6 +117,10 @@ export function TaskDetailSheet({
             onDelete={onDelete}
             isDeleting={isDeleting}
             allTags={allTags}
+            onUpdateSensitiveNote={onUpdateSensitiveNote}
+            onClearSensitiveNote={onClearSensitiveNote}
+            onViewNote={onViewNote}
+            saveStatus={saveStatus}
           />
         )}
       </SheetContent>
@@ -112,6 +142,10 @@ interface TaskDetailContentProps {
   onDelete: () => void;
   isDeleting?: boolean;
   allTags?: string[];
+  onUpdateSensitiveNote?: (note: string) => void;
+  onClearSensitiveNote?: () => void;
+  onViewNote?: () => void;
+  saveStatus: 'idle' | 'pending' | 'success' | 'error';
 }
 
 function TaskDetailContent({
@@ -128,13 +162,19 @@ function TaskDetailContent({
   onDelete,
   isDeleting,
   allTags,
+  onUpdateSensitiveNote,
+  onClearSensitiveNote,
+  onViewNote,
+  saveStatus,
 }: TaskDetailContentProps) {
+  const { t } = useTranslation();
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(task?.title ?? '');
   const [descDraft, setDescDraft] = useState(task?.description ?? '');
   const [tagInput, setTagInput] = useState('');
   const [tagInputFocused, setTagInputFocused] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Sync drafts when task data changes -- uses the React-approved "adjust
@@ -183,6 +223,13 @@ function TaskDetailContent({
     setTagInput('');
   }, [task, tagInput, onAddTag]);
 
+  const handleSaveNote = useCallback(() => {
+    const trimmed = noteDraft.trim();
+    if (!trimmed || !onUpdateSensitiveNote) return;
+    onUpdateSensitiveNote(trimmed);
+    setNoteDraft('');
+  }, [noteDraft, onUpdateSensitiveNote]);
+
   const handleSelectSuggestion = useCallback(
     (tag: string) => {
       onAddTag(tag);
@@ -216,9 +263,9 @@ function TaskDetailContent({
   if (isError || !task) {
     return (
       <div className="flex flex-col items-center gap-4 p-6">
-        <p className="text-sm text-muted-foreground">Could not load task details.</p>
+        <p className="text-sm text-muted-foreground">{t('tasks.detail.loadError')}</p>
         <Button variant="outline" size="sm" onClick={onClose}>
-          Close
+          {t('common.close')}
         </Button>
       </div>
     );
@@ -248,7 +295,7 @@ function TaskDetailContent({
           />
         ) : (
           <SheetTitle
-            className="cursor-pointer text-lg font-semibold hover:text-primary transition-colors"
+            className="cursor-pointer text-lg font-semibold hover:text-lemon transition-colors"
             onClick={() => {
               setEditingTitle(true);
               setTimeout(() => titleInputRef.current?.focus(), 0);
@@ -266,25 +313,37 @@ function TaskDetailContent({
           </SheetTitle>
         )}
         <SheetDescription className="sr-only">Edit task details</SheetDescription>
+        {saveStatus === 'pending' && (
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
+            <LoaderCircleIcon className="size-3 animate-spin" />
+            {t('tasks.detail.saving')}
+          </p>
+        )}
+        {saveStatus === 'success' && (
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
+            <CheckCircle2Icon className="size-3 text-green-600 dark:text-green-400" />
+            {t('tasks.detail.saved')}
+          </p>
+        )}
       </SheetHeader>
 
       <div className="flex flex-col gap-5 px-6 pb-6">
         {/* Description */}
         <div className="space-y-1.5">
-          <Label htmlFor="task-description">Description</Label>
+          <Label htmlFor="task-description">{t('tasks.detail.description')}</Label>
           <Textarea
             id="task-description"
             value={descDraft}
             onChange={(e) => setDescDraft(e.target.value)}
             onBlur={handleDescSave}
-            placeholder="Add a description..."
+            placeholder={t('tasks.detail.descriptionPlaceholder')}
             className="min-h-[80px] resize-none"
           />
         </div>
 
         {/* Priority */}
         <div className="space-y-1.5">
-          <Label>Priority</Label>
+          <Label>{t('tasks.detail.priority')}</Label>
           <Select value={task.priority} onValueChange={onUpdatePriority}>
             <SelectTrigger className="w-full" aria-label="Task priority">
               <SelectValue />
@@ -292,7 +351,7 @@ function TaskDetailContent({
             <SelectContent>
               {Object.values(Priority).map((p) => (
                 <SelectItem key={p} value={p}>
-                  {p === 'None' ? 'No priority' : p}
+                  {p === 'None' ? t('tasks.detail.noPriority') : t(`tasks.priority.${p.toLowerCase()}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -301,7 +360,7 @@ function TaskDetailContent({
 
         {/* Due Date */}
         <div className="space-y-1.5">
-          <Label>Due Date</Label>
+          <Label>{t('tasks.detail.dueDate')}</Label>
           <div className="flex items-center gap-2">
             <Popover>
               <PopoverTrigger asChild>
@@ -313,7 +372,7 @@ function TaskDetailContent({
                   )}
                 >
                   <CalendarIcon className="mr-2 size-4" />
-                  {parsedDueDate ? format(parsedDueDate, 'PPP') : 'Pick a date'}
+                  {parsedDueDate ? format(parsedDueDate, 'PPP') : t('tasks.detail.pickDate')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -331,7 +390,7 @@ function TaskDetailContent({
                 size="icon"
                 className="size-8 shrink-0"
                 onClick={() => onUpdateDueDate(undefined)}
-                aria-label="Clear due date"
+                aria-label={t('tasks.detail.clearDueDate')}
               >
                 <XIcon className="size-4" />
               </Button>
@@ -341,7 +400,7 @@ function TaskDetailContent({
 
         {/* Tags */}
         <div className="space-y-1.5">
-          <Label>Tags</Label>
+          <Label>{t('tasks.detail.tags')}</Label>
           <div className="flex flex-wrap gap-1.5">
             {task.tags.map((tag) => (
               <Badge key={tag} variant="secondary" className="gap-1 pr-1">
@@ -349,7 +408,7 @@ function TaskDetailContent({
                 <button
                   onClick={() => onRemoveTag(tag)}
                   className="ml-0.5 rounded-full p-0.5 hover:bg-destructive/20 transition-colors"
-                  aria-label={`Remove tag ${tag}`}
+                  aria-label={t('tasks.detail.removeTag', { tag })}
                 >
                   <XIcon className="size-3" />
                 </button>
@@ -372,7 +431,7 @@ function TaskDetailContent({
                   // Delay hiding so click on suggestion registers first
                   setTimeout(() => setTagInputFocused(false), 150);
                 }}
-                placeholder="Add a tag..."
+                placeholder={t('tasks.detail.tagPlaceholder')}
                 className="h-8 text-sm"
                 aria-label="New tag"
               />
@@ -384,7 +443,7 @@ function TaskDetailContent({
                 disabled={!tagInput.trim()}
               >
                 <PlusIcon className="mr-1 size-3" />
-                Add
+                {t('common.add')}
               </Button>
             </form>
             {tagInputFocused && filteredSuggestions.length > 0 && (
@@ -411,25 +470,78 @@ function TaskDetailContent({
           </div>
         </div>
 
+        {/* Sensitive Note */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <LockIcon className="size-3.5 text-amber-500" />
+            {t('tasks.sensitiveNote.label')}
+          </Label>
+
+          {task.sensitiveNote && (
+            <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+              <span className="text-sm text-amber-700 dark:text-amber-300">
+                {t('tasks.sensitiveNote.hasNote')}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto gap-1.5"
+                onClick={onViewNote}
+              >
+                <EyeIcon className="size-3.5" />
+                {t('tasks.sensitiveNote.viewNote')}
+              </Button>
+            </div>
+          )}
+
+          <Textarea
+            value={noteDraft}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            placeholder={t('tasks.sensitiveNote.placeholder')}
+            className="min-h-[60px] resize-none"
+          />
+          <p className="text-xs text-muted-foreground">
+            {t('tasks.sensitiveNote.encryptionWarning')}
+          </p>
+
+          <div className="flex gap-2">
+            {noteDraft.trim() && (
+              <Button size="sm" onClick={handleSaveNote}>
+                {t('tasks.sensitiveNote.save')}
+              </Button>
+            )}
+            {task.sensitiveNote && onClearSensitiveNote && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={onClearSensitiveNote}
+              >
+                {t('common.clear')}
+              </Button>
+            )}
+          </div>
+        </div>
+
         {/* Delete */}
         <div className="border-t border-border/50 pt-4">
           {showDeleteConfirm ? (
             <div className="flex items-center gap-2">
-              <p className="text-sm text-destructive">Delete this task?</p>
+              <p className="text-sm text-destructive">{t('tasks.detail.deleteTitle')}</p>
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={onDelete}
                 disabled={isDeleting}
               >
-                Confirm
+                {t('common.confirm')}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDeleteConfirm(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           ) : (
@@ -440,7 +552,7 @@ function TaskDetailContent({
               onClick={() => setShowDeleteConfirm(true)}
             >
               <Trash2Icon className="mr-1.5 size-4" />
-              Delete task
+              {t('tasks.detail.deleteButton')}
             </Button>
           )}
         </div>

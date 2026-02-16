@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+/** Props for {@link AuthLayout}. */
 interface AuthLayoutProps {
   children: ReactNode;
 }
@@ -12,7 +13,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <div className="text-center">
           <h1 className="font-mono text-3xl font-light tracking-normal">
             <span className="text-foreground">LEMON</span>
-            <span className="text-primary">DO</span>
+            <span className="text-lemon">DO</span>
           </h1>
         </div>
         {children}

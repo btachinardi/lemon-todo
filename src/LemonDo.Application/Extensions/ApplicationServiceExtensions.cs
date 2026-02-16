@@ -1,10 +1,18 @@
 namespace LemonDo.Application.Extensions;
 
+using LemonDo.Application.Administration;
+using LemonDo.Application.Administration.Commands;
+using LemonDo.Application.Administration.EventHandlers;
+using LemonDo.Application.Administration.Queries;
 using LemonDo.Application.Boards.Commands;
+using LemonDo.Application.Boards.EventHandlers;
 using LemonDo.Application.Common;
 using LemonDo.Application.Identity.Commands;
 using LemonDo.Application.Tasks.Commands;
 using LemonDo.Application.Tasks.Queries;
+using LemonDo.Domain.Common;
+using LemonDo.Domain.Identity.Events;
+using LemonDo.Domain.Tasks.Events;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>DI registration for the Application layer (command and query handlers).</summary>
@@ -27,6 +35,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<RemoveTagFromTaskCommandHandler>();
         services.AddScoped<ArchiveTaskCommandHandler>();
         services.AddScoped<BulkCompleteTasksCommandHandler>();
+        services.AddScoped<ViewTaskNoteCommandHandler>();
 
         // Board command handlers
         services.AddScoped<AddColumnCommandHandler>();
@@ -45,6 +54,27 @@ public static class ApplicationServiceExtensions
         services.AddScoped<ListTasksQueryHandler>();
         services.AddScoped<GetBoardQueryHandler>();
         services.AddScoped<GetDefaultBoardQueryHandler>();
+
+        // Administration
+        services.AddScoped<IAuditService, AuditService>();
+        services.AddScoped<SearchAuditLogQueryHandler>();
+        services.AddScoped<ListUsersAdminQueryHandler>();
+        services.AddScoped<GetUserAdminQueryHandler>();
+        services.AddScoped<AssignRoleCommandHandler>();
+        services.AddScoped<RemoveRoleCommandHandler>();
+        services.AddScoped<DeactivateUserCommandHandler>();
+        services.AddScoped<ReactivateUserCommandHandler>();
+        services.AddScoped<RevealProtectedDataCommandHandler>();
+        services.AddScoped<RevealTaskNoteCommandHandler>();
+
+        // Board event handlers (downstream context reacting to upstream events)
+        services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, CreateDefaultBoardOnUserRegistered>();
+
+        // Audit event handlers
+        services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, AuditOnUserRegistered>();
+        services.AddScoped<IDomainEventHandler<TaskCreatedEvent>, AuditOnTaskCreated>();
+        services.AddScoped<IDomainEventHandler<TaskDeletedEvent>, AuditOnTaskDeleted>();
+        services.AddScoped<IDomainEventHandler<TaskStatusChangedEvent>, AuditOnTaskStatusChanged>();
 
         return services;
     }

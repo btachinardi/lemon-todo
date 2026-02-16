@@ -9,12 +9,15 @@ using LemonDo.Domain.Tasks.ValueObjects;
 using Microsoft.Extensions.Logging;
 
 /// <summary>Command to add a new column to a board with a target status mapping.</summary>
+/// <remarks>
+/// When Position is null, the column is appended to the end. When provided, it's a 0-based index.
+/// </remarks>
 public sealed record AddColumnCommand(Guid BoardId, string Name, string TargetStatus, int? Position = null);
 
 /// <summary>Validates the column name and status, then delegates to <see cref="LemonDo.Domain.Boards.Entities.Board.AddColumn"/>.</summary>
 public sealed class AddColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork, ILogger<AddColumnCommandHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Validates the column name and target status, adds the column to the board at the specified position, and persists the change.</summary>
     public async Task<Result<ColumnDto, DomainError>> HandleAsync(AddColumnCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Adding column {ColumnName} to board {BoardId}", command.Name, command.BoardId);
