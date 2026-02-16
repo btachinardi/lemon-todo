@@ -424,3 +424,17 @@
 | 1d3bec3 | feat(audit-ui): add audit log viewer with filters and pagination | CP4 |
 | 5240f4c | feat(i18n): add i18next with en + pt-BR translations across all components | CP4 |
 | 8172d24 | feat(otel): add W3C traceparent propagation from frontend to backend | CP4 |
+| d57fc1a | test(db): add dual-provider test infrastructure for SQL Server | CP4 |
+| a6575eb | feat(telemetry): enable Azure Monitor OpenTelemetry integration | CP4 |
+| d5346fd | feat(health): expose health endpoints in all environments | CP4 |
+| 61cec27 | ci(docker): add multi-stage Dockerfile for API | CP4 |
+| 364961b | ci(actions): add GitHub Actions CI/CD pipeline | CP4 |
+| d3070c7 | ci(terraform): add Azure infrastructure with staged deployment | CP4 |
+| 0fbf76f | chore(dx): add developer CLI script | CP4 |
+| 5f045bc | docs: update documentation for CP4 infrastructure changes | CP4 |
+| 0a9a078 | fix(admin): add missing LanguageSwitcher to AdminLayout header | CP4 |
+| 12981dc | fix(admin): show pagination controls on single-page results | CP4 |
+| 2b388a9 | fix(infra): complete CP4 infrastructure — Dockerfile, CI/CD, and bug fixes | CP4 |
+| 8a168ee | docs(csharp): improve XML documentation for API contracts and middleware | CP4 |
+| 9b2ae63 | docs(csharp): add XML documentation to domain, infrastructure, and service defaults | CP4 |
+| 65a702b | docs(csharp): add XML documentation to endpoints and domain types | CP4 |
