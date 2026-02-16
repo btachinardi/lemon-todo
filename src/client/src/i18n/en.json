@@ -54,6 +54,19 @@
     "userMenu": {
       "signOut": "Sign out",
       "signingOut": "Signing out..."
+    },
+    "devSwitcher": {
+      "title": "Quick Login",
+      "subtitle": "Development accounts",
+      "switching": "Switching...",
+      "roles": {
+        "user": "User",
+        "userDesc": "Standard task management",
+        "admin": "Admin",
+        "adminDesc": "User management & admin panel",
+        "sysadmin": "System Admin",
+        "sysadminDesc": "Full system access & protected data reveal"
+      }
     }
   },
   "tasks": {
@@ -160,7 +173,7 @@
       "noUsers": "No users found.",
       "active": "Active",
       "deactivated": "Deactivated",
-      "revealPii": "Reveal PII",
+      "revealProtectedData": "Reveal Protected Data",
       "assignRole": "Assign Role",
       "removeRole": "Remove Role",
       "deactivate": "Deactivate",
@@ -197,7 +210,7 @@
         "UserLoggedOut": "User Logged Out",
         "RoleAssigned": "Role Assigned",
         "RoleRemoved": "Role Removed",
-        "PiiRevealed": "PII Revealed",
+        "ProtectedDataRevealed": "Protected Data Revealed",
         "TaskCreated": "Task Created",
         "TaskCompleted": "Task Completed",
         "TaskDeleted": "Task Deleted",
@@ -205,9 +218,9 @@
         "UserReactivated": "User Reactivated"
       }
     },
-    "piiRevealDialog": {
-      "title": "Reveal Personal Information",
-      "description": "This action reveals sensitive PII and is recorded in the audit trail. Enter a justification and verify your identity to proceed.",
+    "protectedDataRevealDialog": {
+      "title": "Reveal Protected Data",
+      "description": "This action reveals sensitive protected data and is recorded in the audit trail. Enter a justification and verify your identity to proceed.",
       "reason": "Reason",
       "reasonPlaceholder": "Select a reason",
       "reasons": {
@@ -220,7 +233,7 @@
         "Other": "Other"
       },
       "reasonDetails": "Reason Details",
-      "reasonDetailsPlaceholder": "Explain why this PII access is needed...",
+      "reasonDetailsPlaceholder": "Explain why this protected data access is needed...",
       "reasonDetailsRequired": "Details are required when reason is 'Other'.",
       "comments": "Additional Comments",
       "commentsPlaceholder": "Any additional context (optional)...",
@@ -228,7 +241,7 @@
       "passwordPlaceholder": "Enter your account password",
       "passwordError": "Invalid password. Please try again.",
       "auditWarning": "This action is permanently recorded in the audit trail.",
-      "submit": "Reveal PII",
+      "submit": "Reveal Protected Data",
       "submitting": "Verifying..."
     },
     "secureViewer": {
