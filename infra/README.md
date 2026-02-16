@@ -113,7 +113,9 @@ infra/
 | Resource | Abbreviation | Example |
 |----------|-------------|---------|
 | Resource Group | `rg` | `rg-lemondo-mvp-eus2` |
-| App Service | `app` | `app-lemondo-mvp-eus2` |
+| Container App | `ca` | `ca-lemondo-mvp-eus2` |
+| Container App Env | `cae` | `cae-lemondo-mvp-eus2` |
+| Container Registry | `cr` | `crlemondomvpeus2` |
 | SQL Server | `sql` | `sql-lemondo-mvp-eus2` |
 | Key Vault | `kv` | `kv-lemondo-mvp-eus2` |
 | Static Web App | `swa` | `swa-lemondo-mvp-eus2` |
@@ -140,6 +142,84 @@ The GitHub Actions pipeline (`.github/workflows/deploy.yml`) runs:
 | Variable | Description |
 |----------|-------------|
 | `AZURE_APP_SERVICE_NAME` | App Service resource name |
+
+## Custom Domains
+
+Custom domains require a two-phase deployment:
+
+### Phase 1: Deploy without custom domains (get DNS values)
+
+```bash
+./dev infra apply
+./dev infra output
+```
+
+Note the outputs:
+- `container_app_ingress_fqdn` — CNAME target for API
+- `custom_domain_verification_id` — TXT record value for domain verification
+- `static_web_app_hostname` — CNAME target for frontend
+
+### Phase 2: Create DNS records (Google Cloud DNS)
+
+```bash
+# API: TXT record for domain verification
+gcloud dns record-sets create asuid.api.lemondo.btas.dev \
+  --zone=btas-dev \
+  --type=TXT \
+  --ttl=300 \
+  --rrdatas='"<custom_domain_verification_id>"'
+
+# API: CNAME record pointing to Container App
+gcloud dns record-sets create api.lemondo.btas.dev \
+  --zone=btas-dev \
+  --type=CNAME \
+  --ttl=300 \
+  --rrdatas='<container_app_ingress_fqdn>.'
+
+# Frontend: CNAME record pointing to Static Web App
+gcloud dns record-sets create lemondo.btas.dev \
+  --zone=btas-dev \
+  --type=CNAME \
+  --ttl=300 \
+  --rrdatas='<static_web_app_hostname>.'
+```
+
+Wait for DNS propagation (check with `dig` or `nslookup`).
+
+### Phase 3: Enable custom domains in Terraform
+
+Add to `terraform.tfvars`:
+```hcl
+api_custom_domain      = "api.lemondo.btas.dev"
+frontend_custom_domain = "lemondo.btas.dev"
+```
+
+```bash
+./dev infra apply
+```
+
+This binds custom domains, provisions managed TLS certificates, and updates CORS.
+
+**Note**: The Container App custom domain uses `terraform_data` with `local-exec`
+(Azure CLI). On Windows, this requires `bash` in PATH (Git Bash). The provisioner
+includes a polling loop that waits up to 5 minutes for managed certificate
+provisioning before binding.
+
+### Verification
+
+```bash
+curl https://api.lemondo.btas.dev/health   # → Healthy
+curl https://api.lemondo.btas.dev/alive    # → Healthy
+# Open https://lemondo.btas.dev → frontend loads
+# Login flow works (cookies sent cross-subdomain)
+```
+
+### Cookie Auth Cross-Subdomain
+
+The refresh token cookie uses `SameSite=Strict` and `Path=/api/auth`. Since
+`lemondo.btas.dev` and `api.lemondo.btas.dev` share the same registrable
+domain (`btas.dev`), they are "same-site" — cookies are sent automatically.
+No cookie domain configuration changes are needed.
 
 ## Security Notes
 

@@ -1532,6 +1532,100 @@ Released Checkpoint 4 (Production Hardening) as v0.4.0 via gitflow.
 
 ---
 
+## Custom Domain Setup
+
+**Date**: 2026-02-16
+**Branch**: `hotfix/custom-domains` (off `main`)
+
+### What Was Done
+
+Configured custom domains for the Azure deployment:
+- `api.lemondo.btas.dev` → Container App (API)
+- `lemondo.btas.dev` → Static Web App (frontend)
+
+Domain `btas.dev` is managed in Google Cloud DNS (project: `weaver-application`, zone: `btas-dev`).
+
+### Three-Phase Deployment
+
+**Phase 1 — Infrastructure prep**: Upgraded Static Web App from Free to Standard SKU (custom domains require Standard). Added `api_custom_domain` and `frontend_custom_domain` variables with empty defaults. Added Terraform outputs for DNS setup values (`container_app_ingress_fqdn`, `custom_domain_verification_id`, `static_web_app_hostname`). Applied to get the DNS target values.
+
+**Phase 2 — DNS records**: Created three records in Google Cloud DNS:
+1. TXT record: `asuid.api.lemondo.btas.dev` → Container App Environment verification ID
+2. CNAME record: `api.lemondo.btas.dev` → Container App FQDN
+3. CNAME record: `lemondo.btas.dev` → Static Web App default hostname
+
+**Phase 3 — Domain binding**: Set custom domain variables in `terraform.tfvars` and applied. SWA custom domain uses `azurerm_static_web_app_custom_domain` with CNAME delegation. Container App custom domain uses `terraform_data` with Azure CLI `local-exec` provisioner.
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| `terraform_data` + Azure CLI for Container App domains | `azapi_update_resource` does a full PUT requiring all secrets in the body, which fails with `ContainerAppSecretInvalid`. Azure CLI commands (`az containerapp hostname add/bind`, `az containerapp env certificate create`) are the recommended approach. |
+| SWA Standard tier | Custom domains require Standard SKU ($9/mo). Free tier doesn't support them. |
+| Dual CORS origins during transition | Primary: `https://lemondo.btas.dev`, Secondary: `https://<azure-default>.azurestaticapps.net`. Both origins work while DNS propagates. |
+| `VITE_API_BASE_URL` env var | Frontend needs full API URL for cross-origin calls in production. Defaults to `''` so Vite dev proxy still works with relative URLs. |
+
+### Frontend Cross-Origin Support
+
+Added `API_BASE_URL` constant to `api-client.ts` (from `VITE_API_BASE_URL` env var, defaults to `''`). Prepended to all 6 fetch calls in `api-client.ts`, plus direct fetch calls in `token-refresh.ts` and `AuthHydrationProvider.tsx`. CI/CD pipeline sets `VITE_API_BASE_URL=https://api.lemondo.btas.dev` during frontend build.
+
+### Cookie Auth Cross-Subdomain
+
+The refresh token cookie uses `SameSite=Strict` and `Path=/api/auth`. Since `lemondo.btas.dev` and `api.lemondo.btas.dev` share the same registrable domain (`btas.dev`), they are "same-site" — cookies sent automatically. No cookie domain configuration changes needed.
+
+### Gotchas
+
+1. **`azapi_update_resource` does a full PUT**: Container App updates via AzAPI require ALL secrets in the request body, not just the changed fields. This makes it impossible to use for custom domain binding without duplicating all secret values. Azure CLI is the only viable automation path.
+2. **Google Cloud DNS zone in different project**: The `btas.dev` zone was in GCP project `weaver-application`, not the default project. All `gcloud dns` commands needed `--project=weaver-application`.
+3. **`./dev infra apply` is interactive**: Requires `yes` confirmation by default. Use `./dev infra apply stage1-mvp -auto-approve` for non-interactive runs.
+
+### Files Changed (13 files)
+
+**Terraform (8 files)**:
+- `infra/stages/stage1-mvp/main.tf` — SWA Standard, CORS update, custom domain resources
+- `infra/stages/stage1-mvp/variables.tf` — custom domain variables
+- `infra/stages/stage1-mvp/outputs.tf` — DNS setup outputs
+- `infra/stages/stage1-mvp/terraform.tfvars.example` — custom domain examples
+- `infra/modules/container-app/main.tf` — secondary CORS env var
+- `infra/modules/container-app/variables.tf` — `cors_origin_secondary`
+- `infra/modules/container-app/outputs.tf` — container_app_id, environment_id, verification_id, ingress_fqdn
+
+**Frontend (3 files)**:
+- `src/client/src/lib/api-client.ts` — `API_BASE_URL` constant, prepended to all fetches
+- `src/client/src/lib/token-refresh.ts` — import and use `API_BASE_URL`
+- `src/client/src/app/providers/AuthHydrationProvider.tsx` — import and use `API_BASE_URL`
+
+**CI/CD (1 file)**:
+- `.github/workflows/deploy.yml` — `VITE_API_BASE_URL` env var on frontend build step
+
+**Docs (1 file)**:
+- `infra/README.md` — Custom Domains section with 3-phase guide
+
+---
+
+## Release: v0.4.1 — Custom Domains
+
+**Date: February 16, 2026**
+
+Hotfix release adding custom domain support for the Azure deployment. This is the first hotfix release, branching from `main` (not `develop`) per gitflow hotfix process.
+
+### What Shipped
+
+- Custom domains: `api.lemondo.btas.dev` (API) and `lemondo.btas.dev` (frontend)
+- Managed TLS certificates via Azure (auto-provisioned and auto-renewed)
+- Frontend cross-origin API support via `VITE_API_BASE_URL` env var
+- Static Web App upgraded from Free to Standard SKU
+- Dual CORS origins for seamless transition
+- CI/CD pipeline updated with `VITE_API_BASE_URL` for production builds
+
+### Hotfix Lessons
+
+1. **Terraform `local-exec` on Windows defaults to `cmd.exe`** — bash-style `\` continuations break. Always set `interpreter = ["bash", "-c"]`.
+2. **Azure Container App custom domains can't use `azapi_update_resource`** — it does a full PUT requiring all secrets. Azure CLI commands are the only viable automation path.
+3. **Managed certificate provisioning needs polling** — cert goes from Pending to Succeeded in ~60 seconds; attempting to bind before that fails.
+
+---
+
 ## What's Next
 
 ### Checkpoint 5: Advanced & Delight
