@@ -13,6 +13,7 @@ interface TaskCheckboxProps {
 /**
  * Animated circular checkbox with lime-green fill, checkmark stroke draw,
  * and scale bounce. Used for task completion toggling.
+ * Memoized — rendered in task card lists.
  */
 export const TaskCheckbox = memo(function TaskCheckbox({ checked, onToggle, isLoading, className }: TaskCheckboxProps) {
   const { t } = useTranslation();

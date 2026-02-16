@@ -10,9 +10,12 @@ interface DevAccount {
   email: string;
   password: string;
   roleKey: string;
+  /** i18n key for the role label (e.g., "auth.devSwitcher.roles.user"). */
   labelKey: string;
+  /** i18n key for the role description (e.g., "auth.devSwitcher.roles.userDesc"). */
   descKey: string;
   icon: typeof UserIcon;
+  /** Tailwind classes for color accent (text, background, border). */
   accent: string;
 }
 

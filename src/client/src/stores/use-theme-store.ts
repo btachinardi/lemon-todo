@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+/** User theme preference: explicit light/dark or system (follows OS setting). */
 export type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeState {
@@ -8,14 +9,24 @@ interface ThemeState {
   setTheme: (theme: Theme) => void;
 }
 
-/** Resolves 'system' to the actual OS preference, otherwise returns the explicit theme. */
+/**
+ * Resolves 'system' to the actual OS preference, otherwise returns the explicit theme.
+ *
+ * @param theme - The user's theme preference.
+ * @returns The resolved theme ('light' or 'dark'). Queries OS preference if theme is 'system'.
+ */
 export function resolveTheme(theme: Theme): 'light' | 'dark' {
   if (theme !== 'system') return theme;
   if (typeof window === 'undefined') return 'dark';
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-/** Applies the resolved theme class to the document root element. */
+/**
+ * Applies the resolved theme class to the document root element.
+ * Side effect: Mutates document.documentElement.classList (removes 'light'/'dark', adds resolved theme).
+ *
+ * @param theme - The user's theme preference to apply.
+ */
 export function applyThemeClass(theme: Theme): void {
   const resolved = resolveTheme(theme);
   const root = document.documentElement;

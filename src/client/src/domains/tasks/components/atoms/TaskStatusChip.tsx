@@ -21,7 +21,10 @@ interface TaskStatusChipProps {
   className?: string;
 }
 
-/** Colored badge displaying the current task lifecycle status. */
+/**
+ * Colored badge displaying the current task lifecycle status.
+ * Memoized — rendered in task card lists.
+ */
 export const TaskStatusChip = memo(function TaskStatusChip({ status, className }: TaskStatusChipProps) {
   const { t } = useTranslation();
 

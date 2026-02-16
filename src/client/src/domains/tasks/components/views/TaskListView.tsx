@@ -22,9 +22,13 @@ const priorityBorder: Record<Priority, string> = {
 
 interface TaskListViewProps {
   groups: TaskGroup[];
+  /** When true, renders group headers with labels and counts. @defaultValue false */
   showGroupHeaders?: boolean;
+  /** Called when the user toggles a task's completion checkbox. */
   onCompleteTask?: (id: string) => void;
+  /** Called when the user clicks a task row to view details. */
   onSelectTask?: (id: string) => void;
+  /** ID of the task currently being toggled (shows spinner). */
   togglingTaskId?: string | null;
   className?: string;
 }
@@ -116,11 +120,20 @@ export function TaskListView({
   );
 }
 
+/**
+ * Props for a single task list item row.
+ * @internal
+ */
 interface TaskListItemProps {
+  /** The task to render. */
   task: Task;
+  /** Position in the list, used for staggered animation. */
   index: number;
+  /** ID of the task currently being toggled (shows spinner). */
   togglingTaskId?: string | null;
+  /** Called when the user toggles the completion checkbox. */
   onCompleteTask?: (id: string) => void;
+  /** Called when the user clicks the row. */
   onSelectTask?: (id: string) => void;
 }
 

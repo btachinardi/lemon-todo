@@ -8,7 +8,11 @@ export const adminApi = {
     return apiClient.get<PagedAdminUsers>('/api/admin/users', params);
   },
 
-  /** Gets a single user by ID (Admin+ required). */
+  /**
+   * Fetches a single user by ID with protected data redacted.
+   * Email and displayName are masked unless explicitly revealed via break-the-glass.
+   * Requires Admin+ authorization.
+   */
   getUser(id: string) {
     return apiClient.get<AdminUser>(`/api/admin/users/${id}`);
   },

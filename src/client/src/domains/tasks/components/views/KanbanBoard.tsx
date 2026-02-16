@@ -24,6 +24,7 @@ type ColumnItems = Record<string, string[]>;
 /** Stable drop animation config — defined outside the component to avoid creating a new object on every render. */
 const DROP_ANIMATION = { duration: 200, easing: 'ease-out' } as const;
 
+/** Builds a map of columnId -> taskId[] sorted by rank from the board's cards. */
 function buildColumnItems(board: Board): ColumnItems {
   const items: ColumnItems = {};
   for (const col of board.columns) {
@@ -42,6 +43,7 @@ function buildColumnItems(board: Board): ColumnItems {
   return items;
 }
 
+/** Finds the column ID containing the given task. Returns null if not found. */
 function findColumnOfTask(items: ColumnItems, taskId: string): string | null {
   for (const [colId, taskIds] of Object.entries(items)) {
     if (taskIds.includes(taskId)) return colId;
@@ -53,10 +55,13 @@ interface KanbanBoardProps {
   board: Board;
   /** Full task list; the board's `cards` are used to sort them into columns. */
   tasks: Task[];
+  /** Called when the user toggles a task's completion checkbox. */
   onCompleteTask?: (id: string) => void;
+  /** Called when the user clicks a task card to view details. */
   onSelectTask?: (id: string) => void;
   /** Called when a card is dropped at a new position. Passes neighbor IDs for rank computation. */
   onMoveTask?: (taskId: string, columnId: string, previousTaskId: string | null, nextTaskId: string | null) => void;
+  /** ID of the task currently being toggled (shows spinner). */
   togglingTaskId?: string | null;
   className?: string;
 }

@@ -18,7 +18,10 @@ import { useTaskViewStore } from '@/domains/tasks/stores/use-task-view-store';
 import { filterTasks, hasActiveFilters } from '@/domains/tasks/utils/filter-tasks';
 import { TaskStatus } from '@/domains/tasks/types/task.types';
 
-/** Kanban board page with quick-add form and toggle-complete support. */
+/**
+ * Kanban board page with quick-add form and toggle-complete support.
+ * Supports drag-and-drop task positioning, filter bar for search/priority/status/tag, and empty state handling.
+ */
 export function TaskBoardPage() {
   const { t } = useTranslation();
   const boardQuery = useDefaultBoardQuery();

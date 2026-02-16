@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 
+/** Props for {@link AdminLayout}. */
 interface AdminLayoutProps {
   children: ReactNode;
 }

@@ -2,7 +2,10 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { RegisterForm } from '@/domains/auth/components/RegisterForm';
 
-/** Register page with link to login. */
+/**
+ * Registration page with email, password, and display name form validation.
+ * Redirects to the home page on successful account creation.
+ */
 export function RegisterPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();

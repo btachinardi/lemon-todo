@@ -18,7 +18,10 @@ const BASE = '/api/tasks';
  * Client for the tasks REST API (`/api/tasks`).
  * Each method maps 1:1 to a backend endpoint.
  *
- * @throws {@link import("@/lib/api-client").ApiRequestError} on non-2xx responses.
+ * @throws {@link import("@/lib/api-client").ApiRequestError} on non-2xx responses:
+ * - 400 validation errors (malformed request, constraint violations)
+ * - 401 unauthorized (missing or invalid authentication)
+ * - 404 not found (task does not exist or was deleted)
  */
 export const tasksApi = {
   /** Paginated, filterable task list. */
@@ -31,10 +34,12 @@ export const tasksApi = {
     return apiClient.get<Task>(`${BASE}/${id}`);
   },
 
+  /** Creates a new task and places it on the default board. */
   create(request: CreateTaskRequest): Promise<Task> {
     return apiClient.post<Task>(BASE, request);
   },
 
+  /** Partial-updates a task. Only provided fields are modified (patch semantics). */
   update(id: string, request: UpdateTaskRequest): Promise<Task> {
     return apiClient.put<Task>(`${BASE}/${id}`, request);
   },

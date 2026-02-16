@@ -7,30 +7,35 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 import { cn } from "@/lib/utils"
 import { Button } from "@/ui/button"
 
+/** Modal dialog root component. Manages open/close state and accessibility. */
 function Dialog({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
+/** Trigger button that opens the dialog when clicked. */
 function DialogTrigger({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
 }
 
+/** Portal wrapper that renders dialog content into document.body. */
 function DialogPortal({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
 }
 
+/** Close button for dismissing the dialog. */
 function DialogClose({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Close>) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
 }
 
+/** Backdrop overlay behind the dialog content, darkens the page. */
 function DialogOverlay({
   className,
   ...props
@@ -47,6 +52,11 @@ function DialogOverlay({
   )
 }
 
+/**
+ * Main dialog content panel, centered on screen with overlay.
+ *
+ * @param showCloseButton - When true (default), renders an X icon button at top-right for closing the dialog.
+ */
 function DialogContent({
   className,
   children,
@@ -81,6 +91,7 @@ function DialogContent({
   )
 }
 
+/** Header region for dialog title and description. */
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -91,6 +102,11 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * Footer region for dialog actions.
+ *
+ * @param showCloseButton - When true, renders a "Close" button in the footer (defaults to false).
+ */
 function DialogFooter({
   className,
   showCloseButton = false,
@@ -118,6 +134,7 @@ function DialogFooter({
   )
 }
 
+/** Primary heading for the dialog. Required for accessibility. */
 function DialogTitle({
   className,
   ...props
@@ -131,6 +148,7 @@ function DialogTitle({
   )
 }
 
+/** Descriptive text explaining the dialog purpose. Recommended for accessibility. */
 function DialogDescription({
   className,
   ...props

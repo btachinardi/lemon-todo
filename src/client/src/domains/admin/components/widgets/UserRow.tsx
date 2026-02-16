@@ -29,6 +29,10 @@ const roleBadgeVariant: Record<string, 'default' | 'secondary' | 'destructive' |
   SystemAdmin: 'destructive',
 };
 
+/**
+ * Duration in seconds that unredacted protected data remains visible after reveal.
+ * 30 seconds balances security (minimize exposure window) and UX (enough time to read/copy).
+ */
 const REVEAL_DURATION_S = 30;
 
 interface UserRowProps {

@@ -5,7 +5,10 @@ import { adminKeys } from './use-admin-queries';
 import { toastSuccess } from '@/lib/toast-helpers';
 import type { RevealProtectedDataRequest } from '../types/admin.types';
 
-/** Assigns a role to a user and invalidates admin caches. */
+/**
+ * Assigns a role to a user and invalidates admin caches.
+ * @returns Mutation result with success callback and loading/error states.
+ */
 export function useAssignRole() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -19,7 +22,10 @@ export function useAssignRole() {
   });
 }
 
-/** Removes a role from a user and invalidates admin caches. */
+/**
+ * Removes a role from a user and invalidates admin caches.
+ * @returns Mutation result with success callback and loading/error states.
+ */
 export function useRemoveRole() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -33,7 +39,10 @@ export function useRemoveRole() {
   });
 }
 
-/** Deactivates a user account and invalidates admin caches. */
+/**
+ * Deactivates a user account and invalidates admin caches.
+ * @returns Mutation result with success callback and loading/error states.
+ */
 export function useDeactivateUser() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -46,7 +55,10 @@ export function useDeactivateUser() {
   });
 }
 
-/** Reactivates a deactivated user and invalidates admin caches. */
+/**
+ * Reactivates a deactivated user and invalidates admin caches.
+ * @returns Mutation result with success callback and loading/error states.
+ */
 export function useReactivateUser() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -59,7 +71,10 @@ export function useReactivateUser() {
   });
 }
 
-/** Reveals a user's unredacted protected data with break-the-glass controls. Logged in audit trail. */
+/**
+ * Reveals a user's unredacted protected data with break-the-glass controls. Logged in audit trail.
+ * @returns Mutation result with RevealedProtectedData on success, loading/error states. Does NOT invalidate caches.
+ */
 export function useRevealProtectedData() {
   return useMutation({
     mutationFn: ({ userId, request }: { userId: string; request: RevealProtectedDataRequest }) =>

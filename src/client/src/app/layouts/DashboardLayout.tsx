@@ -13,6 +13,7 @@ import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitc
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
+/** Props for {@link DashboardLayout}. */
 interface DashboardLayoutProps {
   children: ReactNode;
 }

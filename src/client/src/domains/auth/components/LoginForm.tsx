@@ -6,6 +6,7 @@ import { ApiRequestError } from '@/lib/api-client';
 import { useLogin } from '../hooks/use-auth-mutations';
 
 interface LoginFormProps {
+  /** Called after successful authentication and token storage. */
   onSuccess: () => void;
 }
 

@@ -15,6 +15,12 @@ import {
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/ui/button"
 
+/**
+ * Date picker component built on react-day-picker with custom styling and navigation.
+ * Supports single date, range selection, and multiple selection modes.
+ *
+ * @param buttonVariant - Visual style for navigation and day buttons (defaults to ghost).
+ */
 function Calendar({
   className,
   classNames,
@@ -179,6 +185,10 @@ function Calendar({
   )
 }
 
+/**
+ * Individual day button within the calendar grid.
+ * Handles focused state, selection state, and range start/middle/end visual indicators.
+ */
 function CalendarDayButton({
   className,
   day,

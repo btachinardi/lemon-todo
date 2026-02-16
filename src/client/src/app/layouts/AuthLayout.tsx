@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+/** Props for {@link AuthLayout}. */
 interface AuthLayoutProps {
   children: ReactNode;
 }

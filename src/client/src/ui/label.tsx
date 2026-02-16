@@ -5,6 +5,7 @@ import { Label as LabelPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/** Accessible label for form inputs. Associates with input via htmlFor or nesting. */
 function Label({
   className,
   ...props

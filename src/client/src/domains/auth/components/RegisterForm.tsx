@@ -6,6 +6,7 @@ import { ApiRequestError } from '@/lib/api-client';
 import { useRegister } from '../hooks/use-auth-mutations';
 
 interface RegisterFormProps {
+  /** Called after successful authentication and token storage. */
   onSuccess: () => void;
 }
 
