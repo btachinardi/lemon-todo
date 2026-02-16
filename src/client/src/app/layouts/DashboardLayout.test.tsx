@@ -29,6 +29,11 @@ vi.mock('@/domains/notifications/components/widgets/NotificationDropdown', () =>
   NotificationDropdown: () => <div data-testid="notification-dropdown" />,
 }));
 
+// Mock SyncIndicator to avoid offline queue store dependency
+vi.mock('@/ui/feedback/SyncIndicator', () => ({
+  SyncIndicator: () => null,
+}));
+
 describe('DashboardLayout', () => {
   beforeEach(() => {
     useAuthStore.setState({

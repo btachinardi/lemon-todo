@@ -14,6 +14,7 @@ import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 import { NotificationDropdown } from '@/domains/notifications/components/widgets/NotificationDropdown';
 import { OnboardingTour } from '@/domains/onboarding/components/widgets/OnboardingTour';
+import { SyncIndicator } from '@/ui/feedback/SyncIndicator';
 
 /** Props for {@link DashboardLayout}. */
 interface DashboardLayoutProps {
@@ -118,7 +119,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </Popover>
         </div>
       )}
-      <footer className="pointer-events-none fixed bottom-2 right-3">
+      <footer className="pointer-events-none fixed bottom-2 right-3 flex items-center gap-3">
+        <SyncIndicator />
         <span className="text-[10px] text-muted-foreground/40 select-none">
           v{__APP_VERSION__}
         </span>

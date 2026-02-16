@@ -1,10 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { tasksApi } from '../api/tasks.api';
 import type { CreateTaskRequest, MoveTaskRequest, UpdateTaskRequest } from '../types/api.types';
 import { boardKeys } from './use-board-query';
 import { taskKeys } from './use-tasks-query';
 import { track } from '@/lib/analytics';
 import { toastSuccess } from '@/lib/toast-helpers';
+import { useOfflineQueueStore } from '@/stores/use-offline-queue-store';
 
 /**
  * Invalidates both task and board query caches.
@@ -16,11 +18,41 @@ function invalidateTaskAndBoard(queryClient: ReturnType<typeof useQueryClient>) 
   queryClient.invalidateQueries({ queryKey: boardKeys.all });
 }
 
+/**
+ * Returns true if the error is a network failure that should be queued
+ * for offline replay (TypeError from fetch when offline).
+ */
+function isOfflineNetworkError(error: unknown): boolean {
+  return !navigator.onLine && error instanceof TypeError;
+}
+
+/**
+ * Enqueues a mutation to the offline queue and shows an info toast.
+ */
+async function enqueueOffline(
+  method: 'POST' | 'PUT' | 'DELETE',
+  url: string,
+  body?: unknown,
+): Promise<void> {
+  await useOfflineQueueStore.getState().enqueueMutation(method, url, body);
+  toast.info('Change saved offline. Will sync when connected.');
+}
+
 /** Creates a new task and places it on the default board. */
 export function useCreateTask() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (request: CreateTaskRequest) => tasksApi.create(request),
+    mutationFn: async (request: CreateTaskRequest) => {
+      try {
+        return await tasksApi.create(request);
+      } catch (error) {
+        if (isOfflineNetworkError(error)) {
+          await enqueueOffline('POST', '/api/tasks', request);
+          return undefined as never;
+        }
+        throw error;
+      }
+    },
     onSuccess: () => {
       invalidateTaskAndBoard(queryClient);
       toastSuccess('Task created');
@@ -33,8 +65,17 @@ export function useCreateTask() {
 export function useUpdateTask() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, request }: { id: string; request: UpdateTaskRequest }) =>
-      tasksApi.update(id, request),
+    mutationFn: async ({ id, request }: { id: string; request: UpdateTaskRequest }) => {
+      try {
+        return await tasksApi.update(id, request);
+      } catch (error) {
+        if (isOfflineNetworkError(error)) {
+          await enqueueOffline('PUT', `/api/tasks/${id}`, request);
+          return undefined as never;
+        }
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
@@ -45,7 +86,17 @@ export function useUpdateTask() {
 export function useCompleteTask() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => tasksApi.complete(id),
+    mutationFn: async (id: string) => {
+      try {
+        return await tasksApi.complete(id);
+      } catch (error) {
+        if (isOfflineNetworkError(error)) {
+          await enqueueOffline('POST', `/api/tasks/${id}/complete`);
+          return;
+        }
+        throw error;
+      }
+    },
     onSuccess: () => {
       invalidateTaskAndBoard(queryClient);
       toastSuccess('Task completed');
@@ -58,7 +109,17 @@ export function useCompleteTask() {
 export function useUncompleteTask() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => tasksApi.uncomplete(id),
+    mutationFn: async (id: string) => {
+      try {
+        return await tasksApi.uncomplete(id);
+      } catch (error) {
+        if (isOfflineNetworkError(error)) {
+          await enqueueOffline('POST', `/api/tasks/${id}/uncomplete`);
+          return;
+        }
+        throw error;
+      }
+    },
     onSuccess: () => {
       invalidateTaskAndBoard(queryClient);
       toastSuccess('Task reopened');
@@ -70,7 +131,17 @@ export function useUncompleteTask() {
 export function useDeleteTask() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => tasksApi.delete(id),
+    mutationFn: async (id: string) => {
+      try {
+        return await tasksApi.delete(id);
+      } catch (error) {
+        if (isOfflineNetworkError(error)) {
+          await enqueueOffline('DELETE', `/api/tasks/${id}`);
+          return;
+        }
+        throw error;
+      }
+    },
     onSuccess: () => {
       invalidateTaskAndBoard(queryClient);
       toastSuccess('Task deleted');
@@ -83,8 +154,17 @@ export function useDeleteTask() {
 export function useMoveTask() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, request }: { id: string; request: MoveTaskRequest }) =>
-      tasksApi.move(id, request),
+    mutationFn: async ({ id, request }: { id: string; request: MoveTaskRequest }) => {
+      try {
+        return await tasksApi.move(id, request);
+      } catch (error) {
+        if (isOfflineNetworkError(error)) {
+          await enqueueOffline('POST', `/api/tasks/${id}/move`, request);
+          return;
+        }
+        throw error;
+      }
+    },
     onSuccess: () => {
       invalidateTaskAndBoard(queryClient);
       track('task_moved_ui');
@@ -96,8 +176,17 @@ export function useMoveTask() {
 export function useAddTag() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, tag }: { id: string; tag: string }) =>
-      tasksApi.addTag(id, { tag }),
+    mutationFn: async ({ id, tag }: { id: string; tag: string }) => {
+      try {
+        return await tasksApi.addTag(id, { tag });
+      } catch (error) {
+        if (isOfflineNetworkError(error)) {
+          await enqueueOffline('POST', `/api/tasks/${id}/tags`, { tag });
+          return;
+        }
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
       toastSuccess('Tag added');
@@ -109,8 +198,17 @@ export function useAddTag() {
 export function useRemoveTag() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, tag }: { id: string; tag: string }) =>
-      tasksApi.removeTag(id, tag),
+    mutationFn: async ({ id, tag }: { id: string; tag: string }) => {
+      try {
+        return await tasksApi.removeTag(id, tag);
+      } catch (error) {
+        if (isOfflineNetworkError(error)) {
+          await enqueueOffline('DELETE', `/api/tasks/${id}/tags/${encodeURIComponent(tag)}`);
+          return;
+        }
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
       toastSuccess('Tag removed');
