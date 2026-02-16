@@ -3,9 +3,29 @@ output "resource_group_name" {
   value       = azurerm_resource_group.this.name
 }
 
-output "app_service_hostname" {
-  description = "API hostname"
-  value       = module.app_service.default_hostname
+output "api_url" {
+  description = "API URL (Container App)"
+  value       = module.container_app.app_url
+}
+
+output "api_fqdn" {
+  description = "API FQDN (Container App)"
+  value       = module.container_app.app_fqdn
+}
+
+output "container_registry_login_server" {
+  description = "Container Registry login server"
+  value       = module.container_app.container_registry_login_server
+}
+
+output "container_registry_name" {
+  description = "Container Registry name"
+  value       = module.container_app.container_registry_name
+}
+
+output "container_app_name" {
+  description = "Container App name"
+  value       = module.container_app.container_app_name
 }
 
 output "static_web_app_hostname" {

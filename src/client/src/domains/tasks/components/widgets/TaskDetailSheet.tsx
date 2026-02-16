@@ -295,7 +295,7 @@ function TaskDetailContent({
           />
         ) : (
           <SheetTitle
-            className="cursor-pointer text-lg font-semibold hover:text-primary transition-colors"
+            className="cursor-pointer text-lg font-semibold hover:text-lemon transition-colors"
             onClick={() => {
               setEditingTitle(true);
               setTimeout(() => titleInputRef.current?.focus(), 0);

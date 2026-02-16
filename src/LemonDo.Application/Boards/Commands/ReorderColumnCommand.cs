@@ -13,7 +13,7 @@ public sealed record ReorderColumnCommand(Guid BoardId, Guid ColumnId, int NewPo
 /// <summary>Moves the column to the new position via <see cref="LemonDo.Domain.Boards.Entities.Board.ReorderColumn"/>.</summary>
 public sealed class ReorderColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork, ILogger<ReorderColumnCommandHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Loads the board, moves the column to the new position, and persists the change.</summary>
     public async Task<Result<ColumnDto, DomainError>> HandleAsync(ReorderColumnCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Reordering column {ColumnId} to position {NewPosition} on board {BoardId}", command.ColumnId, command.NewPosition, command.BoardId);

@@ -13,6 +13,16 @@ using Microsoft.Extensions.Logging;
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
 /// <summary>Command to move a task card to a column at a position between two neighbor cards.</summary>
+/// <remarks>
+/// Uses neighbor-based ranking to determine insertion position:
+/// <list type="bullet">
+/// <item>Both PreviousTaskId and NextTaskId null: places at top of column.</item>
+/// <item>Only PreviousTaskId set: places after that task.</item>
+/// <item>Only NextTaskId set: places before it.</item>
+/// <item>Both set: places between them.</item>
+/// </list>
+/// The actual rank is computed as a midpoint between neighbors.
+/// </remarks>
 public sealed record MoveTaskCommand(Guid TaskId, Guid ColumnId, Guid? PreviousTaskId, Guid? NextTaskId);
 
 /// <summary>
@@ -27,7 +37,7 @@ public sealed class MoveTaskCommandHandler(
     ILogger<MoveTaskCommandHandler> logger,
     ApplicationMetrics metrics)
 {
-    /// <inheritdoc/>
+    /// <summary>Validates task and column existence, moves the card using neighbor-based ranking, then syncs the task status to match the target column.</summary>
     public async Task<Result<DomainError>> HandleAsync(MoveTaskCommand command, CancellationToken ct = default)
     {
         using var activity = ApplicationActivitySource.Source.StartActivity("MoveTask");

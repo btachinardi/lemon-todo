@@ -96,6 +96,13 @@ All common commands are available via the `./dev` script:
 ./dev docker up             # Start SQL Server container
 ./dev docker down           # Stop and remove container
 
+# Azure Infrastructure (Terraform)
+./dev infra plan            # Plan stage1-mvp (default)
+./dev infra apply           # Apply stage1-mvp
+./dev infra output          # Show deployed resource URLs
+./dev infra status          # List resources in state
+./dev infra destroy         # Tear down infrastructure
+
 # Full verification gate (build + all tests + lint)
 ./dev verify
 ```
@@ -162,6 +169,31 @@ The project uses separate migration assemblies per provider (`LemonDo.Migrations
 ./dev migrate remove sqlite
 ./dev migrate remove sql
 ```
+
+### Azure Infrastructure
+
+The project includes a 3-stage Terraform infrastructure for Azure deployment. Stage 1 (MVP) is the default.
+
+**Prerequisites**: Azure CLI (`az`) and Terraform (>= 1.5) — both are auto-detected from PATH or common install locations.
+
+```bash
+# First-time setup: bootstrap the Terraform state backend
+az login
+./dev infra bootstrap
+
+# Initialize and deploy Stage 1 MVP (~$55/month)
+./dev infra init
+./dev infra plan
+./dev infra apply
+
+# View deployed resource URLs
+./dev infra output
+
+# Other stages: stage2-resilience, stage3-scale
+./dev infra plan stage2-resilience
+```
+
+The CI/CD pipeline (`.github/workflows/deploy.yml`) runs tests on all pushes and deploys to Azure on push to `main`.
 
 ### API Documentation
 

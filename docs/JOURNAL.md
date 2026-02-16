@@ -1441,6 +1441,79 @@ Multi-stage build:
 
 ---
 
+### Azure Deployment: App Service → Container Apps Migration
+
+**Date**: 2026-02-16
+
+#### The Quota Problem
+
+After bootstrapping the Terraform state backend and deploying 12 of 14 resources successfully, the App Service Plan consistently failed — Azure reported **0 VM quota** for all tiers (Basic, Standard, and even Free) in East US 2. We upgraded from Free Trial to Pay-As-You-Go, but quota requests were denied.
+
+#### The Solution: Azure Container Apps
+
+Container Apps run on a consumption-based model that **doesn't require VM quotas**. Key advantages over B1 App Service for our MVP:
+
+| Capability | App Service (B1) | Container Apps |
+|------------|------------------|----------------|
+| Auto-scaling | No (fixed 1 instance) | Yes (0-N replicas) |
+| Health probes | Health check path | Liveness + Readiness + Startup |
+| Zero-downtime deploy | Only with slots (Stage 2+) | Built-in via revisions |
+| Cost | ~$13/month fixed | Pay-per-use (cheaper for MVP) |
+| Observability | App Insights | App Insights + Log Analytics |
+
+#### Infrastructure Changes
+
+Created `infra/modules/container-app/` with:
+- **Azure Container Registry (Basic)** — stores Docker images
+- **Container App Environment** — managed Kubernetes with Log Analytics integration
+- **Container App** — runs the API with secrets, health probes, and managed identity
+
+Updated all three stages to use `container_app` module instead of `app_service`. Stage 2 and 3 have TODOs for networking module adaptation (Container Apps use VNet integration differently than App Service).
+
+#### CI/CD Changes
+
+Replaced ZIP deploy with Docker-based deployment:
+1. `az acr login` — authenticate to Container Registry
+2. `docker build + push` — build and push image tagged with commit SHA
+3. `az containerapp update` — deploy new image to Container App
+
+Deploy only triggers on push to `main` (develop only runs tests). Removed the staging deploy job since Stage 1 doesn't have a staging environment.
+
+#### Developer CLI (`./dev infra`)
+
+Added infrastructure management commands with dynamic Azure CLI detection:
+- `./dev infra bootstrap` — one-time state backend setup
+- `./dev infra init` / `plan` / `apply` / `destroy` — stage lifecycle
+- `./dev infra output` / `status` / `unlock` — operational commands
+- Automatic `MSYS_NO_PATHCONV=1` for Git Bash/MSYS2 path conversion fix
+
+#### Deployed Resources (15 total)
+
+| Resource | Name |
+|----------|------|
+| Container App | `ca-lemondo-mvp-eus2` |
+| Container Registry | `crlemondomvpeus2` |
+| Container App Environment | `cae-lemondo-mvp-eus2` |
+| SQL Server | `sql-lemondo-mvp-eus2` |
+| SQL Database | `sqldb-lemondo-mvp` |
+| Key Vault | `kv-lemondo-mvp-eus2` |
+| App Insights | `appi-lemondo-mvp-eus2` |
+| Log Analytics | `log-lemondo-mvp-eus2` |
+| Static Web App | `swa-lemondo-mvp-eus2` |
+| Resource Group | `rg-lemondo-mvp-eus2` |
+
+API verified healthy at `https://ca-lemondo-mvp-eus2.greenground-1ee8436d.eastus2.azurecontainerapps.io`.
+
+#### Lessons Learned
+
+1. **Azure Free Trial VM quotas are 0** for App Service in some regions — upgrading to Pay-As-You-Go doesn't immediately fix it
+2. **Container Apps are a better MVP choice** — consumption pricing, no quota issues, built-in auto-scaling
+3. **Push Docker image before Terraform apply** — Container Apps validates image existence during provisioning
+4. **MSYS2 path conversion** — `/subscriptions/...` gets mangled to `C:/Program Files/Git/subscriptions/...`; fix with `MSYS_NO_PATHCONV=1`
+5. **Failed Container Apps can't be imported** — must delete from Azure first, then re-create via Terraform
+
+---
+
 ## What's Next
 
 ### Checkpoint 5: Advanced & Delight

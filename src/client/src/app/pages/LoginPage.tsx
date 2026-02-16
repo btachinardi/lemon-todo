@@ -20,7 +20,7 @@ export function LoginPage() {
       <LoginForm onSuccess={() => navigate('/', { replace: true })} />
       <p className="text-center text-sm text-muted-foreground">
         {t('auth.login.noAccount')}{' '}
-        <Link to="/register" className="font-medium text-primary hover:underline">
+        <Link to="/register" className="font-medium text-lemon hover:underline">
           {t('auth.login.createOne')}
         </Link>
       </p>

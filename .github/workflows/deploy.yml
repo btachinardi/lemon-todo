@@ -129,64 +129,10 @@ jobs:
         run: docker build -f src/LemonDo.Api/Dockerfile -t lemondo-api:${{ github.sha }} .
 
   # ──────────────────────────────────────────────
-  # Deploy to Staging (on push to develop)
+  # Deploy to Azure (on push to main only)
   # ──────────────────────────────────────────────
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [backend-test, backend-test-sqlserver, frontend-test, docker-build]
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    environment: staging
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Publish API
-        run: dotnet publish src/LemonDo.Api/LemonDo.Api.csproj -c Release -o ./publish
-
-      - name: Deploy API to App Service staging slot
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ vars.AZURE_APP_SERVICE_NAME }}
-          slot-name: staging
-          package: ./publish
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Build frontend
-        run: pnpm install --frozen-lockfile && pnpm build
-        working-directory: src/client
-
-      - name: Deploy frontend to Static Web App
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.SWA_DEPLOYMENT_TOKEN }}
-          action: upload
-          app_location: src/client/dist
-          skip_app_build: true
-
-  # ──────────────────────────────────────────────
-  # Deploy to Production (on push to main)
-  # ──────────────────────────────────────────────
-  deploy-production:
-    name: Deploy to Production
+  deploy:
+    name: Deploy to Azure
     runs-on: ubuntu-latest
     needs: [backend-test, backend-test-sqlserver, frontend-test, docker-build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -200,20 +146,27 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+      # --- API: Build & push Docker image to ACR, deploy to Container App ---
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ vars.AZURE_ACR_NAME }}
 
-      - name: Publish API
-        run: dotnet publish src/LemonDo.Api/LemonDo.Api.csproj -c Release -o ./publish
+      - name: Build and push API image
+        run: |
+          IMAGE="${{ vars.AZURE_ACR_LOGIN_SERVER }}/lemondo-api:${{ github.sha }}"
+          docker build -f src/LemonDo.Api/Dockerfile -t "$IMAGE" .
+          docker tag "$IMAGE" "${{ vars.AZURE_ACR_LOGIN_SERVER }}/lemondo-api:latest"
+          docker push "$IMAGE"
+          docker push "${{ vars.AZURE_ACR_LOGIN_SERVER }}/lemondo-api:latest"
 
-      - name: Deploy API to App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ vars.AZURE_APP_SERVICE_NAME }}
-          package: ./publish
+      - name: Deploy to Container App
+        run: |
+          az containerapp update \
+            --name ${{ vars.AZURE_CONTAINER_APP_NAME }} \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --image "${{ vars.AZURE_ACR_LOGIN_SERVER }}/lemondo-api:${{ github.sha }}"
 
+      # --- Frontend: Build & deploy to Static Web App ---
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}

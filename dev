@@ -13,6 +13,8 @@ API_PROJECT="$ROOT_DIR/src/LemonDo.Api"
 APPHOST_PROJECT="$ROOT_DIR/src/LemonDo.AppHost"
 MIGRATIONS_SQLITE="$ROOT_DIR/src/LemonDo.Migrations.Sqlite"
 MIGRATIONS_SQLSERVER="$ROOT_DIR/src/LemonDo.Migrations.SqlServer"
+INFRA_DIR="$ROOT_DIR/infra"
+DEFAULT_STAGE="stage1-mvp"
 
 # Default SQL Server connection for local Docker
 DEFAULT_SQL_CONN='Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStr0ngPassw0rd;TrustServerCertificate=True;'
@@ -29,6 +31,90 @@ header()  { echo -e "\n${CYAN}${BOLD}=== $1 ===${NC}\n"; }
 success() { echo -e "${GREEN}$1${NC}"; }
 warn()    { echo -e "${YELLOW}$1${NC}"; }
 err()     { echo -e "${RED}$1${NC}" >&2; }
+
+# ── Tool detection helpers ───────────────────────────────────────────
+# Dynamically locate Azure CLI — checks PATH first, then common install locations
+find_az() {
+  if command -v az &>/dev/null; then
+    echo "az"
+    return
+  fi
+
+  local candidates=(
+    "/c/Program Files/Microsoft SDKs/Azure/CLI2/wbin/az.cmd"
+    "/c/Program Files (x86)/Microsoft SDKs/Azure/CLI2/wbin/az.cmd"
+    "$HOME/.local/bin/az"
+    "/usr/local/bin/az"
+    "/opt/homebrew/bin/az"
+  )
+
+  for candidate in "${candidates[@]}"; do
+    if [ -f "$candidate" ]; then
+      echo "$candidate"
+      return
+    fi
+  done
+
+  err "Azure CLI (az) not found."
+  echo "  Install: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli"
+  exit 1
+}
+
+find_terraform() {
+  if command -v terraform &>/dev/null; then
+    echo "terraform"
+    return
+  fi
+
+  local candidates=(
+    "/c/ProgramData/chocolatey/bin/terraform.exe"
+    "$HOME/.local/bin/terraform"
+    "/usr/local/bin/terraform"
+    "/opt/homebrew/bin/terraform"
+  )
+
+  for candidate in "${candidates[@]}"; do
+    if [ -f "$candidate" ]; then
+      echo "$candidate"
+      return
+    fi
+  done
+
+  err "Terraform not found."
+  echo "  Install: https://developer.hashicorp.com/terraform/install"
+  exit 1
+}
+
+# Run terraform with MSYS2 path conversion disabled (prevents /subscriptions/ → C:/Program Files/Git/...)
+run_terraform() {
+  local tf
+  tf="$(find_terraform)"
+  MSYS_NO_PATHCONV=1 "$tf" "$@"
+}
+
+# Ensure Azure CLI is authenticated
+ensure_az_login() {
+  local az_cmd
+  az_cmd="$(find_az)"
+  if ! "$az_cmd" account show &>/dev/null; then
+    err "Not logged into Azure. Run:"
+    echo "  az login"
+    exit 1
+  fi
+}
+
+# Add Azure CLI to PATH if not already there (for tools like terraform that shell out to az)
+setup_az_path() {
+  if command -v az &>/dev/null; then
+    return
+  fi
+
+  local az_cmd
+  az_cmd="$(find_az)"
+  local az_dir
+  az_dir="$(dirname "$az_cmd")"
+  export PATH="$az_dir:$PATH"
+}
 
 # ── SQL Server helpers ────────────────────────────────────────────────
 sql_conn() {
@@ -271,6 +357,137 @@ cmd_verify() {
   fi
 }
 
+cmd_infra() {
+  local action="${1:-help}"
+  shift 2>/dev/null || true
+
+  # Show help without requiring Azure login
+  if [ "$action" = "help" ] || [ "$action" = "--help" ] || [ "$action" = "-h" ]; then
+    cmd_infra_help
+    return
+  fi
+
+  setup_az_path
+  ensure_az_login
+
+  case "$action" in
+    bootstrap)
+      header "Bootstrapping Terraform State Backend"
+      (cd "$INFRA_DIR/bootstrap" && run_terraform init && run_terraform apply "$@")
+      ;;
+    init)
+      local stage="${1:-$DEFAULT_STAGE}"
+      header "Initializing Stage: $stage"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      if [ ! -d "$stage_dir" ]; then
+        err "Stage directory not found: $stage_dir"
+        echo "Available stages:"
+        ls -1 "$INFRA_DIR/stages/"
+        exit 1
+      fi
+      (cd "$stage_dir" && run_terraform init "$@")
+      ;;
+    plan)
+      local stage="${1:-$DEFAULT_STAGE}"
+      shift 2>/dev/null || true
+      header "Planning Stage: $stage"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      if [ ! -d "$stage_dir" ]; then
+        err "Stage directory not found: $stage_dir"
+        echo "Available stages:"
+        ls -1 "$INFRA_DIR/stages/"
+        exit 1
+      fi
+      (cd "$stage_dir" && run_terraform plan "$@")
+      ;;
+    apply)
+      local stage="${1:-$DEFAULT_STAGE}"
+      shift 2>/dev/null || true
+      header "Applying Stage: $stage"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      if [ ! -d "$stage_dir" ]; then
+        err "Stage directory not found: $stage_dir"
+        echo "Available stages:"
+        ls -1 "$INFRA_DIR/stages/"
+        exit 1
+      fi
+      (cd "$stage_dir" && run_terraform apply "$@")
+      ;;
+    destroy)
+      local stage="${1:-$DEFAULT_STAGE}"
+      shift 2>/dev/null || true
+      header "Destroying Stage: $stage"
+      warn "WARNING: This will destroy ALL resources in stage '$stage'!"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      if [ ! -d "$stage_dir" ]; then
+        err "Stage directory not found: $stage_dir"
+        exit 1
+      fi
+      (cd "$stage_dir" && run_terraform destroy "$@")
+      ;;
+    output)
+      local stage="${1:-$DEFAULT_STAGE}"
+      shift 2>/dev/null || true
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      (cd "$stage_dir" && run_terraform output "$@")
+      ;;
+    unlock)
+      local stage="${1:-}"
+      local lock_id="${2:-}"
+      if [ -z "$stage" ] || [ -z "$lock_id" ]; then
+        err "Usage: ./dev infra unlock <stage> <lock-id>"
+        exit 1
+      fi
+      header "Force-unlocking Stage: $stage (Lock: $lock_id)"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      (cd "$stage_dir" && run_terraform force-unlock -force "$lock_id")
+      ;;
+    status)
+      local stage="${1:-$DEFAULT_STAGE}"
+      local stage_dir="$INFRA_DIR/stages/$stage"
+      header "State for Stage: $stage"
+      (cd "$stage_dir" && run_terraform state list 2>/dev/null) || warn "No state found for $stage"
+      ;;
+    *)
+      err "Unknown infra action: $action"
+      cmd_infra_help
+      exit 1
+      ;;
+  esac
+}
+
+cmd_infra_help() {
+  cat <<'EOF'
+
+  Usage: ./dev infra <action> [stage] [options]
+
+  Actions:
+    bootstrap                   Create Terraform state backend in Azure
+    init [stage]                Initialize Terraform for a stage
+    plan [stage]                Plan infrastructure changes
+    apply [stage]               Apply infrastructure changes
+    destroy [stage]             Destroy all resources in a stage
+    output [stage]              Show Terraform outputs
+    status [stage]              List resources in state
+    unlock <stage> <lock-id>    Force-unlock a stuck state lock
+
+  Stages: stage1-mvp (default), stage2-resilience, stage3-scale
+
+  Prerequisites:
+    - Azure CLI (az) — auto-detected from PATH or common install locations
+    - Terraform (>= 1.5) — auto-detected from PATH or common install locations
+    - Logged into Azure: az login
+
+  Examples:
+    ./dev infra plan                   Plan stage1-mvp
+    ./dev infra apply stage1-mvp       Apply stage1-mvp
+    ./dev infra output stage1-mvp      Show outputs
+    ./dev infra status                 List deployed resources
+    ./dev infra destroy stage2-resilience
+
+EOF
+}
+
 cmd_docker() {
   local action="${1:-up}"
 
@@ -342,7 +559,19 @@ cmd_help() {
       up                      Start container (default)
       down                    Stop and remove container
 
+    infra <action> [stage]    Azure infrastructure (Terraform)
+      bootstrap               Create state backend in Azure
+      init [stage]            Initialize Terraform for a stage
+      plan [stage]            Plan infrastructure changes
+      apply [stage]           Apply infrastructure changes
+      destroy [stage]         Destroy all resources in a stage
+      output [stage]          Show Terraform outputs
+      status [stage]          List resources in state
+      unlock <stage> <id>     Force-unlock a stuck state lock
+
     help                      Show this help
+
+  Stages: stage1-mvp (default), stage2-resilience, stage3-scale
 
   Examples:
     ./dev build
@@ -356,6 +585,9 @@ cmd_help() {
     ./dev migrate list sqlserver
     ./dev verify
     ./dev docker up
+    ./dev infra plan
+    ./dev infra apply stage1-mvp
+    ./dev infra output
 
 EOF
 }
@@ -372,6 +604,7 @@ case "$command" in
   migrate)     cmd_migrate "$@" ;;
   verify)      cmd_verify "$@" ;;
   docker)      cmd_docker "$@" ;;
+  infra)       cmd_infra "$@" ;;
   help|--help|-h)  cmd_help ;;
   *)
     err "Unknown command: $command"

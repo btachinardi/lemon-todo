@@ -59,7 +59,7 @@ resource "azurerm_linux_web_app" "this" {
 
 # Grant managed identity access to Key Vault secrets
 resource "azurerm_role_assignment" "keyvault_reader" {
-  count = var.key_vault_id != "" ? 1 : 0
+  count = var.enable_key_vault_access ? 1 : 0
 
   scope                = var.key_vault_id
   role_definition_name = "Key Vault Secrets User"

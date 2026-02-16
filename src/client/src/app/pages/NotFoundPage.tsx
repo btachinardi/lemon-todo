@@ -8,7 +8,7 @@ export function NotFoundPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <h1 className="text-6xl font-bold text-primary">{t('notFound.code')}</h1>
+      <h1 className="text-6xl font-bold text-lemon">{t('notFound.code')}</h1>
       <p className="text-muted-foreground">{t('notFound.title')}</p>
       <Button asChild>
         <Link to="/">{t('notFound.goHome')}</Link>

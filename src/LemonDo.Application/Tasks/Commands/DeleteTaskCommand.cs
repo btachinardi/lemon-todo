@@ -23,7 +23,7 @@ public sealed class DeleteTaskCommandHandler(
     ILogger<DeleteTaskCommandHandler> logger,
     ApplicationMetrics metrics)
 {
-    /// <inheritdoc/>
+    /// <summary>Loads the task, soft-deletes it (marks as deleted), removes its card from the board, and persists both changes atomically.</summary>
     public async Task<Result<DomainError>> HandleAsync(DeleteTaskCommand command, CancellationToken ct = default)
     {
         using var activity = ApplicationActivitySource.Source.StartActivity("DeleteTask");

@@ -162,10 +162,11 @@
 | CP4.10 | Data encryption at rest (PII fields) | DONE | AES-256-GCM field encryption, EncryptedEmail + EncryptedDisplayName columns |
 | CP4.11 | Dual-provider SQL Server support | DONE | DatabaseProvider config, SqlServerTestCleanup, EnsureCreated for SQL Server, 370 tests pass on both |
 | CP4.12 | Dual EF Core migration assemblies | DONE | Migrations.Sqlite + Migrations.SqlServer projects, unconditional MigrateAsync for both providers |
-| CP4.13 | Terraform Azure infrastructure | DONE | Bootstrap + 3 stages (MVP ~$18/mo, Resilience ~$180/mo, Scale ~$1.7K/mo), 9 reusable modules, deployment scripts |
-| CP4.14 | CI/CD pipeline (GitHub Actions) | DONE | 6-job workflow: backend tests (SQLite + SQL Server), frontend (lint + test + build), Docker build, staging + production deploy |
+| CP4.13 | Terraform Azure infrastructure | DONE | Bootstrap + 3 stages, 10 reusable modules (added container-app), Container Apps replaces App Service (VM quota blocked) |
+| CP4.14 | CI/CD pipeline (GitHub Actions) | DONE | 4-job test + 1-job deploy workflow: Docker push to ACR + `az containerapp update`, deploy only on main |
 | CP4.15 | Dockerfile + containerization | DONE | Multi-stage build, non-root user, curl healthcheck, migration assemblies, .dockerignore |
-| CP4.16 | Developer CLI (`./dev`) | DONE | Unified bash script: build, test (SQLite/SQL Server/E2E), lint, start, migrate, docker, verify |
+| CP4.16 | Developer CLI (`./dev`) | DONE | Unified bash script: build, test, lint, start, migrate, docker, verify, infra (bootstrap/init/plan/apply/destroy/output/status/unlock) |
+| CP4.17 | Azure deployment verification | DONE | 15 resources deployed, API healthy, Key Vault secrets configured, GitHub CI/CD secrets + variables set |
 | | **Deliverable** | | Production-hardened app with observability, compliance, and cloud deployment |
 
 ---
@@ -274,6 +275,9 @@
 | 2026-02-16 | Dual-provider database support (SQLite + SQL Server) | DatabaseProvider config key, conditional UseSqlite/UseSqlServer, per-instance unique test DBs for SQL Server |
 | 2026-02-16 | Separate migration assemblies per provider | EF Core requires one ModelSnapshot per DbContext per assembly. SQLite and SQL Server produce different column types. Migrations.Sqlite + Migrations.SqlServer assemblies, each with IDesignTimeDbContextFactory. DatabaseProvider env var needed for SQL Server migration generation (dotnet ef finds both factories via Api's references). |
 | 2026-02-16 | `./dev` CLI over Makefile or npm scripts | Bash script is portable (Git Bash on Windows), has colored output, auto-manages env vars for SQL Server, and wraps dual-provider migrations in a single command. Colon-separated subcommands (`test backend:sql`) read naturally without flag parsing. |
+| 2026-02-16 | Container Apps over App Service | Azure Free Trial and Pay-As-You-Go both had 0 VM quota for App Service (all tiers, all regions). Container Apps use consumption model — no VM quota needed, built-in auto-scaling, cheaper for MVP. |
+| 2026-02-16 | Docker push + `az containerapp update` over ZIP deploy | Container Apps don't support ZIP deploy. CI/CD builds Docker image, pushes to ACR with commit SHA tag, then updates Container App image reference. |
+| 2026-02-16 | `./dev infra` CLI commands | Terraform operations need Azure CLI in PATH, `MSYS_NO_PATHCONV=1` for Git Bash, and stage selection. CLI wraps all this, making `./dev infra plan stage1-mvp` as simple as `./dev test`. |
 
 ---
 
@@ -314,8 +318,9 @@
   - PII redaction: Default-masked in admin views, SystemAdmin reveal with audit trail
   - i18n: i18next with en + pt-BR (158 translation keys), LanguageSwitcher component
   - Dual database: SQLite + SQL Server with separate migration assemblies, MigrateAsync for both
-  - Infrastructure: Terraform Azure (bootstrap + 3 stages, 9 modules), GitHub Actions CI/CD (6 jobs), Docker
-  - Developer CLI: `./dev` script with build, test, lint, start, migrate, docker, verify commands
+  - Infrastructure: Terraform Azure (bootstrap + 3 stages, 10 modules incl. container-app), GitHub Actions CI/CD, Docker
+  - Azure deployment: 15 resources live (Container Apps, ACR, SQL, Key Vault, SWA, App Insights, Log Analytics)
+  - Developer CLI: `./dev` script with build, test, lint, start, migrate, docker, verify, infra commands
 - **Checkpoint 5**: NOT STARTED (Advanced & Delight)
 
 ---
@@ -438,3 +443,4 @@
 | 8a168ee | docs(csharp): improve XML documentation for API contracts and middleware | CP4 |
 | 9b2ae63 | docs(csharp): add XML documentation to domain, infrastructure, and service defaults | CP4 |
 | 65a702b | docs(csharp): add XML documentation to endpoints and domain types | CP4 |
+| 823672c | docs: add CP4 commit history to TASKS.md | CP4 |

@@ -60,6 +60,12 @@ variable "key_vault_id" {
   default     = ""
 }
 
+variable "enable_key_vault_access" {
+  description = "Whether to grant managed identity access to Key Vault"
+  type        = bool
+  default     = false
+}
+
 variable "enable_staging_slot" {
   description = "Enable a staging deployment slot"
   type        = bool

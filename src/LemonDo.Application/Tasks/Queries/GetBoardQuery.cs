@@ -15,7 +15,7 @@ public sealed record GetBoardQuery(Guid BoardId);
 /// <summary>Loads the board with columns and cards, filtering out cards for deleted/archived tasks.</summary>
 public sealed class GetBoardQueryHandler(IBoardRepository boardRepository, ITaskRepository taskRepository, ICurrentUserService currentUser, ILogger<GetBoardQueryHandler> logger)
 {
-    /// <inheritdoc/>
+    /// <summary>Loads the board with its columns and cards, filtering out cards for deleted or archived tasks.</summary>
     public async Task<Result<BoardDto, DomainError>> HandleAsync(GetBoardQuery query, CancellationToken ct = default)
     {
         logger.LogInformation("Fetching board {BoardId}", query.BoardId);

@@ -62,9 +62,10 @@ module "sql_database" {
   tags = local.tags
 }
 
-# --- App Service (Premium auto-scale) ---
-module "app_service" {
-  source = "../../modules/app-service"
+# --- Container App (Premium — replaces App Service + auto-scale) ---
+# Container Apps have built-in auto-scaling (min/max replicas + HTTP/CPU rules)
+module "container_app" {
+  source = "../../modules/container-app"
 
   project             = local.project
   environment         = local.environment
@@ -72,80 +73,17 @@ module "app_service" {
   location_short      = var.location_short
   resource_group_name = azurerm_resource_group.this.name
 
-  sku_name             = "P2v3"
-  always_on            = true
-  enable_staging_slot  = true
-  key_vault_id         = module.key_vault.key_vault_id
+  log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
 
   sql_connection_string          = module.sql_database.connection_string
+  jwt_secret_key                 = var.jwt_secret_key
+  encryption_key                 = var.encryption_key
   app_insights_connection_string = module.monitoring.app_insights_connection_string
+  cors_origin                    = "https://${module.frontdoor.endpoint_hostname}"
 
-  extra_app_settings = {
-    "Jwt__Issuer"                     = "LemonDo"
-    "Jwt__Audience"                   = "LemonDo"
-    "Jwt__SecretKey"                  = "@Microsoft.KeyVault(VaultName=${module.key_vault.key_vault_name};SecretName=jwt-secret-key)"
-    "Encryption__FieldEncryptionKey"  = "@Microsoft.KeyVault(VaultName=${module.key_vault.key_vault_name};SecretName=field-encryption-key)"
-    "Cors__AllowedOrigins__0"         = "https://${module.frontdoor.endpoint_hostname}"
-    "ConnectionStrings__Redis"        = module.redis.connection_string
-  }
-
-  tags = local.tags
-}
-
-# --- Auto-scale for App Service ---
-resource "azurerm_monitor_autoscale_setting" "app" {
-  name                = "autoscale-${local.project}-${local.environment}"
-  resource_group_name = azurerm_resource_group.this.name
-  location            = var.location
-  target_resource_id  = module.app_service.service_plan_id
-
-  profile {
-    name = "default"
-
-    capacity {
-      default = 2
-      minimum = 2
-      maximum = 10
-    }
-
-    rule {
-      metric_trigger {
-        metric_name        = "CpuPercentage"
-        metric_resource_id = module.app_service.service_plan_id
-        time_grain         = "PT1M"
-        statistic          = "Average"
-        time_window        = "PT5M"
-        time_aggregation   = "Average"
-        operator           = "GreaterThan"
-        threshold          = 70
-      }
-      scale_action {
-        direction = "Increase"
-        type      = "ChangeCount"
-        value     = "1"
-        cooldown  = "PT5M"
-      }
-    }
-
-    rule {
-      metric_trigger {
-        metric_name        = "CpuPercentage"
-        metric_resource_id = module.app_service.service_plan_id
-        time_grain         = "PT1M"
-        statistic          = "Average"
-        time_window        = "PT10M"
-        time_aggregation   = "Average"
-        operator           = "LessThan"
-        threshold          = 25
-      }
-      scale_action {
-        direction = "Decrease"
-        type      = "ChangeCount"
-        value     = "1"
-        cooldown  = "PT10M"
-      }
-    }
-  }
+  cpu          = 1.0
+  memory       = "2Gi"
+  max_replicas = 10
 
   tags = local.tags
 }
@@ -176,7 +114,8 @@ module "networking" {
 
   enable_sql_private_endpoint = true
   sql_server_id               = module.sql_database.server_id
-  app_service_id              = module.app_service.app_service_id
+  # TODO: Update networking module to accept container_app_environment_id
+  app_service_id              = "" # Placeholder — Container Apps use VNet integration differently
 
   tags = local.tags
 }
@@ -191,7 +130,7 @@ module "frontdoor" {
   resource_group_name = azurerm_resource_group.this.name
 
   sku_name             = "Premium_AzureFrontDoor"
-  app_service_hostname = module.app_service.default_hostname
+  app_service_hostname = module.container_app.app_fqdn
   enable_waf           = true
   waf_mode             = "Prevention"
 

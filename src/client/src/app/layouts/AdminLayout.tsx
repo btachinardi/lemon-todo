@@ -27,7 +27,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className="flex items-center gap-3">
             <h1 className="font-mono text-base font-light tracking-normal sm:text-lg">
               <span className="text-foreground">{t('brand.lemon')}</span>
-              <span className="text-primary">{t('brand.do')}</span>
+              <span className="text-lemon">{t('brand.do')}</span>
               <span className="ml-2 text-xs text-muted-foreground">{t('brand.admin')}</span>
             </h1>
           </div>

@@ -56,9 +56,9 @@ module "sql_database" {
   tags = local.tags
 }
 
-# --- App Service ---
-module "app_service" {
-  source = "../../modules/app-service"
+# --- Container App (replaces App Service — no VM quota needed) ---
+module "container_app" {
+  source = "../../modules/container-app"
 
   project             = local.project
   environment         = local.environment
@@ -66,20 +66,17 @@ module "app_service" {
   location_short      = var.location_short
   resource_group_name = azurerm_resource_group.this.name
 
-  sku_name    = "B1"
-  always_on   = true
-  key_vault_id = module.key_vault.key_vault_id
+  log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
 
   sql_connection_string          = module.sql_database.connection_string
+  jwt_secret_key                 = var.jwt_secret_key
+  encryption_key                 = var.encryption_key
   app_insights_connection_string = module.monitoring.app_insights_connection_string
+  cors_origin                    = "https://${module.static_web_app.default_hostname}"
 
-  extra_app_settings = {
-    "Jwt__Issuer"                   = "LemonDo"
-    "Jwt__Audience"                 = "LemonDo"
-    "Jwt__SecretKey"                = "@Microsoft.KeyVault(VaultName=${module.key_vault.key_vault_name};SecretName=jwt-secret-key)"
-    "Encryption__FieldEncryptionKey" = "@Microsoft.KeyVault(VaultName=${module.key_vault.key_vault_name};SecretName=field-encryption-key)"
-    "Cors__AllowedOrigins__0"       = "https://${module.static_web_app.default_hostname}"
-  }
+  cpu          = 0.25
+  memory       = "0.5Gi"
+  max_replicas = 3
 
   tags = local.tags
 }
