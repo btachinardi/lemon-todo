@@ -23,8 +23,8 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <GlobeIcon className="size-4" />
+        <Button variant="ghost" size="icon" className="size-9 sm:size-8">
+          <GlobeIcon className="size-[18px] sm:size-4" />
           <span className="sr-only">
             {i18n.language === 'pt-BR' ? 'Idioma' : 'Language'}
           </span>

@@ -1,6 +1,6 @@
 {
   "brand": {
-    "lemon": "LEMON",
+    "lemon": "Lemon.",
     "do": "DO",
     "admin": "ADMIN"
   },
@@ -49,7 +49,25 @@
       "passwordPlaceholder": "Sua senha",
       "passwordHint": "M\u00edn. 8 caracteres",
       "displayName": "Nome de exibi\u00e7\u00e3o",
-      "displayNamePlaceholder": "Seu nome"
+      "displayNamePlaceholder": "Seu nome",
+      "showPassword": "Mostrar senha",
+      "hidePassword": "Ocultar senha"
+    },
+    "passwordStrength": {
+      "label": "For\u00e7a da senha",
+      "tooWeak": "Muito fraca",
+      "weak": "Fraca",
+      "fair": "Razo\u00e1vel",
+      "strong": "Forte",
+      "veryStrong": "Muito forte",
+      "requirements": "Requisitos",
+      "minLength": "Pelo menos 8 caracteres",
+      "hasUppercase": "Uma letra mai\u00fascula",
+      "hasLowercase": "Uma letra min\u00fascula",
+      "hasDigit": "Um n\u00famero",
+      "bonus": "B\u00f4nus",
+      "hasSpecial": "Caractere especial",
+      "longPassword": "12+ caracteres"
     },
     "userMenu": {
       "signOut": "Sair",

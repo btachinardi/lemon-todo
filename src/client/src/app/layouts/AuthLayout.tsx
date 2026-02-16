@@ -10,9 +10,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="font-mono text-3xl font-light tracking-normal">
-            <span className="text-foreground">LEMON</span>
+        <div className="flex flex-col items-center gap-3">
+          <img src="/lemondo-icon.png" alt="" className="size-24" />
+          <h1 className="font-[var(--font-brand)] text-4xl font-black tracking-tight">
+            <span className="text-foreground">Lemon.</span>
             <span className="text-lemon">DO</span>
           </h1>
         </div>

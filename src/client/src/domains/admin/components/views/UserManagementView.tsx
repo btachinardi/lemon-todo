@@ -26,6 +26,7 @@ import {
   useReactivateUser,
 } from '../../hooks/use-admin-mutations';
 import { UserRow } from '../widgets/UserRow';
+import { UserCard } from '../widgets/UserCard';
 import { RoleAssignmentDialog } from '../widgets/RoleAssignmentDialog';
 import type { AdminUser } from '../../types/admin.types';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
@@ -123,8 +124,8 @@ export function UserManagementView() {
         </Select>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
+      {/* Table (desktop) */}
+      <div className="hidden rounded-md border sm:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -168,6 +169,35 @@ export function UserManagementView() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Cards (mobile) */}
+      <div className="space-y-3 sm:hidden">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-lg border p-4 space-y-2">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-1/3" />
+            </div>
+          ))
+        ) : data?.items.length === 0 ? (
+          <p className="py-8 text-center text-muted-foreground">
+            {t('admin.users.noUsers')}
+          </p>
+        ) : (
+          data?.items.map((u) => (
+            <UserCard
+              key={u.id}
+              user={u}
+              isSystemAdmin={isSystemAdmin}
+              onAssignRole={setAssignDialogUser}
+              onRemoveRole={handleRemoveRole}
+              onDeactivate={handleDeactivate}
+              onReactivate={handleReactivate}
+            />
+          ))
+        )}
       </div>
 
       {/* Pagination */}

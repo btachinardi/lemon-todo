@@ -30,9 +30,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:h-16 sm:px-6">
-          <h1 className="font-mono text-base font-light tracking-normal sm:text-lg">
-            <span className="text-foreground">{t('brand.lemon')}</span>
-            <span className="text-lemon">{t('brand.do')}</span>
+          <h1 className="flex items-center gap-1.5">
+            <img src="/lemondo-icon.png" alt="" className="size-7 sm:size-8" />
+            <span className="font-[var(--font-brand)] text-lg font-black tracking-tight sm:text-xl">
+              <span className="text-foreground">{t('brand.lemon')}</span>
+              <span className="text-lemon">{t('brand.do')}</span>
+            </span>
           </h1>
           <nav
             className="flex items-center gap-1 rounded-lg border-2 border-border/40 bg-secondary/30 p-1"
@@ -68,13 +71,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <span className="hidden sm:inline">{t('nav.list')}</span>
             </NavLink>
           </nav>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             {isAdmin && (
               <NavLink
                 to="/admin/users"
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center justify-center gap-1 rounded-md p-2 text-xs text-muted-foreground hover:text-foreground sm:px-2 sm:py-1.5"
               >
-                <ShieldIcon className="size-3" />
+                <ShieldIcon className="size-4 sm:size-3" />
                 <span className="hidden sm:inline">{t('nav.admin')}</span>
               </NavLink>
             )}

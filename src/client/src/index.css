@@ -5,11 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Typography — matching lemon.io computed styles:
-     Outfit for everything, Source Code Pro for logo/labels */
+  /* Typography — Outfit for body, Nunito for brand, Source Code Pro for code */
   --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
   --font-display: 'Outfit', system-ui, sans-serif;
   --font-mono: 'Source Code Pro', ui-monospace, monospace;
+  --font-brand: 'Nunito', 'Outfit', system-ui, sans-serif;
 
   /* Radius — lemon.io buttons use 8px */
   --radius-sm: calc(var(--radius) - 4px);

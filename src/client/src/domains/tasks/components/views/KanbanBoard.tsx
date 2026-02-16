@@ -11,7 +11,6 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { ScrollArea, ScrollBar } from '@/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import type { Board } from '../../types/board.types';
 import type { Task } from '../../types/task.types';
@@ -233,8 +232,8 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <ScrollArea className={cn('w-full', className)}>
-        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto p-4 sm:snap-none sm:p-6">
+      <div className={cn('w-full overflow-x-auto', className)}>
+        <div className="flex snap-x snap-mandatory gap-4 p-4 sm:snap-none sm:p-6">
           {sortedColumns.map((column, index) => (
               <KanbanColumn
                 key={column.id}
@@ -248,8 +247,7 @@ export function KanbanBoard({
               />
             ))}
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      </div>
 
       {/* Floating drag preview */}
       <DragOverlay dropAnimation={DROP_ANIMATION}>

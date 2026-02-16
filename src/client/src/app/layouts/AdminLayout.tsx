@@ -25,10 +25,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:h-16 sm:px-6">
           <div className="flex items-center gap-3">
-            <h1 className="font-mono text-base font-light tracking-normal sm:text-lg">
-              <span className="text-foreground">{t('brand.lemon')}</span>
-              <span className="text-lemon">{t('brand.do')}</span>
-              <span className="ml-2 text-xs text-muted-foreground">{t('brand.admin')}</span>
+            <h1 className="flex items-center gap-1.5">
+              <img src="/lemondo-icon.png" alt="" className="size-7 sm:size-8" />
+              <span className="font-[var(--font-brand)] text-lg font-black tracking-tight sm:text-xl">
+                <span className="text-foreground">{t('brand.lemon')}</span>
+                <span className="text-lemon">{t('brand.do')}</span>
+              </span>
+              <span className="ml-1 text-xs text-muted-foreground">{t('brand.admin')}</span>
             </h1>
           </div>
           <nav

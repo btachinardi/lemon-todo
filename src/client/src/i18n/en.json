@@ -1,6 +1,6 @@
 {
   "brand": {
-    "lemon": "LEMON",
+    "lemon": "Lemon.",
     "do": "DO",
     "admin": "ADMIN"
   },
@@ -49,7 +49,25 @@
       "passwordPlaceholder": "Your password",
       "passwordHint": "Min. 8 characters",
       "displayName": "Display name",
-      "displayNamePlaceholder": "Your name"
+      "displayNamePlaceholder": "Your name",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
+    },
+    "passwordStrength": {
+      "label": "Password strength",
+      "tooWeak": "Too weak",
+      "weak": "Weak",
+      "fair": "Fair",
+      "strong": "Strong",
+      "veryStrong": "Very strong",
+      "requirements": "Requirements",
+      "minLength": "At least 8 characters",
+      "hasUppercase": "One uppercase letter",
+      "hasLowercase": "One lowercase letter",
+      "hasDigit": "One number",
+      "bonus": "Bonus",
+      "hasSpecial": "Special character",
+      "longPassword": "12+ characters"
     },
     "userMenu": {
       "signOut": "Sign out",
