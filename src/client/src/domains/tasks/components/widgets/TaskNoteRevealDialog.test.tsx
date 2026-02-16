@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TaskNoteRevealDialog } from './TaskNoteRevealDialog';
+import { ApiRequestError } from '@/lib/api-client';
 
 // Mock i18next — return key as value for deterministic assertions
 vi.mock('react-i18next', () => ({
@@ -88,18 +89,48 @@ describe('TaskNoteRevealDialog', () => {
     expect(screen.getByText('tasks.noteRevealDialog.submitting')).toBeInTheDocument();
   });
 
-  it('should show password error on 401 response', () => {
-    const error = new Error('Request failed with status 401');
+  it('should show password error when ApiRequestError has status 401', () => {
+    const error = new ApiRequestError(401, {
+      type: 'unauthorized',
+      title: 'Invalid password. Re-authentication failed.',
+      status: 401,
+    });
     render(<TaskNoteRevealDialog {...defaultProps} error={error} />);
 
     expect(screen.getByText('tasks.noteRevealDialog.passwordError')).toBeInTheDocument();
   });
 
-  it('should not show password error on non-401 error', () => {
-    const error = new Error('Network error');
+  it('should not show password error on non-401 ApiRequestError', () => {
+    const error = new ApiRequestError(500, {
+      type: 'unknown_error',
+      title: 'Internal server error',
+      status: 500,
+    });
     render(<TaskNoteRevealDialog {...defaultProps} error={error} />);
 
     expect(screen.queryByText('tasks.noteRevealDialog.passwordError')).not.toBeInTheDocument();
+  });
+
+  it('should show generic error message for non-401 errors', () => {
+    const error = new ApiRequestError(500, {
+      type: 'unknown_error',
+      title: 'Internal server error',
+      status: 500,
+    });
+    render(<TaskNoteRevealDialog {...defaultProps} error={error} />);
+
+    expect(screen.getByText('tasks.noteRevealDialog.genericError')).toBeInTheDocument();
+  });
+
+  it('should not show generic error when error is a password error', () => {
+    const error = new ApiRequestError(401, {
+      type: 'unauthorized',
+      title: 'Invalid password. Re-authentication failed.',
+      status: 401,
+    });
+    render(<TaskNoteRevealDialog {...defaultProps} error={error} />);
+
+    expect(screen.queryByText('tasks.noteRevealDialog.genericError')).not.toBeInTheDocument();
   });
 
   it('should show revealed note content when revealedNote is provided', () => {

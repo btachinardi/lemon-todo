@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ApiRequestError } from '@/lib/api-client';
 import {
   Dialog,
   DialogContent,
@@ -60,7 +61,8 @@ export function ProtectedDataRevealDialog({
   const isReasonValid = reason !== '' && (!isOther || reasonDetails.trim().length > 0);
   const isFormValid = isReasonValid && password.length > 0;
 
-  const isPasswordError = error?.message?.includes('401') || error?.message?.includes('unauthorized');
+  const isPasswordError = error instanceof ApiRequestError && error.status === 401;
+  const isGenericError = !!error && !isPasswordError;
 
   const handleSubmit = () => {
     if (!isFormValid || !reason) return;
@@ -150,6 +152,11 @@ export function ProtectedDataRevealDialog({
             {isPasswordError && (
               <p className="text-xs text-destructive">
                 {t('admin.protectedDataRevealDialog.passwordError')}
+              </p>
+            )}
+            {isGenericError && (
+              <p className="text-xs text-destructive">
+                {t('admin.protectedDataRevealDialog.genericError')}
               </p>
             )}
           </div>
