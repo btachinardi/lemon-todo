@@ -122,6 +122,14 @@ resource "azurerm_container_app" "this" {
         value = var.cors_origin
       }
 
+      dynamic "env" {
+        for_each = var.cors_origin_secondary != "" ? [var.cors_origin_secondary] : []
+        content {
+          name  = "Cors__AllowedOrigins__1"
+          value = env.value
+        }
+      }
+
       liveness_probe {
         transport = "HTTP"
         port      = 8080

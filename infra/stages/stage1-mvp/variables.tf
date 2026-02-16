@@ -48,3 +48,15 @@ variable "encryption_key" {
   type        = string
   sensitive   = true
 }
+
+variable "api_custom_domain" {
+  description = "Custom domain for the API Container App (e.g. api.lemondo.btas.dev). Leave empty to skip."
+  type        = string
+  default     = ""
+}
+
+variable "frontend_custom_domain" {
+  description = "Custom domain for the frontend Static Web App (e.g. lemondo.btas.dev). Leave empty to skip."
+  type        = string
+  default     = ""
+}

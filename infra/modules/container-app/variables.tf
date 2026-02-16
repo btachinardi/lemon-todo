@@ -54,9 +54,15 @@ variable "app_insights_connection_string" {
 }
 
 variable "cors_origin" {
-  description = "Allowed CORS origin (frontend URL)"
+  description = "Primary allowed CORS origin (frontend URL)"
   type        = string
   default     = "*"
+}
+
+variable "cors_origin_secondary" {
+  description = "Secondary allowed CORS origin (e.g. Azure default hostname during custom domain transition)"
+  type        = string
+  default     = ""
 }
 
 variable "aspnet_environment" {
