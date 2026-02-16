@@ -154,7 +154,8 @@
       "placeholder": "Digite informa\u00e7\u00f5es sens\u00edveis (criptografado em repouso)...",
       "encryptionWarning": "Este conte\u00fado \u00e9 criptografado e s\u00f3 pode ser visualizado com sua senha.",
       "viewNote": "Ver Nota",
-      "hasNote": "Possui nota criptografada"
+      "hasNote": "Possui nota criptografada",
+      "save": "Salvar Nota"
     },
     "noteRevealDialog": {
       "title": "Ver Nota Sens\u00edvel",
@@ -234,7 +235,8 @@
         "TaskCompleted": "Tarefa Concluída",
         "TaskDeleted": "Tarefa Excluída",
         "UserDeactivated": "Usuário Desativado",
-        "UserReactivated": "Usuário Reativado"
+        "UserReactivated": "Usuário Reativado",
+        "SensitiveNoteRevealed": "Nota Sensível Revelada"
       }
     },
     "protectedDataRevealDialog": {

@@ -9,14 +9,16 @@ using Microsoft.Extensions.Logging;
 
 using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
-/// <summary>Command to partially update a task's scalar fields (title, description, priority, due date).</summary>
+/// <summary>Command to partially update a task's scalar fields (title, description, priority, due date, sensitive note).</summary>
 public sealed record UpdateTaskCommand(
     Guid TaskId,
     string? Title = null,
     string? Description = null,
     Priority? Priority = null,
     DateTimeOffset? DueDate = null,
-    bool ClearDueDate = false);
+    bool ClearDueDate = false,
+    string? SensitiveNote = null,
+    bool ClearSensitiveNote = false);
 
 /// <summary>Applies partial updates to a task. Only non-null fields are changed.</summary>
 public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<UpdateTaskCommandHandler> logger)
@@ -76,7 +78,27 @@ public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOf
                 return Result<TaskDto, DomainError>.Failure(dueDateResult.Error);
         }
 
-        await repository.UpdateAsync(task, ct);
+        SensitiveNote? sensitiveNote = null;
+        var clearNote = command.ClearSensitiveNote;
+        if (clearNote)
+        {
+            var noteResult = task.UpdateSensitiveNote(null);
+            if (noteResult.IsFailure)
+                return Result<TaskDto, DomainError>.Failure(noteResult.Error);
+        }
+        else if (command.SensitiveNote is not null)
+        {
+            var noteResult = SensitiveNote.Create(command.SensitiveNote);
+            if (noteResult.IsFailure)
+                return Result<TaskDto, DomainError>.Failure(noteResult.Error);
+            sensitiveNote = noteResult.Value;
+
+            var updateNoteResult = task.UpdateSensitiveNote(sensitiveNote);
+            if (updateNoteResult.IsFailure)
+                return Result<TaskDto, DomainError>.Failure(updateNoteResult.Error);
+        }
+
+        await repository.UpdateAsync(task, sensitiveNote, clearNote, ct);
         await unitOfWork.SaveChangesAsync(ct);
 
         logger.LogInformation("Task {TaskId} updated successfully", command.TaskId);

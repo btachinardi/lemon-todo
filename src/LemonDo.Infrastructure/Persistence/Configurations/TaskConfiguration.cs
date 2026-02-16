@@ -43,6 +43,10 @@ public sealed class TaskConfiguration : IEntityTypeConfiguration<TaskEntity>
         builder.Property(t => t.CreatedAt);
         builder.Property(t => t.UpdatedAt);
 
+        // Sensitive note: redacted marker stored on entity, encrypted content in shadow property
+        builder.Property(t => t.RedactedSensitiveNote).HasMaxLength(50);
+        builder.Property<string?>("EncryptedSensitiveNote").HasMaxLength(15_000);
+
         builder.Ignore(t => t.DomainEvents);
 
         builder.OwnsMany(t => t.Tags, tagBuilder =>

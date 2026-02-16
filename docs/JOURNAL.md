@@ -1246,9 +1246,9 @@ Deleted 2 obsolete tests (`CreatedAtMigrationTests.cs`) for a migration workarou
 
 3. **Hash-based admin search is a paradigm shift** — Admin search previously used partial plaintext matches (`?search=alice` matched `alice@example.com`). Hash-based lookup requires exact email match (`?search=alice@example.com`). Partial redacted display name search still works (`?search=Ali` matches `A***e`). Tests must store the exact registration email and use it for admin queries.
 
-4. **Shadow properties isolate PII implementation from domain** — The domain `User` entity has no knowledge of encryption, hashing, or PII storage details. `UserRepository` uses EF shadow properties (`EmailHash`, `EncryptedEmail`, `EncryptedDisplayName`) to store sensitive data without coupling the domain model to encryption concerns. This preserves domain purity while enabling zero-trust PII handling.
+4. **Shadow properties isolate protected data implementation from domain** — The domain `User` entity has no knowledge of encryption, hashing, or protected data storage details. `UserRepository` uses EF shadow properties (`EmailHash`, `EncryptedEmail`, `EncryptedDisplayName`) to store sensitive data without coupling the domain model to encryption concerns. This preserves domain purity while enabling zero-trust protected data handling. The same pattern was later applied to `TaskRepository` with `EncryptedSensitiveNote`.
 
-5. **ISensitivePii makes PII awareness domain-level** — Instead of infrastructure or application layers "knowing" which fields are PII and applying redaction/hashing/encryption ad-hoc, the domain VOs themselves declare "I am sensitive PII" via the marker interface and provide their own redaction logic. This centralizes the policy and makes it impossible to forget redaction when adding new PII fields.
+5. **IProtectedData makes sensitivity awareness domain-level** — Instead of infrastructure or application layers "knowing" which fields are sensitive and applying redaction/hashing/encryption ad-hoc, the domain VOs themselves declare "I am protected data" via the marker interface and provide their own redaction logic. This centralizes the policy and makes it impossible to forget redaction when adding new protected data fields (e.g., `SensitiveNote` on tasks).
 
 ---
 
@@ -1275,6 +1275,38 @@ Pure terminology rename with zero functional changes:
 - **E2E**: `admin-pii-reveal.spec.ts` updated (file kept, content renamed)
 
 Migration files left untouched (historical records).
+
+---
+
+## Task SensitiveNote Feature
+
+**Date**: 2026-02-16
+**Branch**: `feature/pii-zero-trust`
+
+### Motivation
+
+Tasks often contain sensitive information (medical notes, legal references, confidential details) that shouldn't be visible at rest. The existing ProtectedData infrastructure (AES-256-GCM encryption, break-the-glass reveals, audit trail) provides the perfect foundation for extending encryption to task-level content.
+
+### Design Decisions
+
+1. **Reuse existing encryption infrastructure** — `IFieldEncryptionService` already handles AES-256-GCM encryption/decryption. Tasks reuse the same service rather than duplicating encryption logic.
+
+2. **Shadow property pattern** — Same as User protected data: the domain `Task` entity only stores `RedactedSensitiveNote` (the string `"[PROTECTED]"` or null). The actual encrypted content lives in an EF Core shadow property `EncryptedSensitiveNote`, managed entirely by `TaskRepository`.
+
+3. **Two decryption paths** — Owner re-authentication (password required, audited) via `ViewTaskNoteCommand`, and admin break-the-glass (justification + password required, fully audited) via `RevealTaskNoteCommand`. Both produce `SensitiveNoteRevealed` audit entries.
+
+4. **IProtectedData marker** — `SensitiveNote` implements `IProtectedData` like `Email` and `DisplayName`, making it automatically eligible for the redaction and logging policies.
+
+5. **Frontend: explicit save for notes** — Unlike description (blur-to-save), the sensitive note uses an explicit "Save Note" button since writing encrypted content is a deliberate action. The note textarea is always empty (never shows `[PROTECTED]`) — users write new content to replace, or click "Clear" to remove.
+
+### Implementation Highlights
+
+- **Domain**: `SensitiveNote` value object (max 10K chars), `Task.UpdateSensitiveNote()` mutation, `ITaskRepository` extended with encryption parameters
+- **Infrastructure**: `TaskRepository` encrypts/decrypts via shadow property, new `GetDecryptedSensitiveNoteAsync` method
+- **Application**: `ViewTaskNoteCommand` (owner), `RevealTaskNoteCommand` (admin), updated create/update commands
+- **API**: `POST /api/tasks/:id/view-note`, `POST /api/admin/tasks/:id/reveal-note`, updated create/update contracts
+- **Frontend**: `TaskNoteRevealDialog` (password + 30s countdown), task detail sheet with note section, lock icon on cards
+- **Tests**: 370 backend + 223 frontend = 593 total
 
 ---
 

@@ -6,4 +6,5 @@ public sealed record CreateTaskRequest(
     string? Description = null,
     string Priority = "None",
     DateTimeOffset? DueDate = null,
-    List<string>? Tags = null);
+    List<string>? Tags = null,
+    string? SensitiveNote = null);

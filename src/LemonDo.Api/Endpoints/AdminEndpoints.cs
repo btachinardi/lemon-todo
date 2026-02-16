@@ -31,6 +31,10 @@ public static class AdminEndpoints
         group.MapPost("/users/{id:guid}/reveal", RevealProtectedData)
             .RequireAuthorization(Roles.RequireSystemAdmin);
 
+        // Task sensitive note reveal (admin break-the-glass)
+        group.MapPost("/tasks/{taskId:guid}/reveal-note", RevealTaskNote)
+            .RequireAuthorization(Roles.RequireSystemAdmin);
+
         // Audit log
         group.MapGet("/audit", SearchAuditLog);
 
@@ -116,6 +120,21 @@ public static class AdminEndpoints
         var result = await handler.HandleAsync(
             new SearchAuditLogQuery(dateFrom, dateTo, action, actorId, resourceType, page, pageSize), ct);
         return Results.Ok(result);
+    }
+
+    private static async Task<IResult> RevealTaskNote(
+        RevealTaskNoteCommandHandler handler,
+        Guid taskId,
+        RevealTaskNoteRequest request,
+        HttpContext httpContext,
+        CancellationToken ct)
+    {
+        if (!Enum.TryParse<ProtectedDataRevealReason>(request.Reason, ignoreCase: true, out var reason))
+            return Results.BadRequest(new { Error = $"Invalid reason: '{request.Reason}'." });
+
+        var command = new RevealTaskNoteCommand(taskId, reason, request.ReasonDetails, request.Comments, request.Password);
+        var result = await handler.HandleAsync(command, ct);
+        return result.ToHttpResult(note => Results.Ok(new { Note = note }), httpContext: httpContext);
     }
 
     private static async Task<IResult> RevealProtectedData(

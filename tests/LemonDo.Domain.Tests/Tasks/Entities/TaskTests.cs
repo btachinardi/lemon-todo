@@ -428,4 +428,64 @@ public sealed class TaskTests
 
         Assert.AreEqual(originalOwner, task.OwnerId);
     }
+
+    // --- Sensitive Note ---
+
+    [TestMethod]
+    public void Should_CreateWithSensitiveNote_When_Provided()
+    {
+        var note = SensitiveNote.Create("Secret content").Value;
+        var result = TaskEntity.Create(DefaultOwner, ValidTitle, sensitiveNote: note);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual("[PROTECTED]", result.Value.RedactedSensitiveNote);
+    }
+
+    [TestMethod]
+    public void Should_CreateWithoutSensitiveNote_When_NotProvided()
+    {
+        var result = TaskEntity.Create(DefaultOwner, ValidTitle);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsNull(result.Value.RedactedSensitiveNote);
+    }
+
+    [TestMethod]
+    public void Should_UpdateSensitiveNote_When_Valid()
+    {
+        var task = CreateValidTask();
+        Assert.IsNull(task.RedactedSensitiveNote);
+
+        var note = SensitiveNote.Create("New secret").Value;
+        var result = task.UpdateSensitiveNote(note);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual("[PROTECTED]", task.RedactedSensitiveNote);
+    }
+
+    [TestMethod]
+    public void Should_ClearSensitiveNote_When_NullPassed()
+    {
+        var note = SensitiveNote.Create("Secret").Value;
+        var task = TaskEntity.Create(DefaultOwner, ValidTitle, sensitiveNote: note).Value;
+        Assert.AreEqual("[PROTECTED]", task.RedactedSensitiveNote);
+
+        var result = task.UpdateSensitiveNote(null);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsNull(task.RedactedSensitiveNote);
+    }
+
+    [TestMethod]
+    public void Should_FailUpdateSensitiveNote_When_TaskDeleted()
+    {
+        var task = CreateValidTask();
+        task.Delete();
+
+        var note = SensitiveNote.Create("Secret").Value;
+        var result = task.UpdateSensitiveNote(note);
+
+        Assert.IsTrue(result.IsFailure);
+        Assert.AreEqual("task.deleted", result.Error.Code);
+    }
 }

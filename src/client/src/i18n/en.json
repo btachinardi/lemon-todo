@@ -148,6 +148,26 @@
       "updateTask": "Could not update task. Try again.",
       "moveTask": "Could not move task. Try again.",
       "saveTask": "Could not save task. Try again."
+    },
+    "sensitiveNote": {
+      "label": "Sensitive Note",
+      "placeholder": "Enter sensitive information (encrypted at rest)...",
+      "encryptionWarning": "This content is encrypted and can only be viewed with your password.",
+      "viewNote": "View Note",
+      "hasNote": "Has encrypted note",
+      "save": "Save Note"
+    },
+    "noteRevealDialog": {
+      "title": "View Sensitive Note",
+      "description": "Enter your password to decrypt and view this note. This action is logged.",
+      "revealedDescription": "This note will auto-hide for security.",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your account password",
+      "passwordError": "Incorrect password. Please try again.",
+      "submit": "View Note",
+      "submitting": "Decrypting...",
+      "autoHide": "Auto-hiding in",
+      "hide": "Hide Now"
     }
   },
   "nav": {
@@ -215,7 +235,8 @@
         "TaskCompleted": "Task Completed",
         "TaskDeleted": "Task Deleted",
         "UserDeactivated": "User Deactivated",
-        "UserReactivated": "User Reactivated"
+        "UserReactivated": "User Reactivated",
+        "SensitiveNoteRevealed": "Sensitive Note Revealed"
       }
     },
     "protectedDataRevealDialog": {

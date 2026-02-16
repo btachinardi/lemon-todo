@@ -21,6 +21,8 @@ public sealed record TaskDto
     public required bool IsArchived { get; init; }
     /// <summary>Indicates if the task has been soft-deleted.</summary>
     public required bool IsDeleted { get; init; }
+    /// <summary>Whether this task has an encrypted sensitive note. Shows "[PROTECTED]" or null.</summary>
+    public string? SensitiveNote { get; init; }
     /// <summary>Timestamp when the task was marked as Done, or null if not completed.</summary>
     public DateTimeOffset? CompletedAt { get; init; }
     /// <summary>Timestamp when the task was created.</summary>

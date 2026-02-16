@@ -51,7 +51,7 @@ public sealed class DeleteTaskCommandHandler(
             await boardRepository.UpdateAsync(board, ct);
         }
 
-        await taskRepository.UpdateAsync(task, ct);
+        await taskRepository.UpdateAsync(task, ct: ct);
         await unitOfWork.SaveChangesAsync(ct);
         metrics.TaskDeleted();
 

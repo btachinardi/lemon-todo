@@ -44,15 +44,24 @@ Checkpoint 4: Production Hardening — observability, security, admin tooling, a
 - **W3C traceparent propagation** from frontend to backend
   - Every API request includes a `traceparent` header for distributed tracing
   - Zero new npm dependencies (uses native `crypto.getRandomValues`)
-- **485 tests** total (321 backend + 164 frontend), up from 478
-  - 59 new backend tests (encryption, protected data redaction, audit, admin endpoints)
-  - 3 new frontend tests (traceparent format validation)
+- **Task Sensitive Note** — encrypted free-text field on tasks for storing sensitive information
+  - `SensitiveNote` value object (max 10,000 chars) with AES-256-GCM encryption at rest
+  - Owner can view their own note via password re-authentication (`POST /api/tasks/:id/view-note`)
+  - SystemAdmin break-the-glass reveal with justification + audit trail (`POST /api/admin/tasks/:id/reveal-note`)
+  - Task detail sheet with encrypted note section: add/replace textarea, "View Note" dialog with 30s auto-hide
+  - Lock icon badge on task cards when a sensitive note exists
+  - `SensitiveNoteRevealed` audit action for both owner and admin access
+- **593 tests** total (370 backend + 223 frontend), up from 478
+  - 13 new domain tests (SensitiveNote VO + Task entity with notes)
+  - New application-layer command handlers (ViewTaskNote, RevealTaskNote)
+  - 24 new frontend tests (TaskNoteRevealDialog, TaskDetailSheet sensitive note, TaskCard lock icon)
 
 ### Changed
 
 - All frontend components now use `useTranslation()` + `t()` for user-facing strings
 - Admin user list shows protected-data-redacted values by default
 - API client sends `traceparent` and `X-Correlation-Id` headers on every request
+- Renamed "PII" terminology to "Protected Data" across entire codebase (zero functional changes)
 
 ## [0.3.0] - 2026-02-15
 

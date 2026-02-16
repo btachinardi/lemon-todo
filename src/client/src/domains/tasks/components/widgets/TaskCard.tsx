@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card';
 import { cn } from '@/lib/utils';
+import { LockIcon } from 'lucide-react';
 import type { Task } from '../../types/task.types';
 import { TaskStatus, Priority } from '../../types/task.types';
 import { PriorityBadge } from '../atoms/PriorityBadge';
@@ -90,6 +91,9 @@ export const TaskCard = memo(function TaskCard({
           <CardTitle className={cn('text-sm font-semibold leading-tight', isDone && 'line-through')}>
             {task.title}
           </CardTitle>
+          {task.sensitiveNote && (
+            <LockIcon className="ml-auto size-3.5 shrink-0 text-amber-500" aria-label={t('tasks.sensitiveNote.hasNote')} />
+          )}
         </div>
       </CardHeader>
       {(task.tags.length > 0 || task.dueDate || task.priority !== 'None') && (

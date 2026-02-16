@@ -43,4 +43,7 @@ public enum AuditAction
 
     /// <summary>The system decrypted protected data for an automated operation (e.g., sending email).</summary>
     ProtectedDataAccessed,
+
+    /// <summary>A task's sensitive note was viewed by its owner or revealed by an admin.</summary>
+    SensitiveNoteRevealed,
 }

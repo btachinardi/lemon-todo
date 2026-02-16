@@ -7,6 +7,8 @@ import type {
   MoveTaskRequest,
   PagedResult,
   UpdateTaskRequest,
+  ViewTaskNoteRequest,
+  ViewTaskNoteResponse,
 } from '../types/api.types';
 import type { Task } from '../types/task.types';
 
@@ -73,6 +75,11 @@ export const tasksApi = {
   /** Removes a tag from a task. The tag value is URI-encoded for safe transport. */
   removeTag(id: string, tag: string): Promise<void> {
     return apiClient.deleteVoid(`${BASE}/${id}/tags/${encodeURIComponent(tag)}`);
+  },
+
+  /** Decrypts and returns the task's sensitive note after password re-authentication. */
+  viewNote(id: string, request: ViewTaskNoteRequest): Promise<ViewTaskNoteResponse> {
+    return apiClient.post<ViewTaskNoteResponse>(`${BASE}/${id}/view-note`, request);
   },
 
   /** Marks multiple tasks as complete in a single request. */

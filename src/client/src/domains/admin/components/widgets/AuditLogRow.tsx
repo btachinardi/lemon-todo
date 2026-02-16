@@ -15,6 +15,7 @@ const actionVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'o
   TaskDeleted: 'destructive',
   UserDeactivated: 'destructive',
   UserReactivated: 'default',
+  SensitiveNoteRevealed: 'destructive',
 };
 
 function formatTimestamp(iso: string): string {

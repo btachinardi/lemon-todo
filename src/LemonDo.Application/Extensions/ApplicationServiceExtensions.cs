@@ -35,6 +35,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<RemoveTagFromTaskCommandHandler>();
         services.AddScoped<ArchiveTaskCommandHandler>();
         services.AddScoped<BulkCompleteTasksCommandHandler>();
+        services.AddScoped<ViewTaskNoteCommandHandler>();
 
         // Board command handlers
         services.AddScoped<AddColumnCommandHandler>();
@@ -64,6 +65,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<DeactivateUserCommandHandler>();
         services.AddScoped<ReactivateUserCommandHandler>();
         services.AddScoped<RevealProtectedDataCommandHandler>();
+        services.AddScoped<RevealTaskNoteCommandHandler>();
 
         // Board event handlers (downstream context reacting to upstream events)
         services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, CreateDefaultBoardOnUserRegistered>();

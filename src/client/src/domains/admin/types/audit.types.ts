@@ -10,7 +10,8 @@ export type AuditAction =
   | 'TaskCompleted'
   | 'TaskDeleted'
   | 'UserDeactivated'
-  | 'UserReactivated';
+  | 'UserReactivated'
+  | 'SensitiveNoteRevealed';
 
 /** A single audit trail entry. */
 export interface AuditEntry {

@@ -307,13 +307,14 @@ Task
 ├── DueDate: DateTimeOffset?
 ├── Tags: IReadOnlyList<Tag>
 ├── IsArchived: bool (visibility flag, orthogonal to status)
+├── RedactedSensitiveNote: string? (redacted placeholder "[PROTECTED]" or null)
 ├── IsDeleted: bool (soft delete flag)
 ├── CompletedAt: DateTimeOffset? (set when status becomes Done)
 ├── CreatedAt: DateTimeOffset
 ├── UpdatedAt: DateTimeOffset
 │
 ├── Methods:
-│   ├── Create(ownerId, title, description?, priority?, dueDate?, tags?)
+│   ├── Create(ownerId, title, description?, priority?, dueDate?, tags?, sensitiveNote?)
 │   │       -> TaskCreatedEvent (defaults to TaskStatus.Todo)
 │   ├── SetStatus(status) -> TaskStatusChangedEvent
 │   │       (manages CompletedAt: set when transitioning to Done, cleared when leaving Done)
@@ -327,6 +328,7 @@ Task
 │   ├── SetDueDate(dueDate) -> TaskDueDateChangedEvent
 │   ├── AddTag(tag) -> TaskTagAddedEvent
 │   ├── RemoveTag(tag) -> TaskTagRemovedEvent
+│   ├── UpdateSensitiveNote(note?) -> (note encrypted at rest; only redacted value stored on entity)
 │   ├── Archive() -> TaskArchivedEvent (any status)
 │   ├── Unarchive() -> TaskUnarchivedEvent
 │   └── Delete() -> TaskDeletedEvent (soft delete)
@@ -336,6 +338,7 @@ Task
     ├── Description must be 0-10000 characters
     ├── Cannot archive a deleted task
     ├── Cannot edit a deleted task
+    ├── SensitiveNote max 10,000 chars; encrypted at rest via AES-256-GCM
     ├── Tags are unique per task (no duplicates)
     ├── OwnerId cannot change after creation
     ├── CompletedAt is set when status transitions to Done
@@ -348,6 +351,8 @@ Task
 TaskId          -> Guid wrapper
 TaskTitle       -> Non-empty string, 1-500 chars, trimmed
 TaskDescription -> String, 0-10000 chars
+SensitiveNote   -> Non-empty string, 1-10000 chars, trimmed, implements IProtectedData
+                   Encrypted at rest via AES-256-GCM shadow property; only redacted value on entity
 Tag             -> Non-empty string, 1-50 chars, lowercase, trimmed
 Priority        -> Enum: None, Low, Medium, High, Critical
 TaskStatus      -> Enum: Todo, InProgress, Done (NO Archived — archive is a visibility flag)
@@ -372,10 +377,10 @@ TaskDeletedEvent            { TaskId, DeletedAt }
 
 ```
 Commands:
-├── CreateTaskCommand            { Title, Description?, Priority?, DueDate?, Tags? }
+├── CreateTaskCommand            { Title, Description?, Priority?, DueDate?, Tags?, SensitiveNote? }
 │       → Creates Task (defaults to Todo), then coordinates with Board context
 │         to place card on default board's initial column
-├── UpdateTaskCommand            { TaskId, Title?, Description?, Priority?, DueDate? }
+├── UpdateTaskCommand            { TaskId, Title?, Description?, Priority?, DueDate?, SensitiveNote?, ClearSensitiveNote? }
 ├── AddTagToTaskCommand          { TaskId, Tag }
 ├── RemoveTagFromTaskCommand     { TaskId, Tag }
 ├── CompleteTaskCommand          { TaskId }
@@ -386,8 +391,14 @@ Commands:
 │         to move card to Todo column
 ├── ArchiveTaskCommand           { TaskId }
 ├── DeleteTaskCommand            { TaskId }
-└── BulkCompleteTasksCommand     { TaskIds }
-        → Same as CompleteTaskCommand in a loop
+├── BulkCompleteTasksCommand     { TaskIds }
+│       → Same as CompleteTaskCommand in a loop
+├── ViewTaskNoteCommand          { TaskId, Password }
+│       → Owner re-authenticates to decrypt and view their own sensitive note
+│         Audited as SensitiveNoteRevealed
+└── RevealTaskNoteCommand        { TaskId, Reason, ReasonDetails?, Comments?, AdminPassword }
+        → Admin break-the-glass to decrypt any user's sensitive note
+          Requires justification + password re-auth; audited with full details
 
 Queries:
 ├── GetTaskByIdQuery             { TaskId } -> TaskDto (no columnId/position)
@@ -404,8 +415,10 @@ public interface ITaskRepository
     Task<PagedResult<Task>> ListAsync(
         UserId ownerId, Priority? priority, TaskStatus? status,
         string? searchTerm, int page, int pageSize, CancellationToken ct);
-    Task AddAsync(Task task, CancellationToken ct);
-    Task UpdateAsync(Task task, CancellationToken ct);
+    Task AddAsync(Task task, SensitiveNote? sensitiveNote = null, CancellationToken ct = default);
+    Task UpdateAsync(Task task, SensitiveNote? sensitiveNote = null,
+        bool clearSensitiveNote = false, CancellationToken ct = default);
+    Task<Result<string, DomainError>> GetDecryptedSensitiveNoteAsync(TaskId taskId, CancellationToken ct);
 }
 ```
 

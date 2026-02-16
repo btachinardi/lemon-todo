@@ -54,7 +54,7 @@ public sealed class BulkCompleteTasksCommandHandler(
             if (moveResult.IsFailure)
                 return Result<DomainError>.Failure(moveResult.Error);
 
-            await taskRepository.UpdateAsync(task, ct);
+            await taskRepository.UpdateAsync(task, ct: ct);
         }
 
         await boardRepository.UpdateAsync(board, ct);

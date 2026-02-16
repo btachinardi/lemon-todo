@@ -33,6 +33,7 @@ const AUDIT_ACTIONS: AuditAction[] = [
   'TaskDeleted',
   'UserDeactivated',
   'UserReactivated',
+  'SensitiveNoteRevealed',
 ];
 
 const RESOURCE_TYPES = ['User', 'Task'];
