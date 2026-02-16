@@ -16,7 +16,7 @@ export function RegisterPage() {
         <h2 className="text-xl font-semibold text-foreground">{t('auth.register.title')}</h2>
         <p className="text-sm text-muted-foreground">{t('auth.register.subtitle')}</p>
       </div>
-      <RegisterForm onSuccess={() => navigate('/', { replace: true })} />
+      <RegisterForm onSuccess={() => navigate('/board', { replace: true })} />
       <p className="text-center text-sm text-muted-foreground">
         {t('auth.register.hasAccount')}{' '}
         <Link to="/login" className="font-medium text-lemon hover:underline">

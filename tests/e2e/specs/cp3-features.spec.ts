@@ -20,7 +20,7 @@ test.describe.serial('Task Detail Sheet', () => {
   });
 
   test('clicking a card opens the detail sheet with task title', async () => {
-    await page.goto('/');
+    await page.goto('/board');
 
     // Wait for the task card to be visible
     const card = page.locator('[aria-label="Task: Detail sheet task"]');
@@ -119,7 +119,7 @@ test.describe.serial('Filter & Search', () => {
   });
 
   test('search filters tasks by title', async () => {
-    await page.goto('/');
+    await page.goto('/board');
 
     // All 3 tasks should be visible initially
     await expect(page.getByText('Buy groceries')).toBeVisible();
@@ -192,7 +192,7 @@ test.describe.serial('Theme Toggle', () => {
   });
 
   test('default theme applies dark class', async () => {
-    await page.goto('/');
+    await page.goto('/board');
     const htmlClass = await page.locator('html').getAttribute('class');
     expect(htmlClass).toContain('dark');
   });

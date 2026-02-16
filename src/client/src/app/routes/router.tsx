@@ -1,20 +1,34 @@
 import { createBrowserRouter, Outlet } from 'react-router';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { LandingPage } from '../pages/LandingPage';
 import { LoginRoute } from './LoginRoute';
 import { RegisterRoute } from './RegisterRoute';
+import { PublicRoute } from './PublicRoute';
 import { ProtectedRoute } from './ProtectedRoute';
 import { AdminRoute } from './AdminRoute';
 import { TaskBoardRoute } from './TaskBoardRoute';
 import { TaskListRoute } from './TaskListRoute';
 import { AdminUsersPage } from '../pages/AdminUsersPage';
 import { AdminAuditPage } from '../pages/AdminAuditPage';
+import { LandingLayout } from '../layouts/LandingLayout';
 
 /**
- * Application route tree. Auth routes are public; task routes are protected.
- * Admin routes require authentication (server enforces Admin+ role).
- * Unauthenticated users are redirected to `/login`.
+ * Application route tree.
+ * - `/` is the public landing page (redirects to `/board` if authenticated)
+ * - `/board` and `/list` are protected app routes
+ * - `/admin/*` requires Admin+ role
  */
 export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: (
+      <PublicRoute>
+        <LandingLayout>
+          <LandingPage />
+        </LandingLayout>
+      </PublicRoute>
+    ),
+  },
   {
     path: '/login',
     element: <LoginRoute />,
@@ -31,7 +45,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       {
-        path: '/',
+        path: '/board',
         element: <TaskBoardRoute />,
       },
       {

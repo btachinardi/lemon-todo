@@ -17,7 +17,7 @@ export function LoginPage() {
         <h2 className="text-xl font-semibold text-foreground">{t('auth.login.title')}</h2>
         <p className="text-sm text-muted-foreground">{t('auth.login.subtitle')}</p>
       </div>
-      <LoginForm onSuccess={() => navigate('/', { replace: true })} />
+      <LoginForm onSuccess={() => navigate('/board', { replace: true })} />
       <p className="text-center text-sm text-muted-foreground">
         {t('auth.login.noAccount')}{' '}
         <Link to="/register" className="font-medium text-lemon hover:underline">

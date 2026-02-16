@@ -316,3 +316,22 @@
   40% { transform: scale(1.2); }
   100% { transform: scale(1); }
 }
+
+@keyframes lemon-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(220,255,2,0.25); }
+  50% { box-shadow: 0 0 32px rgba(220,255,2,0.45); }
+}
+
+/* Landing page utilities */
+.glow-text {
+  text-shadow: 0 0 40px rgba(220,255,2,0.4), 0 0 80px rgba(220,255,2,0.15);
+}
+
+.light .glow-text {
+  text-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-text { text-shadow: none; }
+  * { animation-duration: 0.01ms !important; }
+}

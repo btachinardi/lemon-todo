@@ -42,7 +42,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             aria-label={t('nav.viewSwitcher')}
           >
             <NavLink
-              to="/"
+              to="/board"
               end
               className={({ isActive }) =>
                 cn(

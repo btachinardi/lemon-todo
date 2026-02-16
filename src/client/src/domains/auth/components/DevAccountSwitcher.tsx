@@ -77,7 +77,7 @@ export function DevAccountSwitcher() {
         password: account.password,
       });
       setAuth(response.accessToken, response.user);
-      navigate('/', { replace: true });
+      navigate('/board', { replace: true });
     } catch {
       // Login failed — stay on current page
     } finally {

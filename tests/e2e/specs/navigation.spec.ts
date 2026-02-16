@@ -18,8 +18,8 @@ test.describe.serial('Navigation', () => {
     await context.close();
   });
 
-  test('board page loads at / with 3 column headings', async () => {
-    await page.goto('/');
+  test('board page loads at /board with 3 column headings', async () => {
+    await page.goto('/board');
     await expect(page.getByRole('heading', { name: 'To Do' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'In Progress' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Done' })).toBeVisible();
@@ -37,16 +37,17 @@ test.describe.serial('Navigation', () => {
     await expect(page.getByText('Page not found')).toBeVisible();
   });
 
-  test('Go home link on 404 navigates back to /', async () => {
+  test('Go home link on 404 navigates to landing, redirects to board for auth users', async () => {
     await page.goto('/some-nonexistent-route');
     await page.getByRole('link', { name: /go home/i }).click();
-    await expect(page).toHaveURL('/');
+    // Authenticated user: PublicRoute redirects / → /board
+    await expect(page).toHaveURL('/board');
     // Seeded task ensures columns render (not EmptyBoard)
     await expect(page.getByRole('heading', { name: 'To Do' })).toBeVisible();
   });
 
   test('LemonDo header visible on board and list pages', async () => {
-    await page.goto('/');
+    await page.goto('/board');
     await expect(page.getByRole('heading', { name: 'LemonDo' })).toBeVisible();
 
     await page.goto('/list');

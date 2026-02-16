@@ -220,7 +220,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     const todoCol = board.columns.find((c) => c.targetStatus === 'Todo')!;
     await moveTask(t3.id, todoCol.id, t1.id, t2.id);
 
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
     await expect(uiPage.getByText('Alpha task')).toBeVisible();
     await expect(uiPage.getByText('Gamma task')).toBeVisible();
     await expect(uiPage.getByText('Beta task')).toBeVisible();
@@ -241,7 +241,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     const t1 = await createTask({ title: 'Stays on board' });
     const t2 = await createTask({ title: 'Gets deleted' });
 
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
     await expect(uiPage.getByText('Gets deleted')).toBeVisible();
 
     // Delete via API and reload
@@ -253,7 +253,7 @@ test.describe.serial('Card Ordering (UI)', () => {
   });
 
   test('UI-created tasks maintain order after reload', async () => {
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
 
     // Create tasks through the quick-add form
     const uiTitles = ['UI Task One', 'UI Task Two', 'UI Task Three'];
@@ -292,7 +292,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     await createTask({ title: 'Stable Epsilon' });
 
     // Load page and wait for the last created task to be visible
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
     await expect(uiPage.getByText('Stable Epsilon')).toBeVisible();
 
     const cards = uiPage.locator('[role="button"][aria-label^="Task:"]');
@@ -323,7 +323,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     await moveTask(t3.id, todoCol.id, null, t1.id);
 
     // Load the page — Third should be before First and Second among the todo tasks
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
     const cards = uiPage.locator('[role="button"][aria-label^="Task:"]');
     const labelsBefore = await cards.evaluateAll((els) =>
       els.map((el) => el.getAttribute('aria-label')),
@@ -376,7 +376,7 @@ test.describe.serial('Card Ordering (UI)', () => {
 
     await moveTask(t1.id, inProgressCol.id, null, null);
 
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
 
     // Wait for board to fully render (auth refresh + data fetch)
     await expect(uiPage.getByText('Moving task')).toBeVisible();
