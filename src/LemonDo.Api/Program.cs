@@ -89,16 +89,21 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Rate limiting
-var authRateLimit = builder.Configuration.GetValue("RateLimiting:Auth:PermitLimit", 20);
+// Rate limiting — uses AddPolicy with deferred IConfiguration read so that
+// WebApplicationFactory config overrides (e.g., PermitLimit=10000) are applied.
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter("auth", limiter =>
+    options.AddPolicy("auth", context =>
     {
-        limiter.PermitLimit = authRateLimit;
-        limiter.Window = TimeSpan.FromMinutes(1);
-        limiter.QueueLimit = 0;
+        var config = context.RequestServices.GetRequiredService<IConfiguration>();
+        var permitLimit = config.GetValue("RateLimiting:Auth:PermitLimit", 20);
+        return RateLimitPartition.GetFixedWindowLimiter("auth", _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = permitLimit,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        });
     });
 });
 

@@ -492,6 +492,9 @@ AuditAction     -> Enum: UserRegistered, UserLoggedIn, UserDeactivated,
                          RoleAssigned, RoleRemoved, PiiRevealed,
                          TaskCreated, TaskCompleted, TaskDeleted,
                          DataExported, SettingsChanged
+PiiRevealReason -> Enum: SupportTicket, LegalRequest, AccountRecovery,
+                         SecurityInvestigation, DataSubjectRequest,
+                         ComplianceAudit, Other
 RedactedString  -> Wrapper that stores original (encrypted) + masked version
 ```
 
@@ -500,7 +503,11 @@ RedactedString  -> Wrapper that stores original (encrypted) + masked version
 ```
 Commands:
 ├── RecordAuditEntryCommand      { ActorId, Action, ResourceType, ResourceId, Details, IpAddress }
-├── RevealPiiCommand             { FieldType, ResourceId }  [SystemAdmin only, creates audit entry]
+├── RevealPiiCommand             { UserId, Reason, ReasonDetails?, Comments?, AdminPassword }
+│                                  [SystemAdmin only, break-the-glass]
+│                                  Flow: validate reason → re-authenticate via password →
+│                                        reveal PII → record structured audit (JSON details)
+│                                  If Reason=Other, ReasonDetails is required.
 
 Queries:
 ├── SearchAuditLogQuery          { DateFrom?, DateTo?, ActorId?, Action?, ResourceType?, Page, PageSize }
@@ -821,10 +828,16 @@ FluentValidation for all commands. Validation errors return 400 with structured 
 
 All mutations publish domain events. An event handler persists audit entries asynchronously.
 
-### 12.5 PII Handling
+### 12.5 PII / PHI Handling
 
 - All DTOs returned to admin endpoints use `RedactedString` fields by default
-- PII reveal requires explicit API call which creates audit entry
+- **Break-the-glass PII reveal** (HIPAA-modeled):
+  - Mandatory justification (`PiiRevealReason` enum + optional comments)
+  - Password re-authentication before reveal (MFA step-up planned for future)
+  - Structured audit trail with JSON details (reason, details, comments)
+  - Time-limited reveal (30 seconds) with client-side countdown UX
+- Task titles and descriptions treated as potential PHI — stripped from audit log entries
+- Tags are categorical labels, not treated as PII/PHI
 - Logs use Serilog destructuring policy to redact PII
 - Analytics events hash user identifiers
 

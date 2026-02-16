@@ -1118,6 +1118,35 @@ All 10 CP4 items implemented across 10 atomic commits on `feature/cp4-production
 
 ---
 
+## PII/PHI Break-the-Glass Enhancement
+
+> **Date**: 2026-02-16
+> **Branch**: `develop`
+
+### What Was Built
+
+Added HIPAA-modeled break-the-glass controls to the PII reveal flow. Previously, SystemAdmins could reveal PII with a bare API call and no justification. Now the flow requires:
+
+1. **Mandatory justification**: `PiiRevealReason` enum with 7 values (SupportTicket, LegalRequest, AccountRecovery, SecurityInvestigation, DataSubjectRequest, ComplianceAudit, Other). "Other" requires free-text details.
+2. **Password re-authentication**: Admin must re-enter their account password before PII is revealed. Uses `UserManager.CheckPasswordAsync` (not sign-in) to avoid triggering lockout counters.
+3. **Structured audit trail**: Audit details are stored as JSON (`PiiRevealAuditDetails` record) with reason, details, and comments — enabling compliance reporting and analytics.
+4. **Time-limited secure viewer**: Revealed PII auto-hides after 30 seconds with a visual countdown (progress bar + seconds badge). "Hide" button for early dismissal.
+5. **PHI-safe audit logging**: Task titles (potential PHI) stripped from `AuditOnTaskCreated` handler — only task ID and priority are logged.
+
+### Key Decisions
+
+- **Password re-auth over MFA**: MFA not yet implemented; password provides "something you know" as second factor beyond the session. MFA step-up added to roadmap.
+- **Task titles as PHI**: Completely stripped from audit logs. Hashing isn't useful for audit review, and redaction patterns leak partial info. Task ID in the audit entry allows authorized lookup if needed.
+- **Tags not PHI**: Categorical labels (e.g., "medical") don't identify a person — the association with a user's task creates PHI, already protected behind auth.
+- **30s hardcoded timer**: Security policy should not be user-adjustable. Server is stateless (returns PII once); server-enforced TTL would require time-limited encrypted tokens — deferred.
+
+### Gotchas
+
+- **Rate limiter eager config read**: `builder.Configuration.GetValue()` in Program.cs reads before `WebApplicationFactory` config overrides are applied (same pattern as JWT deferred config issue). Fixed by switching from `AddFixedWindowLimiter` to `AddPolicy` with deferred `IConfiguration` read from `context.RequestServices`.
+- **Radix Select in jsdom**: Radix UI Select portals don't work in jsdom (`target.hasPointerCapture is not a function`). Frontend tests avoid direct Select dropdown interaction — test form state and rendering instead.
+
+---
+
 ## What's Next
 
 ### Checkpoint 5: Advanced & Delight

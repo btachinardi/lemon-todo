@@ -106,6 +106,21 @@ public sealed class AdminUserService(
     }
 
     /// <inheritdoc />
+    public async Task<Result<DomainError>> VerifyAdminPasswordAsync(Guid adminUserId, string password, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(adminUserId.ToString());
+        if (user is null)
+            return Result<DomainError>.Failure(DomainError.NotFound("admin", adminUserId.ToString()));
+
+        var isValid = await userManager.CheckPasswordAsync(user, password);
+        if (!isValid)
+            return Result<DomainError>.Failure(
+                DomainError.Unauthorized("auth", "Invalid password. Re-authentication failed."));
+
+        return Result<DomainError>.Success();
+    }
+
+    /// <inheritdoc />
     public async Task<Result<RevealedPiiDto, DomainError>> RevealPiiAsync(Guid userId, CancellationToken ct)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());

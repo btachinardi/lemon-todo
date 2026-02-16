@@ -67,6 +67,10 @@ Beyond CP5, the roadmap is organized into capability tiers:
 - **Desktop App** - Tauri (Rust shell wrapping our React frontend) for native desktop experience with system tray, global shortcuts, and offline-first storage.
 - **Mobile Native** - React Native sharing domain types from `packages/shared-types` for iOS and Android.
 - **SSO** - SAML 2.0 and OIDC for enterprise single sign-on (Okta, Azure AD, Auth0).
+- **MFA Step-Up Authentication** - TOTP (RFC 6238) or WebAuthn/passkey as required second factor for break-the-glass PII reveal, replacing current password re-entry. Also available as optional MFA for user login.
+- **Task Content Encryption at Rest** - AES-256-GCM field-level encryption for task titles and descriptions (same pattern as PII fields). Enables PHI-safe task storage without impacting query performance for non-encrypted fields.
+- **PII Reveal Rate Limiting** - Max N reveals per admin per time window (e.g., 5/hour). Anomaly detection alerts when unusual patterns emerge (e.g., bulk reveals).
+- **PII Reveal Notifications** - Email/Slack alerts to security team when PII is revealed. Configurable per-organization notification channels.
 - **Full HIPAA Certification** - BAA templates, annual security risk assessment, workforce training program, breach notification procedures, subcontractor BAA verification.
 - **GDPR Compliance** - Right to erasure, data portability (full JSON export), consent management, Data Protection Officer workflow.
 - **SOC 2 Type II** - Our audit trail and encryption foundations make this achievable. Add formal policies, evidence collection, and annual audit.

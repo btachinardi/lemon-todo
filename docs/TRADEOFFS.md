@@ -71,6 +71,11 @@
 | **Token family detection** | Deferred | Detect stolen refresh token reuse | Requires DB migration (FamilyId column) and complex revocation logic; current single-device model limits attack surface |
 | **HaveIBeenPwned check** | Deferred | Reject breached passwords on registration | External API dependency needs graceful degradation; can be added independently later |
 | **Refresh token cleanup** | Background service (every 6 hours) | Manual cleanup or no cleanup | Prevents unbounded table growth; 6h interval balances DB load vs staleness |
+| **PII reveal: justification** | Required reason enum + optional comments | Free-text-only justification | Structured enum enables compliance reporting and analytics; "Other" with required details covers edge cases; optional comments field adds context without blocking |
+| **PII reveal: re-auth** | Password re-entry | MFA step-up (TOTP/WebAuthn) | MFA not yet implemented; password re-auth provides "something you know" as second factor beyond session cookie; MFA step-up planned for future enhancement |
+| **PII reveal: timer** | 30s hardcoded, client-side only | Configurable timer / server-enforced TTL | Security policy should not be user-adjustable; backend is stateless (returns PII once); server-enforced TTL would require time-limited encrypted tokens — deferred |
+| **Task titles as PHI** | Strip from audit logs entirely | Hash or redact task titles in audit | Hashing is not reversible for audit review; redaction patterns are fragile and still leak partial info; task ID in audit entry allows authorized lookup if needed |
+| **Tags as PHI** | Not treated as PHI | Encrypt or redact tags | Tags are categorical labels, not personally identifying; a tag like "medical" doesn't identify a person — it's the association with a user's task that creates PHI, already protected behind auth |
 
 ### Card Ordering & API Design
 

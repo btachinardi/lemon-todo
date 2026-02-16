@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { adminApi } from '../api/admin.api';
 import { adminKeys } from './use-admin-queries';
 import { toastSuccess } from '@/lib/toast-helpers';
+import type { RevealPiiRequest } from '../types/admin.types';
 
 /** Assigns a role to a user and invalidates admin caches. */
 export function useAssignRole() {
@@ -58,9 +59,10 @@ export function useReactivateUser() {
   });
 }
 
-/** Reveals a user's unredacted PII. This action is logged in the audit trail. */
+/** Reveals a user's unredacted PII with break-the-glass controls. Logged in audit trail. */
 export function useRevealPii() {
   return useMutation({
-    mutationFn: (userId: string) => adminApi.revealPii(userId),
+    mutationFn: ({ userId, request }: { userId: string; request: RevealPiiRequest }) =>
+      adminApi.revealPii(userId, request),
   });
 }

@@ -14,7 +14,7 @@ public sealed class AuditOnTaskCreated(IAuditService auditService) : IDomainEven
             AuditAction.TaskCreated,
             "Task",
             domainEvent.TaskId.Value.ToString(),
-            $"Title: {domainEvent.Title}",
+            $"Priority: {domainEvent.Priority}",
             actorIdOverride: domainEvent.OwnerId.Value,
             cancellationToken: ct);
     }

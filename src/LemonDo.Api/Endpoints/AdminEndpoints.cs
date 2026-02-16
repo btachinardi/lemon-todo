@@ -121,10 +121,15 @@ public static class AdminEndpoints
     private static async Task<IResult> RevealPii(
         RevealPiiCommandHandler handler,
         Guid id,
+        RevealPiiRequest request,
         HttpContext httpContext,
         CancellationToken ct)
     {
-        var result = await handler.HandleAsync(new RevealPiiCommand(id), ct);
+        if (!Enum.TryParse<PiiRevealReason>(request.Reason, ignoreCase: true, out var reason))
+            return Results.BadRequest(new { Error = $"Invalid reason: '{request.Reason}'." });
+
+        var command = new RevealPiiCommand(id, reason, request.ReasonDetails, request.Comments, request.Password);
+        var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(dto => Results.Ok(dto), httpContext: httpContext);
     }
 }

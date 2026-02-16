@@ -9,7 +9,7 @@ import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
 interface RefreshResponse {
   accessToken: string;
-  user: { id: string; email: string; displayName: string };
+  user: { id: string; email: string; displayName: string; roles: string[] };
 }
 
 /** In-flight refresh promise — prevents multiple concurrent refresh calls. */

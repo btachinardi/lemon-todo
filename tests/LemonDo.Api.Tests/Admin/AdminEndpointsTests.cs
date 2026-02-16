@@ -201,7 +201,7 @@ public sealed class AdminEndpointsTests
         Assert.IsTrue(user!.IsActive);
     }
 
-    // --- PII Reveal (SystemAdmin only) ---
+    // --- PII Reveal (SystemAdmin only, break-the-glass) ---
 
     [TestMethod]
     public async Task Should_Return403_When_AdminTriesToRevealPii()
@@ -212,7 +212,11 @@ public sealed class AdminEndpointsTests
         var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
         var userId = list!.Items[0].Id;
 
-        var response = await client.PostAsync($"/api/admin/users/{userId}/reveal", null);
+        var response = await client.PostAsJsonAsync($"/api/admin/users/{userId}/reveal", new
+        {
+            Reason = "SupportTicket",
+            Password = "anything"
+        });
         Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
@@ -240,15 +244,18 @@ public sealed class AdminEndpointsTests
         // Verify list shows redacted PII
         Assert.Contains("***", list.Items[0].Email);
 
-        // Reveal PII
-        var revealResponse = await client.PostAsync($"/api/admin/users/{userId}/reveal", null);
+        // Reveal PII with break-the-glass controls
+        var revealResponse = await client.PostAsJsonAsync($"/api/admin/users/{userId}/reveal", new
+        {
+            Reason = "SupportTicket",
+            Password = CustomWebApplicationFactory.SystemAdminUserPassword
+        });
         Assert.AreEqual(HttpStatusCode.OK, revealResponse.StatusCode);
 
         var revealed = await revealResponse.Content.ReadFromJsonAsync<RevealedPiiDto>(TestJsonOptions.Default);
         Assert.IsNotNull(revealed);
 
-        // The revealed email should be unredacted (no encryption was done at registration,
-        // so it falls back to the raw Identity email)
+        // The revealed email should be unredacted
         Assert.AreEqual(email, revealed.Email);
         Assert.AreEqual(displayName, revealed.DisplayName);
     }
@@ -258,7 +265,96 @@ public sealed class AdminEndpointsTests
     {
         var client = await _factory.CreateSystemAdminClientAsync();
 
-        var response = await client.PostAsync($"/api/admin/users/{Guid.NewGuid()}/reveal", null);
+        var response = await client.PostAsJsonAsync($"/api/admin/users/{Guid.NewGuid()}/reveal", new
+        {
+            Reason = "SupportTicket",
+            Password = CustomWebApplicationFactory.SystemAdminUserPassword
+        });
         Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Should_Return400_When_ReasonIsOtherButNoDetails()
+    {
+        var client = await _factory.CreateSystemAdminClientAsync();
+
+        var listResponse = await client.GetAsync("/api/admin/users");
+        var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
+        var userId = list!.Items[0].Id;
+
+        var response = await client.PostAsJsonAsync($"/api/admin/users/{userId}/reveal", new
+        {
+            Reason = "Other",
+            Password = CustomWebApplicationFactory.SystemAdminUserPassword
+        });
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Should_Return401_When_PasswordIsWrong()
+    {
+        var client = await _factory.CreateSystemAdminClientAsync();
+
+        var listResponse = await client.GetAsync("/api/admin/users");
+        var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
+        var userId = list!.Items[0].Id;
+
+        var response = await client.PostAsJsonAsync($"/api/admin/users/{userId}/reveal", new
+        {
+            Reason = "SupportTicket",
+            Password = "WrongPassword123!"
+        });
+        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Should_Return400_When_ReasonIsInvalid()
+    {
+        var client = await _factory.CreateSystemAdminClientAsync();
+
+        var listResponse = await client.GetAsync("/api/admin/users");
+        var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
+        var userId = list!.Items[0].Id;
+
+        var response = await client.PostAsJsonAsync($"/api/admin/users/{userId}/reveal", new
+        {
+            Reason = "InvalidReason",
+            Password = CustomWebApplicationFactory.SystemAdminUserPassword
+        });
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Should_ReturnUnredactedPii_When_ReasonIsOtherWithDetails()
+    {
+        var client = await _factory.CreateSystemAdminClientAsync();
+
+        var email = $"reveal-other-{Guid.NewGuid():N}@example.com";
+        var displayName = "Reveal Other User";
+        var registerClient = _factory.CreateClient();
+        await registerClient.PostAsJsonAsync("/api/auth/register", new
+        {
+            Email = email,
+            Password = "Test1234!",
+            DisplayName = displayName
+        });
+
+        var listResponse = await client.GetAsync("/api/admin/users?search=reveal-other");
+        var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
+        var userId = list!.Items[0].Id;
+
+        var response = await client.PostAsJsonAsync($"/api/admin/users/{userId}/reveal", new
+        {
+            Reason = "Other",
+            ReasonDetails = "Manual identity verification for phone-based support request",
+            Comments = "Ticket #12345",
+            Password = CustomWebApplicationFactory.SystemAdminUserPassword
+        });
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+        var revealed = await response.Content.ReadFromJsonAsync<RevealedPiiDto>(TestJsonOptions.Default);
+        Assert.IsNotNull(revealed);
+        Assert.AreEqual(email, revealed.Email);
+        Assert.AreEqual(displayName, revealed.DisplayName);
     }
 }
