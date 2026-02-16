@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import en from './en.json';
 import ptBR from './pt-BR.json';
+import es from './es.json';
 
 const locales: Record<string, Record<string, unknown>> = {
   en,
   'pt-BR': ptBR,
+  es,
 };
 
 function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
