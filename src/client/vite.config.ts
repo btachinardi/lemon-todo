@@ -19,8 +19,8 @@ export default defineConfig({
         name: 'Lemon.DO',
         short_name: 'LemonDo',
         description: 'A delightful task management app',
-        theme_color: '#facc15',
-        background_color: '#ffffff',
+        theme_color: '#000000',
+        background_color: '#000000',
         display: 'standalone',
         start_url: '/',
         icons: [
