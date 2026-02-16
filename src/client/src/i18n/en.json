@@ -318,6 +318,114 @@
     "updateAvailable": "A new version is available",
     "update": "Update"
   },
+  "landing": {
+    "nav": {
+      "login": "Log in",
+      "getStarted": "Get Started"
+    },
+    "hero": {
+      "titleLine1": "Your Tasks.",
+      "titleLine2": "Your Server.",
+      "titleHighlight": "Your Rules.",
+      "subtitle": "The open-source task manager built for teams that can't compromise on data sovereignty. Self-host on your infrastructure, stay compliant, ship faster.",
+      "ctaPrimary": "Get Started Free",
+      "ctaGithub": "View on GitHub"
+    },
+    "features": {
+      "title": "Everything you need to ship",
+      "subtitle": "Powerful features wrapped in a beautiful, dark-first interface designed for focus.",
+      "highlight": "ship",
+      "items": [
+        {
+          "title": "Kanban Boards",
+          "description": "Visual task organization with drag & drop. See your workflow at a glance."
+        },
+        {
+          "title": "Smart Priorities",
+          "description": "Focus on what matters with priority levels from low to critical."
+        },
+        {
+          "title": "Quick Capture",
+          "description": "Add tasks instantly with a single keystroke. Never lose an idea."
+        },
+        {
+          "title": "Flexible Tags",
+          "description": "Organize your way with custom tagging and powerful filtering."
+        },
+        {
+          "title": "Audit Trail",
+          "description": "Full activity logging for compliance. Every action tracked and timestamped."
+        },
+        {
+          "title": "Dark-First Design",
+          "description": "Beautiful UI built for focus. Easy on the eyes, day and night."
+        }
+      ]
+    },
+    "openSource": {
+      "title": "100% Open Source",
+      "subtitle": "Transparent, auditable, and community-driven. No black boxes.",
+      "highlight": "Open Source",
+      "badge1": "Open Source",
+      "badge2": "MIT License",
+      "badge3": "Self-Hostable",
+      "pitch": "Deploy on your own infrastructure in minutes.",
+      "noVendorLock": "No vendor lock-in. No data leaves your network. Full control, always.",
+      "viewGithub": "View on GitHub"
+    },
+    "security": {
+      "title": "Built for regulated industries",
+      "subtitle": "Healthcare, finance, legal, government. When compliance isn't optional.",
+      "highlight": "regulated industries",
+      "items": [
+        {
+          "title": "Data Sovereignty",
+          "description": "Your data stays on your servers. No third-party access, no cloud dependency."
+        },
+        {
+          "title": "Audit Logging",
+          "description": "Every action tracked for compliance. Searchable, filterable, exportable."
+        },
+        {
+          "title": "Role-Based Access",
+          "description": "Admin, user, and system roles with granular permissions."
+        },
+        {
+          "title": "Compliance Ready",
+          "description": "Built-in encrypted notes, protected data reveal with justification, and full audit trail."
+        }
+      ]
+    },
+    "howItWorks": {
+      "title": "Up and running in minutes",
+      "subtitle": "Three steps to owning your productivity.",
+      "steps": [
+        {
+          "title": "Clone & Deploy",
+          "description": "Self-host with Docker or deploy to Azure. One command to production."
+        },
+        {
+          "title": "Create Your Workspace",
+          "description": "Add tasks, boards, and team members. Organize your way."
+        },
+        {
+          "title": "Stay Compliant",
+          "description": "Built-in audit trail and encrypted notes keep you covered."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Ready to own your productivity?",
+      "subtitle": "Deploy LemonDo on your infrastructure today. Open source, forever free.",
+      "ctaPrimary": "Get Started",
+      "ctaGithub": "Star on GitHub"
+    },
+    "footer": {
+      "tagline": "Open-source task management for teams that own their data.",
+      "features": "Features",
+      "security": "Security"
+    }
+  },
   "theme": {
     "light": "Light theme",
     "dark": "Dark theme",

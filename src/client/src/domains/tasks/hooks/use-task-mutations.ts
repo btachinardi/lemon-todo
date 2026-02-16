@@ -3,6 +3,7 @@ import { tasksApi } from '../api/tasks.api';
 import type { CreateTaskRequest, MoveTaskRequest, UpdateTaskRequest } from '../types/api.types';
 import { boardKeys } from './use-board-query';
 import { taskKeys } from './use-tasks-query';
+import { track } from '@/lib/analytics';
 import { toastSuccess } from '@/lib/toast-helpers';
 
 /**
@@ -23,6 +24,7 @@ export function useCreateTask() {
     onSuccess: () => {
       invalidateTaskAndBoard(queryClient);
       toastSuccess('Task created');
+      track('task_created_ui');
     },
   });
 }
@@ -47,6 +49,7 @@ export function useCompleteTask() {
     onSuccess: () => {
       invalidateTaskAndBoard(queryClient);
       toastSuccess('Task completed');
+      track('task_completed_ui');
     },
   });
 }
@@ -71,6 +74,7 @@ export function useDeleteTask() {
     onSuccess: () => {
       invalidateTaskAndBoard(queryClient);
       toastSuccess('Task deleted');
+      track('task_deleted_ui');
     },
   });
 }
@@ -81,7 +85,10 @@ export function useMoveTask() {
   return useMutation({
     mutationFn: ({ id, request }: { id: string; request: MoveTaskRequest }) =>
       tasksApi.move(id, request),
-    onSuccess: () => invalidateTaskAndBoard(queryClient),
+    onSuccess: () => {
+      invalidateTaskAndBoard(queryClient);
+      track('task_moved_ui');
+    },
   });
 }
 

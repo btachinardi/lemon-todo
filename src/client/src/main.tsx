@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './i18n/config'
 import App from './App.tsx'
+import { initAnalytics } from './lib/analytics'
 import { captureError } from './lib/error-logger'
 import { initNetworkMonitoring } from './lib/network-status'
 import { initPWA } from './lib/pwa'
@@ -19,6 +20,7 @@ window.addEventListener('error', (event) => {
 
 initNetworkMonitoring();
 initPWA();
+initAnalytics();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

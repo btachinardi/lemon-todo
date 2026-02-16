@@ -318,6 +318,114 @@
     "updateAvailable": "Una nueva versión está disponible",
     "update": "Actualizar"
   },
+  "landing": {
+    "nav": {
+      "login": "Iniciar sesi\u00f3n",
+      "getStarted": "Empezar"
+    },
+    "hero": {
+      "titleLine1": "Tus Tareas.",
+      "titleLine2": "Tu Servidor.",
+      "titleHighlight": "Tus Reglas.",
+      "subtitle": "El gestor de tareas open-source para equipos que no pueden comprometer la soberan\u00eda de datos. Auto-hospeda en tu infraestructura, cumple normativas, entrega m\u00e1s r\u00e1pido.",
+      "ctaPrimary": "Empieza Gratis",
+      "ctaGithub": "Ver en GitHub"
+    },
+    "features": {
+      "title": "Todo lo que necesitas para entregar",
+      "subtitle": "Funcionalidades potentes en una interfaz hermosa, dark-first, dise\u00f1ada para el enfoque.",
+      "highlight": "entregar",
+      "items": [
+        {
+          "title": "Tableros Kanban",
+          "description": "Organizaci\u00f3n visual de tareas con arrastrar y soltar. Ve tu flujo de trabajo de un vistazo."
+        },
+        {
+          "title": "Prioridades Inteligentes",
+          "description": "Enf\u00f3cate en lo importante con niveles de prioridad de baja a cr\u00edtica."
+        },
+        {
+          "title": "Captura R\u00e1pida",
+          "description": "Agrega tareas instant\u00e1neamente con una sola tecla. Nunca pierdas una idea."
+        },
+        {
+          "title": "Etiquetas Flexibles",
+          "description": "Organiza a tu manera con etiquetas personalizadas y filtrado potente."
+        },
+        {
+          "title": "Registro de Auditor\u00eda",
+          "description": "Registro completo de actividades para cumplimiento. Cada acci\u00f3n rastreada y con marca de tiempo."
+        },
+        {
+          "title": "Dise\u00f1o Dark-First",
+          "description": "Interfaz hermosa hecha para el enfoque. F\u00e1cil para la vista, d\u00eda y noche."
+        }
+      ]
+    },
+    "openSource": {
+      "title": "100% Open Source",
+      "subtitle": "Transparente, auditable y dirigido por la comunidad. Sin cajas negras.",
+      "highlight": "Open Source",
+      "badge1": "Open Source",
+      "badge2": "Licencia MIT",
+      "badge3": "Auto-Hospedable",
+      "pitch": "Despliega en tu propia infraestructura en minutos.",
+      "noVendorLock": "Sin vendor lock-in. Ning\u00fan dato sale de tu red. Control total, siempre.",
+      "viewGithub": "Ver en GitHub"
+    },
+    "security": {
+      "title": "Hecho para industrias reguladas",
+      "subtitle": "Salud, finanzas, legal, gobierno. Cuando el cumplimiento no es opcional.",
+      "highlight": "industrias reguladas",
+      "items": [
+        {
+          "title": "Soberan\u00eda de Datos",
+          "description": "Tus datos se quedan en tus servidores. Sin acceso de terceros, sin dependencia de nube."
+        },
+        {
+          "title": "Registro de Auditor\u00eda",
+          "description": "Cada acci\u00f3n rastreada para cumplimiento. Buscable, filtrable, exportable."
+        },
+        {
+          "title": "Acceso por Roles",
+          "description": "Roles de admin, usuario y sistema con permisos granulares."
+        },
+        {
+          "title": "Listo para Cumplimiento",
+          "description": "Notas cifradas, revelaci\u00f3n de datos protegidos con justificaci\u00f3n y registro de auditor\u00eda completo."
+        }
+      ]
+    },
+    "howItWorks": {
+      "title": "Funcionando en minutos",
+      "subtitle": "Tres pasos para controlar tu productividad.",
+      "steps": [
+        {
+          "title": "Clona y Despliega",
+          "description": "Auto-hospeda con Docker o despliega en Azure. Un comando para producci\u00f3n."
+        },
+        {
+          "title": "Crea Tu Espacio",
+          "description": "Agrega tareas, tableros y miembros del equipo. Organiza a tu manera."
+        },
+        {
+          "title": "Cumple Normativas",
+          "description": "Registro de auditor\u00eda y notas cifradas integradas para tu seguridad."
+        }
+      ]
+    },
+    "cta": {
+      "title": "\u00bfListo para controlar tu productividad?",
+      "subtitle": "Despliega LemonDo en tu infraestructura hoy. Open source, gratis para siempre.",
+      "ctaPrimary": "Empezar",
+      "ctaGithub": "Estrella en GitHub"
+    },
+    "footer": {
+      "tagline": "Gesti\u00f3n de tareas open-source para equipos que controlan sus datos.",
+      "features": "Funcionalidades",
+      "security": "Seguridad"
+    }
+  },
   "theme": {
     "light": "Tema claro",
     "dark": "Tema oscuro",

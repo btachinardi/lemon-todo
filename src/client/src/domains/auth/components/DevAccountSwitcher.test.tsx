@@ -116,7 +116,7 @@ describe('DevAccountSwitcher', () => {
 
     // Wait for async operations
     await vi.waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/board', { replace: true });
     });
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
     expect(useAuthStore.getState().accessToken).toBe('new-token');
