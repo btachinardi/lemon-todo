@@ -121,6 +121,14 @@
 - **Frontend Support**: OTLP HTTP endpoint for browser trace collection
 - **Source**: [Microsoft Learn - .NET Observability](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/observability-with-otel)
 
+### 1.9 WebPush (NuGet)
+
+- **Version**: 2.0.4
+- **Purpose**: VAPID-based Web Push notifications from .NET backend
+- **Features**: Send push messages to browser push subscriptions, VAPID authentication, payload encryption
+- **Used By**: `DueDateReminderService`, `WebPushService` in Infrastructure layer
+- **Added**: CP5 (Notification system)
+
 ---
 
 ## 2. Frontend Technologies
@@ -461,6 +469,7 @@ scalar: 2.x
 fscheck: 3.x
 mstest: 4.x (MTP runner)
 serilog: 4.x
+web-push: 2.x
 opentelemetry-dotnet: 1.x
 
 # Frontend

@@ -1588,7 +1588,7 @@ Applied brand assets (cartoon lemon icon + "Lemon.DO" logo) across the entire fr
 | No zxcvbn | 30-line pure function vs 400KB+ library; backend doesn't use dictionary checks so frontend shouldn't either |
 | Disable submit until requirements met | Prevents frustrating 400 errors; enables as soon as 4 required checks pass; bonus checks improve score only |
 
-### 5.5 Verification
+### 5.5 Initial Verification
 
 | Check | Result |
 |---|---|
@@ -1596,6 +1596,137 @@ Applied brand assets (cartoon lemon icon + "Lemon.DO" logo) across the entire fr
 | **Frontend Tests** | 278 passed, 0 failed (24 new for password strength) |
 | **Frontend Build** | Clean |
 | **Frontend Lint** | Clean |
+
+---
+
+### 5.6 Onboarding Flow (CP5.3)
+
+**Two commits**: backend migration + frontend tooltip tour.
+
+**Backend**: Added `OnboardingCompletedAt` (nullable `DateTimeOffset?`) to the domain `User` entity with `CompleteOnboarding()` method (sets timestamp, raises `OnboardingCompletedEvent`, idempotent). Dual-provider migration (`AddOnboardingCompletedAt`) with data migration that sets existing users' `OnboardingCompletedAt` to `CURRENT_TIMESTAMP` so they skip the tour. API endpoints: `GET /api/onboarding/status` and `POST /api/onboarding/complete`.
+
+**Frontend**: 3-step tooltip tour with auto-advance:
+1. "Create your first task" — highlights QuickAddForm
+2. "Complete it by clicking the checkbox" — auto-advances via MutationObserver watching for `data-onboarding="task-card"` attribute
+3. "Explore your board!" — celebration animation on completion
+
+The `OnboardingTooltip` positions itself relative to target elements via `getBoundingClientRect()` + `position: fixed`. `CelebrationAnimation` shows a checkmark burst for 2 seconds. Skip button calls the complete API immediately.
+
+### 5.7 Notification System (CP5.5)
+
+**Three commits**: entity + migration, backend infrastructure, frontend UI.
+
+**Backend**: New Notifications bounded context with `Notification` entity (Id, UserId, Type, Title, Body, IsRead, CreatedAt, ReadAt). `NotificationType` enum: DueDateReminder, TaskOverdue, Welcome. `INotificationRepository` with user-scoped queries. `PushSubscriptionEntity` for Web Push (VAPID). `DueDateReminderService` (BackgroundService) runs every 6 hours, checks tasks due within 24h, creates notifications + sends push. `WelcomeNotificationOnUserRegistered` event handler creates a welcome notification on registration.
+
+**CQRS handlers**: ListNotificationsQuery (paginated), GetUnreadCountQuery, MarkNotificationReadCommand, MarkAllNotificationsReadCommand, SubscribePushCommand, UnsubscribePushCommand.
+
+**API endpoints**: `GET /api/notifications`, `GET /api/notifications/unread-count`, `POST /api/notifications/{id}/read`, `POST /api/notifications/read-all`, `POST /api/push/subscribe`, `DELETE /api/push/subscribe`, `GET /api/push/vapid-key`.
+
+**Frontend**: NotificationBell (bell icon + unread count badge, 30s polling), NotificationDropdown (list with mark-read, mark-all-read, empty state), NotificationItem (icon by type, relative time display). Push subscription via `serviceWorkerRegistration.pushManager.subscribe()` with VAPID key.
+
+### 5.8 Offline Support (CP5.2 + CP5.8)
+
+**Three commits**: read support, mutation queue, hook wiring.
+
+**Offline Read (CP5.2)**: Enhanced Workbox runtime caching in vite.config.ts — NetworkFirst for `/api/tasks*` and `/api/boards/*` (cache "api-data", maxEntries 100, maxAge 24h), excluding auth/analytics/push endpoints. TanStack Query set to `networkMode: 'offlineFirst'` with extended `gcTime`. AuthHydrationProvider checks `navigator.onLine` before silent refresh. OfflineBanner shows differentiated messages: "Viewing cached data" when offline with cache vs "You are offline" without.
+
+**Offline Mutations (CP5.8)**: IndexedDB-backed FIFO queue (`offline-queue.ts`) with schema `{ id, timestamp, method, url, body, status }`. `enqueue()`, `drain()`, `clear()`, `getPendingCount()` operations. Zustand store (`use-offline-queue-store.ts`) tracks pendingCount and isSyncing state. On `online` event: triggers silent refresh first (token may be expired), then drains queue in FIFO order. 409 conflicts: toast notification, mutation discarded, TanStack Query caches invalidated. SyncIndicator component shows "X changes pending" → "Syncing..." → "All synced".
+
+### 5.9 Description Auto-Save Bug Fix
+
+**Commit**: `fix(tasks): add debounced auto-save for task description with flush on unmount`
+
+Users reported that typing in the task description and quickly closing the sheet lost changes. Root cause: description changes required clicking away (blur event) to save. Fast exits bypassed the blur handler entirely.
+
+**Fix**: Added debounced auto-save (1s delay) using `useRef` to track the draft, with `useEffect` cleanup that flushes any pending save on unmount. A save indicator shows "Saving..." → "Saved" → fades to transparent. The `lastSavedDescRef` prevents re-saving when the server response matches the draft.
+
+### 5.10 Additional UX Enhancements
+
+**Dev Account Password Auto-Fill**: In development mode, the ProtectedDataRevealDialog pre-fills the password field with the dev account's password, making demo workflows frictionless.
+
+**Self-Reveal for User's Own Profile**: Users can now see their own redacted email and display name without SystemAdmin intervention. The reveal dialog checks if the target user matches the current user and uses password re-authentication (not admin break-the-glass).
+
+**"How I Built This" Story Page**: An interactive engineering narrative at `/story` that walks through the project's development journey, architecture decisions, and technical challenges.
+
+**Custom Domains**: Terraform configuration for `api.lemondo.btas.dev` (API Container App) and `lemondo.btas.dev` (frontend Static Web App) with managed certificates via Azure and Google Cloud DNS.
+
+### 5.11 E2E Tests & Visual Regression (CP5.6 + CP5.6b)
+
+**Updated `playwright.config.ts`**: Added Firefox and WebKit projects (conditionally excluded in CI via `process.env.CI`). Added device emulation: iPhone 14, iPad Mini, Pixel 7 (local only). Configured `toHaveScreenshot` with `maxDiffPixelRatio: 0.01`.
+
+**New E2E specs** (41 tests total):
+- `language.spec.ts` (5): Default English, switch to Spanish (verify "Titulo de la nueva tarea"), persist across nav, Portuguese, back to English
+- `onboarding.spec.ts` (7): New user sees step 1, creating task auto-advances to step 2, completing task advances to step 3, Finish triggers celebration, tour gone on reload, skip button
+- `notifications.spec.ts` (9): Welcome notification exists, unread count, bell badge, dropdown open, mark-all-read, empty state, API mark-read tests
+- `offline-sync.spec.ts` (6): No banner when connected, banner on offline, banner disappears on reconnect, cached data visible offline
+- `pwa.spec.ts` (4): Manifest link, theme-color meta, valid manifest JSON, SW registration
+- `visual-regression.spec.ts` (10): Board/list/auth views in light + dark themes at 1280x720 with `reducedMotion: 'reduce'`
+
+**New helpers**: `notification.helpers.ts` (list, unread count, mark read), `onboarding.helpers.ts` (status, complete).
+
+### 5.12 Lint & Type Fixes
+
+Several React 19 and ESLint strictness issues surfaced during verification:
+
+- **react-hooks/refs**: React 19 requires ref `.current` assignments inside `useEffect`, not during render. Fixed in TaskDetailSheet.tsx by wrapping each `ref.current = value` in `useEffect(() => { ref.current = value; }, [value])`.
+- **react-hooks/set-state-in-effect**: Direct `setState` in effect body violates React 19 rules. Fixed with `queueMicrotask()` in OnboardingTour.tsx and CelebrationAnimation.tsx.
+- **React 19 useRef types**: `useRef<T>()` without argument requires explicit `undefined` initial value. Fixed `useRef<ReturnType<typeof setTimeout> | undefined>(undefined)`.
+- **react-refresh/only-export-components**: Files exporting both components and non-component values need eslint-disable. Applied to DevAccountSwitcher and PasswordStrengthMeter.
+
+### 5.13 Final Verification
+
+| Check | Result |
+|---|---|
+| **Backend Build** | 11/11 projects, 0 warnings, 0 errors (3.05s) |
+| **Frontend Build** | 3406 modules (3.90s) |
+| **Backend Tests** | 375 passed, 0 failed (6.74s) |
+| **Frontend Tests** | 337 passed, 0 failed (8.65s) |
+| **Frontend Lint** | Clean, no issues |
+| **E2E Tests** | 96 total (55 existing + 41 new) |
+| **Total Tests** | **808** (375 backend + 337 frontend + 96 E2E) |
+
+### 5.14 CP5 Lessons Learned
+
+1. **React 19's stricter ref rules catch real bugs.** Moving ref assignments to `useEffect` prevents subtle issues where stale closures capture outdated ref values during render. The lint rules are protective, not pedantic.
+
+2. **queueMicrotask is the escape hatch for setState in effects.** When you need to immediately update state based on a synchronous DOM check in an effect, `queueMicrotask(() => setState(...))` defers the update past React's effect phase without introducing a visual delay.
+
+3. **MutationObserver is a clean alternative to prop drilling for onboarding.** Instead of threading an `onTaskCreated` callback through 5 levels of components, the onboarding tour watches for DOM changes on elements with `data-onboarding` attributes. This decouples the tour from the task creation flow entirely.
+
+4. **IndexedDB for offline queues is worth the complexity.** localStorage has a 5MB limit and synchronous API. IndexedDB supports structured data, cursors for FIFO ordering, and much larger storage — critical for an offline mutation queue that may accumulate many changes before reconnecting.
+
+5. **409 conflict handling with toast + discard is pragmatic.** Full conflict resolution (3-way merge, user choice UI) adds significant complexity for a rare scenario. Toast notification + cache invalidation keeps the user informed and refetches server truth.
+
+6. **Debounced auto-save with flush-on-unmount is the right pattern for text fields.** Pure blur-to-save misses fast exits (close button, navigation). The combination of debounced saves during editing + cleanup flush on unmount covers all exit paths.
+
+---
+
+### CP5 Commits Summary
+
+| Hash | Message |
+|------|---------|
+| 67b731d | feat(infra): add custom domain support for api.lemondo.btas.dev and lemondo.btas.dev |
+| 548c97e | feat(client): improve mobile responsiveness and apply Lemon.DO branding |
+| 19c3d0c | feat(i18n): add Spanish (es) language support |
+| 88ffe53 | feat(pwa): add service worker, manifest, install and update prompts |
+| dd16176 | feat(auth): add password strength meter to registration form |
+| e69dd3c | feat(analytics): add backend analytics port/adapter with domain event handlers |
+| 2a962c9 | feat(analytics): add frontend event tracking with batching |
+| 847ab45 | docs: update changelog, journal, and tasks for CP5 mobile and branding changes |
+| 1758924 | feat(onboarding): add OnboardingCompletedAt to User entity with dual-provider migration |
+| 4fd7733 | feat(client): add landing page with scroll animations and route restructure |
+| c8ca5ff | feat(onboarding): add tooltip tour with celebration animation |
+| 09202c0 | feat(notifications): add Notification entity, repository, endpoints, and due date reminders |
+| 3d7654a | feat(notifications): add notification bell, dropdown, and push subscription frontend |
+| 7c4e197 | feat(offline): add offline read support with Workbox caching and offlineFirst query mode |
+| 83aef47 | fix(tasks): add debounced auto-save for task description with flush on unmount |
+| 629798c | feat(auth): add dev-only password auto-fill for demo accounts in reveal dialogs |
+| f20170a | feat(auth): add self-reveal for user's own redacted profile data |
+| cb89dbe | feat(client): add "How I Built This" story page at /story |
+| d721908 | feat(offline): add IndexedDB mutation queue with FIFO drain and conflict handling |
+| 4a46301 | fix(lint): resolve all ESLint errors across CP5 files |
+| a96fadf | test(e2e): add CP5 E2E specs, multi-browser config, and visual regression |
+| 94b6463 | docs(roadmap): add frontend bundle optimization to Tier 9 |
 
 ---
 
