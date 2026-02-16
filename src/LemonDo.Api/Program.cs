@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text;
 using LemonDo.Api.Auth;
 using LemonDo.Api.Endpoints;
+using LemonDo.Api.Logging;
 using LemonDo.Api.Middleware;
 using LemonDo.Application.Common;
 using LemonDo.Application.Extensions;
@@ -18,9 +19,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using Serilog;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog — uses AddSerilog (not UseSerilog) to avoid static Log.Logger
+// mutation that breaks WebApplicationFactory-based tests ("logger already frozen").
+builder.Services.AddSerilog(configuration => configuration
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Application", "LemonDo.Api")
+    .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+    .Enrich.WithProperty("MachineName", System.Environment.MachineName)
+    .Enrich.With<PiiMaskingEnricher>()
+    .Destructure.With<PiiDestructuringPolicy>());
 
 builder.AddServiceDefaults();
 builder.Services.AddOpenApi();
@@ -90,7 +103,7 @@ _ = app.Services.GetRequiredService<IOptions<JwtSettings>>().Value;
 var startupLogger = app.Services.GetRequiredService<ILoggerFactory>()
     .CreateLogger("LemonDo.Api.Startup");
 
-var version = typeof(LemonDo.Api.Endpoints.TaskEndpoints).Assembly
+var version = typeof(TaskEndpoints).Assembly
     .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
 startupLogger.LogInformation("LemonDo API v{Version} starting", version);
 
@@ -139,14 +152,16 @@ catch (Exception ex)
 }
 
 // Middleware pipeline order:
-// 1. Security headers (early — adds headers on every response)
-// 2. Correlation ID (request tracing)
-// 3. Error handling (catches exceptions from downstream)
-// 4. HSTS + HTTPS redirect (non-dev only)
-// 5. CORS (credentials support for cookies)
-// 6. Rate limiter (auth endpoint protection)
-// 7. Authentication (JWT validation)
-// 8. Authorization (route protection)
+// 1. Serilog request logging (HTTP-level structured logs)
+// 2. Security headers (early — adds headers on every response)
+// 3. Correlation ID (request tracing via Serilog LogContext)
+// 4. Error handling (catches exceptions from downstream)
+// 5. HSTS + HTTPS redirect (non-dev only)
+// 6. CORS (credentials support for cookies)
+// 7. Rate limiter (auth endpoint protection)
+// 8. Authentication (JWT validation)
+// 9. Authorization (route protection)
+app.UseSerilogRequestLogging();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();

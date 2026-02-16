@@ -1,11 +1,14 @@
+using Serilog.Context;
+
 namespace LemonDo.Api.Middleware;
 
 /// <summary>
 /// Extracts or generates a correlation ID for each request. Sets it on
 /// <see cref="HttpContext.TraceIdentifier"/>, adds it to response headers,
-/// and pushes a logging scope so all log entries include the correlation ID.
+/// and pushes it to Serilog's <see cref="LogContext"/> so all log entries
+/// include the correlation ID.
 /// </summary>
-public sealed class CorrelationIdMiddleware(RequestDelegate next, ILogger<CorrelationIdMiddleware> logger)
+public sealed class CorrelationIdMiddleware(RequestDelegate next)
 {
     private const string CorrelationIdHeader = "X-Correlation-Id";
 
@@ -22,10 +25,7 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next, ILogger<Correl
             return Task.CompletedTask;
         });
 
-        using (logger.BeginScope(new Dictionary<string, object>
-        {
-            ["CorrelationId"] = correlationId
-        }))
+        using (LogContext.PushProperty("CorrelationId", correlationId))
         {
             await next(context);
         }
