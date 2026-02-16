@@ -35,7 +35,7 @@ const NODES: DomainNode[] = [
     id: 'task',
     icon: CheckSquareIcon,
     x: 50,
-    y: 16,
+    y: 22,
     entities: ['Task', 'TaskTitle', 'Priority', 'Tag', 'DueDate', 'SensitiveNote'],
     border: 'border-yellow-400/25 hover:border-yellow-400/50',
     iconBg: 'bg-yellow-400/10',
@@ -46,8 +46,8 @@ const NODES: DomainNode[] = [
   {
     id: 'board',
     icon: LayoutDashboardIcon,
-    x: 76,
-    y: 46,
+    x: 73,
+    y: 48,
     entities: ['Board', 'Column', 'TaskCard', 'Position'],
     border: 'border-sky-400/25 hover:border-sky-400/50',
     iconBg: 'bg-sky-400/10',
@@ -58,8 +58,8 @@ const NODES: DomainNode[] = [
   {
     id: 'identity',
     icon: FingerprintIcon,
-    x: 24,
-    y: 46,
+    x: 27,
+    y: 48,
     entities: ['User', 'Email', 'DisplayName', 'RefreshToken'],
     border: 'border-violet-400/25 hover:border-violet-400/50',
     iconBg: 'bg-violet-400/10',
@@ -70,8 +70,8 @@ const NODES: DomainNode[] = [
   {
     id: 'admin',
     icon: ShieldCheckIcon,
-    x: 32,
-    y: 78,
+    x: 35,
+    y: 74,
     entities: ['AuditEntry', 'AuditAction', 'RequestContext'],
     border: 'border-amber-400/25 hover:border-amber-400/50',
     iconBg: 'bg-amber-400/10',
@@ -82,8 +82,8 @@ const NODES: DomainNode[] = [
   {
     id: 'notification',
     icon: BellRingIcon,
-    x: 68,
-    y: 78,
+    x: 65,
+    y: 74,
     entities: ['Notification', 'NotificationType', 'PushSubscription'],
     border: 'border-emerald-400/25 hover:border-emerald-400/50',
     iconBg: 'bg-emerald-400/10',
@@ -106,7 +106,7 @@ const CONNECTIONS = [
 /* ── SVG helpers ──────────────────────────────────────────────── */
 
 const VB_W = 1000;
-const VB_H = 750;
+const VB_H = 650;
 
 function nodeById(id: string) {
   return NODES.find((n) => n.id === id)!;
