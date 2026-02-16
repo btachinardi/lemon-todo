@@ -10,17 +10,17 @@
     "confirm": "Confirmar",
     "tryAgain": "Tentar Novamente",
     "previous": "Anterior",
-    "next": "Pr\u00f3ximo",
+    "next": "Próximo",
     "add": "Adicionar",
     "close": "Fechar",
     "clear": "Limpar",
     "back": "Voltar",
-    "actions": "A\u00e7\u00f5es",
+    "actions": "Ações",
     "error": {
       "generic": "Algo deu errado. Tente novamente.",
-      "connection": "Verifique sua conex\u00e3o e tente novamente."
+      "connection": "Verifique sua conexão e tente novamente."
     },
-    "page": "P\u00e1gina {{page}} de {{totalPages}} ({{totalCount}} {{unit}})",
+    "page": "Página {{page}} de {{totalPages}} ({{totalCount}} {{unit}})",
     "devAutoFill": "Preencher senha automaticamente"
   },
   "auth": {
@@ -29,9 +29,9 @@
       "subtitle": "Entre na sua conta",
       "submit": "Entrar",
       "submitting": "Entrando...",
-      "noAccount": "N\u00e3o tem uma conta?",
+      "noAccount": "Não tem uma conta?",
       "createOne": "Crie uma",
-      "errorInvalid": "E-mail ou senha inv\u00e1lidos.",
+      "errorInvalid": "E-mail ou senha inválidos.",
       "errorLocked": "Conta temporariamente bloqueada. Tente novamente mais tarde."
     },
     "register": {
@@ -39,40 +39,57 @@
       "subtitle": "Comece a organizar suas tarefas",
       "submit": "Criar conta",
       "submitting": "Criando conta...",
-      "hasAccount": "J\u00e1 tem uma conta?",
+      "hasAccount": "Já tem uma conta?",
       "signIn": "Entrar",
-      "errorExists": "J\u00e1 existe uma conta com este e-mail."
+      "errorExists": "Já existe uma conta com este e-mail."
     },
     "fields": {
       "email": "E-mail",
       "emailPlaceholder": "voce@exemplo.com",
       "password": "Senha",
       "passwordPlaceholder": "Sua senha",
-      "passwordHint": "M\u00edn. 8 caracteres",
-      "displayName": "Nome de exibi\u00e7\u00e3o",
+      "passwordHint": "Mín. 8 caracteres",
+      "displayName": "Nome de exibição",
       "displayNamePlaceholder": "Seu nome",
       "showPassword": "Mostrar senha",
       "hidePassword": "Ocultar senha"
     },
     "passwordStrength": {
-      "label": "For\u00e7a da senha",
+      "label": "Força da senha",
       "tooWeak": "Muito fraca",
       "weak": "Fraca",
-      "fair": "Razo\u00e1vel",
+      "fair": "Razoável",
       "strong": "Forte",
       "veryStrong": "Muito forte",
       "requirements": "Requisitos",
       "minLength": "Pelo menos 8 caracteres",
-      "hasUppercase": "Uma letra mai\u00fascula",
-      "hasLowercase": "Uma letra min\u00fascula",
-      "hasDigit": "Um n\u00famero",
-      "bonus": "B\u00f4nus",
+      "hasUppercase": "Uma letra maiúscula",
+      "hasLowercase": "Uma letra minúscula",
+      "hasDigit": "Um número",
+      "bonus": "Bônus",
       "hasSpecial": "Caractere especial",
       "longPassword": "12+ caracteres"
     },
     "userMenu": {
       "signOut": "Sair",
       "signingOut": "Saindo..."
+    },
+    "selfReveal": {
+      "popoverHint": "Seus dados estão tão seguros que nem sua própria conta consegue lê-los facilmente. Verifique sua identidade para espiar por trás da cortina.",
+      "revealButton": "Revelar meus dados",
+      "title": "Verificação de identidade",
+      "description": "Digite sua senha novamente para visualizar temporariamente seus dados de perfil sem redação.",
+      "revealedDescription": "Seus dados de perfil sem redação estão exibidos abaixo. Eles serão ocultados automaticamente para sua proteção.",
+      "password": "Senha",
+      "passwordPlaceholder": "Digite sua senha",
+      "passwordError": "Senha incorreta. Tente novamente.",
+      "genericError": "Algo deu errado. Tente novamente.",
+      "submit": "Revelar",
+      "submitting": "Verificando...",
+      "emailLabel": "Email",
+      "nameLabel": "Nome de exibição",
+      "autoHide": "Ocultando em",
+      "hide": "Ocultar agora"
     },
     "devSwitcher": {
       "title": "Login Rápido",
@@ -92,9 +109,9 @@
     "priority": {
       "none": "Nenhuma",
       "low": "Baixa",
-      "medium": "M\u00e9dia",
+      "medium": "Média",
       "high": "Alta",
-      "critical": "Cr\u00edtica"
+      "critical": "Crítica"
     },
     "status": {
       "todo": "A Fazer",
@@ -103,11 +120,11 @@
     },
     "dueDate": {
       "today": "Hoje",
-      "tomorrow": "Amanh\u00e3",
+      "tomorrow": "Amanhã",
       "overdue": "Atrasada: {{date}}"
     },
     "quickAdd": {
-      "label": "T\u00edtulo da nova tarefa",
+      "label": "Título da nova tarefa",
       "placeholder": "O que precisa ser feito?",
       "submit": "Adicionar Tarefa"
     },
@@ -115,9 +132,9 @@
       "ariaLabel": "Tarefa: {{title}}"
     },
     "detail": {
-      "loadError": "N\u00e3o foi poss\u00edvel carregar os detalhes da tarefa.",
-      "description": "Descri\u00e7\u00e3o",
-      "descriptionPlaceholder": "Adicione uma descri\u00e7\u00e3o...",
+      "loadError": "Não foi possível carregar os detalhes da tarefa.",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Adicione uma descrição...",
       "priority": "Prioridade",
       "noPriority": "Sem prioridade",
       "dueDate": "Data de Vencimento",
@@ -138,23 +155,23 @@
       "allStatuses": "Todos os status"
     },
     "listToolbar": {
-      "label": "Op\u00e7\u00f5es de visualiza\u00e7\u00e3o em lista",
+      "label": "Opções de visualização em lista",
       "groupBy": "Agrupar por",
       "noGrouping": "Sem agrupamento",
       "day": "Dia",
       "week": "Semana",
-      "month": "M\u00eas",
-      "splitDone": "Separar conclu\u00eddas"
+      "month": "Mês",
+      "splitDone": "Separar concluídas"
     },
     "checkbox": {
       "markIncomplete": "Marcar como incompleta",
       "markComplete": "Marcar como completa"
     },
     "empty": {
-      "boardTitle": "Seu quadro est\u00e1 vazio",
-      "boardSubtitle": "Adicione uma tarefa acima para come\u00e7ar.",
+      "boardTitle": "Seu quadro está vazio",
+      "boardSubtitle": "Adicione uma tarefa acima para começar.",
       "listTitle": "Nenhuma tarefa ainda",
-      "listSubtitle": "Adicione uma tarefa acima para come\u00e7ar.",
+      "listSubtitle": "Adicione uma tarefa acima para começar.",
       "searchTitle": "Nenhuma tarefa encontrada",
       "searchSubtitle": "Tente ajustar seus filtros ou termo de busca.",
       "clearFilters": "Limpar filtros"
@@ -162,26 +179,26 @@
     "column": {
       "noTasks": "Sem tarefas"
     },
-    "completed": "Conclu\u00eddas ({{count}})",
+    "completed": "Concluídas ({{count}})",
     "errors": {
-      "loadBoard": "N\u00e3o foi poss\u00edvel carregar seu quadro",
-      "loadTasks": "N\u00e3o foi poss\u00edvel carregar as tarefas",
-      "updateTask": "N\u00e3o foi poss\u00edvel atualizar a tarefa. Tente novamente.",
-      "moveTask": "N\u00e3o foi poss\u00edvel mover a tarefa. Tente novamente.",
-      "saveTask": "N\u00e3o foi poss\u00edvel salvar a tarefa. Tente novamente."
+      "loadBoard": "Não foi possível carregar seu quadro",
+      "loadTasks": "Não foi possível carregar as tarefas",
+      "updateTask": "Não foi possível atualizar a tarefa. Tente novamente.",
+      "moveTask": "Não foi possível mover a tarefa. Tente novamente.",
+      "saveTask": "Não foi possível salvar a tarefa. Tente novamente."
     },
     "sensitiveNote": {
-      "label": "Nota Sens\u00edvel",
-      "placeholder": "Digite informa\u00e7\u00f5es sens\u00edveis (criptografado em repouso)...",
-      "encryptionWarning": "Este conte\u00fado \u00e9 criptografado e s\u00f3 pode ser visualizado com sua senha.",
+      "label": "Nota Sensível",
+      "placeholder": "Digite informações sensíveis (criptografado em repouso)...",
+      "encryptionWarning": "Este conteúdo é criptografado e só pode ser visualizado com sua senha.",
       "viewNote": "Ver Nota",
       "hasNote": "Possui nota criptografada",
       "save": "Salvar Nota"
     },
     "noteRevealDialog": {
-      "title": "Ver Nota Sens\u00edvel",
-      "description": "Digite sua senha para descriptografar e ver esta nota. Esta a\u00e7\u00e3o \u00e9 registrada.",
-      "revealedDescription": "Esta nota ser\u00e1 ocultada automaticamente por seguran\u00e7a.",
+      "title": "Ver Nota Sensível",
+      "description": "Digite sua senha para descriptografar e ver esta nota. Esta ação é registrada.",
+      "revealedDescription": "Esta nota será ocultada automaticamente por segurança.",
       "password": "Senha",
       "passwordPlaceholder": "Digite a senha da sua conta",
       "passwordError": "Senha incorreta. Tente novamente.",
@@ -193,53 +210,53 @@
     }
   },
   "nav": {
-    "viewSwitcher": "Alternar visualiza\u00e7\u00e3o",
+    "viewSwitcher": "Alternar visualização",
     "board": "Quadro",
     "list": "Lista",
     "admin": "Admin",
-    "adminNav": "Navega\u00e7\u00e3o admin",
-    "users": "Usu\u00e1rios",
+    "adminNav": "Navegação admin",
+    "users": "Usuários",
     "auditLog": "Log de Auditoria"
   },
   "admin": {
     "users": {
-      "title": "Gerenciamento de Usu\u00e1rios",
-      "subtitle": "Gerencie contas de usu\u00e1rios e fun\u00e7\u00f5es.",
-      "searchPlaceholder": "Buscar usu\u00e1rios...",
-      "allRoles": "Todas as Fun\u00e7\u00f5es",
+      "title": "Gerenciamento de Usuários",
+      "subtitle": "Gerencie contas de usuários e funções.",
+      "searchPlaceholder": "Buscar usuários...",
+      "allRoles": "Todas as Funções",
       "columnId": "ID",
       "columnEmail": "E-mail",
-      "columnDisplayName": "Nome de Exibi\u00e7\u00e3o",
-      "columnRoles": "Fun\u00e7\u00f5es",
+      "columnDisplayName": "Nome de Exibição",
+      "columnRoles": "Funções",
       "columnStatus": "Status",
-      "noUsers": "Nenhum usu\u00e1rio encontrado.",
+      "noUsers": "Nenhum usuário encontrado.",
       "active": "Ativo",
       "deactivated": "Desativado",
       "revealProtectedData": "Revelar Dados Protegidos",
-      "assignRole": "Atribuir Fun\u00e7\u00e3o",
-      "removeRole": "Remover Fun\u00e7\u00e3o",
+      "assignRole": "Atribuir Função",
+      "removeRole": "Remover Função",
       "deactivate": "Desativar",
       "reactivate": "Reativar"
     },
     "roleDialog": {
-      "title": "Atribuir Fun\u00e7\u00e3o",
-      "description": "Atribuir uma fun\u00e7\u00e3o a {{user}}.",
-      "selectRole": "Selecione uma fun\u00e7\u00e3o",
-      "allRolesAssigned": "Usu\u00e1rio j\u00e1 possui todas as fun\u00e7\u00f5es dispon\u00edveis.",
+      "title": "Atribuir Função",
+      "description": "Atribuir uma função a {{user}}.",
+      "selectRole": "Selecione uma função",
+      "allRolesAssigned": "Usuário já possui todas as funções disponíveis.",
       "submitting": "Atribuindo...",
       "submit": "Atribuir"
     },
     "audit": {
       "title": "Log de Auditoria",
-      "subtitle": "Visualize a\u00e7\u00f5es relevantes de seguran\u00e7a e eventos do sistema.",
+      "subtitle": "Visualize ações relevantes de segurança e eventos do sistema.",
       "from": "De",
-      "to": "At\u00e9",
-      "action": "A\u00e7\u00e3o",
-      "allActions": "Todas as a\u00e7\u00f5es",
+      "to": "Até",
+      "action": "Ação",
+      "allActions": "Todas as ações",
       "resource": "Recurso",
       "allResources": "Todos",
       "columnTimestamp": "Data/Hora",
-      "columnAction": "A\u00e7\u00e3o",
+      "columnAction": "Ação",
       "columnResource": "Recurso",
       "columnResourceId": "ID do Recurso",
       "columnActor": "Ator",
@@ -263,28 +280,28 @@
     },
     "protectedDataRevealDialog": {
       "title": "Revelar Dados Protegidos",
-      "description": "Esta a\u00e7\u00e3o revela dados protegidos sens\u00edveis e \u00e9 registrada no log de auditoria. Insira uma justificativa e verifique sua identidade para prosseguir.",
+      "description": "Esta ação revela dados protegidos sensíveis e é registrada no log de auditoria. Insira uma justificativa e verifique sua identidade para prosseguir.",
       "reason": "Motivo",
       "reasonPlaceholder": "Selecione um motivo",
       "reasons": {
         "SupportTicket": "Ticket de Suporte",
-        "LegalRequest": "Solicita\u00e7\u00e3o Legal",
-        "AccountRecovery": "Recupera\u00e7\u00e3o de Conta",
-        "SecurityInvestigation": "Investiga\u00e7\u00e3o de Seguran\u00e7a",
-        "DataSubjectRequest": "Solicita\u00e7\u00e3o do Titular (LGPD/HIPAA)",
+        "LegalRequest": "Solicitação Legal",
+        "AccountRecovery": "Recuperação de Conta",
+        "SecurityInvestigation": "Investigação de Segurança",
+        "DataSubjectRequest": "Solicitação do Titular (LGPD/HIPAA)",
         "ComplianceAudit": "Auditoria de Conformidade",
         "Other": "Outro"
       },
       "reasonDetails": "Detalhes do Motivo",
-      "reasonDetailsPlaceholder": "Explique por que este acesso aos dados protegidos \u00e9 necess\u00e1rio...",
-      "reasonDetailsRequired": "Detalhes s\u00e3o obrigat\u00f3rios quando o motivo \u00e9 'Outro'.",
-      "comments": "Coment\u00e1rios Adicionais",
+      "reasonDetailsPlaceholder": "Explique por que este acesso aos dados protegidos é necessário...",
+      "reasonDetailsRequired": "Detalhes são obrigatórios quando o motivo é 'Outro'.",
+      "comments": "Comentários Adicionais",
       "commentsPlaceholder": "Qualquer contexto adicional (opcional)...",
       "password": "Sua Senha",
       "passwordPlaceholder": "Digite sua senha da conta",
-      "passwordError": "Senha inv\u00e1lida. Tente novamente.",
+      "passwordError": "Senha inválida. Tente novamente.",
       "genericError": "Algo deu errado. Tente novamente.",
-      "auditWarning": "Esta a\u00e7\u00e3o \u00e9 registrada permanentemente no log de auditoria.",
+      "auditWarning": "Esta ação é registrada permanentemente no log de auditoria.",
       "submit": "Revelar Dados Protegidos",
       "submitting": "Verificando..."
     },
@@ -293,17 +310,17 @@
       "secondsRemaining": "{{seconds}}s"
     },
     "toasts": {
-      "roleAssigned": "Fun\u00e7\u00e3o atribu\u00edda",
-      "roleRemoved": "Fun\u00e7\u00e3o removida",
-      "userDeactivated": "Usu\u00e1rio desativado",
-      "userReactivated": "Usu\u00e1rio reativado"
+      "roleAssigned": "Função atribuída",
+      "roleRemoved": "Função removida",
+      "userDeactivated": "Usuário desativado",
+      "userReactivated": "Usuário reativado"
     }
   },
   "error": {
     "title": "Algo deu errado",
-    "description": "Ocorreu um erro inesperado. Voc\u00ea pode tentar recarregar a p\u00e1gina ou clicar abaixo para tentar recuperar.",
+    "description": "Ocorreu um erro inesperado. Você pode tentar recarregar a página ou clicar abaixo para tentar recuperar.",
     "tryAgain": "Tentar novamente",
-    "reload": "Recarregar p\u00e1gina"
+    "reload": "Recarregar página"
   },
   "notifications": {
     "bell": "Notificacoes ({{count}} nao lidas)",
@@ -312,13 +329,17 @@
     "empty": "Nenhuma notificacao ainda"
   },
   "offline": {
-    "banner": "Voc\u00ea est\u00e1 offline. As altera\u00e7\u00f5es n\u00e3o ser\u00e3o salvas at\u00e9 que sua conex\u00e3o seja restaurada.",
-    "cachedData": "Voce esta offline. Visualizando dados em cache."
+    "banner": "Você está offline. As alterações não serão salvas até que sua conexão seja restaurada.",
+    "cachedData": "Voce esta offline. Visualizando dados em cache.",
+    "syncing": "Sincronizando...",
+    "allSynced": "Tudo sincronizado",
+    "pendingChanges": "{{count}} alteração pendente",
+    "pendingChanges_other": "{{count}} alterações pendentes"
   },
   "notFound": {
     "code": "404",
-    "title": "P\u00e1gina n\u00e3o encontrada",
-    "goHome": "Ir para in\u00edcio"
+    "title": "Página não encontrada",
+    "goHome": "Ir para início"
   },
   "pwa": {
     "installPrompt": "Instale o Lemon.DO para uma experiência mais rápida",
@@ -335,90 +356,90 @@
       "titleLine1": "Suas Tarefas.",
       "titleLine2": "Seu Servidor.",
       "titleHighlight": "Suas Regras.",
-      "subtitle": "O gerenciador de tarefas open-source para equipes que n\u00e3o podem comprometer a soberania dos dados. Hospede em sua pr\u00f3pria infraestrutura, mantenha conformidade, entregue mais r\u00e1pido.",
-      "ctaPrimary": "Comece Gr\u00e1tis",
+      "subtitle": "O gerenciador de tarefas open-source para equipes que não podem comprometer a soberania dos dados. Hospede em sua própria infraestrutura, mantenha conformidade, entregue mais rápido.",
+      "ctaPrimary": "Comece Grátis",
       "ctaGithub": "Ver no GitHub"
     },
     "features": {
-      "title": "Tudo que voc\u00ea precisa para entregar",
+      "title": "Tudo que você precisa para entregar",
       "subtitle": "Funcionalidades poderosas em uma interface bonita, dark-first, projetada para foco.",
       "highlight": "entregar",
       "items": [
         {
           "title": "Quadros Kanban",
-          "description": "Organiza\u00e7\u00e3o visual de tarefas com arrastar e soltar. Veja seu fluxo de trabalho de relance."
+          "description": "Organização visual de tarefas com arrastar e soltar. Veja seu fluxo de trabalho de relance."
         },
         {
           "title": "Prioridades Inteligentes",
-          "description": "Foque no que importa com n\u00edveis de prioridade de baixa a cr\u00edtica."
+          "description": "Foque no que importa com níveis de prioridade de baixa a crítica."
         },
         {
-          "title": "Captura R\u00e1pida",
-          "description": "Adicione tarefas instantaneamente com uma \u00fanica tecla. Nunca perca uma ideia."
+          "title": "Captura Rápida",
+          "description": "Adicione tarefas instantaneamente com uma única tecla. Nunca perca uma ideia."
         },
         {
-          "title": "Tags Flex\u00edveis",
+          "title": "Tags Flexíveis",
           "description": "Organize do seu jeito com tags personalizadas e filtragem poderosa."
         },
         {
           "title": "Trilha de Auditoria",
-          "description": "Registro completo de atividades para conformidade. Cada a\u00e7\u00e3o rastreada e com timestamp."
+          "description": "Registro completo de atividades para conformidade. Cada ação rastreada e com timestamp."
         },
         {
           "title": "Design Dark-First",
-          "description": "Interface bonita feita para foco. F\u00e1cil para os olhos, dia e noite."
+          "description": "Interface bonita feita para foco. Fácil para os olhos, dia e noite."
         }
       ]
     },
     "openSource": {
       "title": "100% Open Source",
-      "subtitle": "Transparente, audit\u00e1vel e orientado pela comunidade. Sem caixas pretas.",
+      "subtitle": "Transparente, auditável e orientado pela comunidade. Sem caixas pretas.",
       "highlight": "Open Source",
       "badge1": "Open Source",
-      "badge2": "Licen\u00e7a MIT",
+      "badge2": "Licença MIT",
       "badge3": "Auto-Hospedagem",
-      "pitch": "Implante em sua pr\u00f3pria infraestrutura em minutos.",
+      "pitch": "Implante em sua própria infraestrutura em minutos.",
       "noVendorLock": "Sem vendor lock-in. Nenhum dado sai da sua rede. Controle total, sempre.",
       "viewGithub": "Ver no GitHub"
     },
     "security": {
-      "title": "Feito para ind\u00fastrias reguladas",
-      "subtitle": "Sa\u00fade, finan\u00e7as, jur\u00eddico, governo. Quando conformidade n\u00e3o \u00e9 opcional.",
-      "highlight": "ind\u00fastrias reguladas",
+      "title": "Feito para indústrias reguladas",
+      "subtitle": "Saúde, finanças, jurídico, governo. Quando conformidade não é opcional.",
+      "highlight": "indústrias reguladas",
       "items": [
         {
           "title": "Soberania de Dados",
-          "description": "Seus dados ficam nos seus servidores. Sem acesso de terceiros, sem depend\u00eancia de nuvem."
+          "description": "Seus dados ficam nos seus servidores. Sem acesso de terceiros, sem dependência de nuvem."
         },
         {
           "title": "Log de Auditoria",
-          "description": "Cada a\u00e7\u00e3o rastreada para conformidade. Pesquis\u00e1vel, filtr\u00e1vel, export\u00e1vel."
+          "description": "Cada ação rastreada para conformidade. Pesquisável, filtrável, exportável."
         },
         {
-          "title": "Acesso por Fun\u00e7\u00f5es",
-          "description": "Fun\u00e7\u00f5es de admin, usu\u00e1rio e sistema com permiss\u00f5es granulares."
+          "title": "Acesso por Funções",
+          "description": "Funções de admin, usuário e sistema com permissões granulares."
         },
         {
           "title": "Pronto para Conformidade",
-          "description": "Notas criptografadas, revela\u00e7\u00e3o de dados protegidos com justificativa e trilha de auditoria completa."
+          "description": "Notas criptografadas, revelação de dados protegidos com justificativa e trilha de auditoria completa."
         }
       ]
     },
     "howItWorks": {
       "title": "Funcionando em minutos",
-      "subtitle": "Tr\u00eas passos para controlar sua produtividade.",
+      "subtitle": "Três passos para controlar sua produtividade.",
       "steps": [
         {
           "title": "Clone e Implante",
-          "description": "Auto-hospede com Docker ou implante no Azure. Um comando para produ\u00e7\u00e3o."
+          "description": "Auto-hospede com Docker ou implante no Azure. Um comando para produção."
         },
         {
-          "title": "Crie Seu Espa\u00e7o",
+          "title": "Crie Seu Espaço",
           "description": "Adicione tarefas, quadros e membros da equipe. Organize do seu jeito."
         },
         {
           "title": "Mantenha Conformidade",
-          "description": "Trilha de auditoria e notas criptografadas integradas para sua seguran\u00e7a."
+          "description": "Trilha de auditoria e notas criptografadas integradas para sua segurança."
         }
       ]
     },
@@ -431,7 +452,8 @@
     "footer": {
       "tagline": "Gerenciamento de tarefas open-source para equipes que controlam seus dados.",
       "features": "Funcionalidades",
-      "security": "Seguran\u00e7a"
+      "security": "Segurança",
+      "story": "Nossa Historia"
     }
   },
   "onboarding": {
@@ -449,5 +471,236 @@
     "dark": "Tema escuro",
     "system": "Tema do sistema",
     "toggle": "Atual: {{label}}. Clique para {{next}}"
+  },
+  "story": {
+    "nav": "Nossa História",
+    "hero": {
+      "titleLine1": "De Pasta Vazia a",
+      "titleHighlight": "Produção",
+      "titleLine2": "em 3 Dias",
+      "subtitle": "A história de construir um gerenciador de tarefas pronto para produção e conformidade, com DDD, TDD rigoroso e uma obsessão em fazer as coisas certas."
+    },
+    "vision": {
+      "title": "5 Documentos Antes de Uma Linha de Código",
+      "highlight": "Uma Linha",
+      "subtitle": "Todo grande produto começa com um plano. Escrevemos cinco documentos fundamentais antes de tocar uma única linha de código.",
+      "quote": "Planejamento não é tempo perdido. É depuração comprimida.",
+      "items": [
+        {
+          "title": "Requisitos do Produto",
+          "description": "Definiu o quê e o porquê. Três personas, cinco checkpoints, critérios claros de sucesso."
+        },
+        {
+          "title": "Pesquisa Tecnológica",
+          "description": "Avaliou .NET 10, React 19, Vite 7 — versões travadas antes de escrever código."
+        },
+        {
+          "title": "Cenários de Usuário",
+          "description": "Storyboards de Sarah a freelancer, Marcus o líder de equipe e Diana a oficial de conformidade."
+        },
+        {
+          "title": "Modelo de Domínio",
+          "description": "Dois contextos delimitados projetados antecipadamente: Task (upstream) e Board (downstream conformista)."
+        },
+        {
+          "title": "Diretrizes de Desenvolvimento",
+          "description": "Convenções de nomenclatura, regras de camada, metodologia TDD — o contrato da equipe consigo mesma."
+        }
+      ]
+    },
+    "journey": {
+      "title": "5 Checkpoints, 5 Produtos Entregáveis",
+      "highlight": "5 Produtos Entregáveis",
+      "subtitle": "Cada checkpoint entregou uma aplicação completa e funcional. Pare em qualquer ponto e você tem algo real.",
+      "insight": "Cada checkpoint entrega um app completo. Pare em qualquer ponto e você tem algo real.",
+      "checkpoints": [
+        {
+          "title": "Tarefas Core",
+          "subtitle": "CP1 — A Fundação",
+          "description": "CRUD full-stack com DDD desde o primeiro dia. Modo single-user, quadro kanban, visão em lista, arrastar e soltar.",
+          "decision": "Coluna determina status — uma única fonte da verdade",
+          "tests": "242"
+        },
+        {
+          "title": "Auth & Segurança",
+          "subtitle": "CP2 — Identidade",
+          "description": "JWT com cookies HttpOnly, isolamento de usuário, acesso por funções, headers de segurança.",
+          "decision": "Refresh via cookie, access token apenas em memória",
+          "tests": "388"
+        },
+        {
+          "title": "UX Rica",
+          "subtitle": "CP3 — Polimento",
+          "description": "Modo escuro, filtros de prioridade, painel de detalhes, reordenação drag-and-drop, i18n em 3 idiomas.",
+          "decision": "Ranks decimais esparsos para movimentação O(1)",
+          "tests": "434"
+        },
+        {
+          "title": "Pronto para Produção",
+          "subtitle": "CP4 — Enterprise",
+          "description": "Trilha de auditoria, notas criptografadas, painel admin, deploy Azure com Terraform, suporte dual de banco.",
+          "decision": "Padrão Result ao invés de exceções para lógica de domínio",
+          "tests": "668"
+        },
+        {
+          "title": "Encantamento",
+          "subtitle": "CP5 — Experiência",
+          "description": "PWA com suporte offline, tour de onboarding, landing pages, notificações push, analytics.",
+          "decision": "Cache via Service Worker para leituras offline-first",
+          "tests": "700+"
+        }
+      ]
+    },
+    "arch": {
+      "title": "Dois Contextos Delimitados, Zero Compromissos",
+      "highlight": "Zero Compromissos",
+      "subtitle": "Arquitetura limpa com fronteiras de camada rigorosas. Cada direção de import é intencional.",
+      "backendLabel": "Camadas do Backend",
+      "frontendLabel": "Tiers do Frontend",
+      "backendLayers": [
+        "Domínio",
+        "Aplicação",
+        "Infraestrutura",
+        "API"
+      ],
+      "frontendTiers": [
+        "Roteamento",
+        "Páginas",
+        "Estado",
+        "Componentes"
+      ],
+      "decisions": [
+        "Coluna determina status — uma única fonte da verdade",
+        "Ranks decimais esparsos — movimentação O(1), sem drift de posição",
+        "Padrão Result, não exceções — para lógica de negócio"
+      ]
+    },
+    "tech": {
+      "title": "Construído com as Melhores Ferramentas",
+      "highlight": "Melhores Ferramentas",
+      "subtitle": "Stack de ponta, travado em versões específicas, escolhido para prontidão em produção.",
+      "categories": {
+        "backend": "Backend",
+        "frontend": "Frontend",
+        "testing": "Testes",
+        "devops": "DevOps"
+      },
+      "items": {
+        "dotnet": {
+          "name": ".NET 10",
+          "description": "Runtime backend de alta performance"
+        },
+        "aspire": {
+          "name": "Aspire",
+          "description": "Orquestração cloud-native"
+        },
+        "efcore": {
+          "name": "EF Core",
+          "description": "ORM de banco com migrações"
+        },
+        "sqlite": {
+          "name": "SQLite + SQL Server",
+          "description": "Suporte dual de banco de dados"
+        },
+        "react": {
+          "name": "React 19",
+          "description": "Framework de UI baseado em componentes"
+        },
+        "vite": {
+          "name": "Vite 7",
+          "description": "Ferramenta de build ultrarrápida"
+        },
+        "tailwind": {
+          "name": "Tailwind 4",
+          "description": "Framework CSS utility-first"
+        },
+        "shadcn": {
+          "name": "Shadcn/ui",
+          "description": "Componentes bonitos e acessíveis"
+        },
+        "tanstack": {
+          "name": "TanStack Query",
+          "description": "Gerenciamento de estado do servidor"
+        },
+        "zustand": {
+          "name": "Zustand",
+          "description": "Estado do cliente leve"
+        },
+        "mstest": {
+          "name": "MSTest 4",
+          "description": "Testes unitários e de integração backend"
+        },
+        "fscheck": {
+          "name": "FsCheck",
+          "description": "Testes baseados em propriedade para .NET"
+        },
+        "vitest": {
+          "name": "Vitest",
+          "description": "Runner de testes frontend rápido"
+        },
+        "fastcheck": {
+          "name": "fast-check",
+          "description": "Testes baseados em propriedade para JS"
+        },
+        "playwright": {
+          "name": "Playwright",
+          "description": "Testes E2E cross-browser"
+        },
+        "azure": {
+          "name": "Azure",
+          "description": "Hospedagem e serviços em nuvem"
+        },
+        "terraform": {
+          "name": "Terraform",
+          "description": "Infraestrutura como código"
+        },
+        "ghactions": {
+          "name": "GitHub Actions",
+          "description": "Pipelines de CI/CD"
+        },
+        "docker": {
+          "name": "Docker",
+          "description": "Runtime de contêineres"
+        }
+      }
+    },
+    "numbers": {
+      "title": "Os Números Falam",
+      "highlight": "Números",
+      "items": [
+        {
+          "value": "700+",
+          "label": "Testes",
+          "detail": "Backend + Frontend + E2E"
+        },
+        {
+          "value": "11",
+          "label": "Projetos",
+          "detail": "Estrutura da solution .NET"
+        },
+        {
+          "value": "5",
+          "label": "Checkpoints",
+          "detail": "Cada um entregável"
+        },
+        {
+          "value": "3",
+          "label": "Idiomas",
+          "detail": "EN, PT-BR, ES"
+        },
+        {
+          "value": "2",
+          "label": "Contextos",
+          "detail": "Task + Board (DDD)"
+        },
+        {
+          "value": "3",
+          "label": "Dias",
+          "detail": "De pasta vazia a produção"
+        }
+      ],
+      "ctaPrimary": "Veja em Ação",
+      "ctaGithub": "Leia o Código"
+    }
   }
 }

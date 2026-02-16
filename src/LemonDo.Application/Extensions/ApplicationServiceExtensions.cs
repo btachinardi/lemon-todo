@@ -50,6 +50,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<LoginUserCommandHandler>();
         services.AddScoped<RefreshTokenCommandHandler>();
         services.AddScoped<RevokeRefreshTokenCommandHandler>();
+        services.AddScoped<RevealOwnProfileCommandHandler>();
 
         // Task query handlers
         services.AddScoped<GetTaskByIdQueryHandler>();

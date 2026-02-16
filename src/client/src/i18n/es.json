@@ -17,74 +17,91 @@
     "back": "Volver",
     "actions": "Acciones",
     "error": {
-      "generic": "Algo sali\u00f3 mal. Por favor, int\u00e9ntalo de nuevo.",
-      "connection": "Verifica tu conexi\u00f3n e int\u00e9ntalo de nuevo."
+      "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
+      "connection": "Verifica tu conexión e inténtalo de nuevo."
     },
-    "page": "P\u00e1gina {{page}} de {{totalPages}} ({{totalCount}} {{unit}})",
+    "page": "Página {{page}} de {{totalPages}} ({{totalCount}} {{unit}})",
     "devAutoFill": "Autocompletar contraseña"
   },
   "auth": {
     "login": {
       "title": "Bienvenido de nuevo",
-      "subtitle": "Inicia sesi\u00f3n en tu cuenta",
-      "submit": "Iniciar sesi\u00f3n",
-      "submitting": "Iniciando sesi\u00f3n...",
-      "noAccount": "\u00bfNo tienes una cuenta?",
+      "subtitle": "Inicia sesión en tu cuenta",
+      "submit": "Iniciar sesión",
+      "submitting": "Iniciando sesión...",
+      "noAccount": "¿No tienes una cuenta?",
       "createOne": "Crea una",
-      "errorInvalid": "Correo electr\u00f3nico o contrase\u00f1a inv\u00e1lidos.",
-      "errorLocked": "Cuenta bloqueada temporalmente. Por favor, int\u00e9ntalo m\u00e1s tarde."
+      "errorInvalid": "Correo electrónico o contraseña inválidos.",
+      "errorLocked": "Cuenta bloqueada temporalmente. Por favor, inténtalo más tarde."
     },
     "register": {
       "title": "Crea tu cuenta",
       "subtitle": "Comienza a organizar tus tareas",
       "submit": "Crear cuenta",
       "submitting": "Creando cuenta...",
-      "hasAccount": "\u00bfYa tienes una cuenta?",
-      "signIn": "Iniciar sesi\u00f3n",
-      "errorExists": "Ya existe una cuenta con este correo electr\u00f3nico."
+      "hasAccount": "¿Ya tienes una cuenta?",
+      "signIn": "Iniciar sesión",
+      "errorExists": "Ya existe una cuenta con este correo electrónico."
     },
     "fields": {
-      "email": "Correo electr\u00f3nico",
+      "email": "Correo electrónico",
       "emailPlaceholder": "tu@ejemplo.com",
-      "password": "Contrase\u00f1a",
-      "passwordPlaceholder": "Tu contrase\u00f1a",
-      "passwordHint": "M\u00edn. 8 caracteres",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Tu contraseña",
+      "passwordHint": "Mín. 8 caracteres",
       "displayName": "Nombre para mostrar",
       "displayNamePlaceholder": "Tu nombre",
-      "showPassword": "Mostrar contrase\u00f1a",
-      "hidePassword": "Ocultar contrase\u00f1a"
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
     },
     "passwordStrength": {
-      "label": "Fortaleza de la contrase\u00f1a",
-      "tooWeak": "Muy d\u00e9bil",
-      "weak": "D\u00e9bil",
+      "label": "Fortaleza de la contraseña",
+      "tooWeak": "Muy débil",
+      "weak": "Débil",
       "fair": "Aceptable",
       "strong": "Fuerte",
       "veryStrong": "Muy fuerte",
       "requirements": "Requisitos",
       "minLength": "Al menos 8 caracteres",
-      "hasUppercase": "Una letra may\u00fascula",
-      "hasLowercase": "Una letra min\u00fascula",
-      "hasDigit": "Un n\u00famero",
+      "hasUppercase": "Una letra mayúscula",
+      "hasLowercase": "Una letra minúscula",
+      "hasDigit": "Un número",
       "bonus": "Bonus",
-      "hasSpecial": "Car\u00e1cter especial",
+      "hasSpecial": "Carácter especial",
       "longPassword": "12+ caracteres"
     },
     "userMenu": {
-      "signOut": "Cerrar sesi\u00f3n",
-      "signingOut": "Cerrando sesi\u00f3n..."
+      "signOut": "Cerrar sesión",
+      "signingOut": "Cerrando sesión..."
+    },
+    "selfReveal": {
+      "popoverHint": "Tus datos están tan seguros que ni tu propia cuenta puede leerlos fácilmente. Verifica tu identidad para echar un vistazo detrás de la cortina.",
+      "revealButton": "Revelar mis datos",
+      "title": "Verificación de identidad",
+      "description": "Vuelve a ingresar tu contraseña para ver temporalmente tus datos de perfil sin redactar.",
+      "revealedDescription": "Tus datos de perfil sin redactar se muestran a continuación. Se ocultarán automáticamente para tu protección.",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Ingresa tu contraseña",
+      "passwordError": "Contraseña incorrecta. Inténtalo de nuevo.",
+      "genericError": "Algo salió mal. Inténtalo de nuevo.",
+      "submit": "Revelar",
+      "submitting": "Verificando...",
+      "emailLabel": "Correo electrónico",
+      "nameLabel": "Nombre para mostrar",
+      "autoHide": "Ocultando en",
+      "hide": "Ocultar ahora"
     },
     "devSwitcher": {
-      "title": "Inicio R\u00e1pido",
+      "title": "Inicio Rápido",
       "subtitle": "Cuentas de desarrollo",
       "switching": "Cambiando...",
       "roles": {
         "user": "Usuario",
-        "userDesc": "Gesti\u00f3n est\u00e1ndar de tareas",
+        "userDesc": "Gestión estándar de tareas",
         "admin": "Admin",
-        "adminDesc": "Gesti\u00f3n de usuarios y panel admin",
+        "adminDesc": "Gestión de usuarios y panel admin",
         "sysadmin": "Admin del Sistema",
-        "sysadminDesc": "Acceso total al sistema y revelaci\u00f3n de datos protegidos"
+        "sysadminDesc": "Acceso total al sistema y revelación de datos protegidos"
       }
     }
   },
@@ -94,7 +111,7 @@
       "low": "Baja",
       "medium": "Media",
       "high": "Alta",
-      "critical": "Cr\u00edtica"
+      "critical": "Crítica"
     },
     "status": {
       "todo": "Pendiente",
@@ -103,12 +120,12 @@
     },
     "dueDate": {
       "today": "Hoy",
-      "tomorrow": "Ma\u00f1ana",
+      "tomorrow": "Mañana",
       "overdue": "Vencida: {{date}}"
     },
     "quickAdd": {
-      "label": "T\u00edtulo de la nueva tarea",
-      "placeholder": "\u00bfQu\u00e9 necesitas hacer?",
+      "label": "Título de la nueva tarea",
+      "placeholder": "¿Qué necesitas hacer?",
       "submit": "Agregar Tarea"
     },
     "card": {
@@ -116,8 +133,8 @@
     },
     "detail": {
       "loadError": "No se pudieron cargar los detalles de la tarea.",
-      "description": "Descripci\u00f3n",
-      "descriptionPlaceholder": "Agrega una descripci\u00f3n...",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Agrega una descripción...",
       "priority": "Prioridad",
       "noPriority": "Sin prioridad",
       "dueDate": "Fecha de Vencimiento",
@@ -126,22 +143,22 @@
       "tags": "Etiquetas",
       "tagPlaceholder": "Agregar una etiqueta...",
       "removeTag": "Eliminar etiqueta {{tag}}",
-      "deleteTitle": "\u00bfEliminar esta tarea?",
+      "deleteTitle": "¿Eliminar esta tarea?",
       "deleteButton": "Eliminar tarea",
       "saving": "Guardando...",
       "saved": "Guardado"
     },
     "filter": {
       "searchPlaceholder": "Buscar tareas...",
-      "clearSearch": "Limpiar b\u00fasqueda",
+      "clearSearch": "Limpiar búsqueda",
       "allPriorities": "Todas las prioridades",
       "allStatuses": "Todos los estados"
     },
     "listToolbar": {
       "label": "Opciones de vista de lista",
       "groupBy": "Agrupar por",
-      "noGrouping": "Sin agrupaci\u00f3n",
-      "day": "D\u00eda",
+      "noGrouping": "Sin agrupación",
+      "day": "Día",
       "week": "Semana",
       "month": "Mes",
       "splitDone": "Separar completadas"
@@ -151,12 +168,12 @@
       "markComplete": "Marcar como completa"
     },
     "empty": {
-      "boardTitle": "Tu tablero est\u00e1 vac\u00edo",
+      "boardTitle": "Tu tablero está vacío",
       "boardSubtitle": "Agrega una tarea arriba para comenzar.",
-      "listTitle": "A\u00fan no hay tareas",
+      "listTitle": "Aún no hay tareas",
       "listSubtitle": "Agrega una tarea arriba para comenzar.",
       "searchTitle": "No se encontraron tareas",
-      "searchSubtitle": "Intenta ajustar tus filtros o t\u00e9rmino de b\u00fasqueda.",
+      "searchSubtitle": "Intenta ajustar tus filtros o término de búsqueda.",
       "clearFilters": "Limpiar filtros"
     },
     "column": {
@@ -166,29 +183,29 @@
     "errors": {
       "loadBoard": "No se pudo cargar tu tablero",
       "loadTasks": "No se pudieron cargar las tareas",
-      "updateTask": "No se pudo actualizar la tarea. Int\u00e9ntalo de nuevo.",
-      "moveTask": "No se pudo mover la tarea. Int\u00e9ntalo de nuevo.",
-      "saveTask": "No se pudo guardar la tarea. Int\u00e9ntalo de nuevo."
+      "updateTask": "No se pudo actualizar la tarea. Inténtalo de nuevo.",
+      "moveTask": "No se pudo mover la tarea. Inténtalo de nuevo.",
+      "saveTask": "No se pudo guardar la tarea. Inténtalo de nuevo."
     },
     "sensitiveNote": {
       "label": "Nota Sensible",
-      "placeholder": "Ingresa informaci\u00f3n sensible (cifrada en reposo)...",
-      "encryptionWarning": "Este contenido est\u00e1 cifrado y solo puede verse con tu contrase\u00f1a.",
+      "placeholder": "Ingresa información sensible (cifrada en reposo)...",
+      "encryptionWarning": "Este contenido está cifrado y solo puede verse con tu contraseña.",
       "viewNote": "Ver Nota",
       "hasNote": "Tiene nota cifrada",
       "save": "Guardar Nota"
     },
     "noteRevealDialog": {
       "title": "Ver Nota Sensible",
-      "description": "Ingresa tu contrase\u00f1a para descifrar y ver esta nota. Esta acci\u00f3n queda registrada.",
-      "revealedDescription": "Esta nota se ocultar\u00e1 autom\u00e1ticamente por seguridad.",
-      "password": "Contrase\u00f1a",
-      "passwordPlaceholder": "Ingresa la contrase\u00f1a de tu cuenta",
-      "passwordError": "Contrase\u00f1a incorrecta. Por favor, int\u00e9ntalo de nuevo.",
-      "genericError": "Algo sali\u00f3 mal. Por favor, int\u00e9ntalo de nuevo.",
+      "description": "Ingresa tu contraseña para descifrar y ver esta nota. Esta acción queda registrada.",
+      "revealedDescription": "Esta nota se ocultará automáticamente por seguridad.",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Ingresa la contraseña de tu cuenta",
+      "passwordError": "Contraseña incorrecta. Por favor, inténtalo de nuevo.",
+      "genericError": "Algo salió mal. Por favor, inténtalo de nuevo.",
       "submit": "Ver Nota",
       "submitting": "Descifrando...",
-      "autoHide": "Ocultando autom\u00e1ticamente en",
+      "autoHide": "Ocultando automáticamente en",
       "hide": "Ocultar Ahora"
     }
   },
@@ -197,18 +214,18 @@
     "board": "Tablero",
     "list": "Lista",
     "admin": "Admin",
-    "adminNav": "Navegaci\u00f3n admin",
+    "adminNav": "Navegación admin",
     "users": "Usuarios",
-    "auditLog": "Registro de Auditor\u00eda"
+    "auditLog": "Registro de Auditoría"
   },
   "admin": {
     "users": {
-      "title": "Gesti\u00f3n de Usuarios",
+      "title": "Gestión de Usuarios",
       "subtitle": "Administra cuentas de usuarios y roles.",
       "searchPlaceholder": "Buscar usuarios...",
       "allRoles": "Todos los Roles",
       "columnId": "ID",
-      "columnEmail": "Correo electr\u00f3nico",
+      "columnEmail": "Correo electrónico",
       "columnDisplayName": "Nombre para Mostrar",
       "columnRoles": "Roles",
       "columnStatus": "Estado",
@@ -230,22 +247,22 @@
       "submit": "Asignar"
     },
     "audit": {
-      "title": "Registro de Auditor\u00eda",
+      "title": "Registro de Auditoría",
       "subtitle": "Consulta acciones relevantes de seguridad y eventos del sistema.",
       "from": "Desde",
       "to": "Hasta",
-      "action": "Acci\u00f3n",
+      "action": "Acción",
       "allActions": "Todas las acciones",
       "resource": "Recurso",
       "allResources": "Todos",
       "columnTimestamp": "Fecha/Hora",
-      "columnAction": "Acci\u00f3n",
+      "columnAction": "Acción",
       "columnResource": "Recurso",
       "columnResourceId": "ID del Recurso",
       "columnActor": "Actor",
       "columnDetails": "Detalles",
       "system": "Sistema",
-      "noEntries": "No se encontraron entradas de auditor\u00eda.",
+      "noEntries": "No se encontraron entradas de auditoría.",
       "actions": {
         "UserRegistered": "Usuario Registrado",
         "UserLoggedIn": "Usuario Conectado",
@@ -263,28 +280,28 @@
     },
     "protectedDataRevealDialog": {
       "title": "Revelar Datos Protegidos",
-      "description": "Esta acci\u00f3n revela datos protegidos sensibles y queda registrada en el registro de auditor\u00eda. Ingresa una justificaci\u00f3n y verifica tu identidad para continuar.",
+      "description": "Esta acción revela datos protegidos sensibles y queda registrada en el registro de auditoría. Ingresa una justificación y verifica tu identidad para continuar.",
       "reason": "Motivo",
       "reasonPlaceholder": "Selecciona un motivo",
       "reasons": {
         "SupportTicket": "Ticket de Soporte",
         "LegalRequest": "Solicitud Legal",
-        "AccountRecovery": "Recuperaci\u00f3n de Cuenta",
-        "SecurityInvestigation": "Investigaci\u00f3n de Seguridad",
+        "AccountRecovery": "Recuperación de Cuenta",
+        "SecurityInvestigation": "Investigación de Seguridad",
         "DataSubjectRequest": "Solicitud del Titular (RGPD/HIPAA)",
-        "ComplianceAudit": "Auditor\u00eda de Cumplimiento",
+        "ComplianceAudit": "Auditoría de Cumplimiento",
         "Other": "Otro"
       },
       "reasonDetails": "Detalles del Motivo",
-      "reasonDetailsPlaceholder": "Explica por qu\u00e9 es necesario acceder a estos datos protegidos...",
+      "reasonDetailsPlaceholder": "Explica por qué es necesario acceder a estos datos protegidos...",
       "reasonDetailsRequired": "Los detalles son obligatorios cuando el motivo es 'Otro'.",
       "comments": "Comentarios Adicionales",
       "commentsPlaceholder": "Cualquier contexto adicional (opcional)...",
-      "password": "Tu Contrase\u00f1a",
-      "passwordPlaceholder": "Ingresa la contrase\u00f1a de tu cuenta",
-      "passwordError": "Contrase\u00f1a inv\u00e1lida. Por favor, int\u00e9ntalo de nuevo.",
-      "genericError": "Algo sali\u00f3 mal. Por favor, int\u00e9ntalo de nuevo.",
-      "auditWarning": "Esta acci\u00f3n queda registrada permanentemente en el registro de auditor\u00eda.",
+      "password": "Tu Contraseña",
+      "passwordPlaceholder": "Ingresa la contraseña de tu cuenta",
+      "passwordError": "Contraseña inválida. Por favor, inténtalo de nuevo.",
+      "genericError": "Algo salió mal. Por favor, inténtalo de nuevo.",
+      "auditWarning": "Esta acción queda registrada permanentemente en el registro de auditoría.",
       "submit": "Revelar Datos Protegidos",
       "submitting": "Verificando..."
     },
@@ -300,10 +317,10 @@
     }
   },
   "error": {
-    "title": "Algo sali\u00f3 mal",
-    "description": "Ocurri\u00f3 un error inesperado. Puedes intentar recargar la p\u00e1gina o hacer clic abajo para intentar recuperarte.",
+    "title": "Algo salió mal",
+    "description": "Ocurrió un error inesperado. Puedes intentar recargar la página o hacer clic abajo para intentar recuperarte.",
     "tryAgain": "Reintentar",
-    "reload": "Recargar p\u00e1gina"
+    "reload": "Recargar página"
   },
   "notifications": {
     "bell": "Notificaciones ({{count}} sin leer)",
@@ -312,12 +329,16 @@
     "empty": "No hay notificaciones aun"
   },
   "offline": {
-    "banner": "Est\u00e1s sin conexi\u00f3n. Los cambios no se guardar\u00e1n hasta que se restablezca tu conexi\u00f3n.",
-    "cachedData": "Estas sin conexion. Viendo datos en cache."
+    "banner": "Estás sin conexión. Los cambios no se guardarán hasta que se restablezca tu conexión.",
+    "cachedData": "Estas sin conexion. Viendo datos en cache.",
+    "syncing": "Sincronizando...",
+    "allSynced": "Todo sincronizado",
+    "pendingChanges": "{{count}} cambio pendiente",
+    "pendingChanges_other": "{{count}} cambios pendientes"
   },
   "notFound": {
     "code": "404",
-    "title": "P\u00e1gina no encontrada",
+    "title": "Página no encontrada",
     "goHome": "Ir al inicio"
   },
   "pwa": {
@@ -328,45 +349,45 @@
   },
   "landing": {
     "nav": {
-      "login": "Iniciar sesi\u00f3n",
+      "login": "Iniciar sesión",
       "getStarted": "Empezar"
     },
     "hero": {
       "titleLine1": "Tus Tareas.",
       "titleLine2": "Tu Servidor.",
       "titleHighlight": "Tus Reglas.",
-      "subtitle": "El gestor de tareas open-source para equipos que no pueden comprometer la soberan\u00eda de datos. Auto-hospeda en tu infraestructura, cumple normativas, entrega m\u00e1s r\u00e1pido.",
+      "subtitle": "El gestor de tareas open-source para equipos que no pueden comprometer la soberanía de datos. Auto-hospeda en tu infraestructura, cumple normativas, entrega más rápido.",
       "ctaPrimary": "Empieza Gratis",
       "ctaGithub": "Ver en GitHub"
     },
     "features": {
       "title": "Todo lo que necesitas para entregar",
-      "subtitle": "Funcionalidades potentes en una interfaz hermosa, dark-first, dise\u00f1ada para el enfoque.",
+      "subtitle": "Funcionalidades potentes en una interfaz hermosa, dark-first, diseñada para el enfoque.",
       "highlight": "entregar",
       "items": [
         {
           "title": "Tableros Kanban",
-          "description": "Organizaci\u00f3n visual de tareas con arrastrar y soltar. Ve tu flujo de trabajo de un vistazo."
+          "description": "Organización visual de tareas con arrastrar y soltar. Ve tu flujo de trabajo de un vistazo."
         },
         {
           "title": "Prioridades Inteligentes",
-          "description": "Enf\u00f3cate en lo importante con niveles de prioridad de baja a cr\u00edtica."
+          "description": "Enfócate en lo importante con niveles de prioridad de baja a crítica."
         },
         {
-          "title": "Captura R\u00e1pida",
-          "description": "Agrega tareas instant\u00e1neamente con una sola tecla. Nunca pierdas una idea."
+          "title": "Captura Rápida",
+          "description": "Agrega tareas instantáneamente con una sola tecla. Nunca pierdas una idea."
         },
         {
           "title": "Etiquetas Flexibles",
           "description": "Organiza a tu manera con etiquetas personalizadas y filtrado potente."
         },
         {
-          "title": "Registro de Auditor\u00eda",
-          "description": "Registro completo de actividades para cumplimiento. Cada acci\u00f3n rastreada y con marca de tiempo."
+          "title": "Registro de Auditoría",
+          "description": "Registro completo de actividades para cumplimiento. Cada acción rastreada y con marca de tiempo."
         },
         {
-          "title": "Dise\u00f1o Dark-First",
-          "description": "Interfaz hermosa hecha para el enfoque. F\u00e1cil para la vista, d\u00eda y noche."
+          "title": "Diseño Dark-First",
+          "description": "Interfaz hermosa hecha para el enfoque. Fácil para la vista, día y noche."
         }
       ]
     },
@@ -378,7 +399,7 @@
       "badge2": "Licencia MIT",
       "badge3": "Auto-Hospedable",
       "pitch": "Despliega en tu propia infraestructura en minutos.",
-      "noVendorLock": "Sin vendor lock-in. Ning\u00fan dato sale de tu red. Control total, siempre.",
+      "noVendorLock": "Sin vendor lock-in. Ningún dato sale de tu red. Control total, siempre.",
       "viewGithub": "Ver en GitHub"
     },
     "security": {
@@ -387,12 +408,12 @@
       "highlight": "industrias reguladas",
       "items": [
         {
-          "title": "Soberan\u00eda de Datos",
+          "title": "Soberanía de Datos",
           "description": "Tus datos se quedan en tus servidores. Sin acceso de terceros, sin dependencia de nube."
         },
         {
-          "title": "Registro de Auditor\u00eda",
-          "description": "Cada acci\u00f3n rastreada para cumplimiento. Buscable, filtrable, exportable."
+          "title": "Registro de Auditoría",
+          "description": "Cada acción rastreada para cumplimiento. Buscable, filtrable, exportable."
         },
         {
           "title": "Acceso por Roles",
@@ -400,7 +421,7 @@
         },
         {
           "title": "Listo para Cumplimiento",
-          "description": "Notas cifradas, revelaci\u00f3n de datos protegidos con justificaci\u00f3n y registro de auditor\u00eda completo."
+          "description": "Notas cifradas, revelación de datos protegidos con justificación y registro de auditoría completo."
         }
       ]
     },
@@ -410,7 +431,7 @@
       "steps": [
         {
           "title": "Clona y Despliega",
-          "description": "Auto-hospeda con Docker o despliega en Azure. Un comando para producci\u00f3n."
+          "description": "Auto-hospeda con Docker o despliega en Azure. Un comando para producción."
         },
         {
           "title": "Crea Tu Espacio",
@@ -418,20 +439,21 @@
         },
         {
           "title": "Cumple Normativas",
-          "description": "Registro de auditor\u00eda y notas cifradas integradas para tu seguridad."
+          "description": "Registro de auditoría y notas cifradas integradas para tu seguridad."
         }
       ]
     },
     "cta": {
-      "title": "\u00bfListo para controlar tu productividad?",
+      "title": "¿Listo para controlar tu productividad?",
       "subtitle": "Despliega LemonDo en tu infraestructura hoy. Open source, gratis para siempre.",
       "ctaPrimary": "Empezar",
       "ctaGithub": "Estrella en GitHub"
     },
     "footer": {
-      "tagline": "Gesti\u00f3n de tareas open-source para equipos que controlan sus datos.",
+      "tagline": "Gestión de tareas open-source para equipos que controlan sus datos.",
       "features": "Funcionalidades",
-      "security": "Seguridad"
+      "security": "Seguridad",
+      "story": "Nuestra Historia"
     }
   },
   "onboarding": {
@@ -449,5 +471,236 @@
     "dark": "Tema oscuro",
     "system": "Tema del sistema",
     "toggle": "Actual: {{label}}. Clic para {{next}}"
+  },
+  "story": {
+    "nav": "Nuestra Historia",
+    "hero": {
+      "titleLine1": "De Carpeta Vacía a",
+      "titleHighlight": "Producción",
+      "titleLine2": "en 3 Días",
+      "subtitle": "La historia de construir un gestor de tareas listo para producción y cumplimiento, con DDD, TDD estricto y una obsesión por hacer las cosas bien."
+    },
+    "vision": {
+      "title": "5 Documentos Antes de Una Línea de Código",
+      "highlight": "Una Línea",
+      "subtitle": "Todo gran producto comienza con un plan. Escribimos cinco documentos fundamentales antes de tocar una sola línea de código.",
+      "quote": "Planificar no es tiempo perdido. Es depuración comprimida.",
+      "items": [
+        {
+          "title": "Requisitos del Producto",
+          "description": "Definió el qué y el por qué. Tres personas, cinco checkpoints, criterios claros de éxito."
+        },
+        {
+          "title": "Investigación Tecnológica",
+          "description": "Evaluó .NET 10, React 19, Vite 7 — versiones bloqueadas antes de escribir código."
+        },
+        {
+          "title": "Escenarios de Usuario",
+          "description": "Storyboards de Sarah la freelancer, Marcus el líder de equipo y Diana la oficial de cumplimiento."
+        },
+        {
+          "title": "Modelo de Dominio",
+          "description": "Dos contextos delimitados diseñados por adelantado: Task (upstream) y Board (downstream conformista)."
+        },
+        {
+          "title": "Guías de Desarrollo",
+          "description": "Convenciones de nomenclatura, reglas de capas, metodología TDD — el contrato del equipo consigo mismo."
+        }
+      ]
+    },
+    "journey": {
+      "title": "5 Checkpoints, 5 Productos Entregables",
+      "highlight": "5 Productos Entregables",
+      "subtitle": "Cada checkpoint entregó una aplicación completa y funcional. Detente en cualquier punto y tienes algo real.",
+      "insight": "Cada checkpoint entrega una app completa. Detente en cualquier punto y tienes algo real.",
+      "checkpoints": [
+        {
+          "title": "Tareas Core",
+          "subtitle": "CP1 — La Base",
+          "description": "CRUD full-stack con DDD desde el primer día. Modo single-user, tablero kanban, vista de lista, arrastrar y soltar.",
+          "decision": "La columna determina el estado — una única fuente de verdad",
+          "tests": "242"
+        },
+        {
+          "title": "Auth y Seguridad",
+          "subtitle": "CP2 — Identidad",
+          "description": "JWT con cookies HttpOnly, aislamiento de usuario, acceso por roles, headers de seguridad.",
+          "decision": "Refresh via cookie, access token solo en memoria",
+          "tests": "388"
+        },
+        {
+          "title": "UX Rica",
+          "subtitle": "CP3 — Pulido",
+          "description": "Modo oscuro, filtros de prioridad, panel de detalles, reordenamiento drag-and-drop, i18n en 3 idiomas.",
+          "decision": "Ranks decimales dispersos para movimiento O(1)",
+          "tests": "434"
+        },
+        {
+          "title": "Listo para Producción",
+          "subtitle": "CP4 — Enterprise",
+          "description": "Registro de auditoría, notas cifradas, panel admin, despliegue Azure con Terraform, soporte dual de BD.",
+          "decision": "Patrón Result en vez de excepciones para lógica de dominio",
+          "tests": "668"
+        },
+        {
+          "title": "Deleite",
+          "subtitle": "CP5 — Experiencia",
+          "description": "PWA con soporte offline, tour de onboarding, landing pages, notificaciones push, analytics.",
+          "decision": "Cache via Service Worker para lecturas offline-first",
+          "tests": "700+"
+        }
+      ]
+    },
+    "arch": {
+      "title": "Dos Contextos Delimitados, Cero Compromisos",
+      "highlight": "Cero Compromisos",
+      "subtitle": "Arquitectura limpia con fronteras de capas estrictas. Cada dirección de import es intencional.",
+      "backendLabel": "Capas del Backend",
+      "frontendLabel": "Tiers del Frontend",
+      "backendLayers": [
+        "Dominio",
+        "Aplicación",
+        "Infraestructura",
+        "API"
+      ],
+      "frontendTiers": [
+        "Rutas",
+        "Páginas",
+        "Estado",
+        "Componentes"
+      ],
+      "decisions": [
+        "La columna determina el estado — una única fuente de verdad",
+        "Ranks decimales dispersos — movimiento O(1), sin drift de posición",
+        "Patrón Result, no excepciones — para lógica de negocio"
+      ]
+    },
+    "tech": {
+      "title": "Construido con las Mejores Herramientas",
+      "highlight": "Mejores Herramientas",
+      "subtitle": "Stack de vanguardia, bloqueado en versiones específicas, elegido para producción.",
+      "categories": {
+        "backend": "Backend",
+        "frontend": "Frontend",
+        "testing": "Testing",
+        "devops": "DevOps"
+      },
+      "items": {
+        "dotnet": {
+          "name": ".NET 10",
+          "description": "Runtime backend de alto rendimiento"
+        },
+        "aspire": {
+          "name": "Aspire",
+          "description": "Orquestación cloud-native"
+        },
+        "efcore": {
+          "name": "EF Core",
+          "description": "ORM de BD con migraciones"
+        },
+        "sqlite": {
+          "name": "SQLite + SQL Server",
+          "description": "Soporte dual de base de datos"
+        },
+        "react": {
+          "name": "React 19",
+          "description": "Framework de UI basado en componentes"
+        },
+        "vite": {
+          "name": "Vite 7",
+          "description": "Herramienta de build ultrárrápida"
+        },
+        "tailwind": {
+          "name": "Tailwind 4",
+          "description": "Framework CSS utility-first"
+        },
+        "shadcn": {
+          "name": "Shadcn/ui",
+          "description": "Componentes hermosos y accesibles"
+        },
+        "tanstack": {
+          "name": "TanStack Query",
+          "description": "Gestión de estado del servidor"
+        },
+        "zustand": {
+          "name": "Zustand",
+          "description": "Estado del cliente ligero"
+        },
+        "mstest": {
+          "name": "MSTest 4",
+          "description": "Tests unitarios e integración backend"
+        },
+        "fscheck": {
+          "name": "FsCheck",
+          "description": "Tests basados en propiedades para .NET"
+        },
+        "vitest": {
+          "name": "Vitest",
+          "description": "Runner de tests frontend rápido"
+        },
+        "fastcheck": {
+          "name": "fast-check",
+          "description": "Tests basados en propiedades para JS"
+        },
+        "playwright": {
+          "name": "Playwright",
+          "description": "Tests E2E cross-browser"
+        },
+        "azure": {
+          "name": "Azure",
+          "description": "Hosting y servicios en la nube"
+        },
+        "terraform": {
+          "name": "Terraform",
+          "description": "Infraestructura como código"
+        },
+        "ghactions": {
+          "name": "GitHub Actions",
+          "description": "Pipelines de CI/CD"
+        },
+        "docker": {
+          "name": "Docker",
+          "description": "Runtime de contenedores"
+        }
+      }
+    },
+    "numbers": {
+      "title": "Los Números Hablan",
+      "highlight": "Números",
+      "items": [
+        {
+          "value": "700+",
+          "label": "Tests",
+          "detail": "Backend + Frontend + E2E"
+        },
+        {
+          "value": "11",
+          "label": "Proyectos",
+          "detail": "Estructura de la solution .NET"
+        },
+        {
+          "value": "5",
+          "label": "Checkpoints",
+          "detail": "Cada uno entregable"
+        },
+        {
+          "value": "3",
+          "label": "Idiomas",
+          "detail": "EN, PT-BR, ES"
+        },
+        {
+          "value": "2",
+          "label": "Contextos",
+          "detail": "Task + Board (DDD)"
+        },
+        {
+          "value": "3",
+          "label": "Días",
+          "detail": "De carpeta vacía a producción"
+        }
+      ],
+      "ctaPrimary": "Velo en Acción",
+      "ctaGithub": "Lee el Código"
+    }
   }
 }

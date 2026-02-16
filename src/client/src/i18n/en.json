@@ -74,6 +74,23 @@
       "signOut": "Sign out",
       "signingOut": "Signing out..."
     },
+    "selfReveal": {
+      "popoverHint": "Your data is so secure, not even your own account can read it this easily. Verify your identity to peek behind the curtain.",
+      "revealButton": "Reveal my data",
+      "title": "Identity verification",
+      "description": "Re-enter your password to temporarily view your unredacted profile data.",
+      "revealedDescription": "Your unredacted profile data is shown below. It will auto-hide for your protection.",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "passwordError": "Incorrect password. Please try again.",
+      "genericError": "Something went wrong. Please try again.",
+      "submit": "Reveal",
+      "submitting": "Verifying...",
+      "emailLabel": "Email",
+      "nameLabel": "Display name",
+      "autoHide": "Auto-hiding in",
+      "hide": "Hide now"
+    },
     "devSwitcher": {
       "title": "Quick Login",
       "subtitle": "Development accounts",
@@ -313,7 +330,11 @@
   },
   "offline": {
     "banner": "You are offline. Changes will not be saved until your connection is restored.",
-    "cachedData": "You are offline. Viewing cached data."
+    "cachedData": "You are offline. Viewing cached data.",
+    "syncing": "Syncing...",
+    "allSynced": "All synced",
+    "pendingChanges": "{{count}} change pending",
+    "pendingChanges_other": "{{count}} changes pending"
   },
   "notFound": {
     "code": "404",

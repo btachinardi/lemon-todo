@@ -46,4 +46,7 @@ public enum AuditAction
 
     /// <summary>A task's sensitive note was viewed by its owner or revealed by an admin.</summary>
     SensitiveNoteRevealed,
+
+    /// <summary>A user revealed their own protected profile data (email/display name) via password re-authentication.</summary>
+    OwnProfileRevealed,
 }
