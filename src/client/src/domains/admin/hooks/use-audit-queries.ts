@@ -13,5 +13,6 @@ export function useAuditLog(filters?: AuditLogFilters) {
   return useQuery({
     queryKey: auditKeys.search(filters),
     queryFn: () => auditApi.searchAuditLog(filters),
+    staleTime: 1000 * 5,
   });
 }
