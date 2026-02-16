@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
 import {
@@ -203,12 +203,56 @@ function TaskDetailContent({
     setEditingTitle(false);
   }, [task, titleDraft, onUpdateTitle]);
 
-  const handleDescSave = useCallback(() => {
+  // --- Debounced auto-save for description ---
+  // Use refs so the flush function is stable and always reads the latest values.
+  const descDraftRef = useRef(descDraft);
+  descDraftRef.current = descDraft;
+  const taskRef = useRef(task);
+  taskRef.current = task;
+  const onUpdateDescriptionRef = useRef(onUpdateDescription);
+  onUpdateDescriptionRef.current = onUpdateDescription;
+
+  // Track the last description value we've sent to the server, to avoid
+  // duplicate saves when both the debounce timer and blur fire in sequence.
+  const lastSavedDescRef = useRef(task?.description ?? null);
+
+  // Update the "last saved" baseline when the server data changes
+  // (e.g. after a mutation round-trip).
+  if (task && (task.description ?? null) !== lastSavedDescRef.current) {
+    lastSavedDescRef.current = task.description ?? null;
+  }
+
+  const descTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Stable flush function — cancels any pending debounce and saves immediately
+  // if the current draft differs from the last saved value.
+  const flushDescSave = useCallback(() => {
+    clearTimeout(descTimerRef.current);
+    const currentTask = taskRef.current;
+    if (!currentTask) return;
+    const newDesc = descDraftRef.current.trim() || null;
+    if (newDesc === lastSavedDescRef.current) return;
+    lastSavedDescRef.current = newDesc;
+    onUpdateDescriptionRef.current(newDesc);
+  }, []);
+
+  // Auto-save description 1 second after the user stops typing.
+  useEffect(() => {
     if (!task) return;
     const newDesc = descDraft.trim() || null;
-    if (newDesc === (task.description ?? null)) return;
-    onUpdateDescription(newDesc);
-  }, [task, descDraft, onUpdateDescription]);
+    if (newDesc === lastSavedDescRef.current) return;
+
+    descTimerRef.current = setTimeout(flushDescSave, 1000);
+    return () => clearTimeout(descTimerRef.current);
+  }, [descDraft, task, flushDescSave]);
+
+  // Flush any pending debounced save on component unmount (e.g. route change).
+  useEffect(() => {
+    return () => flushDescSave();
+  }, [flushDescSave]);
+
+  // onBlur handler: immediately flush the debounce (same as pressing "save").
+  const handleDescSave = flushDescSave;
 
   const handleAddTag = useCallback(() => {
     if (!task) return;
