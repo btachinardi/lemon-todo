@@ -10,7 +10,7 @@ vi.mock('../../api/audit.api', () => ({
     searchAuditLog: vi.fn().mockResolvedValue({
       items: [],
       page: 1,
-      pageSize: 20,
+      pageSize: 10,
       totalCount: 0,
       totalPages: 0,
       hasPreviousPage: false,

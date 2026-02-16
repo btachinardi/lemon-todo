@@ -8,7 +8,7 @@ public sealed record ListUsersAdminQuery(
     string? Search = null,
     string? Role = null,
     int Page = 1,
-    int PageSize = 20);
+    int PageSize = 10);
 
 /// <summary>Handles <see cref="ListUsersAdminQuery"/> by querying Identity users with redacted protected data.</summary>
 public sealed class ListUsersAdminQueryHandler(IAdminUserQuery adminUserQuery)

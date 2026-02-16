@@ -50,7 +50,7 @@ public static class AdminEndpoints
         string? search = null,
         string? role = null,
         int page = 1,
-        int pageSize = 20,
+        int pageSize = 10,
         CancellationToken ct = default)
     {
         var result = await handler.HandleAsync(
@@ -118,7 +118,7 @@ public static class AdminEndpoints
         Guid? actorId = null,
         string? resourceType = null,
         int page = 1,
-        int pageSize = 20,
+        int pageSize = 10,
         CancellationToken ct = default)
     {
         var result = await handler.HandleAsync(

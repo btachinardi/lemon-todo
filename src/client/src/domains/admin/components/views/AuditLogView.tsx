@@ -43,7 +43,7 @@ export function AuditLogView() {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<AuditLogFilters>({
     page: 1,
-    pageSize: 20,
+    pageSize: 10,
   });
 
   const { data, isLoading } = useAuditLog(filters);

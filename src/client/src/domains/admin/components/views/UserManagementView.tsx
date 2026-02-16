@@ -47,6 +47,7 @@ export function UserManagementView() {
     search: search || undefined,
     role: roleFilter !== 'All' ? roleFilter : undefined,
     page,
+    pageSize: 10,
   };
 
   const { data, isLoading } = useAdminUsers(params);

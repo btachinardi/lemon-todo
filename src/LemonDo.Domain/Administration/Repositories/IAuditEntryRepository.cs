@@ -19,6 +19,6 @@ public interface IAuditEntryRepository
         Guid? actorId = null,
         string? resourceType = null,
         int page = 1,
-        int pageSize = 20,
+        int pageSize = 10,
         CancellationToken cancellationToken = default);
 }

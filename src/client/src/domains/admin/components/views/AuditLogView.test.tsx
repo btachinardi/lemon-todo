@@ -40,7 +40,7 @@ function makePagedResponse(overrides: Partial<PagedAuditEntries> = {}): PagedAud
     items: [makeEntry()],
     totalCount: 1,
     page: 1,
-    pageSize: 20,
+    pageSize: 10,
     totalPages: 1,
     hasNextPage: false,
     hasPreviousPage: false,
@@ -53,6 +53,16 @@ function mockUseAuditLog(data: PagedAuditEntries | undefined, isLoading = false)
 }
 
 describe('AuditLogView', () => {
+  describe('default page size', () => {
+    it('should request pageSize of 10 on initial render', () => {
+      mockUseAuditLog(makePagedResponse());
+      render(<AuditLogView />);
+
+      const firstCall = (useAuditLog as Mock).mock.calls[0]?.[0];
+      expect(firstCall).toMatchObject({ pageSize: 10 });
+    });
+  });
+
   describe('pagination', () => {
     it('should show pagination footer when data has a single page', () => {
       mockUseAuditLog(makePagedResponse({ totalCount: 5, totalPages: 1 }));

@@ -55,7 +55,7 @@ function makePagedResponse(overrides: Partial<PagedAdminUsers> = {}): PagedAdmin
     items: [makeUser()],
     totalCount: 1,
     page: 1,
-    pageSize: 20,
+    pageSize: 10,
     totalPages: 1,
     hasNextPage: false,
     hasPreviousPage: false,
@@ -68,6 +68,16 @@ function mockUseAdminUsers(data: PagedAdminUsers | undefined, isLoading = false)
 }
 
 describe('UserManagementView', () => {
+  describe('default page size', () => {
+    it('should request pageSize of 10 on initial render', () => {
+      mockUseAdminUsers(makePagedResponse());
+      render(<UserManagementView />);
+
+      const firstCall = (useAdminUsers as Mock).mock.calls[0]?.[0];
+      expect(firstCall).toMatchObject({ pageSize: 10 });
+    });
+  });
+
   describe('pagination', () => {
     it('should show pagination footer when data has a single page', () => {
       mockUseAdminUsers(makePagedResponse({ totalCount: 3, totalPages: 1 }));

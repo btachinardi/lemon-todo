@@ -14,7 +14,7 @@ public sealed record SearchAuditLogQuery(
     Guid? ActorId = null,
     string? ResourceType = null,
     int Page = 1,
-    int PageSize = 20);
+    int PageSize = 10);
 
 /// <summary>Handles <see cref="SearchAuditLogQuery"/> by querying the audit entry repository.</summary>
 public sealed class SearchAuditLogQueryHandler(
