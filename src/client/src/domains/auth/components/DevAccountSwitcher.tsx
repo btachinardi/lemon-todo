@@ -97,7 +97,7 @@ export function DevAccountSwitcher() {
       <p className="text-center text-[11px] text-muted-foreground/60">
         {t('auth.devSwitcher.subtitle')}
       </p>
-      <div className="grid gap-2">
+      <div className="grid gap-2 overflow-hidden">
         {DEV_ACCOUNTS.map((account) => {
           const Icon = account.icon;
           const isActive = switchingRole === account.roleKey;
