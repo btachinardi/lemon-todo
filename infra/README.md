@@ -221,6 +221,12 @@ The refresh token cookie uses `SameSite=Strict` and `Path=/api/auth`. Since
 domain (`btas.dev`), they are "same-site" — cookies are sent automatically.
 No cookie domain configuration changes are needed.
 
+## SPA Routing
+
+The frontend requires `src/client/public/staticwebapp.config.json` with a
+`navigationFallback` rewrite to `/index.html`. Without this, refreshing on
+client-side routes (e.g. `/login`, `/list`) returns 404 from Azure Static Web Apps.
+
 ## Security Notes
 
 - All secrets stored in Key Vault, referenced via `@Microsoft.KeyVault()` syntax

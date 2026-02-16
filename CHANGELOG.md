@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **500 on registration** — AES-256-GCM encryption key was 33 bytes (not 32); regenerated proper 32-byte key
+- **SPA route 404 on refresh** — added `staticwebapp.config.json` with `navigationFallback` for Azure Static Web Apps
+
 ## [0.4.1] - 2026-02-16
 
 Custom domains for Azure deployment with managed TLS certificates.

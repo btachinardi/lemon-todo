@@ -1618,11 +1618,20 @@ Hotfix release adding custom domain support for the Azure deployment. This is th
 - Dual CORS origins for seamless transition
 - CI/CD pipeline updated with `VITE_API_BASE_URL` for production builds
 
+### Post-Release Fixes
+
+Two issues discovered after the v0.4.1 deploy:
+
+1. **500 on POST /api/auth/register** — The `FieldEncryption:Key` was a hand-typed base64 string that decoded to 33 bytes instead of 32. AES-256-GCM requires exactly 32 bytes. Fix: generated a proper `RandomNumberGenerator.GetBytes(32)` key, updated Container App secret + Key Vault + tfvars.
+2. **404 on SPA route refresh** — Azure Static Web Apps returns 404 for client-side routes (e.g. `/login`) because there's no physical file at that path. Fix: added `staticwebapp.config.json` with `navigationFallback` rewriting non-asset routes to `/index.html`.
+
 ### Hotfix Lessons
 
 1. **Terraform `local-exec` on Windows defaults to `cmd.exe`** — bash-style `\` continuations break. Always set `interpreter = ["bash", "-c"]`.
 2. **Azure Container App custom domains can't use `azapi_update_resource`** — it does a full PUT requiring all secrets. Azure CLI commands are the only viable automation path.
 3. **Managed certificate provisioning needs polling** — cert goes from Pending to Succeeded in ~60 seconds; attempting to bind before that fails.
+4. **Always use `RandomNumberGenerator.GetBytes(N)` for encryption keys** — never hand-type a base64 string; length is easy to get wrong.
+5. **Azure Static Web Apps need `staticwebapp.config.json`** for SPA routing — without `navigationFallback`, refreshing on a client route returns 404.
 
 ---
 
