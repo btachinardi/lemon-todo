@@ -36,6 +36,12 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             >
               <GithubIcon className="size-4" />
             </a>
+            <Link
+              to="/story"
+              className="rounded-md px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {t('story.nav')}
+            </Link>
             <LanguageSwitcher />
             <ThemeToggle
               theme={theme}
@@ -77,6 +83,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <a href="#features" className="hover:text-foreground">{t('landing.footer.features')}</a>
             <a href="#security" className="hover:text-foreground">{t('landing.footer.security')}</a>
+            <Link to="/story" className="hover:text-foreground">{t('landing.footer.story')}</Link>
             <a
               href="https://github.com/btachinardi/lemon-todo"
               target="_blank"

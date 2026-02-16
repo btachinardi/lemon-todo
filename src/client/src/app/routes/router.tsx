@@ -1,6 +1,7 @@
 import { createBrowserRouter, Outlet } from 'react-router';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { LandingPage } from '../pages/LandingPage';
+import { StoryPage } from '../pages/StoryPage';
 import { LoginRoute } from './LoginRoute';
 import { RegisterRoute } from './RegisterRoute';
 import { PublicRoute } from './PublicRoute';
@@ -27,6 +28,14 @@ export const router = createBrowserRouter([
           <LandingPage />
         </LandingLayout>
       </PublicRoute>
+    ),
+  },
+  {
+    path: '/story',
+    element: (
+      <LandingLayout>
+        <StoryPage />
+      </LandingLayout>
     ),
   },
   {
