@@ -5,6 +5,7 @@ using LemonDo.Domain.Administration.Entities;
 using LemonDo.Domain.Boards.Entities;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.Entities;
+using LemonDo.Domain.Notifications.Entities;
 using LemonDo.Infrastructure.Events;
 using LemonDo.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -53,6 +54,9 @@ public sealed class LemonDoDbContext : IdentityDbContext<ApplicationUser, Identi
 
     /// <summary>Gets the DbSet for audit trail entries.</summary>
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+
+    /// <summary>Gets the DbSet for in-app notifications.</summary>
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     /// <summary>Applies Identity schema and all EF Core entity configurations from this assembly.</summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)

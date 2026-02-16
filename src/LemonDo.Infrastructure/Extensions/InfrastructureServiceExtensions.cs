@@ -9,8 +9,10 @@ using LemonDo.Infrastructure.Security;
 using LemonDo.Domain.Administration.Repositories;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Identity.Repositories;
+using LemonDo.Domain.Notifications.Repositories;
 using LemonDo.Domain.Tasks.Repositories;
 using LemonDo.Infrastructure.Analytics;
+using LemonDo.Infrastructure.Notifications;
 using LemonDo.Infrastructure.Events;
 using LemonDo.Infrastructure.Identity;
 using LemonDo.Infrastructure.Persistence;
@@ -49,6 +51,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IBoardRepository, BoardRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IAuditEntryRepository, AuditEntryRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
 
         // JWT token services
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
@@ -80,6 +83,9 @@ public static class InfrastructureServiceExtensions
 
         // Analytics
         services.AddSingleton<IAnalyticsService, ConsoleAnalyticsService>();
+
+        // Background services
+        services.AddHostedService<DueDateReminderService>();
 
         // Field encryption for protected data at rest
         services.AddSingleton<IFieldEncryptionService, AesFieldEncryptionService>();

@@ -5,6 +5,7 @@ using LemonDo.Application.Administration.Commands;
 using LemonDo.Application.Administration.EventHandlers;
 using LemonDo.Application.Administration.Queries;
 using LemonDo.Application.Analytics.EventHandlers;
+using LemonDo.Application.Notifications.EventHandlers;
 using LemonDo.Application.Boards.Commands;
 using LemonDo.Application.Boards.EventHandlers;
 using LemonDo.Application.Common;
@@ -81,6 +82,9 @@ public static class ApplicationServiceExtensions
         services.AddScoped<IDomainEventHandler<TaskCreatedEvent>, AnalyticsOnTaskCreated>();
         services.AddScoped<IDomainEventHandler<TaskStatusChangedEvent>, AnalyticsOnTaskCompleted>();
         services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, AnalyticsOnUserRegistered>();
+
+        // Notification event handlers
+        services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, WelcomeNotificationOnUserRegistered>();
 
         return services;
     }

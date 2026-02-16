@@ -248,6 +248,7 @@ app.MapBoardEndpoints();
 app.MapAdminEndpoints();
 app.MapAnalyticsEndpoints();
 app.MapOnboardingEndpoints();
+app.MapNotificationEndpoints();
 
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));
 
