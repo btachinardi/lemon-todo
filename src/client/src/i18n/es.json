@@ -312,6 +312,12 @@
     "title": "P\u00e1gina no encontrada",
     "goHome": "Ir al inicio"
   },
+  "pwa": {
+    "installPrompt": "Instala Lemon.DO para una experiencia más rápida",
+    "install": "Instalar",
+    "updateAvailable": "Una nueva versión está disponible",
+    "update": "Actualizar"
+  },
   "theme": {
     "light": "Tema claro",
     "dark": "Tema oscuro",

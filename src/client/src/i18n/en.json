@@ -312,6 +312,12 @@
     "title": "Page not found",
     "goHome": "Go home"
   },
+  "pwa": {
+    "installPrompt": "Install Lemon.DO for a faster experience",
+    "install": "Install",
+    "updateAvailable": "A new version is available",
+    "update": "Update"
+  },
   "theme": {
     "light": "Light theme",
     "dark": "Dark theme",

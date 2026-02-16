@@ -5,6 +5,7 @@ import './i18n/config'
 import App from './App.tsx'
 import { captureError } from './lib/error-logger'
 import { initNetworkMonitoring } from './lib/network-status'
+import { initPWA } from './lib/pwa'
 import { initWebVitals } from './lib/web-vitals'
 
 // Global handlers for errors that escape React's error boundaries
@@ -17,6 +18,7 @@ window.addEventListener('error', (event) => {
 });
 
 initNetworkMonitoring();
+initPWA();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
