@@ -1,6 +1,7 @@
 import type { ApiError } from '@/domains/tasks/types/api.types';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 import { attemptTokenRefresh } from './token-refresh';
+import { generateTraceparent } from './traceparent';
 
 /** Accepted value types for query-string parameters. */
 type ParamValue = string | number | boolean | null | undefined;
@@ -34,6 +35,7 @@ function buildHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Correlation-Id': generateCorrelationId(),
+    traceparent: generateTraceparent(),
   };
 
   const token = getAccessToken();

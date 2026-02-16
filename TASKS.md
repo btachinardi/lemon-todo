@@ -149,17 +149,17 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| CP4.1 | Backend OpenTelemetry traces + metrics | PENDING | Aspire Dashboard integration |
-| CP4.1b | Frontend OpenTelemetry (browser SDK) | PENDING | OTel Browser SDK → OTLP HTTP → Aspire Dashboard, distributed tracing |
-| CP4.2 | Structured logging (Serilog) | PENDING | Correlation IDs, request context, PII-safe |
-| CP4.3 | PII redaction in admin views | PENDING | Default-masked, reveal with audit log entry |
-| CP4.4 | Audit trail | PENDING | Log all data access and mutations |
-| CP4.5 | Admin panel (user management) | PENDING | AdminLayout, user list, role assignment |
-| CP4.6 | Admin panel (audit log viewer) | PENDING | Filterable, searchable audit log table |
-| CP4.7 | SystemAdmin role | PENDING | Third role with elevated privileges |
-| CP4.8 | i18n setup (en + pt-BR) | PENDING | react-i18next, all user-facing strings |
-| CP4.9 | Rate limiting on auth endpoints | PENDING | Configurable per-IP limits |
-| CP4.10 | Data encryption at rest (PII fields) | PENDING | AES-256 for sensitive fields |
+| CP4.1 | Backend OpenTelemetry traces + metrics | DONE | Aspire Dashboard integration (done in CP1 observability commit) |
+| CP4.1b | Frontend OpenTelemetry (traceparent) | DONE | W3C traceparent propagation from frontend to backend, zero new deps |
+| CP4.2 | Structured logging (Serilog) | DONE | Serilog with PII masking, correlation ID enrichment, console + OTel sinks |
+| CP4.3 | PII redaction in admin views | DONE | Default-masked via PiiRedactor, SystemAdmin reveal with audit trail + 30s auto-hide |
+| CP4.4 | Audit trail | DONE | Administration bounded context, AuditEntry entity, domain event handlers, paginated search |
+| CP4.5 | Admin panel (user management) | DONE | AdminLayout, paginated user list, role assignment, deactivate/reactivate, AdminRoute guard |
+| CP4.6 | Admin panel (audit log viewer) | DONE | Filterable by date/action/resource, paginated table with color-coded action badges |
+| CP4.7 | SystemAdmin role | DONE | Third role with RequireAdminOrAbove + RequireSystemAdmin authorization policies |
+| CP4.8 | i18n setup (en + pt-BR) | DONE | i18next + i18next-browser-languagedetector, 158 keys in en.json + pt-BR.json, LanguageSwitcher |
+| CP4.9 | Rate limiting on auth endpoints | DONE | Configurable per-IP limits (done in CP2 security hardening) |
+| CP4.10 | Data encryption at rest (PII fields) | DONE | AES-256-GCM field encryption, EncryptedEmail + EncryptedDisplayName columns |
 | | **Deliverable** | | Production-hardened app with observability and compliance readiness |
 
 ---
@@ -258,6 +258,13 @@
 | 2026-02-15 | react-day-picker for calendar (Shadcn/ui default) | Shadcn Calendar component is built on react-day-picker; using the standard primitive |
 | 2026-02-15 | CSS animate-fade-in on kanban cards (NFR-011.1) | New DOM elements (new tasks) get fade-in animation via CSS animation-fill-mode:both. React reconciliation preserves existing elements, so only new cards animate. TaskListView already had animate-fade-in-up. |
 | 2026-02-15 | v0.3.0 release via gitflow | CP3 (Rich UX & Polish) release. 478 tests (262 backend + 161 frontend + 55 E2E). Dark mode, filter bar, task detail sheet, loading skeletons, empty states, error boundaries, toasts, micro-animations. |
+| 2026-02-16 | Serilog over built-in logging | Structured JSON logging, PII destructuring policy, correlation ID enrichment via LogContext |
+| 2026-02-16 | SystemAdmin as third role | Separate from Admin for elevated ops (role assignment, deactivation, PII reveal). Two policies: RequireAdminOrAbove, RequireSystemAdmin |
+| 2026-02-16 | Administration bounded context for audit | AuditEntry entity with action enum, domain event handlers create entries on key actions (login, register, task CRUD, role changes) |
+| 2026-02-16 | AES-256-GCM for PII encryption at rest | Random 12-byte IV prepended to ciphertext, separate EncryptedEmail/EncryptedDisplayName columns alongside Identity columns (Identity uses NormalizedEmail for lookups) |
+| 2026-02-16 | PII redacted by default in admin views | PiiRedactor masks emails/names, SystemAdmin reveal creates PiiRevealed audit entry, 30-second auto-hide in UI |
+| 2026-02-16 | i18next over react-intl for i18n | Simpler API, namespace support, browser language detection, localStorage persistence |
+| 2026-02-16 | Manual traceparent over OTel Browser SDK | Zero new npm deps, W3C Trace Context format, sufficient for distributed tracing correlation |
 
 ---
 
@@ -290,7 +297,13 @@
   - Micro-animations: fade-in for kanban cards, draw-check + bounce for completion checkbox
   - New Shadcn/ui primitives: Sheet, Calendar, Popover, Label
   - E2E: 13 new tests (detail sheet, filters, theme toggle) + 5 existing tests fixed for CP3 changes
-- **Checkpoint 4**: NOT STARTED (Production Hardening)
+- **Checkpoint 4**: DONE (Production Hardening - 321 backend + 164 frontend = 485 tests)
+  - Observability: Serilog structured logging, PII masking, W3C traceparent propagation
+  - Security: AES-256-GCM field encryption for PII, SystemAdmin role with authorization policies
+  - Audit: Administration bounded context with AuditEntry entity and domain event handlers
+  - Admin panel: User management (list, search, roles, deactivate) + audit log viewer (filters, pagination)
+  - PII redaction: Default-masked in admin views, SystemAdmin reveal with audit trail
+  - i18n: i18next with en + pt-BR (158 translation keys), LanguageSwitcher component
 - **Checkpoint 5**: NOT STARTED (Advanced & Delight)
 
 ---
@@ -386,3 +399,16 @@
 | e298324 | feat(tasks): add TaskDetailSheet with inline editing | CP3 |
 | c5e8be3 | feat(tasks): enhance task components with DnD, toasts, and responsive UI | CP3 |
 | 9d072dd | feat(client): wire CP3 features into app shell | CP3 |
+| ad5c52c | merge: feature/cp3-rich-ux into develop — CP3 Rich UX | CP3 |
+| c791563 | chore(release): prepare v0.3.0 | Release |
+| b71d9fd | merge: back-merge release/0.3.0 into develop | Release |
+| 248de48 | feat(logging): add Serilog with PII masking and correlation enrichment | CP4 |
+| bd233de | feat(auth): add SystemAdmin role with authorization policies | CP4 |
+| 4e74cd5 | feat(audit): add audit trail with domain event handlers and Administration context | CP4 |
+| 871b9c7 | feat(admin): add user management queries and admin endpoints | CP4 |
+| 3855aa4 | feat(admin-ui): add AdminLayout, UserManagementView, and admin routing | CP4 |
+| 3d6d99d | feat(security): add AES-256-GCM field encryption for PII data at rest | CP4 |
+| 3fcda6f | feat(pii): add PII redaction and reveal with audit logging | CP4 |
+| 1d3bec3 | feat(audit-ui): add audit log viewer with filters and pagination | CP4 |
+| 5240f4c | feat(i18n): add i18next with en + pt-BR translations across all components | CP4 |
+| 8172d24 | feat(otel): add W3C traceparent propagation from frontend to backend | CP4 |

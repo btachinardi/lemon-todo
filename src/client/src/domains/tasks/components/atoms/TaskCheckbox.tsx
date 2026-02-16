@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LoaderIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +15,8 @@ interface TaskCheckboxProps {
  * and scale bounce. Used for task completion toggling.
  */
 export const TaskCheckbox = memo(function TaskCheckbox({ checked, onToggle, isLoading, className }: TaskCheckboxProps) {
+  const { t } = useTranslation();
+
   if (isLoading) {
     return (
       <div className={cn('flex size-5 shrink-0 items-center justify-center', className)}>
@@ -35,7 +38,7 @@ export const TaskCheckbox = memo(function TaskCheckbox({ checked, onToggle, isLo
         'transition-transform active:scale-90',
         className,
       )}
-      aria-label={checked ? 'Mark as incomplete' : 'Mark as complete'}
+      aria-label={checked ? t('tasks.checkbox.markIncomplete') : t('tasks.checkbox.markComplete')}
     >
       <svg viewBox="0 0 20 20" className="size-5">
         {/* Circle */}

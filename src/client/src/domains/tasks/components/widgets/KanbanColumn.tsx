@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -34,6 +35,7 @@ export const KanbanColumn = memo(function KanbanColumn({
   className,
   style,
 }: KanbanColumnProps) {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
 
@@ -69,7 +71,7 @@ export const KanbanColumn = memo(function KanbanColumn({
             ))}
             {tasks.length === 0 && (
               <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-border py-8 text-center">
-                <p className="text-sm text-muted-foreground">No tasks</p>
+                <p className="text-sm text-muted-foreground">{t('tasks.column.noTasks')}</p>
               </div>
             )}
           </div>

@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertCircleIcon } from 'lucide-react';
 import { toastApiError } from '@/lib/toast-helpers';
 import { Button } from '@/ui/button';
@@ -19,6 +20,7 @@ import { TaskStatus } from '@/domains/tasks/types/task.types';
 
 /** Kanban board page with quick-add form and toggle-complete support. */
 export function TaskBoardPage() {
+  const { t } = useTranslation();
   const boardQuery = useDefaultBoardQuery();
   const tasksQuery = useTasksQuery();
   const createTask = useCreateTask();
@@ -56,28 +58,28 @@ export function TaskBoardPage() {
       setTogglingTaskId(id);
       const mutation = task.status === TaskStatus.Done ? uncompleteTask : completeTask;
       mutation.mutate(id, {
-        onError: (error: Error) => toastApiError(error, 'Could not update task. Try again.'),
+        onError: (error: Error) => toastApiError(error, t('tasks.errors.updateTask')),
         onSettled: () => setTogglingTaskId(null),
       });
     },
-    [allTasks, completeTask, uncompleteTask],
+    [allTasks, completeTask, uncompleteTask, t],
   );
 
   const handleMoveTask = useCallback(
     (taskId: string, columnId: string, previousTaskId: string | null, nextTaskId: string | null) =>
       moveTask.mutate(
         { id: taskId, request: { columnId, previousTaskId, nextTaskId } },
-        { onError: (error: Error) => toastApiError(error, 'Could not move task. Try again.') },
+        { onError: (error: Error) => toastApiError(error, t('tasks.errors.moveTask')) },
       ),
-    [moveTask],
+    [moveTask, t],
   );
 
   const handleCreateTask = useCallback(
     (request: CreateTaskRequest) =>
       createTask.mutate(request, {
-        onError: (error: Error) => toastApiError(error, 'Could not save task. Try again.'),
+        onError: (error: Error) => toastApiError(error, t('tasks.errors.saveTask')),
       }),
-    [createTask],
+    [createTask, t],
   );
 
   const handleCloseDetail = useCallback(() => setSelectedTaskId(null), []);
@@ -97,8 +99,8 @@ export function TaskBoardPage() {
           <AlertCircleIcon className="size-8 text-destructive" />
         </div>
         <div className="text-center">
-          <p className="text-lg font-semibold">Could not load your board</p>
-          <p className="mt-1 text-sm text-muted-foreground">Check your connection and try again.</p>
+          <p className="text-lg font-semibold">{t('tasks.errors.loadBoard')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('common.error.connection')}</p>
         </div>
         <Button
           variant="outline"
@@ -107,7 +109,7 @@ export function TaskBoardPage() {
             tasksQuery.refetch();
           }}
         >
-          Try Again
+          {t('common.tryAgain')}
         </Button>
       </div>
     );

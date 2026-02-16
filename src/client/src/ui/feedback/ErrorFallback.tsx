@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/ui/card';
 
@@ -13,14 +14,16 @@ interface ErrorFallbackProps {
  * Lives in the Design System tier — no domain knowledge, pure visual presentation.
  */
 export function ErrorFallback({ error, onReset }: ErrorFallbackProps) {
+  const { t } = useTranslation();
+
   return (
     <Card className="mx-auto mt-12 max-w-md">
       <CardHeader>
-        <CardTitle>Something went wrong</CardTitle>
+        <CardTitle>{t('error.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          An unexpected error occurred. You can try reloading the page or click below to attempt recovery.
+          {t('error.description')}
         </p>
         {import.meta.env.DEV && (
           <pre className="mt-4 overflow-auto rounded-lg bg-secondary p-3 font-mono text-xs text-muted-foreground">
@@ -30,10 +33,10 @@ export function ErrorFallback({ error, onReset }: ErrorFallbackProps) {
       </CardContent>
       <CardFooter className="gap-2">
         <Button onClick={onReset} variant="default">
-          Try again
+          {t('error.tryAgain')}
         </Button>
         <Button onClick={() => window.location.reload()} variant="outline">
-          Reload page
+          {t('error.reload')}
         </Button>
       </CardFooter>
     </Card>

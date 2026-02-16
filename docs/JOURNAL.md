@@ -1040,11 +1040,85 @@ Third release, covering Checkpoint 3. The app now has dark mode, a filter bar, t
 
 ---
 
+## Checkpoint 4: Production Hardening
+
+**Date: February 16, 2026**
+
+All 10 CP4 items implemented across 10 atomic commits on `feature/cp4-production-hardening`, adding 59 new backend tests and 3 new frontend tests.
+
+### 4.1 What Was Built
+
+**Serilog Structured Logging (CP4.2)**: Replaced built-in logging with Serilog. Added `PiiMaskingEnricher` that auto-masks properties named `Email`, `Password`, `DisplayName` etc. Correlation ID pushed to `LogContext` via middleware. Console + OpenTelemetry sinks configured.
+
+**SystemAdmin Role (CP4.7)**: Third role tier with two authorization policies: `RequireAdminOrAbove` (Admin | SystemAdmin) and `RequireSystemAdmin` (SystemAdmin only). Roles seeded on startup alongside User and Admin.
+
+**Audit Trail (CP4.4)**: New Administration bounded context with `AuditEntry` entity tracking security-relevant actions. Domain event handlers create audit entries for user registration, login, task creation/deletion/completion, role changes, and PII reveals. `IRequestContext` captures IP address and user agent per HTTP request. Paginated `SearchAuditLogQuery` with filters.
+
+**Admin Panel (CP4.5)**: Backend admin endpoints for user management (list, search, assign/remove roles, deactivate/reactivate). Frontend `AdminLayout` with sidebar navigation, `UserManagementView` with paginated table, role badges, action dropdowns, and `RoleAssignmentDialog`. `AdminRoute` guard checks Admin/SystemAdmin roles.
+
+**Data Encryption at Rest (CP4.10)**: `AesFieldEncryptionService` implementing AES-256-GCM with random 12-byte IV prepended to ciphertext. `EncryptedEmail` and `EncryptedDisplayName` columns added to `AspNetUsers` alongside Identity's existing columns (Identity uses `NormalizedEmail` for lookups, so no breaking changes). Key from configuration (`Encryption:FieldEncryptionKey`).
+
+**PII Redaction (CP4.3)**: `PiiRedactor` utility masks emails (`j***@example.com`) and names in admin views by default. SystemAdmin can reveal real values via `POST /api/admin/users/{id}/reveal`, which decrypts encrypted columns and creates a `PiiRevealed` audit entry. UI shows revealed values with amber highlight and 30-second auto-hide.
+
+**Audit Log Viewer (CP4.6)**: `GET /api/admin/audit` endpoint with date range, action type, actor, and resource type filters. Frontend `AuditLogView` with Shadcn Select/Input/Table components and color-coded action badges (green for creates, red for deletes, amber for role changes, purple for PII reveals).
+
+**i18n (CP4.8)**: i18next with `i18next-browser-languagedetector` for automatic language detection. 158 translation keys in `en.json` and `pt-BR.json` organized by domain (`auth.login.title`, `tasks.filter.search`, `admin.users.title`, etc.). All 40+ frontend components updated with `useTranslation()` + `t()`. `LanguageSwitcher` dropdown in dashboard footer. Test setup uses dedicated `i18n-setup.ts` without browser detection.
+
+**Frontend OTel (CP4.1b)**: W3C `traceparent` header (`00-{traceId(32hex)}-{parentId(16hex)}-01`) generated on every API request via `generateTraceparent()` in a dedicated `traceparent.ts` module. Uses native `crypto.getRandomValues()` — zero new npm dependencies.
+
+### 4.2 New Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `Serilog.AspNetCore` | latest | Structured logging framework |
+| `Serilog.Sinks.Console` | latest | Console output with JSON formatting |
+| `Serilog.Sinks.OpenTelemetry` | latest | OTel log pipeline integration |
+| `i18next` | 25.x | Frontend internationalization framework |
+| `react-i18next` | 16.x | React bindings for i18next |
+| `i18next-browser-languagedetector` | 8.x | Browser language auto-detection |
+
+### 4.3 Architecture Additions
+
+**Administration Bounded Context**: New domain context (`LemonDo.Domain.Administration`) with `AuditEntry` entity, `AuditAction` enum, and `IAuditEntryRepository`. Application layer has event handlers (`AuditOnUserRegistered`, `AuditOnTaskCreated`, etc.) and `SearchAuditLogQuery`. This context is read-heavy (audit log search) with append-only writes (event handlers).
+
+**IRequestContext**: Abstracts HTTP request metadata (UserId, IpAddress, UserAgent) for audit entries. Implemented by `HttpRequestContext` in the API layer, injected into command/event handlers.
+
+**Field Encryption Service**: `IFieldEncryptionService` with `Encrypt(plaintext)` / `Decrypt(ciphertext)`. AES-256-GCM implementation with 12-byte random IV + 16-byte authentication tag. Output format: `Base64(IV[12] + Tag[16] + Ciphertext[N])`.
+
+### 4.4 Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Separate encrypted columns (not replacing Identity columns) | Identity uses NormalizedEmail for lookups — encrypting the source column would break authentication |
+| AES-256-GCM over AES-CBC | GCM provides authenticated encryption (tamper detection), CBC requires separate HMAC |
+| Admin views show redacted PII by default | HIPAA-ready: minimum necessary access principle. Reveal is explicit and audited |
+| i18next over react-intl | Simpler API, first-class namespace support, wider ecosystem (language detector, ICU) |
+| Manual traceparent over OTel Browser SDK | OTel Browser SDK adds 200KB+ bundle; manual W3C header is 20 lines and correlates traces end-to-end |
+| Administration as separate bounded context | Audit + admin concerns are orthogonal to Task/Board contexts; separate context prevents coupling |
+
+### 4.5 Gotchas & Lessons
+
+1. **AuthenticationTagMismatchException in .NET 10**: AES-GCM throws `AuthenticationTagMismatchException` (subclass of `CryptographicException`) for tampered data. MSTest 4's `Assert.ThrowsExactly<T>` checks exact type, so `ThrowsExactly<CryptographicException>` fails for tamper tests.
+
+2. **i18next-browser-languagedetector (not languagedetection)**: The npm package name is `i18next-browser-languagedetector` (ends in "or", not "ion").
+
+3. **AuditLogFilters type vs Record<string, ParamValue>**: TypeScript interfaces don't have index signatures. API client's `get()` expects `Record<string, ParamValue>`. Fix: type assertion at the call site.
+
+4. **i18n test setup**: The production i18n config includes browser language detection, which fails in JSDOM (no `navigator.languages`). Tests use a dedicated `i18n-setup.ts` with English-only config and no detection plugins.
+
+### 4.6 Verification
+
+| Check | Result |
+|---|---|
+| **Backend Build** | 9/9 projects, 0 warnings, 0 errors (5.7s) |
+| **Frontend Build** | 2954 modules, 780 KB JS + 68 KB CSS (3.6s) |
+| **Backend Tests** | 321 passed, 0 failed, 0 skipped |
+| **Frontend Tests** | 164 passed, 0 failed (26 test files) |
+| **Frontend Lint** | Clean, no issues |
+
+---
+
 ## What's Next
-
-### Checkpoint 4: Production Hardening
-
-*Planned: OpenTelemetry + Serilog observability, PII redaction in admin views, audit trail, admin panel, SystemAdmin role, i18n (en + pt-BR), data encryption at rest.*
 
 ### Checkpoint 5: Advanced & Delight
 

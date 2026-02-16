@@ -1,0 +1,40 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace LemonDo.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddUserAdminColumns : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<string>(
+                name: "CreatedAt",
+                table: "AspNetUsers",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: "");
+
+            migrationBuilder.AddColumn<bool>(
+                name: "IsDeactivated",
+                table: "AspNetUsers",
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: false);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropColumn(
+                name: "CreatedAt",
+                table: "AspNetUsers");
+
+            migrationBuilder.DropColumn(
+                name: "IsDeactivated",
+                table: "AspNetUsers");
+        }
+    }
+}
