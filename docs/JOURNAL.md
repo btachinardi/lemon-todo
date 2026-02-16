@@ -1532,8 +1532,75 @@ Released Checkpoint 4 (Production Hardening) as v0.4.0 via gitflow.
 
 ---
 
+## Checkpoint 5: Advanced & Delight
+
+**Date: February 16, 2026**
+
+### 5.1 Mobile Responsiveness Overhaul
+
+A thorough mobile audit (iPhone X viewport, 375×812) revealed several usability issues. All fixes follow a mobile-first pattern using Tailwind's `sm:` breakpoint.
+
+**Bottom-anchored task input**: On mobile, the QuickAddForm moves from the top of the page to a fixed bottom bar, matching native mobile app conventions. Uses `env(safe-area-inset-bottom)` with `max()` for proper spacing on notched devices (iPhone X+). The `viewport-fit=cover` meta tag enables safe area CSS variables.
+
+**Native touch scrolling for kanban**: Radix UI's `ScrollArea` component intercepted native touch scroll events, preventing horizontal swipe between columns. Replaced with native `overflow-x-auto` + CSS `snap-x snap-mandatory` for natural touch scrolling. Each column has `min-w-[85vw] snap-center` for a one-column-at-a-time swipe experience.
+
+**Admin table → card layout**: Admin tables (UserManagement, AuditLog) were unusable on mobile — columns truncated to unreadable widths. Created `UserCard` and `AuditLogCard` components that render on mobile (`sm:hidden` / `hidden sm:block` pattern). Cards show the same data in a stacked layout with role badges and action menus.
+
+**Touch targets**: All interactive header elements (LanguageSwitcher, ThemeToggle, UserMenu, AdminLink) enlarged to minimum 44×44px on mobile via `size-9 sm:size-8` pattern. Icons scaled proportionally.
+
+**Toolbar overflow**: ListViewToolbar "Split done" button text hidden on mobile (icon-only). FilterBar inputs use `basis-full sm:basis-auto` for responsive wrapping.
+
+### 5.2 Lemon.DO Branding
+
+Applied brand assets (cartoon lemon icon + "Lemon.DO" logo) across the entire frontend.
+
+**Typography**: The logo uses Nunito (Black weight, 900) — identified by its rounded terminals and thick strokes. Added via Google Fonts with `--font-brand` CSS custom property. Brand text uses `font-[var(--font-brand)]` in Tailwind.
+
+**Icon placement**: Lemon mascot icon appears in:
+- Dashboard header: `size-7 sm:size-8` alongside brand text
+- Admin header: same as Dashboard
+- Auth pages (Login/Register): `size-24` centered above brand text
+
+**Brand text rendering**: "Lemon." in `text-foreground` + "DO" in `text-lemon` across all layouts. i18n keys updated: `brand.lemon` = `"Lemon."`, `brand.do` = `"DO"`.
+
+**Favicons & manifest**: Full set of icons generated from the lemon mascot — ICO, PNG 16/32, Apple Touch Icon 180, Android Chrome 192/512. Web manifest updated with `"Lemon.DO"` name and black theme color.
+
+### 5.3 Other CP5 Features (Prior Commits)
+
+**PWA (CP5.1)**: Service worker for offline caching, web manifest for installability, install prompt, and update notification toast.
+
+**Spanish language (CP5.7)**: Third language option (`es.json`) with full translation coverage, added to LanguageSwitcher.
+
+**Password strength meter (CP5.11)**: Delightful registration UX with animated strength feedback. Pure `evaluatePasswordStrength()` function mirrors backend ASP.NET Identity rules exactly: min 8 chars, uppercase, lowercase, digit (all required), plus special character and 12+ chars as bonus. Five strength levels (Too weak → Very strong) displayed with a color-coded progress bar transitioning from destructive red through orange/amber/green to the brand lime. Each requirement is a checklist item with a small dot that becomes an animated checkmark SVG (reusing existing `draw-check` keyframe) when satisfied. Requirements split into "Requirements" (4 mandatory) and "Bonus" (2 optional) sections. Submit button disables until all required checks pass, preventing frustrating server-side 400 errors. Show/hide password toggle with eye icon. Accessible via `aria-live="polite"` + `role="status"`. No external library — the pure function is ~30 lines vs 400KB+ for zxcvbn. 24 new tests: unit tests for each check, level classification, 4 fast-check property tests (score = passed count, score in [0,6], valid level, monotonic prefix score), and component rendering tests.
+
+**Analytics infrastructure (CP5.4)**: Port/adapter pattern with `IAnalyticsService` and domain event handlers for privacy-first event tracking (task created/completed, user registered/logged in).
+
+### 5.4 Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Native overflow over Radix ScrollArea | ScrollArea intercepts touch events; native overflow works with CSS snap for smooth column-by-column swiping |
+| `env(safe-area-inset-bottom)` for bottom bar | Handles iPhone notch/home indicator without hardcoded pixel offsets |
+| `hidden sm:block` / `sm:hidden` for responsive tables | Clean swap between table and card layouts at the `sm` breakpoint; avoids complex CSS-only responsive tables |
+| Nunito for brand font | Matches logo letterforms (rounded terminals, thick strokes); loaded from Google Fonts at weights 700/800/900 |
+| `--font-brand` CSS variable | Single source of truth for brand font; Tailwind uses `font-[var(--font-brand)]` syntax |
+| Client-side password strength over backend-only | Instant feedback as user types; backend remains the authority; frontend is advisory |
+| No zxcvbn | 30-line pure function vs 400KB+ library; backend doesn't use dictionary checks so frontend shouldn't either |
+| Disable submit until requirements met | Prevents frustrating 400 errors; enables as soon as 4 required checks pass; bonus checks improve score only |
+
+### 5.5 Verification
+
+| Check | Result |
+|---|---|
+| **Backend Tests** | 254 passed, 0 failed |
+| **Frontend Tests** | 278 passed, 0 failed (24 new for password strength) |
+| **Frontend Build** | Clean |
+| **Frontend Lint** | Clean |
+
+---
+
 ## What's Next
 
-### Checkpoint 5: Advanced & Delight
+### Remaining CP5 Tasks
 
-*Planned: PWA with offline support, onboarding flow, analytics event tracking, in-app notifications, Playwright E2E tests, Spanish language, offline mutation queue.*
+*Planned: Onboarding flow, offline read support, offline mutation queue, in-app notifications, Playwright E2E cross-browser tests, visual regression baselines.*

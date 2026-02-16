@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Password strength meter** on registration form with animated progress bar and requirement checklist
+  - Evaluates against backend ASP.NET Identity rules: 8+ chars, uppercase, lowercase, digit
+  - Bonus criteria: special character, 12+ characters
+  - 5 strength levels (Too weak → Very strong) with color-coded feedback
+  - Animated checkmark SVG for each passed requirement
+  - Submit button disabled until all required criteria pass
+- **Show/hide password toggle** on registration form with eye icon
+- **Mobile responsiveness overhaul**
+  - Bottom-anchored task input bar with `env(safe-area-inset-bottom)` for notched devices
+  - Native touch scrolling for kanban columns (replaced Radix ScrollArea with `overflow-x-auto`)
+  - Responsive card layouts for admin tables on mobile (`UserCard`, `AuditLogCard`)
+  - Minimum 44px touch targets on all interactive header elements
+  - Toolbar overflow fixes (icon-only buttons on mobile)
+- **Lemon.DO branding refresh**
+  - Cartoon lemon mascot icon in Dashboard, Admin, and Auth layouts
+  - Nunito brand font (Black weight) matching logo typography
+  - Updated favicons (ICO, PNG 16/32, Apple Touch Icon, Android Chrome 192/512)
+  - Updated web manifest with brand name and theme colors
+- **PWA support** — service worker, web manifest, install and update prompts
+- **Spanish (es) language support** — third locale alongside English and Portuguese
+- **Backend analytics port/adapter** with domain event handlers for privacy-first tracking
+- **Landing page** with hero, features, security, and open-source sections
+- **24 new frontend tests** for password strength (unit + property-based + component)
+
 ## [0.4.0] - 2026-02-16
 
 Checkpoint 4: Production Hardening — observability, security, admin tooling, audit trail, i18n, data encryption, and cloud deployment.

@@ -180,15 +180,18 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| CP5.1 | PWA configuration | PENDING | Service worker, manifest, install prompt |
+| CP5.1 | PWA configuration | DONE | Service worker, manifest, install and update prompts |
 | CP5.2 | Offline read support | PENDING | Cached task data viewable offline |
 | CP5.3 | Onboarding flow | PENDING | Guided first task creation + celebration |
-| CP5.4 | Analytics event tracking | PENDING | Privacy-first, hashed IDs, funnel events |
+| CP5.4 | Analytics event tracking | DONE | Backend analytics port/adapter with domain event handlers |
 | CP5.5 | Notification system (in-app) | PENDING | Task reminders, due date alerts |
 | CP5.6 | E2E tests (Playwright) | PENDING | Chromium + Firefox + WebKit, device emulation (iPhone, iPad, Pixel) |
 | CP5.6b | Visual regression baselines | PENDING | Playwright `toHaveScreenshot()` for all key views |
-| CP5.7 | Spanish language support | PENDING | Third language option |
+| CP5.7 | Spanish language support | DONE | Third language option (es.json) |
 | CP5.8 | Offline mutation queue | PENDING | Create/complete tasks offline, sync when online |
+| CP5.9 | Mobile responsiveness + branding | DONE | Lemon.DO visual identity, responsive layouts |
+| CP5.10 | Landing page | DONE | Hero, features, security, open-source sections |
+| CP5.11 | Password strength meter | DONE | Animated strength bar, requirement checklist, show/hide toggle, 24 tests |
 | | **Deliverable** | | Feature-complete platform showcasing full production ambition |
 
 ---
@@ -279,6 +282,13 @@
 | 2026-02-16 | Docker push + `az containerapp update` over ZIP deploy | Container Apps don't support ZIP deploy. CI/CD builds Docker image, pushes to ACR with commit SHA tag, then updates Container App image reference. |
 | 2026-02-16 | `./dev infra` CLI commands | Terraform operations need Azure CLI in PATH, `MSYS_NO_PATHCONV=1` for Git Bash, and stage selection. CLI wraps all this, making `./dev infra plan stage1-mvp` as simple as `./dev test`. |
 | 2026-02-16 | v0.4.0 release via gitflow | CP4 (Production Hardening) release. 668 tests (370 backend + 243 frontend + 55 E2E). Observability, security, admin, audit, i18n, encryption, Azure deployment. |
+| 2026-02-16 | Client-side password strength over backend-only validation | Instant feedback as user types, mirrors ASP.NET Identity rules exactly (8+ chars, uppercase, lowercase, digit). Backend remains the authority; frontend is advisory only. |
+| 2026-02-16 | No external password strength library | `evaluatePasswordStrength()` is a pure function (~30 lines) checking 6 regex patterns. Libraries like zxcvbn add 400KB+ for dictionary-based scoring we don't need. |
+| 2026-02-16 | Disable submit until requirements met | Prevents frustrating server-side 400 errors. Button enables as soon as all 4 required checks pass. Bonus checks (special char, 12+ length) improve the score but don't block submission. |
+| 2026-02-16 | Native overflow over Radix ScrollArea for kanban | Radix ScrollArea intercepts touch events, preventing native swipe between columns. Native `overflow-x-auto` + CSS `snap-x snap-mandatory` gives smooth one-column-at-a-time swiping. |
+| 2026-02-16 | Bottom-anchored task input on mobile | Matches native mobile app conventions (thumb-reachable zone). `env(safe-area-inset-bottom)` handles notched devices. Desktop keeps top placement. |
+| 2026-02-16 | Table-to-card layout for mobile admin views | Tables with 5+ columns are unusable on 375px viewports. `hidden sm:block` / `sm:hidden` pattern swaps between table (desktop) and cards (mobile) at the `sm` breakpoint. |
+| 2026-02-16 | Nunito for brand typography | Identified from logo letterforms (rounded terminals, thick strokes). Google Fonts CDN at weights 700/800/900. CSS `--font-brand` variable as single source of truth. |
 
 ---
 
@@ -322,7 +332,13 @@
   - Infrastructure: Terraform Azure (bootstrap + 3 stages, 10 modules incl. container-app), GitHub Actions CI/CD, Docker
   - Azure deployment: 15 resources live (Container Apps, ACR, SQL, Key Vault, SWA, App Insights, Log Analytics)
   - Developer CLI: `./dev` script with build, test, lint, start, migrate, docker, verify, infra commands
-- **Checkpoint 5**: NOT STARTED (Advanced & Delight)
+- **Checkpoint 5**: IN PROGRESS (Advanced & Delight)
+  - CP5.1 PWA: Service worker, manifest, install and update prompts
+  - CP5.4 Analytics: Backend analytics port/adapter with domain event handlers
+  - CP5.7 Spanish: Third locale (es.json) added
+  - CP5.9 Mobile: Responsive layouts, touch targets, bottom-anchored quick-add
+  - CP5.10 Landing: Hero, features, security, open-source sections
+  - CP5.11 Password strength: Animated meter, requirement checklist, show/hide toggle, 24 tests
 
 ---
 
@@ -445,3 +461,8 @@
 | 9b2ae63 | docs(csharp): add XML documentation to domain, infrastructure, and service defaults | CP4 |
 | 65a702b | docs(csharp): add XML documentation to endpoints and domain types | CP4 |
 | 823672c | docs: add CP4 commit history to TASKS.md | CP4 |
+| 548c97e | feat(client): improve mobile responsiveness and apply Lemon.DO branding | CP5 |
+| 19c3d0c | feat(i18n): add Spanish (es) language support | CP5 |
+| 88ffe53 | feat(pwa): add service worker, manifest, install and update prompts | CP5 |
+| dd16176 | feat(auth): add password strength meter to registration form | CP5 |
+| e69dd3c | feat(analytics): add backend analytics port/adapter with domain event handlers | CP5 |
