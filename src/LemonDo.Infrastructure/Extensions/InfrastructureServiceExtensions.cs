@@ -10,6 +10,7 @@ using LemonDo.Domain.Administration.Repositories;
 using LemonDo.Domain.Boards.Repositories;
 using LemonDo.Domain.Identity.Repositories;
 using LemonDo.Domain.Tasks.Repositories;
+using LemonDo.Infrastructure.Analytics;
 using LemonDo.Infrastructure.Events;
 using LemonDo.Infrastructure.Identity;
 using LemonDo.Infrastructure.Persistence;
@@ -76,6 +77,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IAdminUserQuery, AdminUserQuery>();
         services.AddScoped<IAdminUserService, AdminUserService>();
         services.AddHostedService<RefreshTokenCleanupService>();
+
+        // Analytics
+        services.AddSingleton<IAnalyticsService, ConsoleAnalyticsService>();
 
         // Field encryption for protected data at rest
         services.AddSingleton<IFieldEncryptionService, AesFieldEncryptionService>();
