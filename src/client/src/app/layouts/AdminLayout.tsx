@@ -1,18 +1,18 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router';
-import { KanbanIcon, ListIcon, ShieldIcon } from 'lucide-react';
+import { UsersIcon, ScrollTextIcon, ArrowLeftIcon } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
 import { UserMenu } from '@/domains/auth/components/UserMenu';
 import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 
-interface DashboardLayoutProps {
+interface AdminLayoutProps {
   children: ReactNode;
 }
 
-/** App shell with branded header, pill-shaped view switcher, and toast container. */
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+/** Admin panel layout with sidebar navigation for Users and Audit Log sections. */
+export function AdminLayout({ children }: AdminLayoutProps) {
   const theme = useThemeStore((s) => s.theme);
   const resolvedTheme = resolveTheme(theme);
 
@@ -20,17 +20,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:h-16 sm:px-6">
-          <h1 className="font-mono text-base font-light tracking-normal sm:text-lg">
-            <span className="text-foreground">LEMON</span>
-            <span className="text-primary">DO</span>
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-mono text-base font-light tracking-normal sm:text-lg">
+              <span className="text-foreground">LEMON</span>
+              <span className="text-primary">DO</span>
+              <span className="ml-2 text-xs text-muted-foreground">ADMIN</span>
+            </h1>
+          </div>
           <nav
             className="flex items-center gap-1 rounded-lg border-2 border-border/40 bg-secondary/30 p-1"
-            aria-label="View switcher"
+            aria-label="Admin navigation"
           >
             <NavLink
-              to="/"
-              end
+              to="/admin/users"
               className={({ isActive }) =>
                 cn(
                   'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
@@ -40,11 +42,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 )
               }
             >
-              <KanbanIcon className="size-3.5" />
-              <span className="hidden sm:inline">Board</span>
+              <UsersIcon className="size-3.5" />
+              <span className="hidden sm:inline">Users</span>
             </NavLink>
             <NavLink
-              to="/list"
+              to="/admin/audit"
               className={({ isActive }) =>
                 cn(
                   'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
@@ -54,17 +56,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 )
               }
             >
-              <ListIcon className="size-3.5" />
-              <span className="hidden sm:inline">List</span>
+              <ScrollTextIcon className="size-3.5" />
+              <span className="hidden sm:inline">Audit Log</span>
             </NavLink>
           </nav>
           <div className="flex items-center gap-1">
             <NavLink
-              to="/admin/users"
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              to="/"
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground"
             >
-              <ShieldIcon className="size-3" />
-              <span className="hidden sm:inline">Admin</span>
+              <ArrowLeftIcon className="size-3.5" />
+              <span className="hidden sm:inline">Back</span>
             </NavLink>
             <ThemeToggle
               theme={theme}
@@ -79,12 +81,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-7xl flex-1">{children}</main>
-      <footer className="pointer-events-none fixed bottom-2 right-3">
-        <span className="text-[10px] text-muted-foreground/40 select-none">
-          v{__APP_VERSION__}
-        </span>
-      </footer>
+      <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">{children}</main>
       <Toaster theme={resolvedTheme} />
     </div>
   );
