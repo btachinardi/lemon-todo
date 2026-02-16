@@ -12,6 +12,7 @@ using LemonDo.Infrastructure.Security;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -46,29 +47,59 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         ["Encryption:FieldEncryptionKey"] = "dGVzdC1maWVsZC1lbmNyeXB0aW9uLWtleS0zMmJ5dGU=", // 32-byte test key
     };
 
+    // Per-instance unique database for SQL Server test isolation (parallel-safe)
+    private readonly string _instanceDbName = $"LemonDoTests_{Guid.NewGuid():N}";
+    private string? _instanceConnectionString;
+
+    private static bool UseSqlServer =>
+        Environment.GetEnvironmentVariable("TEST_DATABASE_PROVIDER")
+            ?.Equals("SqlServer", StringComparison.OrdinalIgnoreCase) is true;
+
+    private string GetSqlServerConnectionString()
+    {
+        if (_instanceConnectionString is not null) return _instanceConnectionString;
+
+        var baseConnStr = Environment.GetEnvironmentVariable("TEST_SQLSERVER_CONNECTION_STRING")
+            ?? "Server=localhost,1433;Database=LemonDoTests;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;";
+        var builder = new SqlConnectionStringBuilder(baseConnStr) { InitialCatalog = _instanceDbName };
+        _instanceConnectionString = builder.ConnectionString;
+        return _instanceConnectionString;
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureAppConfiguration((_, config) =>
         {
-            config.AddInMemoryCollection(TestSettings);
+            var settings = new Dictionary<string, string?>(TestSettings);
+
+            if (UseSqlServer)
+            {
+                // Tell AddInfrastructure to use SQL Server from the start,
+                // avoiding dual-provider registration.
+                settings["DatabaseProvider"] = "SqlServer";
+                settings["ConnectionStrings:DefaultConnection"] = GetSqlServerConnectionString();
+            }
+
+            config.AddInMemoryCollection(settings);
         });
 
         builder.ConfigureServices(services =>
         {
-            // Remove existing DbContext registration
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<LemonDoDbContext>));
-            if (descriptor is not null)
-                services.Remove(descriptor);
+            if (!UseSqlServer)
+            {
+                // SQLite mode: replace with in-memory connection for test isolation
+                var descriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(DbContextOptions<LemonDoDbContext>));
+                if (descriptor is not null)
+                    services.Remove(descriptor);
 
-            // Create shared in-memory SQLite connection
-            _connection = new SqliteConnection("DataSource=:memory:");
-            _connection.Open();
+                _connection = new SqliteConnection("DataSource=:memory:");
+                _connection.Open();
 
-            services.AddDbContext<LemonDoDbContext>(options =>
-                options.UseSqlite(_connection)
-                    .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
-
+                services.AddDbContext<LemonDoDbContext>(options =>
+                    options.UseSqlite(_connection, b => b.MigrationsAssembly("LemonDo.Migrations.Sqlite"))
+                        .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
+            }
         });
     }
 
@@ -83,7 +114,10 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
         using var scope = host.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<LemonDoDbContext>();
-        db.Database.EnsureCreated();
+
+        // Both providers: Program.cs applies migrations via MigrateAsync().
+        // SQLite in-memory gets the schema from the Migrations.Sqlite assembly.
+        // SQL Server gets it from the Migrations.SqlServer assembly.
 
         // Seed all roles
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
@@ -162,7 +196,39 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void Dispose(bool disposing)
     {
+        // Dispose host first to close all active database connections
         base.Dispose(disposing);
         _connection?.Dispose();
+
+        // Then drop the unique SQL Server test database
+        if (disposing && UseSqlServer && _instanceConnectionString is not null)
+        {
+            try
+            {
+                // Clear pooled connections that target this specific database
+                using (var poolConn = new SqlConnection(_instanceConnectionString))
+                    SqlConnection.ClearPool(poolConn);
+
+                var connBuilder = new SqlConnectionStringBuilder(_instanceConnectionString)
+                {
+                    InitialCatalog = "master"
+                };
+                using var conn = new SqlConnection(connBuilder.ConnectionString);
+                conn.Open();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = $"""
+                    IF EXISTS (SELECT 1 FROM sys.databases WHERE name = '{_instanceDbName}')
+                    BEGIN
+                        ALTER DATABASE [{_instanceDbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+                        DROP DATABASE [{_instanceDbName}];
+                    END
+                    """;
+                cmd.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Best effort — database may already be deleted
+            }
+        }
     }
 }

@@ -25,7 +25,7 @@ public sealed class SparseRankOrderingMigrationTests
         _connection.Open();
 
         var options = new DbContextOptionsBuilder<LemonDoDbContext>()
-            .UseSqlite(_connection)
+            .UseSqlite(_connection, b => b.MigrationsAssembly("LemonDo.Migrations.Sqlite"))
             .Options;
 
         _dbContext = new LemonDoDbContext(options);
