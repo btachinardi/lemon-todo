@@ -160,7 +160,13 @@
 | CP4.8 | i18n setup (en + pt-BR) | DONE | i18next + i18next-browser-languagedetector, 158 keys in en.json + pt-BR.json, LanguageSwitcher |
 | CP4.9 | Rate limiting on auth endpoints | DONE | Configurable per-IP limits (done in CP2 security hardening) |
 | CP4.10 | Data encryption at rest (PII fields) | DONE | AES-256-GCM field encryption, EncryptedEmail + EncryptedDisplayName columns |
-| | **Deliverable** | | Production-hardened app with observability and compliance readiness |
+| CP4.11 | Dual-provider SQL Server support | DONE | DatabaseProvider config, SqlServerTestCleanup, EnsureCreated for SQL Server, 370 tests pass on both |
+| CP4.12 | Dual EF Core migration assemblies | DONE | Migrations.Sqlite + Migrations.SqlServer projects, unconditional MigrateAsync for both providers |
+| CP4.13 | Terraform Azure infrastructure | IN PROGRESS | Bootstrap + 3 stages (MVP, Resilience, Scale), 9 reusable modules |
+| CP4.14 | CI/CD pipeline (GitHub Actions) | IN PROGRESS | Build, test (SQLite + SQL Server), deploy to Azure |
+| CP4.15 | Dockerfile + containerization | IN PROGRESS | Multi-stage Dockerfile for API |
+| CP4.16 | Developer CLI (`./dev`) | DONE | Unified bash script: build, test (SQLite/SQL Server/E2E), lint, start, migrate, docker, verify |
+| | **Deliverable** | | Production-hardened app with observability, compliance, and cloud deployment |
 
 ---
 
@@ -265,6 +271,9 @@
 | 2026-02-16 | PII redacted by default in admin views | PiiRedactor masks emails/names, SystemAdmin reveal creates PiiRevealed audit entry, 30-second auto-hide in UI |
 | 2026-02-16 | i18next over react-intl for i18n | Simpler API, namespace support, browser language detection, localStorage persistence |
 | 2026-02-16 | Manual traceparent over OTel Browser SDK | Zero new npm deps, W3C Trace Context format, sufficient for distributed tracing correlation |
+| 2026-02-16 | Dual-provider database support (SQLite + SQL Server) | DatabaseProvider config key, conditional UseSqlite/UseSqlServer, per-instance unique test DBs for SQL Server |
+| 2026-02-16 | Separate migration assemblies per provider | EF Core requires one ModelSnapshot per DbContext per assembly. SQLite and SQL Server produce different column types. Migrations.Sqlite + Migrations.SqlServer assemblies, each with IDesignTimeDbContextFactory. DatabaseProvider env var needed for SQL Server migration generation (dotnet ef finds both factories via Api's references). |
+| 2026-02-16 | `./dev` CLI over Makefile or npm scripts | Bash script is portable (Git Bash on Windows), has colored output, auto-manages env vars for SQL Server, and wraps dual-provider migrations in a single command. Colon-separated subcommands (`test backend:sql`) read naturally without flag parsing. |
 
 ---
 
@@ -297,13 +306,15 @@
   - Micro-animations: fade-in for kanban cards, draw-check + bounce for completion checkbox
   - New Shadcn/ui primitives: Sheet, Calendar, Popover, Label
   - E2E: 13 new tests (detail sheet, filters, theme toggle) + 5 existing tests fixed for CP3 changes
-- **Checkpoint 4**: DONE (Production Hardening - 321 backend + 164 frontend = 485 tests)
+- **Checkpoint 4**: IN PROGRESS (Production Hardening)
   - Observability: Serilog structured logging, PII masking, W3C traceparent propagation
   - Security: AES-256-GCM field encryption for PII, SystemAdmin role with authorization policies
   - Audit: Administration bounded context with AuditEntry entity and domain event handlers
   - Admin panel: User management (list, search, roles, deactivate) + audit log viewer (filters, pagination)
   - PII redaction: Default-masked in admin views, SystemAdmin reveal with audit trail
   - i18n: i18next with en + pt-BR (158 translation keys), LanguageSwitcher component
+  - Dual database: SQLite + SQL Server with separate migration assemblies, MigrateAsync for both
+  - Infrastructure: Terraform Azure (bootstrap + 3 stages), CI/CD, Docker
 - **Checkpoint 5**: NOT STARTED (Advanced & Delight)
 
 ---

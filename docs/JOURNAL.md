@@ -1310,6 +1310,80 @@ Tasks often contain sensitive information (medical notes, legal references, conf
 
 ---
 
+## CP4 Infrastructure: Dual EF Core Migrations
+
+**Date: February 16, 2026**
+
+### The Problem
+
+When we added SQL Server support in CP4, we used `EnsureCreatedAsync()` for SQL Server and `MigrateAsync()` for SQLite — a pragmatic hack. But `EnsureCreated` doesn't support incremental schema changes, so any future migration would break SQL Server deployments.
+
+### The Solution: Separate Migration Assemblies
+
+EF Core allows only one `ModelSnapshot` per `DbContext` per assembly, and SQLite and SQL Server produce different column types (e.g., `TEXT` vs `datetimeoffset`). We created dedicated migration assemblies:
+
+- **`LemonDo.Migrations.Sqlite`** — houses all 11 SQLite migrations (moved from Infrastructure)
+- **`LemonDo.Migrations.SqlServer`** — houses a single `InitialCreate` migration covering the full schema
+
+Each has its own `IDesignTimeDbContextFactory` for `dotnet ef` commands.
+
+### Key Decisions
+
+1. **Separate assemblies over shared migrations**: EF Core's `ModelSnapshot` is provider-specific. A single assembly would produce SQLite-typed snapshots when adding SQL Server migrations (or vice versa).
+
+2. **Environment variable for SQL Server migration generation**: `dotnet ef` starts Program.cs which defaults to SQLite. Setting `DatabaseProvider=SqlServer` makes the runtime path select the correct provider. The design-time factory alone doesn't suffice because EF tools find both factories (from both assemblies loaded via Api's references) and fall back to the host builder.
+
+3. **Single-quote connection strings in bash**: The `!` in `YourStrong!Passw0rd` triggers bash history expansion inside double quotes. We updated README examples to use `export` with single quotes.
+
+4. **EF Core Design package stays in Api**: The startup project needs `Microsoft.EntityFrameworkCore.Design` for `dotnet ef` to work, even though the migration projects also have it.
+
+### Changes Summary
+
+- **New**: `src/LemonDo.Migrations.Sqlite/` (csproj + design-time factory + 23 migration files moved from Infrastructure)
+- **New**: `src/LemonDo.Migrations.SqlServer/` (csproj + design-time factory + generated InitialCreate)
+- **Deleted**: `src/LemonDo.Infrastructure/Migrations/` (moved to Sqlite project)
+- **Deleted**: `src/LemonDo.Infrastructure/Persistence/DesignTimeDbContextFactory.cs`
+- **Modified**: `InfrastructureServiceExtensions.cs` — `MigrationsAssembly(...)` on both provider calls
+- **Modified**: `Program.cs` — unconditional `MigrateAsync()` (removed `EnsureCreatedAsync` hack)
+- **Modified**: Test factory — `MigrationsAssembly` on SQLite re-registration, removed `EnsureCreated`
+- **Result**: 370 backend tests pass on both SQLite and SQL Server; 55/56 E2E pass (1 pre-existing failure)
+
+---
+
+## CP4 Infrastructure: Developer CLI (`./dev`)
+
+**Date: February 16, 2026**
+
+### The Problem
+
+Every common operation required remembering long, provider-specific commands:
+- `dotnet clean src/LemonDo.slnx -v quiet && dotnet build src/LemonDo.slnx`
+- `export TEST_DATABASE_PROVIDER=SqlServer && export TEST_SQLSERVER_CONNECTION_STRING='...' && dotnet test --solution src/LemonDo.slnx`
+- `DatabaseProvider=SqlServer dotnet ef migrations add <Name> --project src/LemonDo.Migrations.SqlServer --startup-project src/LemonDo.Api`
+
+Connection string escaping (`!` in passwords triggers bash history expansion), multiple directory changes for frontend commands, and dual-provider migration generation all added friction.
+
+### The Solution
+
+A single `./dev` bash script at the project root that wraps all common operations:
+
+- **`./dev build`** — clean + build all 11 projects
+- **`./dev test backend:sql`** — automatically sets env vars, checks Docker container, runs tests
+- **`./dev test e2e:sql`** — E2E with SQL Server backend, connection wired automatically
+- **`./dev migrate add <Name>`** — generates migrations for BOTH providers in one command
+- **`./dev verify`** — full verification gate (build + frontend build + all tests + lint)
+- **`./dev docker up/down`** — manages the SQL Server container
+
+### Design Decisions
+
+1. **Bash over Makefile**: More portable on Windows (Git Bash), better error handling, colored output
+2. **Subcommands with colon-separated variants**: `test backend:sql` reads naturally, avoids flag parsing complexity
+3. **Auto-detect SQL Server**: `./dev docker up` checks if container already exists before starting
+4. **Connection string defaults**: Hardcoded `sa/YourStrong!Passw0rd` with `TEST_SQLSERVER_CONNECTION_STRING` override for CI/custom setups
+5. **Pass-through args**: Extra arguments after the target are forwarded to the underlying tool (e.g., `./dev test backend -- --filter "TaskTitle"`)
+
+---
+
 ## What's Next
 
 ### Checkpoint 5: Advanced & Delight
