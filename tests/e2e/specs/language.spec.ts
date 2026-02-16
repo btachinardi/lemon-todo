@@ -58,3 +58,83 @@ test.describe.serial('Language Switching', () => {
     await expect(page.getByLabel('New task title')).toBeVisible({ timeout: 5000 });
   });
 });
+
+test.describe.serial('Language Persistence', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    await loginViaApi(page);
+    await completeOnboarding();
+  });
+
+  test.afterAll(async () => {
+    await context.close();
+  });
+
+  test('language persists across page reload', async () => {
+    await page.goto('/board');
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible' });
+
+    // Switch to Spanish
+    await page.getByRole('button', { name: 'Language', exact: true }).click();
+    await expect(page.getByText('Español')).toBeVisible({ timeout: 5000 });
+    await page.getByText('Español').click();
+
+    // Verify Spanish is active
+    await expect(page.getByLabel('Título de la nueva tarea')).toBeVisible({ timeout: 5000 });
+
+    // Reload the page
+    const refreshPromise = page.waitForResponse(
+      (resp) => resp.url().includes('/api/auth/refresh'),
+      { timeout: 15000 },
+    ).catch(() => null);
+    await page.reload();
+    await refreshPromise;
+
+    // After reload, i18n restores Spanish from localStorage.
+    // The nav aria-label is translated to "Cambiar vista" in Spanish.
+    await page.getByRole('navigation', { name: 'Cambiar vista' }).waitFor({ state: 'visible', timeout: 10000 });
+
+    // After reload, the UI should still be in Spanish (persisted via localStorage)
+    await expect(page.getByLabel('Título de la nueva tarea')).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe.serial('User Content Language Independence', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    await loginViaApi(page);
+    await completeOnboarding();
+    await createTask({ title: 'Buy groceries' });
+  });
+
+  test.afterAll(async () => {
+    await context.close();
+  });
+
+  test('user-created content stays in original language after switching', async () => {
+    await page.goto('/board');
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible' });
+
+    // Verify the task is visible in English
+    await expect(page.getByText('Buy groceries')).toBeVisible();
+
+    // Switch to Spanish
+    await page.getByRole('button', { name: 'Language', exact: true }).click();
+    await expect(page.getByText('Español')).toBeVisible({ timeout: 5000 });
+    await page.getByText('Español').click();
+
+    // Wait for the UI to switch to Spanish
+    await expect(page.getByLabel('Título de la nueva tarea')).toBeVisible({ timeout: 5000 });
+
+    // The user-created task title should remain unchanged (not translated)
+    await expect(page.getByText('Buy groceries')).toBeVisible();
+  });
+});
