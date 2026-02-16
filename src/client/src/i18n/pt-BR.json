@@ -311,7 +311,8 @@
     "empty": "Nenhuma notificacao ainda"
   },
   "offline": {
-    "banner": "Voc\u00ea est\u00e1 offline. As altera\u00e7\u00f5es n\u00e3o ser\u00e3o salvas at\u00e9 que sua conex\u00e3o seja restaurada."
+    "banner": "Voc\u00ea est\u00e1 offline. As altera\u00e7\u00f5es n\u00e3o ser\u00e3o salvas at\u00e9 que sua conex\u00e3o seja restaurada.",
+    "cachedData": "Voce esta offline. Visualizando dados em cache."
   },
   "notFound": {
     "code": "404",

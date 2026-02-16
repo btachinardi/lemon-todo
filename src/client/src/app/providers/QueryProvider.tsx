@@ -19,8 +19,10 @@ export function QueryProvider({ children }: QueryProviderProps) {
         defaultOptions: {
           queries: {
             staleTime: 1000 * 60,
+            gcTime: 1000 * 60 * 10, // 10 minutes — longer offline access
             retry: 1,
             refetchOnWindowFocus: false,
+            networkMode: 'offlineFirst',
           },
         },
         queryCache: new QueryCache({

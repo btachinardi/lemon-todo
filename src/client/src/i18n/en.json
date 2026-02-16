@@ -311,7 +311,8 @@
     "empty": "No notifications yet"
   },
   "offline": {
-    "banner": "You are offline. Changes will not be saved until your connection is restored."
+    "banner": "You are offline. Changes will not be saved until your connection is restored.",
+    "cachedData": "You are offline. Viewing cached data."
   },
   "notFound": {
     "code": "404",
