@@ -15,7 +15,11 @@ public static class AuthEndpoints
 {
     private const string RefreshTokenCookieName = "refresh_token";
 
-    /// <summary>Maps all authentication endpoints under <c>/api/auth</c>.</summary>
+    /// <summary>
+    /// Maps all authentication endpoints under <c>/api/auth</c> including register, login,
+    /// token refresh, logout, and current user retrieval.
+    /// </summary>
+    /// <returns>The route group builder for method chaining.</returns>
     public static RouteGroupBuilder MapAuthEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/auth")

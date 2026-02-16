@@ -49,6 +49,10 @@ public interface ITaskRepository
     /// encrypts and updates the shadow property. Pass <c>null</c> with <paramref name="clearSensitiveNote"/>
     /// set to <c>true</c> to remove the note.
     /// </summary>
+    /// <param name="task">The modified task aggregate to persist.</param>
+    /// <param name="sensitiveNote">New encrypted note value, or null to leave unchanged.</param>
+    /// <param name="clearSensitiveNote">When true, removes the sensitive note regardless of the sensitiveNote parameter value.</param>
+    /// <param name="ct">Cancellation token.</param>
     System.Threading.Tasks.Task UpdateAsync(TaskEntity task, SensitiveNote? sensitiveNote = null, bool clearSensitiveNote = false, CancellationToken ct = default);
 
     /// <summary>

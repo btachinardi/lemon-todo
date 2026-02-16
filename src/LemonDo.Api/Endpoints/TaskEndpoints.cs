@@ -10,7 +10,12 @@ using LemonDo.Domain.Tasks.ValueObjects;
 /// <summary>Minimal API endpoint definitions for the <c>/api/tasks</c> route group.</summary>
 public static class TaskEndpoints
 {
-    /// <summary>Maps all task CRUD, lifecycle, and tag endpoints under <c>/api/tasks</c>.</summary>
+    /// <summary>
+    /// Maps all task endpoints under <c>/api/tasks</c> including CRUD operations, lifecycle
+    /// transitions (complete, uncomplete, archive), spatial positioning (move), tag management,
+    /// sensitive note viewing, and bulk operations.
+    /// </summary>
+    /// <returns>The route group builder for method chaining.</returns>
     public static RouteGroupBuilder MapTaskEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/tasks").WithTags("Tasks").RequireAuthorization();
