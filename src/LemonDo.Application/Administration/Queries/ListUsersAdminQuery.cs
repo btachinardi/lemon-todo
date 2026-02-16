@@ -10,10 +10,10 @@ public sealed record ListUsersAdminQuery(
     int Page = 1,
     int PageSize = 20);
 
-/// <summary>Handles <see cref="ListUsersAdminQuery"/> by querying Identity users with redacted PII.</summary>
+/// <summary>Handles <see cref="ListUsersAdminQuery"/> by querying Identity users with redacted protected data.</summary>
 public sealed class ListUsersAdminQueryHandler(IAdminUserQuery adminUserQuery)
 {
-    /// <summary>Returns a paginated list of users with redacted PII.</summary>
+    /// <summary>Returns a paginated list of users with redacted protected data.</summary>
     public Task<PagedResult<AdminUserDto>> HandleAsync(ListUsersAdminQuery query, CancellationToken ct = default)
         => adminUserQuery.ListUsersAsync(query.Search, query.Role, query.Page, query.PageSize, ct);
 }

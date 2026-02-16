@@ -5,7 +5,7 @@ export type AuditAction =
   | 'UserLoggedOut'
   | 'RoleAssigned'
   | 'RoleRemoved'
-  | 'PiiRevealed'
+  | 'ProtectedDataRevealed'
   | 'TaskCreated'
   | 'TaskCompleted'
   | 'TaskDeleted'

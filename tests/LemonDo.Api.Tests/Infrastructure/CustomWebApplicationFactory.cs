@@ -128,7 +128,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         string displayName,
         string role)
     {
-        var emailHash = PiiHasher.HashEmail(email);
+        var emailHash = ProtectedDataHasher.HashEmail(email);
         var existingUser = userManager.FindByNameAsync(emailHash).GetAwaiter().GetResult();
         if (existingUser is not null) return;
 

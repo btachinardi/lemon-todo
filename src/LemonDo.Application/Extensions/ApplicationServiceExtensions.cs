@@ -63,7 +63,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<RemoveRoleCommandHandler>();
         services.AddScoped<DeactivateUserCommandHandler>();
         services.AddScoped<ReactivateUserCommandHandler>();
-        services.AddScoped<RevealPiiCommandHandler>();
+        services.AddScoped<RevealProtectedDataCommandHandler>();
 
         // Board event handlers (downstream context reacting to upstream events)
         services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, CreateDefaultBoardOnUserRegistered>();

@@ -1,6 +1,6 @@
 namespace LemonDo.Application.Administration.DTOs;
 
-/// <summary>Read model for user data in admin views. PII fields are redacted by default.</summary>
+/// <summary>Read model for user data in admin views. Protected data fields are redacted by default.</summary>
 public sealed record AdminUserDto
 {
     /// <summary>User's unique identifier.</summary>

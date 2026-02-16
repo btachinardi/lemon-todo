@@ -11,7 +11,7 @@ public sealed record LoginUserCommand(string Email, string Password);
 
 /// <summary>
 /// Orchestrates login: authenticates via Identity ACL, loads domain User for profile data,
-/// generates auth tokens, returns AuthResult with redacted PII.
+/// generates auth tokens, returns AuthResult with redacted protected data.
 /// </summary>
 public sealed class LoginUserCommandHandler(
     IAuthService authService,

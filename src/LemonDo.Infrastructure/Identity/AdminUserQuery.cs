@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 /// <summary>
 /// Infrastructure implementation of <see cref="IAdminUserQuery"/>.
 /// Queries the domain <c>Users</c> table for profile data and ASP.NET Identity for roles.
-/// All returned PII is in redacted form. Search supports exact email match via hash
+/// All returned protected data is in redacted form. Search supports exact email match via hash
 /// or partial match on redacted display name.
 /// </summary>
 public sealed class AdminUserQuery(
@@ -29,7 +29,7 @@ public sealed class AdminUserQuery(
         if (!string.IsNullOrWhiteSpace(search))
         {
             // Exact email match via hash (shadow property) or partial match on redacted name
-            var emailHash = PiiHasher.HashEmail(search);
+            var emailHash = ProtectedDataHasher.HashEmail(search);
             var term = search.Trim().ToLower();
 
             query = query.Where(u =>

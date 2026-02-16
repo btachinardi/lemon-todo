@@ -14,7 +14,7 @@ public sealed class JwtTokenService(IOptions<JwtSettings> settings)
 
     /// <summary>
     /// Generates a signed JWT access token containing only the user ID and roles.
-    /// No PII (email, display name) is included in the token.
+    /// No protected data (email, display name) is included in the token.
     /// </summary>
     public string GenerateAccessToken(Guid userId, IList<string> roles)
     {

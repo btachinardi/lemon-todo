@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 /// <summary>
 /// EF Core configuration for the domain <see cref="User"/> entity.
-/// Maps to the <c>Users</c> table with shadow properties for PII storage:
+/// Maps to the <c>Users</c> table with shadow properties for protected data storage:
 /// <list type="bullet">
 ///   <item><c>EmailHash</c> — SHA-256 hash for exact-match lookups (unique index).</item>
 ///   <item><c>EncryptedEmail</c> — AES-256-GCM encrypted email (source of truth).</item>
@@ -38,7 +38,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.CreatedAt);
         builder.Property(u => u.UpdatedAt);
 
-        // Shadow properties for PII — not exposed on the domain entity
+        // Shadow properties for protected data — not exposed on the domain entity
         builder.Property<string>("EmailHash")
             .HasMaxLength(64)
             .IsRequired();

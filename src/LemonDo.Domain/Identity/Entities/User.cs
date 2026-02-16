@@ -28,7 +28,7 @@ public sealed class User : Entity<UserId>
 
     /// <summary>
     /// Creates a new user. Validates VOs, stores only redacted forms.
-    /// Full PII is passed to the repository for encryption during persistence.
+    /// Full protected data is passed to the repository for encryption during persistence.
     /// </summary>
     public static Result<User, DomainError> Create(Email email, DisplayName displayName)
     {

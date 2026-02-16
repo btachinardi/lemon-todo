@@ -65,11 +65,11 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IAdminUserService, AdminUserService>();
         services.AddHostedService<RefreshTokenCleanupService>();
 
-        // Field encryption for PII data at rest
+        // Field encryption for protected data at rest
         services.AddSingleton<IFieldEncryptionService, AesFieldEncryptionService>();
 
-        // Audited PII access service — the ONLY authorized path for decrypting PII
-        services.AddScoped<IPiiAccessService, PiiAccessService>();
+        // Audited protected data access service — the ONLY authorized path for decrypting protected data
+        services.AddScoped<IProtectedDataAccessService, ProtectedDataAccessService>();
 
         return services;
     }

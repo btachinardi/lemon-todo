@@ -2,14 +2,14 @@ import { test, expect } from '@playwright/test';
 import { API_BASE } from '../helpers/e2e.config';
 
 /**
- * E2E: Admin PII Reveal (break-the-glass) flow.
+ * E2E: Admin Protected Data Reveal (break-the-glass) flow.
  *
  * Uses the dev-seeded SystemAdmin account to:
- * 1. Register a test user whose PII we'll reveal
+ * 1. Register a test user whose protected data we'll reveal
  * 2. Login as SystemAdmin
  * 3. Navigate to the admin users page
- * 4. Reveal the test user's PII via the break-the-glass dialog
- * 5. Verify the plaintext PII is shown
+ * 4. Reveal the test user's protected data via the break-the-glass dialog
+ * 5. Verify the plaintext protected data is shown
  */
 
 const SYSADMIN_EMAIL = 'dev.sysadmin@lemondo.dev';
@@ -29,13 +29,13 @@ function extractRefreshToken(res: Response): string {
   return match[1];
 }
 
-test.describe('Admin PII Reveal', () => {
+test.describe('Admin Protected Data Reveal', () => {
   let testUserEmail: string;
-  const testUserDisplayName = 'PII Reveal E2E User';
+  const testUserDisplayName = 'Protected Data Reveal E2E User';
 
   test.beforeAll(async () => {
-    // Register a unique test user whose PII we'll reveal
-    testUserEmail = `pii-e2e-${Date.now()}@lemondo.dev`;
+    // Register a unique test user whose protected data we'll reveal
+    testUserEmail = `pd-e2e-${Date.now()}@lemondo.dev`;
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -48,7 +48,7 @@ test.describe('Admin PII Reveal', () => {
     if (!res.ok) throw new Error(`Register failed: ${res.status} ${await res.text()}`);
   });
 
-  test('system admin can reveal PII via break-the-glass dialog', async ({ page }) => {
+  test('system admin can reveal protected data via break-the-glass dialog', async ({ page }) => {
     // 1. Login as SystemAdmin via API + inject cookie
     const loginRes = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
@@ -101,11 +101,11 @@ test.describe('Admin PII Reveal', () => {
     const actionsButton = page.locator('table tbody tr').first().getByRole('button', { name: 'Actions' });
     await actionsButton.click();
 
-    // 7. Click "Reveal PII"
-    await page.getByText('Reveal PII').click();
+    // 7. Click "Reveal Protected Data"
+    await page.getByText('Reveal Protected Data').click();
 
     // 8. Dialog should appear
-    await expect(page.getByText('Reveal Personal Information')).toBeVisible();
+    await expect(page.getByText('Reveal Protected Data')).toBeVisible();
 
     // 9. Select reason
     await page.getByText('Select a reason').click();
@@ -115,9 +115,9 @@ test.describe('Admin PII Reveal', () => {
     await page.getByLabel('Your Password').fill(SYSADMIN_PASSWORD);
 
     // 11. Submit
-    await page.getByRole('button', { name: 'Reveal PII' }).click();
+    await page.getByRole('button', { name: 'Reveal Protected Data' }).click();
 
-    // 12. Verify revealed PII is shown (the email and display name should now be unredacted)
+    // 12. Verify revealed protected data is shown (the email and display name should now be unredacted)
     // The UI shows revealed values in amber color with a countdown timer
     await expect(page.getByText(testUserEmail)).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(testUserDisplayName)).toBeVisible();

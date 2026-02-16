@@ -9,7 +9,7 @@ const actionVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'o
   UserLoggedOut: 'secondary',
   RoleAssigned: 'default',
   RoleRemoved: 'outline',
-  PiiRevealed: 'destructive',
+  ProtectedDataRevealed: 'destructive',
   TaskCreated: 'default',
   TaskCompleted: 'secondary',
   TaskDeleted: 'destructive',

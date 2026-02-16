@@ -5,14 +5,14 @@ using Serilog.Events;
 namespace LemonDo.Api.Tests.Logging;
 
 [TestClass]
-public sealed class PiiMaskingEnricherTests
+public sealed class ProtectedDataMaskingEnricherTests
 {
     [TestMethod]
     public void Should_MaskEmailProperty_When_LogEventContainsEmail()
     {
         LogEvent? capturedEvent = null;
         var logger = new LoggerConfiguration()
-            .Enrich.With<PiiMaskingEnricher>()
+            .Enrich.With<ProtectedDataMaskingEnricher>()
             .WriteTo.Sink(new DelegateSink(e => capturedEvent = e))
             .CreateLogger();
 
@@ -28,7 +28,7 @@ public sealed class PiiMaskingEnricherTests
     {
         LogEvent? capturedEvent = null;
         var logger = new LoggerConfiguration()
-            .Enrich.With<PiiMaskingEnricher>()
+            .Enrich.With<ProtectedDataMaskingEnricher>()
             .WriteTo.Sink(new DelegateSink(e => capturedEvent = e))
             .CreateLogger();
 
@@ -44,7 +44,7 @@ public sealed class PiiMaskingEnricherTests
     {
         LogEvent? capturedEvent = null;
         var logger = new LoggerConfiguration()
-            .Enrich.With<PiiMaskingEnricher>()
+            .Enrich.With<ProtectedDataMaskingEnricher>()
             .WriteTo.Sink(new DelegateSink(e => capturedEvent = e))
             .CreateLogger();
 

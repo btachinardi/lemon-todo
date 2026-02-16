@@ -66,7 +66,7 @@ public sealed class AuthService(
         string email, string password, CancellationToken ct)
     {
         // Look up by email hash stored in UserName
-        var emailHash = PiiHasher.HashEmail(email);
+        var emailHash = ProtectedDataHasher.HashEmail(email);
         var user = await userManager.FindByNameAsync(emailHash);
         if (user is null)
             return Result<UserId, DomainError>.Failure(

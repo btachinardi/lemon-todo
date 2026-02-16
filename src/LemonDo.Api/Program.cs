@@ -35,8 +35,8 @@ builder.Services.AddSerilog(configuration => configuration
     .Enrich.WithProperty("Application", "LemonDo.Api")
     .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
     .Enrich.WithProperty("MachineName", System.Environment.MachineName)
-    .Enrich.With<PiiMaskingEnricher>()
-    .Destructure.With<PiiDestructuringPolicy>());
+    .Enrich.With<ProtectedDataMaskingEnricher>()
+    .Destructure.With<ProtectedDataDestructuringPolicy>());
 
 builder.AddServiceDefaults();
 builder.Services.AddOpenApi();
@@ -176,7 +176,7 @@ try
         foreach (var (email, password, displayName, role) in devAccounts)
         {
             // Check if user already exists via email hash
-            var emailHash = PiiHasher.HashEmail(email);
+            var emailHash = ProtectedDataHasher.HashEmail(email);
             if (await userManager.FindByNameAsync(emailHash) is not null)
                 continue;
 

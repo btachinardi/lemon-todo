@@ -38,7 +38,7 @@ public sealed class AuthEndpointTests
         var auth = await response.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(auth);
         Assert.IsNotNull(auth.AccessToken);
-        // PII zero-trust: register returns redacted values
+        // Protected data zero-trust: register returns redacted values
         Assert.AreEqual("n***@lemondo.dev", auth.User.Email);
         Assert.AreEqual("N***r", auth.User.DisplayName);
 
@@ -83,7 +83,7 @@ public sealed class AuthEndpointTests
         var auth = await response.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(auth);
         Assert.IsNotNull(auth.AccessToken);
-        // PII zero-trust: login returns redacted email
+        // Protected data zero-trust: login returns redacted email
         Assert.AreEqual("t***@lemondo.dev", auth.User.Email);
 
         // Refresh token should be in HttpOnly cookie, NOT in JSON body
@@ -179,7 +179,7 @@ public sealed class AuthEndpointTests
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var user = await response.Content.ReadFromJsonAsync<UserResponse>();
         Assert.IsNotNull(user);
-        // PII zero-trust: /me returns redacted values
+        // Protected data zero-trust: /me returns redacted values
         Assert.AreEqual("t***@lemondo.dev", user.Email);
         Assert.AreEqual("T***r", user.DisplayName);
     }

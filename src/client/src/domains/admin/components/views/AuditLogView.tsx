@@ -27,7 +27,7 @@ const AUDIT_ACTIONS: AuditAction[] = [
   'UserLoggedOut',
   'RoleAssigned',
   'RoleRemoved',
-  'PiiRevealed',
+  'ProtectedDataRevealed',
   'TaskCreated',
   'TaskCompleted',
   'TaskDeleted',

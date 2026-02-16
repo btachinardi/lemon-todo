@@ -1,4 +1,4 @@
-/** User data returned by admin endpoints. PII is redacted by default. */
+/** User data returned by admin endpoints. Protected data is redacted by default. */
 export interface AdminUser {
   id: string;
   email: string;
@@ -8,14 +8,14 @@ export interface AdminUser {
   createdAt: string;
 }
 
-/** Unredacted PII returned by the reveal endpoint. */
-export interface RevealedPii {
+/** Unredacted protected data returned by the reveal endpoint. */
+export interface RevealedProtectedData {
   email: string;
   displayName: string;
 }
 
-/** Justification reasons for PII reveal break-the-glass action. */
-export const PII_REVEAL_REASONS = [
+/** Justification reasons for protected data reveal break-the-glass action. */
+export const PROTECTED_DATA_REVEAL_REASONS = [
   'SupportTicket',
   'LegalRequest',
   'AccountRecovery',
@@ -25,11 +25,11 @@ export const PII_REVEAL_REASONS = [
   'Other',
 ] as const;
 
-export type PiiRevealReason = (typeof PII_REVEAL_REASONS)[number];
+export type ProtectedDataRevealReason = (typeof PROTECTED_DATA_REVEAL_REASONS)[number];
 
-/** Request body for the PII reveal endpoint with break-the-glass controls. */
-export interface RevealPiiRequest {
-  reason: PiiRevealReason;
+/** Request body for the protected data reveal endpoint with break-the-glass controls. */
+export interface RevealProtectedDataRequest {
+  reason: ProtectedDataRevealReason;
   reasonDetails?: string;
   comments?: string;
   password: string;

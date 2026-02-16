@@ -4,10 +4,10 @@ using System.Security.Cryptography;
 using System.Text;
 
 /// <summary>
-/// Deterministic hashing utility for PII values. Produces SHA-256 hashes suitable
+/// Deterministic hashing utility for protected data values. Produces SHA-256 hashes suitable
 /// for database lookups (e.g., finding a user by email without storing the email in plaintext).
 /// </summary>
-public static class PiiHasher
+public static class ProtectedDataHasher
 {
     /// <summary>
     /// Hashes an email address using SHA-256 after case-normalization.

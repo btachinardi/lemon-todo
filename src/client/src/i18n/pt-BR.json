@@ -160,7 +160,7 @@
       "noUsers": "Nenhum usu\u00e1rio encontrado.",
       "active": "Ativo",
       "deactivated": "Desativado",
-      "revealPii": "Revelar PII",
+      "revealProtectedData": "Revelar Dados Protegidos",
       "assignRole": "Atribuir Fun\u00e7\u00e3o",
       "removeRole": "Remover Fun\u00e7\u00e3o",
       "deactivate": "Desativar",
@@ -197,7 +197,7 @@
         "UserLoggedOut": "Usuário Desconectado",
         "RoleAssigned": "Função Atribuída",
         "RoleRemoved": "Função Removida",
-        "PiiRevealed": "PII Revelada",
+        "ProtectedDataRevealed": "Dados Protegidos Revelados",
         "TaskCreated": "Tarefa Criada",
         "TaskCompleted": "Tarefa Concluída",
         "TaskDeleted": "Tarefa Excluída",
@@ -205,9 +205,9 @@
         "UserReactivated": "Usuário Reativado"
       }
     },
-    "piiRevealDialog": {
-      "title": "Revelar Informa\u00e7\u00f5es Pessoais",
-      "description": "Esta a\u00e7\u00e3o revela PII sens\u00edvel e \u00e9 registrada no log de auditoria. Insira uma justificativa e verifique sua identidade para prosseguir.",
+    "protectedDataRevealDialog": {
+      "title": "Revelar Dados Protegidos",
+      "description": "Esta a\u00e7\u00e3o revela dados protegidos sens\u00edveis e \u00e9 registrada no log de auditoria. Insira uma justificativa e verifique sua identidade para prosseguir.",
       "reason": "Motivo",
       "reasonPlaceholder": "Selecione um motivo",
       "reasons": {
@@ -220,7 +220,7 @@
         "Other": "Outro"
       },
       "reasonDetails": "Detalhes do Motivo",
-      "reasonDetailsPlaceholder": "Explique por que este acesso \u00e0 PII \u00e9 necess\u00e1rio...",
+      "reasonDetailsPlaceholder": "Explique por que este acesso aos dados protegidos \u00e9 necess\u00e1rio...",
       "reasonDetailsRequired": "Detalhes s\u00e3o obrigat\u00f3rios quando o motivo \u00e9 'Outro'.",
       "comments": "Coment\u00e1rios Adicionais",
       "commentsPlaceholder": "Qualquer contexto adicional (opcional)...",
@@ -228,7 +228,7 @@
       "passwordPlaceholder": "Digite sua senha da conta",
       "passwordError": "Senha inv\u00e1lida. Tente novamente.",
       "auditWarning": "Esta a\u00e7\u00e3o \u00e9 registrada permanentemente no log de auditoria.",
-      "submit": "Revelar PII",
+      "submit": "Revelar Dados Protegidos",
       "submitting": "Verificando..."
     },
     "secureViewer": {

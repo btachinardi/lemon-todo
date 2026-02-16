@@ -5,12 +5,12 @@ using LemonDo.Domain.Identity.ValueObjects;
 
 /// <summary>
 /// Repository for persisting and querying <see cref="User"/> aggregates.
-/// The implementation handles PII encryption transparently: during <see cref="AddAsync"/>,
+/// The implementation handles protected data encryption transparently: during <see cref="AddAsync"/>,
 /// the plaintext VOs are encrypted for storage; during reads, only redacted values are loaded.
 /// </summary>
 public interface IUserRepository
 {
-    /// <summary>Returns the user with the given ID, or <c>null</c> if not found. PII is redacted.</summary>
+    /// <summary>Returns the user with the given ID, or <c>null</c> if not found. Protected data is redacted.</summary>
     Task<User?> GetByIdAsync(UserId id, CancellationToken ct = default);
 
     /// <summary>

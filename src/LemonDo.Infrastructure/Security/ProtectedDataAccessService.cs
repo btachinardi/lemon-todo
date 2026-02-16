@@ -10,27 +10,27 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// The ONLY authorized path for decrypting PII from encrypted shadow properties on the <c>Users</c> table.
+/// The ONLY authorized path for decrypting protected data from encrypted shadow properties on the <c>Users</c> table.
 /// Every decryption is recorded in the audit trail — whether initiated by an admin or by the system.
 /// </summary>
-public sealed class PiiAccessService(
+public sealed class ProtectedDataAccessService(
     LemonDoDbContext dbContext,
     IFieldEncryptionService encryptionService,
     IAuditService auditService,
-    ILogger<PiiAccessService> logger) : IPiiAccessService
+    ILogger<ProtectedDataAccessService> logger) : IProtectedDataAccessService
 {
     /// <inheritdoc />
-    public async Task<Result<DecryptedPii, DomainError>> AccessForSystemAsync(
-        Guid userId, SystemPiiAccessReason reason, string? details, CancellationToken ct)
+    public async Task<Result<DecryptedProtectedData, DomainError>> AccessForSystemAsync(
+        Guid userId, SystemProtectedDataAccessReason reason, string? details, CancellationToken ct)
     {
-        var result = await DecryptPiiAsync(userId, ct);
+        var result = await DecryptProtectedDataAsync(userId, ct);
         if (result.IsFailure)
             return result;
 
-        logger.LogInformation("System PII access for user {UserId}: {Reason}", userId, reason);
+        logger.LogInformation("System protected data access for user {UserId}: {Reason}", userId, reason);
 
         await auditService.RecordAsync(
-            AuditAction.PiiAccessed,
+            AuditAction.ProtectedDataAccessed,
             "User",
             userId.ToString(),
             JsonSerializer.Serialize(new { Reason = reason.ToString(), Details = details }),
@@ -41,14 +41,14 @@ public sealed class PiiAccessService(
     }
 
     /// <inheritdoc />
-    public async Task<Result<DecryptedPii, DomainError>> RevealForAdminAsync(
+    public async Task<Result<DecryptedProtectedData, DomainError>> RevealForAdminAsync(
         Guid userId, CancellationToken ct)
     {
-        // Audit is recorded by the calling RevealPiiCommandHandler with admin-specific context
-        return await DecryptPiiAsync(userId, ct);
+        // Audit is recorded by the calling RevealProtectedDataCommandHandler with admin-specific context
+        return await DecryptProtectedDataAsync(userId, ct);
     }
 
-    private async Task<Result<DecryptedPii, DomainError>> DecryptPiiAsync(
+    private async Task<Result<DecryptedProtectedData, DomainError>> DecryptProtectedDataAsync(
         Guid userId, CancellationToken ct)
     {
         var targetId = UserId.Reconstruct(userId);
@@ -64,12 +64,12 @@ public sealed class PiiAccessService(
             .FirstOrDefaultAsync(ct);
 
         if (encryptedData is null)
-            return Result<DecryptedPii, DomainError>.Failure(
+            return Result<DecryptedProtectedData, DomainError>.Failure(
                 DomainError.NotFound("user", userId.ToString()));
 
         var email = encryptionService.Decrypt(encryptedData.EncryptedEmail);
         var displayName = encryptionService.Decrypt(encryptedData.EncryptedDisplayName);
 
-        return Result<DecryptedPii, DomainError>.Success(new DecryptedPii(email, displayName));
+        return Result<DecryptedProtectedData, DomainError>.Success(new DecryptedProtectedData(email, displayName));
     }
 }

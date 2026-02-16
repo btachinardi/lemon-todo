@@ -9,7 +9,7 @@ public sealed record RefreshTokenCommand(string RefreshToken);
 
 /// <summary>
 /// Orchestrates token refresh: validates refresh token via Identity ACL,
-/// loads domain User for profile data, returns AuthResult with redacted PII.
+/// loads domain User for profile data, returns AuthResult with redacted protected data.
 /// </summary>
 public sealed class RefreshTokenCommandHandler(
     IAuthService authService,

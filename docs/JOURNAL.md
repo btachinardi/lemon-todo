@@ -1147,6 +1147,137 @@ Added HIPAA-modeled break-the-glass controls to the PII reveal flow. Previously,
 
 ---
 
+---
+
+## Identity/Domain Separation: PII Zero-Trust Architecture
+
+**Date**: 2026-02-16
+**Branch**: `feature/pii-zero-trust`
+
+### The Problem
+
+After completing CP4, the architecture had a critical flaw: ASP.NET Identity (`ApplicationUser`) owned ALL user data — `DisplayName`, `CreatedAt`, `IsDeactivated`, `EncryptedEmail`, and `EncryptedDisplayName` lived on the Identity entity. Meanwhile, the domain `User` entity was ephemeral — created during registration but never persisted. It raised `UserRegisteredEvent`, but the event was silently dropped because the entity never reached EF Core's change tracker.
+
+This violated DDD's separation of concerns: Identity should handle **credentials and authorization only**, while the domain layer should own **user profile data and business state**.
+
+### The Architecture Redesign
+
+We split responsibilities across two tables with a shared ID:
+
+**AspNetUsers** (Identity — credentials only):
+- `Id` (PK)
+- `UserName` (stores SHA-256 email hash for lookups)
+- `PasswordHash`, `SecurityStamp`, `LockoutEnd`, `AccessFailedCount` (Identity's built-in fields)
+- All custom user data fields **removed**
+
+**Users** (Domain — profile + PII):
+- `Id` (PK, matches AspNetUsers.Id)
+- `RedactedEmail`, `RedactedDisplayName` (stored, used for display)
+- `EmailHash` (unique index, for hash-based lookups)
+- `EncryptedEmail`, `EncryptedDisplayName` (EF shadow properties, AES-256-GCM ciphertext)
+- `IsDeactivated`, `CreatedAt`, `UpdatedAt` (business state)
+
+### Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **User entity stores redacted strings, not VOs** | `RedactedEmail: string` vs `Email: Email` — storing `"j***@example.com"` in an `Email` VO creates semantic confusion. VOs used during `Create()` for validation, then `.Redacted` values extracted and stored. |
+| **UserRepository handles encryption transparently** | `AddAsync(user, email, displayName)` receives validated VOs, computes hash/redacted/encrypted forms, stores via EF shadow properties. Callers don't see encryption details. |
+| **IAuthService becomes credential-focused** | Removed `RegisterAsync` (returned AuthResult with user data). Now: `CreateCredentialsAsync(userId, emailHash, password)` → no user profile. Handlers orchestrate Identity + domain User separately. |
+| **AuthTokens record separates tokens from user data** | New `AuthTokens(AccessToken, RefreshToken, Roles)` record. Handlers load domain User, generate tokens, combine into `AuthResult` at the last mile. |
+| **Identity.UserName stores email hash** | Identity's `FindByNameAsync(emailHash)` provides O(1) login lookup. No need for a separate `EmailHash` column on `AspNetUsers` — we repurposed an existing indexed field. |
+| **Admin search via exact email hash** | Admin search by partial string no longer works (was searching redacted values). Now: search by exact email (hashed) or partial redacted display name. |
+| **ISensitivePii marker on VOs** | `Email` and `DisplayName` VOs implement `ISensitivePii` with a `Redacted` property. This makes PII awareness a domain-level concern, not an infrastructure detail. |
+| **CreateDefaultBoardOnUserRegistered event handler** | Domain User is now persisted, so `UserRegisteredEvent` is dispatched via `SaveChangesAsync`. Event handler creates default board for new users. |
+
+### Migration Strategy
+
+**EF Migration**: `20260216125919_SeparateUserFromIdentity`
+1. Drop custom columns from `AspNetUsers` (DisplayName, EncryptedEmail, EncryptedDisplayName, CreatedAt, IsDeactivated)
+2. Create `Users` table with all domain user columns plus shadow properties
+3. Add unique index on `Users.EmailHash`
+
+**No data migration needed** — this was implemented fresh on the `feature/pii-zero-trust` branch before any production users existed. In a production rollout scenario, an app-startup migration service would:
+1. Read plaintext columns from existing `AspNetUsers` rows
+2. Encrypt them to populate `Users.EncryptedEmail/EncryptedDisplayName`
+3. Compute `EmailHash` and redacted forms
+4. Insert into `Users` table
+5. Drop the old columns once migration is verified
+
+### Implementation Phases
+
+**Phase 1 (Domain)**: Enhanced `User` entity with `RedactedEmail`/`RedactedDisplayName` (strings), `Deactivate()`/`Reactivate()` methods, `Reconstitute()` for persistence. Created `IUserRepository` with `AddAsync(user, email, displayName)`. Added `ISensitivePii` interface to `Email`/`DisplayName` VOs with `Redacted` property. Created `PiiHasher.HashEmail()` utility.
+
+**Phase 2 (Application)**: Split `IAuthService` into credential-focused methods. Created `AuthTokens` record. Rewrote `RegisterUserCommandHandler` (orchestrates Identity credentials + domain User + board creation), `LoginUserCommandHandler` (auth → load user → tokens), `RefreshTokenCommandHandler` (refresh → load user → tokens). Created `IPiiAccessService` for audited decryption.
+
+**Phase 3 (Infrastructure)**: Stripped `ApplicationUser` to credential shell. Created `UserConfiguration` with shadow properties for `EmailHash`, `EncryptedEmail`, `EncryptedDisplayName`. Implemented `UserRepository` with transparent encryption. Rewrote `AuthService` for hash-based login (`FindByNameAsync(emailHash)`). Rewrote `AdminUserQuery` to join `Users` + Identity. Implemented `PiiAccessService` with `AccessForSystemAsync` (system decryption with audit) and `RevealForAdminAsync` (admin break-the-glass).
+
+**Phase 4 (API + Migration)**: EF migration created. Updated `AuthEndpoints.GetMe` to load from `IUserRepository`. Updated dev seed in `Program.cs` to create dual records (Identity credentials + domain User).
+
+**Phase 5 (Tests)**: Added 22 new tests covering all the new surface area:
+- **P1 unit tests**: `Email.Redacted` (5), `DisplayName.Redacted` (5), `PiiHasher.HashEmail` (5), `RefreshTokenCommandHandler` (3), `CreateDefaultBoardOnUserRegistered` (2)
+- **P2 scenario tests**: Deactivated user login rejection (1), PII reveal audit trail verification (1)
+- **P3 E2E**: Admin PII reveal flow via browser (1 spec file)
+
+Deleted 2 obsolete tests (`CreatedAtMigrationTests.cs`) for a migration workaround that no longer applies.
+
+### Files Changed Summary
+
+**49 files changed** (+2,125 insertions, -460 deletions):
+- 13 new files (IPiiAccessService, IUserRepository, UserRepository, UserConfiguration, PiiAccessService, PiiHasher, ISensitivePii, SystemPiiAccessReason, CreateDefaultBoardOnUserRegistered, AuthTokens, 3 test files, 2 migration files)
+- 24 modified source files (User entity, Email/DisplayName VOs, IAuthService, AuthService, command handlers, AdminUserService, ApplicationUser, JwtTokenService, etc.)
+- 11 modified test files (UserTests, EmailTests, DisplayNameTests, RegisterUserCommandHandlerTests, LoginUserCommandHandlerTests, AdminEndpointsTests, AuthEndpointTests, CustomWebApplicationFactory, etc.)
+- 1 deleted test file (CreatedAtMigrationTests.cs)
+
+### Test Coverage
+
+| Check | Result |
+|-------|--------|
+| **Backend Tests** | **355 passed** (up from 333), 0 failed |
+| **Frontend Tests** | **187 passed**, 0 failed |
+| **E2E Tests** | **56 passed** (up from 55), 0 failed |
+| **Total** | **598 tests** |
+
+### Lessons Learned
+
+1. **Identity owns credentials, domain owns data** — ASP.NET Identity is designed for authentication, not business data. Overloading it with profile fields, PII encryption, and business flags creates coupling and violates the Single Responsibility Principle. The separation makes each layer clearer: Identity handles lockout/passwords/roles, domain User handles lifecycle/deactivation/profile.
+
+2. **EF migration snapshots can interfere with EnsureCreated()** — In theory, `EnsureCreated()` uses the compiled model from `DbContext.OnModelCreating()`, not migration snapshots. In practice, stale migration snapshots caused 84 test failures with "NOT NULL constraint failed: AspNetUsers.CreatedAt" even though `ApplicationUser` had no `CreatedAt` property. Removing the stale migration via `dotnet ef migrations remove` and regenerating resolved it. This may be a .NET 10 behavior change.
+
+3. **Hash-based admin search is a paradigm shift** — Admin search previously used partial plaintext matches (`?search=alice` matched `alice@example.com`). Hash-based lookup requires exact email match (`?search=alice@example.com`). Partial redacted display name search still works (`?search=Ali` matches `A***e`). Tests must store the exact registration email and use it for admin queries.
+
+4. **Shadow properties isolate PII implementation from domain** — The domain `User` entity has no knowledge of encryption, hashing, or PII storage details. `UserRepository` uses EF shadow properties (`EmailHash`, `EncryptedEmail`, `EncryptedDisplayName`) to store sensitive data without coupling the domain model to encryption concerns. This preserves domain purity while enabling zero-trust PII handling.
+
+5. **ISensitivePii makes PII awareness domain-level** — Instead of infrastructure or application layers "knowing" which fields are PII and applying redaction/hashing/encryption ad-hoc, the domain VOs themselves declare "I am sensitive PII" via the marker interface and provide their own redaction logic. This centralizes the policy and makes it impossible to forget redaction when adding new PII fields.
+
+---
+
+## Terminology Rename: PII → ProtectedData
+
+**Date**: 2026-02-16
+**Branch**: `feature/pii-zero-trust`
+
+### Motivation
+
+The term "PII" (Personally Identifiable Information) was too narrow. The same encryption, redaction, and break-the-glass reveal system protects PII, PHI (Protected Health Information), and other sensitive data categories. Renaming to "ProtectedData" makes the system generic and extensible.
+
+### Scope
+
+Pure terminology rename with zero functional changes:
+
+- **Domain**: `ISensitivePii` → `IProtectedData`, `PiiHasher` → `ProtectedDataHasher`, `PiiRevealReason` → `ProtectedDataRevealReason`, `SystemPiiAccessReason` → `SystemProtectedDataAccessReason`, `AuditAction.PiiRevealed` → `ProtectedDataRevealed`
+- **Application**: `IPiiAccessService` → `IProtectedDataAccessService`, `RevealPiiCommand` → `RevealProtectedDataCommand`, `PiiRedactor` → `ProtectedDataRedactor`
+- **Infrastructure**: `PiiAccessService` → `ProtectedDataAccessService`
+- **API**: `PiiDestructuringPolicy` → `ProtectedDataDestructuringPolicy`, `PiiMaskingEnricher` → `ProtectedDataMaskingEnricher`
+- **Frontend**: `PiiRevealDialog` → `ProtectedDataRevealDialog`, i18n keys `piiRevealDialog.*` → `protectedDataRevealDialog.*`
+- **Tests**: All test files renamed to match
+- **Docs**: CHANGELOG, GUIDELINES, DOMAIN, SCENARIOS updated
+- **E2E**: `admin-pii-reveal.spec.ts` updated (file kept, content renamed)
+
+Migration files left untouched (historical records).
+
+---
+
 ## What's Next
 
 ### Checkpoint 5: Advanced & Delight

@@ -7,7 +7,7 @@ using LemonDo.Domain.Common;
 /// Strongly-typed email address with format validation.
 /// Maximum length is 254 characters per RFC 5321.
 /// </summary>
-public sealed partial class Email : ValueObject<string>, IReconstructable<Email, string>, ISensitivePii
+public sealed partial class Email : ValueObject<string>, IReconstructable<Email, string>, IProtectedData
 {
     /// <summary>Maximum allowed length for an email address (RFC 5321).</summary>
     public const int MaxLength = 254;

@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import type { AdminUser, PagedAdminUsers, RevealedPii, RevealPiiRequest } from '../types/admin.types';
+import type { AdminUser, PagedAdminUsers, RevealedProtectedData, RevealProtectedDataRequest } from '../types/admin.types';
 
 /** API client for admin user management endpoints. */
 export const adminApi = {
@@ -33,8 +33,8 @@ export const adminApi = {
     return apiClient.post<{ success: boolean }>(`/api/admin/users/${userId}/reactivate`);
   },
 
-  /** Reveals a user's unredacted PII with break-the-glass controls (SystemAdmin required). */
-  revealPii(userId: string, request: RevealPiiRequest) {
-    return apiClient.post<RevealedPii>(`/api/admin/users/${userId}/reveal`, request);
+  /** Reveals a user's unredacted protected data with break-the-glass controls (SystemAdmin required). */
+  revealProtectedData(userId: string, request: RevealProtectedDataRequest) {
+    return apiClient.post<RevealedProtectedData>(`/api/admin/users/${userId}/reveal`, request);
   },
 };

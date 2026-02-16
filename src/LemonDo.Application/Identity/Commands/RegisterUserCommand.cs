@@ -12,7 +12,7 @@ public sealed record RegisterUserCommand(string Email, string Password, string D
 
 /// <summary>
 /// Orchestrates registration: validates VOs, creates domain User, creates Identity credentials,
-/// persists User (with encrypted PII), generates auth tokens.
+/// persists User (with encrypted protected data), generates auth tokens.
 /// Default board creation is handled by <see cref="LemonDo.Application.Boards.EventHandlers.CreateDefaultBoardOnUserRegistered"/>
 /// reacting to the <see cref="LemonDo.Domain.Identity.Events.UserRegisteredEvent"/>.
 /// </summary>
@@ -46,12 +46,12 @@ public sealed class RegisterUserCommandHandler(
         var user = userResult.Value;
 
         // Create Identity credentials (password hash, "User" role — no profile data)
-        var emailHash = PiiHasher.HashEmail(email.Value);
+        var emailHash = ProtectedDataHasher.HashEmail(email.Value);
         var credResult = await authService.CreateCredentialsAsync(user.Id, emailHash, command.Password, ct);
         if (credResult.IsFailure)
             return Result<AuthResult, DomainError>.Failure(credResult.Error);
 
-        // Persist domain User (repository encrypts PII into shadow columns)
+        // Persist domain User (repository encrypts protected data into shadow columns)
         await userRepository.AddAsync(user, email, displayName, ct);
 
         // Save User + dispatch UserRegisteredEvent (board creation handled by event handler)

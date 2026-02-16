@@ -23,8 +23,8 @@ public enum AuditAction
     /// <summary>A role was removed from a user.</summary>
     RoleRemoved,
 
-    /// <summary>An admin revealed redacted PII data.</summary>
-    PiiRevealed,
+    /// <summary>An admin revealed redacted protected data.</summary>
+    ProtectedDataRevealed,
 
     /// <summary>A new task was created.</summary>
     TaskCreated,
@@ -41,6 +41,6 @@ public enum AuditAction
     /// <summary>A user account was reactivated.</summary>
     UserReactivated,
 
-    /// <summary>The system decrypted PII for an automated operation (e.g., sending email).</summary>
-    PiiAccessed,
+    /// <summary>The system decrypted protected data for an automated operation (e.g., sending email).</summary>
+    ProtectedDataAccessed,
 }

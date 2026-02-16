@@ -64,7 +64,7 @@ public sealed class AdminEndpointsTests
     }
 
     [TestMethod]
-    public async Task Should_ReturnRedactedPii_When_AdminListsUsers()
+    public async Task Should_ReturnRedactedProtectedData_When_AdminListsUsers()
     {
         var client = await _factory.CreateAdminClientAsync();
 
@@ -203,10 +203,10 @@ public sealed class AdminEndpointsTests
         Assert.IsTrue(user!.IsActive);
     }
 
-    // --- PII Reveal (SystemAdmin only, break-the-glass) ---
+    // --- Protected Data Reveal (SystemAdmin only, break-the-glass) ---
 
     [TestMethod]
-    public async Task Should_Return403_When_AdminTriesToRevealPii()
+    public async Task Should_Return403_When_AdminTriesToRevealProtectedData()
     {
         var client = await _factory.CreateAdminClientAsync();
 
@@ -223,11 +223,11 @@ public sealed class AdminEndpointsTests
     }
 
     [TestMethod]
-    public async Task Should_ReturnUnredactedPii_When_SystemAdminReveals()
+    public async Task Should_ReturnUnredactedProtectedData_When_SystemAdminReveals()
     {
         var client = await _factory.CreateSystemAdminClientAsync();
 
-        // Create a user whose PII we'll reveal
+        // Create a user whose protected data we'll reveal
         var email = $"reveal-{Guid.NewGuid():N}@example.com";
         var displayName = "Reveal Test User";
         var registerClient = _factory.CreateClient();
@@ -243,10 +243,10 @@ public sealed class AdminEndpointsTests
         var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
         var userId = list!.Items[0].Id;
 
-        // Verify list shows redacted PII
+        // Verify list shows redacted protected data
         Assert.Contains("***", list.Items[0].Email);
 
-        // Reveal PII with break-the-glass controls
+        // Reveal protected data with break-the-glass controls
         var revealResponse = await client.PostAsJsonAsync($"/api/admin/users/{userId}/reveal", new
         {
             Reason = "SupportTicket",
@@ -254,7 +254,7 @@ public sealed class AdminEndpointsTests
         });
         Assert.AreEqual(HttpStatusCode.OK, revealResponse.StatusCode);
 
-        var revealed = await revealResponse.Content.ReadFromJsonAsync<RevealedPiiDto>(TestJsonOptions.Default);
+        var revealed = await revealResponse.Content.ReadFromJsonAsync<RevealedProtectedDataDto>(TestJsonOptions.Default);
         Assert.IsNotNull(revealed);
 
         // The revealed email should be unredacted
@@ -327,7 +327,7 @@ public sealed class AdminEndpointsTests
     }
 
     [TestMethod]
-    public async Task Should_ReturnUnredactedPii_When_ReasonIsOtherWithDetails()
+    public async Task Should_ReturnUnredactedProtectedData_When_ReasonIsOtherWithDetails()
     {
         var client = await _factory.CreateSystemAdminClientAsync();
 
@@ -354,7 +354,7 @@ public sealed class AdminEndpointsTests
         });
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
-        var revealed = await response.Content.ReadFromJsonAsync<RevealedPiiDto>(TestJsonOptions.Default);
+        var revealed = await response.Content.ReadFromJsonAsync<RevealedProtectedDataDto>(TestJsonOptions.Default);
         Assert.IsNotNull(revealed);
         Assert.AreEqual(email, revealed.Email);
         Assert.AreEqual(displayName, revealed.DisplayName);
@@ -403,14 +403,14 @@ public sealed class AdminEndpointsTests
             "Deactivated user should not be able to login");
     }
 
-    // --- PII Reveal Audit Trail ---
+    // --- Protected Data Reveal Audit Trail ---
 
     [TestMethod]
-    public async Task Should_CreateAuditEntry_When_PiiIsRevealed()
+    public async Task Should_CreateAuditEntry_When_ProtectedDataIsRevealed()
     {
         var client = await _factory.CreateSystemAdminClientAsync();
 
-        // Create a user whose PII we'll reveal
+        // Create a user whose protected data we'll reveal
         var email = $"audit-reveal-{Guid.NewGuid():N}@example.com";
         var registerClient = _factory.CreateClient();
         await registerClient.PostAsJsonAsync("/api/auth/register", new
@@ -424,7 +424,7 @@ public sealed class AdminEndpointsTests
         var list = await listResponse.Content.ReadFromJsonAsync<PagedResult<AdminUserDto>>(TestJsonOptions.Default);
         var userId = list!.Items[0].Id;
 
-        // Reveal PII
+        // Reveal protected data
         var revealResponse = await client.PostAsJsonAsync($"/api/admin/users/{userId}/reveal", new
         {
             Reason = "SupportTicket",
@@ -432,8 +432,8 @@ public sealed class AdminEndpointsTests
         });
         Assert.AreEqual(HttpStatusCode.OK, revealResponse.StatusCode);
 
-        // Check audit log for PiiRevealed action
-        var auditResponse = await client.GetAsync("/api/admin/audit?action=PiiRevealed&resourceType=User");
+        // Check audit log for ProtectedDataRevealed action
+        var auditResponse = await client.GetAsync("/api/admin/audit?action=ProtectedDataRevealed&resourceType=User");
         Assert.AreEqual(HttpStatusCode.OK, auditResponse.StatusCode);
 
         var audit = await auditResponse.Content.ReadFromJsonAsync<PagedResult<AuditEntryDto>>(TestJsonOptions.Default);
@@ -441,6 +441,6 @@ public sealed class AdminEndpointsTests
 
         // Find the audit entry for this specific user
         var entry = audit.Items.FirstOrDefault(e => e.ResourceId == userId.ToString());
-        Assert.IsNotNull(entry, "PII reveal should create an audit entry for the target user");
+        Assert.IsNotNull(entry, "Protected data reveal should create an audit entry for the target user");
     }
 }

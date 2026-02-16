@@ -5,7 +5,7 @@ using LemonDo.Domain.Common;
 /// <summary>
 /// User display name value object. Must be 2-100 characters after trimming.
 /// </summary>
-public sealed class DisplayName : ValueObject<string>, IReconstructable<DisplayName, string>, ISensitivePii
+public sealed class DisplayName : ValueObject<string>, IReconstructable<DisplayName, string>, IProtectedData
 {
     /// <summary>Minimum allowed length.</summary>
     public const int MinLength = 2;

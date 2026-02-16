@@ -1,6 +1,6 @@
 namespace LemonDo.Application.Common;
 
-/// <summary>Utilities for safe log output that avoids PII exposure.</summary>
+/// <summary>Utilities for safe log output that avoids protected data exposure.</summary>
 public static class LogHelpers
 {
     /// <summary>

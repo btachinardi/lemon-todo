@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Repository for persisting and querying domain <see cref="User"/> aggregates.
-/// Handles PII encryption transparently: during <see cref="AddAsync"/>, plaintext VOs
+/// Handles protected data encryption transparently: during <see cref="AddAsync"/>, plaintext VOs
 /// are encrypted into shadow properties; during reads, only redacted values are loaded.
 /// </summary>
 public sealed class UserRepository(
@@ -29,9 +29,9 @@ public sealed class UserRepository(
     {
         dbContext.Users.Add(user);
 
-        // Set shadow properties with encrypted PII
+        // Set shadow properties with encrypted protected data
         var entry = dbContext.Entry(user);
-        entry.Property("EmailHash").CurrentValue = PiiHasher.HashEmail(email.Value);
+        entry.Property("EmailHash").CurrentValue = ProtectedDataHasher.HashEmail(email.Value);
         entry.Property("EncryptedEmail").CurrentValue = encryptionService.Encrypt(email.Value);
         entry.Property("EncryptedDisplayName").CurrentValue = encryptionService.Encrypt(displayName.Value);
 

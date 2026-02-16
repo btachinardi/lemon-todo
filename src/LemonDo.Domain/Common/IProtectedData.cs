@@ -1,12 +1,13 @@
 namespace LemonDo.Domain.Common;
 
 /// <summary>
-/// Marker interface for value objects that contain Personally Identifiable Information (PII)
-/// or Protected Health Information (PHI). Types implementing this interface declare that their
+/// Marker interface for value objects that contain protected data such as
+/// Personally Identifiable Information (PII) or Protected Health Information (PHI).
+/// Types implementing this interface declare that their
 /// <see cref="ValueObject{T}.Value"/> may contain sensitive data, and that the
 /// <see cref="Redacted"/> form should be used for display, logging, and non-encrypted storage.
 /// </summary>
-public interface ISensitivePii
+public interface IProtectedData
 {
     /// <summary>
     /// Returns a redacted form of the value, safe for display, logging,
