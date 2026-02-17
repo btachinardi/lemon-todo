@@ -1,13 +1,14 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { NavLink } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { UsersIcon, ScrollTextIcon, ArrowLeftIcon } from 'lucide-react';
+import { UsersIcon, ScrollTextIcon, ArrowLeftIcon, MenuIcon } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
 import { UserMenu } from '@/domains/auth/components/UserMenu';
 import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/ui/sheet';
 
 /** Props for {@link AdminLayout}. */
 interface AdminLayoutProps {
@@ -19,6 +20,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { t } = useTranslation();
   const theme = useThemeStore((s) => s.theme);
   const resolvedTheme = resolveTheme(theme);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -67,7 +69,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <span className="hidden sm:inline">{t('nav.auditLog')}</span>
             </NavLink>
           </nav>
-          <div className="flex items-center gap-1">
+          {/* Desktop tools — hidden below md */}
+          <div className="hidden items-center gap-1 md:flex">
             <NavLink
               to="/board"
               className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -87,6 +90,46 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             />
             <UserMenu />
           </div>
+
+          {/* Mobile menu trigger — visible below md */}
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground md:hidden"
+            aria-label="Menu"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <MenuIcon className="size-5" />
+          </button>
+
+          {/* Mobile menu sheet */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetContent side="right" className="w-72">
+              <SheetHeader>
+                <SheetTitle className="sr-only">{t('nav.adminNav')}</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-3 px-4">
+                <NavLink
+                  to="/board"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeftIcon className="size-4" />
+                  {t('common.back')}
+                </NavLink>
+                <LanguageSwitcher />
+                <ThemeToggle
+                  theme={theme}
+                  onToggle={() => {
+                    const themes: Array<typeof theme> = ['light', 'dark', 'system'];
+                    const idx = themes.indexOf(theme);
+                    const next = themes[(idx + 1) % themes.length];
+                    useThemeStore.getState().setTheme(next);
+                  }}
+                />
+                <UserMenu />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">{children}</main>

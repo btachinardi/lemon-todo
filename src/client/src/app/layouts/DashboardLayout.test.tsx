@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
@@ -194,5 +195,50 @@ describe('DashboardLayout', () => {
     );
 
     expect(screen.getByTestId('pwa-install-prompt')).toBeInTheDocument();
+  });
+
+  it('should render a mobile menu toggle button in the header', () => {
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    const header = screen.getByRole('banner');
+    const menuButton = within(header).getByRole('button', { name: /menu/i });
+    expect(menuButton).toBeInTheDocument();
+  });
+
+  it('should show tools in mobile menu when toggle is clicked', async () => {
+    const user = userEvent.setup();
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    const header = screen.getByRole('banner');
+    const menuButton = within(header).getByRole('button', { name: /menu/i });
+    await user.click(menuButton);
+
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByTestId('notification-dropdown')).toBeInTheDocument();
+    expect(within(dialog).getByTestId('user-menu')).toBeInTheDocument();
   });
 });
