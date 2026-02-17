@@ -329,6 +329,8 @@
 | 2026-02-17 | `satisfies` compile-time guards for enum const objects | `as const satisfies { [K in SchemaType]: K }` produces compile error if backend adds value not in const. Cleaner than unused type aliases — no warnings, no runtime code. |
 | 2026-02-17 | Enum translation coverage guard test | Import `openapi.json` directly in Vitest, extract enum arrays, assert every value has matching i18n key in all 3 locales. Catches missing translations when backend adds new enum values. |
 | 2026-02-17 | `.Produces<T>()` metadata on all endpoints | Minimal API `Results.Ok(dto)` doesn't carry type info. Without `.Produces<T>()`, OpenAPI spec only has request schemas, no response schemas. Added to all 7 endpoint files. |
+| 2026-02-17 | v1.0.2 patch release | Consolidates OpenAPI type generation, protected data refactoring, offline queue fixes, admin E2E coverage, theme polish, and CI/CD improvements for release branches. |
+| 2026-02-17 | CI/CD for release branches | Added `release/*` to workflow triggers (push + PR). Tests run but deploy is skipped (deploy only on `main` push). Ensures verification gate passes in CI before merging to main. |
 
 ---
 
@@ -396,6 +398,7 @@
 - **Post-release quality**: Admin E2E coverage (20 tests across 5 specs) + AuthHydrationProvider StrictMode race fix
 - **Post-release DX**: OpenAPI-based TypeScript type generation (471 frontend tests, +9 enum coverage guard tests)
 - **Post-release polish**: Theme refinements — light primary switched to purple, brand token (always lime) for CTAs/logo, dark surfaces lightened, list view card surface, DevOps pipeline icons
+- **Release v1.0.2**: Patch — OpenAPI type generation, protected data refactoring, offline queue fixes, admin E2E coverage (20 tests), theme polish, CI/CD for release branches
 
 ---
 
