@@ -110,7 +110,6 @@ public sealed class SecurityHeadersTests
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         Assert.IsTrue(response.Headers.Contains("Content-Security-Policy"));
         var csp = response.Headers.GetValues("Content-Security-Policy").First();
-        Assert.IsTrue(csp.Contains("script-src 'self'"),
-            $"API endpoints should retain restrictive CSP, but got: {csp}");
+        Assert.Contains("script-src 'self'", csp);
     }
 }

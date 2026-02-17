@@ -15,7 +15,7 @@ import { createBoard, createTask, createTaskCard } from '@/test/factories';
 import { TaskStatus } from '../../types/task.types';
 
 /** Spy on useSensor calls to verify sensor configuration. */
-const mockUseSensor = vi.hoisted(() => vi.fn<[sensor: { name: string }, options?: Record<string, unknown>]>(() => ({})));
+const mockUseSensor = vi.hoisted(() => vi.fn<(sensor: { name: string }, options?: Record<string, unknown>) => Record<string, unknown>>());
 
 /**
  * Captured DndContext event handlers. Updated on every render of KanbanBoard
