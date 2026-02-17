@@ -6,6 +6,11 @@ import { createElement, type ReactNode } from 'react';
 import { UserMenu } from './UserMenu';
 import { useAuthStore } from '../stores/use-auth-store';
 
+const { mockPwaInstallAvailable, mockPromptInstall } = vi.hoisted(() => ({
+  mockPwaInstallAvailable: { value: false },
+  mockPromptInstall: vi.fn().mockResolvedValue(false),
+}));
+
 // Mock auth mutations
 vi.mock('../hooks/use-auth-mutations', () => ({
   useLogout: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),
@@ -22,6 +27,13 @@ vi.mock('../hooks/use-reveal-own-profile', () => ({
   }),
 }));
 
+// Mock pwa lib to control install availability
+vi.mock('@/lib/pwa', () => ({
+  isInstallAvailable: () => mockPwaInstallAvailable.value,
+  onInstallAvailable: vi.fn().mockReturnValue(() => {}),
+  promptInstall: (...args: unknown[]) => mockPromptInstall(...args),
+}));
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -34,6 +46,8 @@ function createWrapper() {
 describe('UserMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPwaInstallAvailable.value = false;
+    mockPromptInstall.mockClear();
     useAuthStore.setState({
       accessToken: 'test-token',
       user: {
@@ -115,6 +129,44 @@ describe('UserMenu', () => {
 
       // Reveal button should be visible without opening any dropdown
       expect(screen.getByRole('button', { name: /reveal my data/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('install app action', () => {
+    it('should show install item in dropdown when PWA install is available', async () => {
+      mockPwaInstallAvailable.value = true;
+      const user = userEvent.setup();
+      render(<UserMenu />, { wrapper: createWrapper() });
+
+      // Open the dropdown
+      await user.click(screen.getByRole('button', { name: /t\*\*\*r/i }));
+
+      expect(screen.getByText(/install app/i)).toBeInTheDocument();
+    });
+
+    it('should not show install item in dropdown when PWA install is not available', async () => {
+      mockPwaInstallAvailable.value = false;
+      const user = userEvent.setup();
+      render(<UserMenu />, { wrapper: createWrapper() });
+
+      // Open the dropdown
+      await user.click(screen.getByRole('button', { name: /t\*\*\*r/i }));
+
+      expect(screen.queryByText(/install app/i)).not.toBeInTheDocument();
+    });
+
+    it('should show install button in inline variant when PWA install is available', () => {
+      mockPwaInstallAvailable.value = true;
+      render(<UserMenu variant="inline" />, { wrapper: createWrapper() });
+
+      expect(screen.getByRole('button', { name: /install app/i })).toBeInTheDocument();
+    });
+
+    it('should not show install button in inline variant when PWA install is not available', () => {
+      mockPwaInstallAvailable.value = false;
+      render(<UserMenu variant="inline" />, { wrapper: createWrapper() });
+
+      expect(screen.queryByRole('button', { name: /install app/i })).not.toBeInTheDocument();
     });
   });
 });

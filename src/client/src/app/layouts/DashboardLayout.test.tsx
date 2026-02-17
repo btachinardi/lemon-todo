@@ -61,6 +61,7 @@ vi.mock('@/ui/feedback/PWAInstallPrompt', () => ({
   PWAInstallPrompt: () => <div data-testid="pwa-install-prompt" />,
 }));
 
+
 describe('DashboardLayout', () => {
   beforeEach(() => {
     useAuthStore.setState({
@@ -344,4 +345,6 @@ describe('DashboardLayout', () => {
     const userMenu = within(dialog).getByTestId('user-menu');
     expect(userMenu).toHaveAttribute('data-variant', 'inline');
   });
+
+
 });

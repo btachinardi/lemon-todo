@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LogOutIcon, ShieldCheckIcon } from 'lucide-react';
+import { DownloadIcon, LogOutIcon, ShieldCheckIcon } from 'lucide-react';
 import { Button } from '@/ui/button';
 import {
   DropdownMenu,
@@ -21,6 +21,7 @@ import { useLogout } from '../hooks/use-auth-mutations';
 import { useRevealOwnProfile } from '../hooks/use-reveal-own-profile';
 import { useDevAccountPassword } from '../hooks/use-dev-account-password';
 import { SelfRevealDialog } from './SelfRevealDialog';
+import { isInstallAvailable, onInstallAvailable, promptInstall } from '@/lib/pwa';
 
 interface UserMenuProps {
   /** When "inline", renders user info and actions directly (for mobile sheets). Defaults to "dropdown". */
@@ -35,6 +36,9 @@ export function UserMenu({ variant = 'dropdown' }: UserMenuProps) {
   const revealMutation = useRevealOwnProfile();
   const devPassword = useDevAccountPassword();
   const [revealDialogOpen, setRevealDialogOpen] = useState(false);
+  const [installAvailable, setInstallAvailable] = useState(isInstallAvailable);
+
+  useEffect(() => onInstallAvailable(setInstallAvailable), []);
 
   if (!user) return null;
 
@@ -72,6 +76,17 @@ export function UserMenu({ variant = 'dropdown' }: UserMenuProps) {
             <ShieldCheckIcon className="size-4" />
             {t('auth.selfReveal.revealButton')}
           </Button>
+          {installAvailable && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="justify-start gap-2 px-3 text-muted-foreground hover:text-primary"
+              onClick={() => promptInstall()}
+            >
+              <DownloadIcon className="size-4" />
+              {t('pwa.installApp')}
+            </Button>
+          )}
           <Separator />
           <Button
             variant="ghost"
@@ -148,6 +163,12 @@ export function UserMenu({ variant = 'dropdown' }: UserMenuProps) {
             </Popover>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {installAvailable && (
+            <DropdownMenuItem onClick={() => promptInstall()}>
+              <DownloadIcon className="mr-2 size-4" />
+              {t('pwa.installApp')}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onClick={() => logout.mutate()}
             disabled={logout.isPending}

@@ -355,6 +355,7 @@
   "pwa": {
     "installPrompt": "Instale o Lemon.DO para uma experiência mais rápida",
     "install": "Instalar",
+    "installApp": "Instalar app",
     "updateAvailable": "Uma nova versão está disponível",
     "update": "Atualizar"
   },
