@@ -96,9 +96,9 @@ export function DevAccountSwitcher() {
         email: account.email,
         password: account.password,
       });
-      // Clear stale data from the previous user before setting new auth
-      queryClient.clear();
+      // Set new auth FIRST so any refetches triggered by clear() use the new token
       setAuth(response.accessToken, response.user);
+      queryClient.clear();
       navigate('/board', { replace: true });
     } catch {
       // Login failed — if we already logged out server-side, clear client state too

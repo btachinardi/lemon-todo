@@ -252,6 +252,40 @@ describe('DevAccountSwitcher', () => {
     });
   });
 
+  it('should set auth token before clearing query cache to prevent stale refetches', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    const newToken = 'admin-token';
+    const newUser = { id: '2', email: 'dev.admin@lemondo.dev', displayName: 'D** A***', roles: ['User', 'Admin'] };
+    mockLogin.mockResolvedValue({ accessToken: newToken, user: newUser });
+
+    // When queryClient.clear() fires, the new token must already be in the store.
+    // If clear() fires before setAuth(), mounted query observers would refetch
+    // with the old token, returning stale data from the previous user.
+    let tokenAtClearTime: string | null = null;
+    vi.spyOn(queryClient, 'clear').mockImplementation(() => {
+      tokenAtClearTime = useAuthStore.getState().accessToken;
+    });
+
+    useAuthStore.setState({
+      accessToken: 'existing-token',
+      user: { id: '1', email: 'dev.user@lemondo.dev', displayName: 'D** U***', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    const user = userEvent.setup();
+    render(<DevAccountSwitcher />, { wrapper: createWrapper(queryClient) });
+
+    await user.click(screen.getByText('Admin'));
+
+    await vi.waitFor(() => {
+      expect(tokenAtClearTime).not.toBeNull();
+    });
+    expect(tokenAtClearTime).toBe(newToken);
+  });
+
   it('should keep isAuthenticated true during the switch to prevent login page flash', async () => {
     let resolveLogin: (value: unknown) => void;
     mockLogin.mockReturnValue(new Promise((resolve) => { resolveLogin = resolve; }));
