@@ -150,7 +150,7 @@ const TaskListItem = memo(function TaskListItem({ task, index, togglingTaskId, o
   return (
     <div
       className={cn(
-        'animate-fade-in-up border-l-2 border-b border-b-border/60 transition-all duration-300',
+        'animate-fade-in-up border-l-2 border-b border-b-border/60 bg-card/60 transition-all duration-300',
         'hover:bg-secondary/50',
         'focus-visible:bg-secondary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
         priorityBorder[task.priority],

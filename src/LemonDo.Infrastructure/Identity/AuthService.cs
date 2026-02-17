@@ -65,8 +65,15 @@ public sealed class AuthService(
     public async Task<Result<UserId, DomainError>> AuthenticateAsync(
         string email, string password, CancellationToken ct)
     {
-        // Look up by email hash stored in UserName
         var emailHash = ProtectedDataHasher.HashEmail(email);
+        return await AuthenticateByHashAsync(emailHash, password, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<UserId, DomainError>> AuthenticateByHashAsync(
+        string emailHash, string password, CancellationToken ct)
+    {
+        // Look up by email hash stored in UserName
         var user = await userManager.FindByNameAsync(emailHash);
         if (user is null)
             return Result<UserId, DomainError>.Failure(
@@ -76,7 +83,7 @@ public sealed class AuthService(
 
         if (signInResult.IsLockedOut)
         {
-            logger.LogWarning("Account locked for {EmailHash}", LogHelpers.MaskEmail(email));
+            logger.LogWarning("Account locked for hash {EmailHash}", emailHash[..8]);
             return Result<UserId, DomainError>.Failure(
                 DomainError.RateLimited("auth", "Account temporarily locked due to too many failed attempts. Please try again later."));
         }

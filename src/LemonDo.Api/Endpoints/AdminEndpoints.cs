@@ -3,9 +3,11 @@ namespace LemonDo.Api.Endpoints;
 using LemonDo.Api.Contracts.Admin;
 using LemonDo.Api.Extensions;
 using LemonDo.Application.Administration.Commands;
+using LemonDo.Application.Administration.DTOs;
 using LemonDo.Application.Administration.Queries;
 using LemonDo.Application.Common;
 using LemonDo.Domain.Administration;
+using LemonDo.Domain.Common;
 
 /// <summary>Minimal API endpoint definitions for admin operations under <c>/api/admin</c>.</summary>
 public static class AdminEndpoints
@@ -22,8 +24,8 @@ public static class AdminEndpoints
             .RequireAuthorization(Roles.RequireAdminOrAbove);
 
         // User management
-        group.MapGet("/users", ListUsers);
-        group.MapGet("/users/{id:guid}", GetUser);
+        group.MapGet("/users", ListUsers).Produces<PagedResult<AdminUserDto>>();
+        group.MapGet("/users/{id:guid}", GetUser).Produces<AdminUserDto>();
         group.MapPost("/users/{id:guid}/roles", AssignRole)
             .RequireAuthorization(Roles.RequireSystemAdmin);
         group.MapDelete("/users/{id:guid}/roles/{roleName}", RemoveRole)
@@ -32,7 +34,7 @@ public static class AdminEndpoints
             .RequireAuthorization(Roles.RequireSystemAdmin);
         group.MapPost("/users/{id:guid}/reactivate", ReactivateUser)
             .RequireAuthorization(Roles.RequireSystemAdmin);
-        group.MapPost("/users/{id:guid}/reveal", RevealProtectedData)
+        group.MapPost("/users/{id:guid}/reveal", RevealProtectedData).Produces<RevealedProtectedDataDto>()
             .RequireAuthorization(Roles.RequireSystemAdmin);
 
         // Task sensitive note reveal (admin break-the-glass)
@@ -40,7 +42,7 @@ public static class AdminEndpoints
             .RequireAuthorization(Roles.RequireSystemAdmin);
 
         // Audit log
-        group.MapGet("/audit", SearchAuditLog);
+        group.MapGet("/audit", SearchAuditLog).Produces<PagedResult<AuditEntryDto>>();
 
         return group;
     }
@@ -136,9 +138,9 @@ public static class AdminEndpoints
         if (!Enum.TryParse<ProtectedDataRevealReason>(request.Reason, ignoreCase: true, out var reason))
             return Results.BadRequest(new { Error = $"Invalid reason: '{request.Reason}'." });
 
-        var command = new RevealTaskNoteCommand(taskId, reason, request.ReasonDetails, request.Comments, request.Password);
+        var command = new RevealTaskNoteCommand(taskId, reason, request.ReasonDetails, request.Comments, request.Password!);
         var result = await handler.HandleAsync(command, ct);
-        return result.ToHttpResult(note => Results.Ok(new { Note = note }), httpContext: httpContext);
+        return result.ToHttpResult(revealed => Results.Ok(new { Note = revealed }), httpContext: httpContext);
     }
 
     private static async Task<IResult> RevealProtectedData(
@@ -151,7 +153,7 @@ public static class AdminEndpoints
         if (!Enum.TryParse<ProtectedDataRevealReason>(request.Reason, ignoreCase: true, out var reason))
             return Results.BadRequest(new { Error = $"Invalid reason: '{request.Reason}'." });
 
-        var command = new RevealProtectedDataCommand(id, reason, request.ReasonDetails, request.Comments, request.Password);
+        var command = new RevealProtectedDataCommand(id, reason, request.ReasonDetails, request.Comments, request.Password!);
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(dto => Results.Ok(dto), httpContext: httpContext);
     }

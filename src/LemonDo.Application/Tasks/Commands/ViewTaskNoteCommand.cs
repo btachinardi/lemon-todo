@@ -12,7 +12,7 @@ using LemonDo.Domain.Tasks.ValueObjects;
 /// Command for a task owner to view their own encrypted sensitive note.
 /// Requires password re-authentication for security.
 /// </summary>
-public sealed record ViewTaskNoteCommand(Guid TaskId, string Password);
+public sealed record ViewTaskNoteCommand(Guid TaskId, ProtectedValue Password);
 
 /// <summary>
 /// Handles <see cref="ViewTaskNoteCommand"/>: verifies ownership, re-authenticates the user,
@@ -25,33 +25,33 @@ public sealed class ViewTaskNoteCommandHandler(
     ICurrentUserService currentUser)
 {
     /// <summary>Decrypts and returns the task's sensitive note after ownership and password verification.</summary>
-    public async Task<Result<string, DomainError>> HandleAsync(ViewTaskNoteCommand command, CancellationToken ct = default)
+    public async Task<Result<RevealedField, DomainError>> HandleAsync(ViewTaskNoteCommand command, CancellationToken ct = default)
     {
         var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);
         if (task is null)
-            return Result<string, DomainError>.Failure(DomainError.NotFound("Task", command.TaskId.ToString()));
+            return Result<RevealedField, DomainError>.Failure(DomainError.NotFound("Task", command.TaskId.ToString()));
 
         // Verify ownership
         if (task.OwnerId != currentUser.UserId)
-            return Result<string, DomainError>.Failure(
+            return Result<RevealedField, DomainError>.Failure(
                 DomainError.BusinessRule("task.not_owner", "You can only view notes on your own tasks."));
 
         // Verify the task has a sensitive note
         if (task.RedactedSensitiveNote is null)
-            return Result<string, DomainError>.Failure(
+            return Result<RevealedField, DomainError>.Failure(
                 DomainError.NotFound("SensitiveNote", command.TaskId.ToString()));
 
         // Re-authenticate the user
         var passwordResult = await authService.VerifyPasswordAsync(
-            currentUser.UserId.Value, command.Password, ct);
+            currentUser.UserId.Value, command.Password.Value, ct);
         if (passwordResult.IsFailure)
-            return Result<string, DomainError>.Failure(passwordResult.Error);
+            return Result<RevealedField, DomainError>.Failure(passwordResult.Error);
 
-        // Decrypt the note
-        var decryptResult = await taskRepository.GetDecryptedSensitiveNoteAsync(
+        // Get the encrypted note as a RevealedField (decryption happens at JSON serialization)
+        var revealResult = await taskRepository.GetEncryptedSensitiveNoteAsync(
             TaskId.From(command.TaskId), ct);
-        if (decryptResult.IsFailure)
-            return Result<string, DomainError>.Failure(decryptResult.Error);
+        if (revealResult.IsFailure)
+            return Result<RevealedField, DomainError>.Failure(revealResult.Error);
 
         // Audit the access
         await auditService.RecordAsync(
@@ -61,6 +61,6 @@ public sealed class ViewTaskNoteCommandHandler(
             "Owner viewed their own sensitive note",
             cancellationToken: ct);
 
-        return Result<string, DomainError>.Success(decryptResult.Value);
+        return Result<RevealedField, DomainError>.Success(revealResult.Value);
     }
 }

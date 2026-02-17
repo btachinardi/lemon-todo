@@ -26,12 +26,12 @@ public static class AuthEndpoints
             .WithTags("Auth")
             .RequireRateLimiting("auth");
 
-        group.MapPost("/register", Register).AllowAnonymous();
-        group.MapPost("/login", Login).AllowAnonymous();
-        group.MapPost("/refresh", Refresh).AllowAnonymous();
+        group.MapPost("/register", Register).AllowAnonymous().Produces<AuthResponse>();
+        group.MapPost("/login", Login).AllowAnonymous().Produces<AuthResponse>();
+        group.MapPost("/refresh", Refresh).AllowAnonymous().Produces<AuthResponse>();
         group.MapPost("/logout", Logout).RequireAuthorization();
-        group.MapGet("/me", GetMe).RequireAuthorization();
-        group.MapPost("/reveal-profile", RevealProfile).RequireAuthorization();
+        group.MapGet("/me", GetMe).RequireAuthorization().Produces<UserResponse>();
+        group.MapPost("/reveal-profile", RevealProfile).RequireAuthorization().Produces<RevealedProfileResponse>();
 
         return group;
     }
@@ -43,7 +43,7 @@ public static class AuthEndpoints
         IOptions<JwtSettings> jwtSettings,
         CancellationToken ct)
     {
-        var command = new RegisterUserCommand(request.Email, request.Password, request.DisplayName);
+        var command = new RegisterUserCommand(request.Email!, request.Password!, request.DisplayName!);
         var result = await handler.HandleAsync(command, ct);
 
         return result.ToHttpResult(
@@ -58,7 +58,7 @@ public static class AuthEndpoints
         IOptions<JwtSettings> jwtSettings,
         CancellationToken ct)
     {
-        var command = new LoginUserCommand(request.Email, request.Password);
+        var command = new LoginUserCommand(request.Email!, request.Password!);
         var result = await handler.HandleAsync(command, ct);
 
         return result.ToHttpResult(
@@ -125,7 +125,7 @@ public static class AuthEndpoints
         HttpContext httpContext,
         CancellationToken ct)
     {
-        var command = new RevealOwnProfileCommand(request.Password);
+        var command = new RevealOwnProfileCommand(request.Password!);
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(
             data => Results.Ok(new RevealedProfileResponse(data.Email, data.DisplayName)),

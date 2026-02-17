@@ -3,12 +3,8 @@ export type SyncStatus = 'synced' | 'pending' | 'not-synced';
 interface UseSaveIndicatorParams {
   /** Whether a mutation is currently in flight. */
   isPending: boolean;
-  /** Whether the browser is online. */
-  isOnline: boolean;
   /** Number of mutations queued in the offline queue. */
   pendingCount: number;
-  /** Currently selected task ID. */
-  taskId: string | null;
 }
 
 /**
@@ -23,9 +19,7 @@ interface UseSaveIndicatorParams {
  */
 export function useSaveIndicator({
   isPending,
-  isOnline: _isOnline,
   pendingCount,
-  taskId: _taskId,
 }: UseSaveIndicatorParams): SyncStatus {
   if (isPending) return 'pending';
   if (pendingCount > 0) return 'not-synced';

@@ -340,3 +340,245 @@ test.describe.serial('SyncIndicator Pending Count', () => {
     await page.waitForTimeout(5000);
   });
 });
+
+/**
+ * Helper: seeds a mutation directly into the IndexedDB offline queue.
+ * Must be called from a page that's on the correct origin.
+ */
+async function seedMutationInIndexedDB(
+  page: Page,
+  mutation: { method: string; url: string; body?: string },
+): Promise<void> {
+  await page.evaluate(async (m) => {
+    const dbName = 'lemondo-offline';
+    const storeName = 'mutations';
+    const db: IDBDatabase = await new Promise((resolve, reject) => {
+      const req = indexedDB.open(dbName, 1);
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains(storeName)) {
+          req.result.createObjectStore(storeName, { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+
+    const entry = {
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      method: m.method,
+      url: m.url,
+      body: m.body,
+    };
+
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).add(entry);
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  }, mutation);
+}
+
+/** Helper: returns the count of mutations in the IndexedDB offline queue. */
+async function getIndexedDBQueueCount(page: Page): Promise<number> {
+  return page.evaluate(async () => {
+    const dbName = 'lemondo-offline';
+    const storeName = 'mutations';
+    const db: IDBDatabase = await new Promise((resolve, reject) => {
+      const req = indexedDB.open(dbName, 1);
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains(storeName)) {
+          req.result.createObjectStore(storeName, { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const tx = db.transaction(storeName, 'readonly');
+    const countReq = tx.objectStore(storeName).count();
+    const count = await new Promise<number>((resolve, reject) => {
+      countReq.onsuccess = () => resolve(countReq.result);
+      countReq.onerror = () => reject(countReq.error);
+    });
+    db.close();
+    return count;
+  });
+}
+
+test.describe.serial('UI Auto-Update After Drain', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    await loginViaApi(page);
+    await completeOnboarding();
+  });
+
+  test.afterAll(async () => {
+    await context.close();
+  });
+
+  test('UI shows new task after drain without manual reload', async () => {
+    await page.goto('/board');
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible' });
+
+    // Go offline and enqueue a create-task mutation
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'onLine', { value: false, writable: true, configurable: true });
+      window.dispatchEvent(new Event('offline'));
+    });
+    await page.waitForTimeout(500);
+
+    await seedMutationInIndexedDB(page, {
+      method: 'POST',
+      url: '/api/tasks',
+      body: JSON.stringify({ title: 'Auto-update drain task' }),
+    });
+
+    // Go back online — drain fires, replays mutation
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
+      window.dispatchEvent(new Event('online'));
+    });
+
+    // The task should appear in the UI WITHOUT a page.reload().
+    // This requires drain to invalidate TanStack Query caches after replay.
+    await expect(page.getByText('Auto-update drain task')).toBeVisible({ timeout: 15000 });
+
+    // Verify server also has it
+    const { items } = await listTasks();
+    expect(items.some((t) => t.title === 'Auto-update drain task')).toBe(true);
+  });
+});
+
+test.describe.serial('Multiple Mutations Drain in Order', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    await loginViaApi(page);
+    await completeOnboarding();
+  });
+
+  test.afterAll(async () => {
+    await context.close();
+  });
+
+  test('three queued mutations all sync to server on reconnect', async () => {
+    await page.goto('/board');
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible' });
+
+    // Go offline
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'onLine', { value: false, writable: true, configurable: true });
+      window.dispatchEvent(new Event('offline'));
+    });
+    await page.waitForTimeout(500);
+
+    // Enqueue three mutations with distinct titles
+    const titles = ['Multi-drain task A', 'Multi-drain task B', 'Multi-drain task C'];
+    for (const title of titles) {
+      await seedMutationInIndexedDB(page, {
+        method: 'POST',
+        url: '/api/tasks',
+        body: JSON.stringify({ title }),
+      });
+    }
+
+    // Verify queue has 3 items
+    const queueCount = await getIndexedDBQueueCount(page);
+    expect(queueCount).toBe(3);
+
+    // Go online — drain all three
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
+      window.dispatchEvent(new Event('online'));
+    });
+
+    // Wait for drain to complete
+    await page.waitForTimeout(8000);
+
+    // Verify all three tasks exist on the server
+    const { items } = await listTasks();
+    for (const title of titles) {
+      expect(items.some((t) => t.title === title)).toBe(true);
+    }
+
+    // Queue should be empty
+    const remainingCount = await getIndexedDBQueueCount(page);
+    expect(remainingCount).toBe(0);
+
+    // All three tasks should appear in UI without manual reload
+    for (const title of titles) {
+      await expect(page.getByText(title)).toBeVisible({ timeout: 10000 });
+    }
+  });
+});
+
+test.describe.serial('Startup Drain When Online With Pending Mutations', () => {
+  let context: BrowserContext;
+  let page: Page;
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    page = await context.newPage();
+    await loginViaApi(page);
+    await completeOnboarding();
+  });
+
+  test.afterAll(async () => {
+    await context.close();
+  });
+
+  test('queued mutations drain automatically when app opens online', async () => {
+    // Step 1: Navigate to the board to establish origin and app state
+    await page.goto('/board');
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible' });
+
+    // Step 2: Seed mutations into IndexedDB (simulating mutations queued during a previous
+    // offline session — the user closed the app while offline with pending changes)
+    await seedMutationInIndexedDB(page, {
+      method: 'POST',
+      url: '/api/tasks',
+      body: JSON.stringify({ title: 'Startup drain task' }),
+    });
+
+    // Verify the mutation is in IndexedDB
+    const countBefore = await getIndexedDBQueueCount(page);
+    expect(countBefore).toBe(1);
+
+    // Step 3: Reload the page while ONLINE.
+    // This simulates: user closed app offline → reopened online.
+    // On load, initOfflineQueue() should detect pending mutations and drain them.
+    const refreshPromise = page.waitForResponse(
+      (resp) => resp.url().includes('/api/auth/refresh'),
+      { timeout: 15000 },
+    ).catch(() => null);
+    await page.reload();
+    await refreshPromise;
+
+    await page.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible', timeout: 10000 });
+
+    // Step 4: Wait for the startup drain to replay mutations
+    // initOfflineQueue() should call drain() when it detects online + pending > 0
+    await page.waitForTimeout(8000);
+
+    // Step 5: Verify the mutation was synced to the server
+    const { items } = await listTasks();
+    const synced = items.find((t) => t.title === 'Startup drain task');
+    expect(synced).toBeTruthy();
+
+    // Step 6: IndexedDB queue should be empty after drain
+    const countAfter = await getIndexedDBQueueCount(page);
+    expect(countAfter).toBe(0);
+
+    // Step 7: Task should appear in UI (drain invalidated caches)
+    await expect(page.getByText('Startup drain task')).toBeVisible({ timeout: 10000 });
+  });
+});

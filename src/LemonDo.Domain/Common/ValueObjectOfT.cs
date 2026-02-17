@@ -20,5 +20,6 @@ public abstract class ValueObject<T> : ValueObject
     }
 
     /// <inheritdoc />
-    public override string ToString() => Value?.ToString() ?? string.Empty;
+    public override string ToString() =>
+        this is IProtectedData pd ? pd.Redacted : (Value?.ToString() ?? string.Empty);
 }

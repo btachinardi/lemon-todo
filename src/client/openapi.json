@@ -1,0 +1,2531 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "LemonDo.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/config": {
+      "get": {
+        "tags": [
+          "LemonDo.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "LemonDo.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/reveal-profile": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevealProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevealedProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResultOfTaskDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/complete": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/uncomplete": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/archive": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/move": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/tags": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTagRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/tags/{tag}": {
+      "delete": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/view-note": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ViewTaskNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/tasks/bulk/complete": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkCompleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/boards/default": {
+      "get": {
+        "tags": [
+          "Boards"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/boards/{id}": {
+      "get": {
+        "tags": [
+          "Boards"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/boards/{id}/columns": {
+      "post": {
+        "tags": [
+          "Boards"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddColumnRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColumnDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/boards/{id}/columns/{colId}": {
+      "put": {
+        "tags": [
+          "Boards"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "colId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameColumnRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Boards"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "colId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/boards/{id}/columns/reorder": {
+      "post": {
+        "tags": [
+          "Boards"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderColumnRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResultOfAdminUserDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/roles": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/roles/{roleName}": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "roleName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/deactivate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/reactivate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/reveal": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevealProtectedDataRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevealedProtectedDataDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/tasks/{taskId}/reveal-note": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevealTaskNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/audit": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "dateFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "dateTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/AuditAction"
+            }
+          },
+          {
+            "name": "actorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "resourceType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResultOfAuditEntryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/events": {
+      "post": {
+        "tags": [
+          "Analytics"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackEventsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/onboarding/status": {
+      "get": {
+        "tags": [
+          "Onboarding"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/onboarding/complete": {
+      "post": {
+        "tags": [
+          "Onboarding"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/{id}/read": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/read-all": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddColumnRequest": {
+        "required": [
+          "name",
+          "targetStatus"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "targetStatus": {
+            "enum": [
+              "Todo",
+              "InProgress",
+              "Done"
+            ],
+            "type": "string"
+          },
+          "position": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Adds a new column to a board with task status mapping."
+      },
+      "AddTagRequest": {
+        "required": [
+          "tag"
+        ],
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": "string"
+          }
+        },
+        "description": "Adds a tag to a task with automatic normalization."
+      },
+      "AdminUserDto": {
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "roles",
+          "isActive",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "User's unique identifier.",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "description": "User's email (redacted by default, e.g. \"j***@example.com\")."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "User's display name (redacted by default, e.g. \"J***e\")."
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Roles assigned to the user."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the user account is active (not locked out permanently)."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the user account was created.",
+            "format": "date-time"
+          }
+        },
+        "description": "Read model for user data in admin views. Protected data fields are redacted by default."
+      },
+      "AnalyticsEvent": {
+        "required": [
+          "eventName"
+        ],
+        "type": "object",
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "description": "The name of the event (e.g. `task_created`)."
+          },
+          "properties": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Optional key-value properties attached to the event."
+          }
+        },
+        "description": "A single analytics event from the frontend."
+      },
+      "AssignRoleRequest": {
+        "required": [
+          "roleName"
+        ],
+        "type": "object",
+        "properties": {
+          "roleName": {
+            "type": "string"
+          }
+        },
+        "description": "Assigns a role to a user account."
+      },
+      "AuditAction": {
+        "enum": [
+          "UserRegistered",
+          "UserLoggedIn",
+          "UserLoggedOut",
+          "RoleAssigned",
+          "RoleRemoved",
+          "ProtectedDataRevealed",
+          "TaskCreated",
+          "TaskCompleted",
+          "TaskDeleted",
+          "UserDeactivated",
+          "UserReactivated",
+          "ProtectedDataAccessed",
+          "SensitiveNoteRevealed",
+          "OwnProfileRevealed"
+        ],
+        "description": "Categorizes security-relevant actions recorded in the audit trail."
+      },
+      "AuditEntryDto": {
+        "required": [
+          "id",
+          "timestamp",
+          "actorId",
+          "action",
+          "resourceType",
+          "resourceId",
+          "details",
+          "ipAddress"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "action": {
+            "$ref": "#/components/schemas/AuditAction"
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "resourceId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "details": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ipAddress": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Data transfer object for an audit trail entry."
+      },
+      "AuthResponse": {
+        "required": [
+          "accessToken",
+          "user"
+        ],
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "description": "Authentication response containing access token and user profile."
+      },
+      "BoardDto": {
+        "required": [
+          "id",
+          "name",
+          "columns",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the board.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the board."
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnDto"
+            },
+            "description": "Ordered list of columns on the board."
+          },
+          "cards": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/TaskCardDto"
+            },
+            "description": "Task cards positioned on the board, optionally filtered to exclude deleted/archived tasks."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the board was created.",
+            "format": "date-time"
+          }
+        },
+        "description": "Read model for a board, including its columns and active task cards."
+      },
+      "BulkCompleteRequest": {
+        "required": [
+          "taskIds"
+        ],
+        "type": "object",
+        "properties": {
+          "taskIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "description": "Completes multiple tasks in a single operation."
+      },
+      "ColumnDto": {
+        "required": [
+          "id",
+          "name",
+          "targetStatus",
+          "position"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the column.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the column."
+          },
+          "targetStatus": {
+            "enum": [
+              "Todo",
+              "InProgress",
+              "Done"
+            ],
+            "type": "string",
+            "description": "Task status that cards in this column represent (Todo, InProgress, or Done)."
+          },
+          "position": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Zero-based position of the column on the board (left to right ordering).",
+            "format": "int32"
+          },
+          "maxTasks": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Maximum number of tasks allowed in this column for WIP limits, or null for unlimited.",
+            "format": "int32"
+          }
+        },
+        "description": "Read model for a board column, including its target status mapping."
+      },
+      "CreateTaskRequest": {
+        "required": [
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "priority": {
+            "enum": [
+              "None",
+              "Low",
+              "Medium",
+              "High",
+              "Critical"
+            ],
+            "type": "string",
+            "default": "None"
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "tags": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "sensitiveNote": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EncryptedField"
+              }
+            ]
+          }
+        },
+        "description": "Creates a new task with optional metadata."
+      },
+      "EncryptedField": {
+        "required": [
+          "encrypted",
+          "redacted"
+        ],
+        "type": "object",
+        "properties": {
+          "encrypted": {
+            "type": "string",
+            "description": "The encrypted ciphertext (Base64). Stored in shadow properties."
+          },
+          "redacted": {
+            "type": "string",
+            "description": "A human-readable redacted form, safe for display and logging."
+          },
+          "hash": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional deterministic hash for database lookups (e.g., SHA-256 of email).\r\nNull for fields that don't need lookup capability."
+          }
+        },
+        "description": "Sealed container for encrypted protected data. The raw plaintext is never stored.\r\nCreated by JSON converters during deserialization: validate → encrypt → discard raw.\r\nImplements IProtectedData so the Serilog destructuring policy masks it."
+      },
+      "LoginRequest": {
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "$ref": "#/components/schemas/EncryptedField"
+          },
+          "password": {
+            "$ref": "#/components/schemas/ProtectedValue"
+          }
+        },
+        "description": "Authenticates a user with email and password credentials."
+      },
+      "MoveTaskRequest": {
+        "required": [
+          "columnId",
+          "previousTaskId",
+          "nextTaskId"
+        ],
+        "type": "object",
+        "properties": {
+          "columnId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "previousTaskId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "nextTaskId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        },
+        "description": "Moves a task to a new position using neighbor-based ranking."
+      },
+      "NotificationListResponse": {
+        "required": [
+          "items",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            },
+            "description": "The notification items for this page."
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of notifications.",
+            "format": "int32"
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Current page number.",
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Items per page.",
+            "format": "int32"
+          }
+        },
+        "description": "Paginated list of notifications."
+      },
+      "NotificationResponse": {
+        "required": [
+          "id",
+          "type",
+          "title",
+          "body",
+          "isRead",
+          "readAt",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Notification unique identifier."
+          },
+          "type": {
+            "enum": [
+              "DueDateReminder",
+              "TaskOverdue",
+              "Welcome"
+            ],
+            "type": "string",
+            "description": "Notification type (DueDateReminder, TaskOverdue, Welcome)."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short headline text."
+          },
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional longer description."
+          },
+          "isRead": {
+            "type": "boolean",
+            "description": "Whether the user has read this notification."
+          },
+          "readAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "ISO 8601 timestamp of when the notification was read, or null."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "ISO 8601 timestamp of creation."
+          }
+        },
+        "description": "Single notification in a list response."
+      },
+      "OnboardingStatusResponse": {
+        "required": [
+          "completed",
+          "completedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "completed": {
+            "type": "boolean",
+            "description": "Whether the user has completed onboarding."
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "ISO 8601 timestamp of completion, or null."
+          }
+        },
+        "description": "Onboarding status response."
+      },
+      "PagedResultOfAdminUserDto": {
+        "required": [
+          "items",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminUserDto"
+            }
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of pages available based on int PagedResult&lt;T&gt;.TotalCount and int PagedResult&lt;T&gt;.PageSize.",
+            "format": "int32"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "True if there are more pages after the current int PagedResult&lt;T&gt;.Page."
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "True if there are pages before the current int PagedResult&lt;T&gt;.Page. False when on the first page."
+          }
+        },
+        "description": "Represents a paginated result set."
+      },
+      "PagedResultOfAuditEntryDto": {
+        "required": [
+          "items",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryDto"
+            }
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of pages available based on int PagedResult&lt;T&gt;.TotalCount and int PagedResult&lt;T&gt;.PageSize.",
+            "format": "int32"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "True if there are more pages after the current int PagedResult&lt;T&gt;.Page."
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "True if there are pages before the current int PagedResult&lt;T&gt;.Page. False when on the first page."
+          }
+        },
+        "description": "Represents a paginated result set."
+      },
+      "PagedResultOfTaskDto": {
+        "required": [
+          "items",
+          "totalCount",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskDto"
+            }
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of pages available based on int PagedResult&lt;T&gt;.TotalCount and int PagedResult&lt;T&gt;.PageSize.",
+            "format": "int32"
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "description": "True if there are more pages after the current int PagedResult&lt;T&gt;.Page."
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "description": "True if there are pages before the current int PagedResult&lt;T&gt;.Page. False when on the first page."
+          }
+        },
+        "description": "Represents a paginated result set."
+      },
+      "ProtectedValue": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The raw value. Only consumed by services that need it (e.g., password verification)."
+          },
+          "redacted": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Wraps a raw sensitive value (e.g., a password) to prevent accidental logging.\r\nNot encrypted — the consuming service needs raw access.\r\nImplements IProtectedData so the Serilog destructuring policy masks it."
+      },
+      "RegisterRequest": {
+        "required": [
+          "email",
+          "password",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "$ref": "#/components/schemas/EncryptedField"
+          },
+          "password": {
+            "$ref": "#/components/schemas/ProtectedValue"
+          },
+          "displayName": {
+            "$ref": "#/components/schemas/EncryptedField"
+          }
+        },
+        "description": "Registers a new user account with email and password."
+      },
+      "RenameColumnRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "Renames a board column."
+      },
+      "ReorderColumnRequest": {
+        "required": [
+          "columnId",
+          "newPosition"
+        ],
+        "type": "object",
+        "properties": {
+          "columnId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "newPosition": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Reorders a column within the board's column list."
+      },
+      "RevealedField": {
+        "required": [
+          "encrypted"
+        ],
+        "type": "object",
+        "properties": {
+          "encrypted": {
+            "type": "string",
+            "description": "The encrypted ciphertext to be decrypted during JSON serialization."
+          }
+        },
+        "description": "Holds encrypted ciphertext that will be decrypted at JSON serialization time.\r\nThe raw value only exists in the JSON output stream — never in a C# property.\r\nUsed for admin reveal and owner reveal responses."
+      },
+      "RevealedProfileResponse": {
+        "required": [
+          "email",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "$ref": "#/components/schemas/RevealedField"
+          },
+          "displayName": {
+            "$ref": "#/components/schemas/RevealedField"
+          }
+        },
+        "description": "Response containing the user's unredacted profile data after password re-authentication."
+      },
+      "RevealedProtectedDataDto": {
+        "required": [
+          "email",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "$ref": "#/components/schemas/RevealedField"
+          },
+          "displayName": {
+            "$ref": "#/components/schemas/RevealedField"
+          }
+        },
+        "description": "DTO returned when protected data is revealed. RevealedField values are decrypted at JSON serialization."
+      },
+      "RevealProfileRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "$ref": "#/components/schemas/ProtectedValue"
+          }
+        },
+        "description": "Request body for `POST /api/auth/reveal-profile`."
+      },
+      "RevealProtectedDataRequest": {
+        "required": [
+          "reason",
+          "reasonDetails",
+          "comments",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reasonDetails": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "comments": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "password": {
+            "$ref": "#/components/schemas/ProtectedValue"
+          }
+        },
+        "description": "Reveals a user's protected data via break-the-glass authentication."
+      },
+      "RevealTaskNoteRequest": {
+        "required": [
+          "reason",
+          "reasonDetails",
+          "comments",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "reasonDetails": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "comments": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "password": {
+            "$ref": "#/components/schemas/ProtectedValue"
+          }
+        },
+        "description": "Reveals a task's sensitive note via break-the-glass authentication."
+      },
+      "TaskCardDto": {
+        "required": [
+          "taskId",
+          "columnId",
+          "rank"
+        ],
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "Unique identifier of the task this card represents.",
+            "format": "uuid"
+          },
+          "columnId": {
+            "type": "string",
+            "description": "Unique identifier of the column where this card is placed.",
+            "format": "uuid"
+          },
+          "rank": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Fractional rank for ordering cards within the column. Higher values appear later in the list.",
+            "format": "double"
+          }
+        },
+        "description": "Read model for a task's spatial placement on a board (column + rank)."
+      },
+      "TaskDto": {
+        "required": [
+          "id",
+          "title",
+          "priority",
+          "status",
+          "tags",
+          "isArchived",
+          "isDeleted",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the task.",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title or summary of the task."
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Detailed description or notes for the task."
+          },
+          "priority": {
+            "enum": [
+              "None",
+              "Low",
+              "Medium",
+              "High",
+              "Critical"
+            ],
+            "type": "string",
+            "description": "Priority level (None, Low, Medium, High)."
+          },
+          "status": {
+            "enum": [
+              "Todo",
+              "InProgress",
+              "Done"
+            ],
+            "type": "string",
+            "description": "Current lifecycle status (Todo, InProgress, Done)."
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional deadline for task completion.",
+            "format": "date-time"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Collection of tags for categorizing or labeling the task."
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Indicates if the task is archived (hidden from active views but not deleted)."
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "description": "Indicates if the task has been soft-deleted."
+          },
+          "sensitiveNote": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Whether this task has an encrypted sensitive note. Shows \"[PROTECTED]\" or null."
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Timestamp when the task was marked as Done, or null if not completed.",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the task was created.",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Timestamp when the task was last modified.",
+            "format": "date-time"
+          }
+        },
+        "description": "Read model for a task, flattening value objects to primitive types for API responses."
+      },
+      "TrackEventsRequest": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsEvent"
+            },
+            "description": "The list of analytics events to record."
+          }
+        },
+        "description": "Batch of analytics events sent from the frontend."
+      },
+      "UnreadCountResponse": {
+        "required": [
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Number of unread notifications.",
+            "format": "int32"
+          }
+        },
+        "description": "Count of unread notifications."
+      },
+      "UpdateTaskRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "priority": {
+            "enum": [
+              "None",
+              "Low",
+              "Medium",
+              "High",
+              "Critical"
+            ],
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "clearDueDate": {
+            "type": "boolean",
+            "default": false
+          },
+          "sensitiveNote": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EncryptedField"
+              }
+            ]
+          },
+          "clearSensitiveNote": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "Updates a task with partial field modifications."
+      },
+      "UserResponse": {
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "roles"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "User profile information with redacted personal data."
+      },
+      "ViewTaskNoteRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "$ref": "#/components/schemas/ProtectedValue"
+          }
+        },
+        "description": "Views a task's sensitive note via break-the-glass authentication."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "LemonDo.Api"
+    },
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Tasks"
+    },
+    {
+      "name": "Boards"
+    },
+    {
+      "name": "Admin"
+    },
+    {
+      "name": "Analytics"
+    },
+    {
+      "name": "Onboarding"
+    },
+    {
+      "name": "Notifications"
+    }
+  ]
+}

@@ -10,14 +10,30 @@
 
 **Date: February 13, 2026**
 
-LemonDo started with an empty folder and a clear vision: build a production-grade task management platform that proves you can have great UX AND compliance. Not one or the other.
+LemonDo is a **lemon.io take-home assignment** for a Full Stack Developer position at a healthcare startup that detects early-stage cancers across multiple organs through a single MRI scan. The assignment asked for a todo/task management app with .NET/SQLite on the backend, React on the frontend, and "any features you would add for a real production MVP."
 
-The constraints:
-- .NET Aspire for cloud-native orchestration
-- React + Shadcn/ui for a premium frontend
-- Strict TDD methodology
-- DDD architecture throughout
-- HIPAA-level data protection
+### The Reasoning Chain
+
+When I read "production MVP," my mind went into what I think of as full product mode. A production MVP is not only about working code — it is about DevOps, telemetry, quick iterations, and compliance in regulated industries. An MVP without product analytics cannot answer the questions it exists to validate.
+
+The target company operates in healthcare, one of the most regulated industries. That immediately drove several decisions:
+
+- **Compliance awareness**: HIPAA-level patterns — AES-256 field encryption at rest, protected data redaction, immutable audit trail, break-the-glass reveal with justification logging.
+- **Offline-first**: From experience, hospital wifi is unreliable. If the product stops working when connectivity drops, it becomes a liability, not a tool. Full PWA with IndexedDB mutation queue.
+- **Azure deployment**: The company uses Azure. The project should demonstrate infrastructure fluency — Terraform IaC, Container Apps, SQL Server for production, GitHub Actions CI/CD.
+- **Dual-database support**: SQLite for blazing-fast development and testing, SQL Server for production. Same codebase, same tests, both providers in CI.
+- **Product analytics**: Privacy-first event tracking with hashed identifiers. No PII in events. Because an MVP exists to validate hypotheses, and you need data to do that.
+- **Incremental delivery**: The vision was ambitious. I broke it into 5 checkpoints — each a complete, shippable application. This meant I'd have a working product within hours, and a comprehensive MVP by the end.
+
+Even the branding was deliberate: I named the project after lemon.io and built a visual identity around it to show I can adapt frontend design to any brand guidelines.
+
+### Technical Constraints
+
+- .NET 10 (current LTS) + Aspire 13 for cloud-native orchestration
+- React 19 + Shadcn/ui for a premium, accessible frontend
+- Strict TDD methodology (RED-GREEN-VALIDATE)
+- DDD architecture with strict layer boundaries
+- HIPAA-aware data protection patterns
 
 ## Phase 1: Planning Before Code
 
@@ -1888,6 +1904,208 @@ First patch release after v1.0.0. All 12 commits are bug fixes — no new featur
 ### Lesson Learned
 
 Post-release polish catches real user-facing issues. Mobile and accessibility testing in particular revealed gaps that automated tests didn't cover — touch interactions, screen reader announcements, and timezone edge cases all required hands-on testing to discover.
+
+---
+
+## Post-Release: Offline Queue Startup Drain & Cache Invalidation (Feb 17)
+
+### What Was Done
+
+Discovered and fixed two bugs in the offline sync implementation, plus added comprehensive E2E tests for offline scenarios.
+
+**Bug 1: No startup drain** — `initOfflineQueue()` only registered an `online` event listener. If the user closed the app while offline with queued IndexedDB mutations and reopened online, the queued changes would sit in IndexedDB forever. The `online` event only fires on transition (offline → online), not on initial page load. Fix: after `refreshCount()`, check `navigator.onLine && pendingCount > 0` and call `drain()`.
+
+**Bug 2: No cache invalidation after drain** — `drain()` replayed mutations to the server via raw `fetch()` but never notified TanStack Query to refetch. The UI showed stale pre-drain data until the user manually refreshed. The store's docstring even claimed "After drain, TanStack Query caches are invalidated" but the code didn't implement it. Fix: `drain()` dispatches a `offline-queue-drained` CustomEvent after replay, and QueryProvider listens for it and calls `queryClient.invalidateQueries()`.
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `stores/use-offline-queue-store.ts` | Startup drain in `initOfflineQueue()`, `offline-queue-drained` event in `drain()` |
+| `app/providers/QueryProvider.tsx` | `useEffect` listening for drain event → invalidate all caches |
+| `app/providers/QueryProvider.test.tsx` | New: 3 tests for invalidation behavior |
+| `stores/use-offline-queue-store.test.ts` | +7 tests for drain event dispatch and startup drain |
+| `tests/e2e/specs/offline-sync.spec.ts` | +3 E2E suites: UI auto-update, multi-mutation drain, startup drain |
+
+### Architecture Decision
+
+Used a `CustomEvent` on `window` to bridge the Zustand store (non-React) and TanStack Query (React-bound). Alternatives considered:
+- **Extract QueryClient to a module-level singleton** — would work but creates a global dependency and changes the existing provider pattern
+- **React component subscribing to Zustand `lastSyncResult`** — creates coupling between unrelated stores
+- **CustomEvent** — zero coupling, simple pub/sub pattern, the store doesn't need to know who listens
+
+### Test Counts
+
+- Frontend: 58 files, 462 tests (up from 57 files, 406 tests — +13 new tests)
+- New E2E: 3 suites testing startup drain, UI auto-update after drain, multiple mutations drain in order
+
+### Lesson Learned
+
+Docstrings can lie. The store's JSDoc described cache invalidation after drain, but the implementation never did it. The existing E2E test masked this by calling `page.reload()` after drain — which technically "worked" but papered over the missing behavior. Writing tests that assert the *intended* behavior (UI updates without reload) exposed the gap immediately.
+
+---
+
+## Post-Release: Admin E2E Coverage & Auth Race Fix (Feb 17)
+
+### The Problem
+
+A coverage audit revealed that admin/system admin features had virtually no E2E test coverage. Of 9 admin API endpoints and 2 frontend pages, only the PII reveal flow had a single E2E test. The user management page, audit log viewer, route guards, and role management were entirely untested at the E2E level.
+
+### What Was Built
+
+**20 admin E2E tests** across 5 spec files, plus a shared helper module:
+
+| Spec | Tests | What It Covers |
+|------|-------|----------------|
+| `admin-users.spec.ts` | 7 | Page rendering for SystemAdmin/Admin, search filtering, role filter dropdown, role assignment dialog, user deactivation, user reactivation |
+| `admin-audit.spec.ts` | 4 | Page access for Admin role, audit entries from registration, action filter, resource type filter |
+| `admin-role-management.spec.ts` | 3 | Role removal via actions menu, audit log reflection, "all roles assigned" message |
+| `admin-route-guard.spec.ts` | 5 | Unauthenticated redirect, regular user redirect to `/board`, admin access, sysadmin access to audit page |
+| `admin-pii-reveal.spec.ts` | 1 | Refactored to use shared helpers (removed ~70 lines of inline auth code) |
+
+**Shared helpers** (`tests/e2e/helpers/admin.helpers.ts`):
+- Account constants: `SYSADMIN`, `ADMIN`, `DEV_USER` with credentials
+- Headless API helpers: `loginAsAdmin()`, `registerTestUser()`, `assignRole()`, `removeRole()`, `deactivateUser()`, `reactivateUser()`, `searchAuditLog()`
+- Browser helpers: `loginAdminViaApi()`, `waitForUsersTable()`, `waitForAuditTable()`
+
+**Development approach**: Wrote the first spec (`admin-users.spec.ts`) manually to establish patterns, then delegated the remaining 4 specs to 3 parallel subagents. This cut development time significantly while maintaining consistency through the shared helper module.
+
+### The Flaky 401 Bug
+
+During admin E2E testing, an intermittent 401 error surfaced on the silent token refresh during page load. Investigation revealed a race condition in `AuthHydrationProvider.tsx`:
+
+**Root cause**: React StrictMode double-fires `useEffect` (mount → unmount → mount). The original code used `AbortController`:
+1. Mount #1: sends `POST /api/auth/refresh` with token A
+2. Cleanup: `controller.abort()` cancels the response client-side — but the server already rotated token A (revoked it, issued token B)
+3. The `abort()` discards the `Set-Cookie` response from mount #1, so the browser never receives token B's cookie
+4. Mount #2: sends refresh with token A again (cookie unchanged) — server sees token A is revoked → 401
+
+**Fix**: Extracted `performSilentRefresh()` as a standalone async function and used `useRef<Promise<void> | null>` to share the promise between StrictMode mounts. The fetch fires exactly once, both mount cycles share the same promise, and the `Set-Cookie` response is never discarded.
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `tests/e2e/helpers/admin.helpers.ts` | **New**: shared utilities for admin E2E tests |
+| `tests/e2e/specs/admin-users.spec.ts` | **New**: 7 tests for user management page |
+| `tests/e2e/specs/admin-audit.spec.ts` | **New**: 4 tests for audit log viewer |
+| `tests/e2e/specs/admin-role-management.spec.ts` | **New**: 3 tests for role management |
+| `tests/e2e/specs/admin-route-guard.spec.ts` | **New**: 5 tests for route authorization |
+| `tests/e2e/specs/admin-pii-reveal.spec.ts` | Refactored to use shared helpers |
+| `src/client/src/app/providers/AuthHydrationProvider.tsx` | Fixed StrictMode race condition |
+
+### Lessons Learned
+
+1. **Refresh token rotation + React StrictMode = danger zone.** Any `useEffect` that calls a non-idempotent endpoint needs protection against double-fire. `AbortController` is not sufficient because it only cancels the client-side response — the server has already committed the mutation.
+
+2. **Shared E2E helpers pay for themselves fast.** The `admin.helpers.ts` module eliminated ~70 lines of boilerplate per spec and ensured consistent login/seed patterns across all admin tests.
+
+3. **Playwright strict mode catches real bugs.** Multiple fixes were needed for selectors like `getByText('Audit Log')` matching both a nav link and heading, `getByRole('option', { name: 'Admin' })` matching "Admin" and "SystemAdmin", etc. Every strict mode violation pointed to a real ambiguity in the selector.
+
+4. **Subagent parallelization works well for test writing** when there's a clear pattern to follow. The key was establishing the pattern manually first, then delegating with explicit shared utilities.
+
+---
+
+## Post-Release: OpenAPI-Based TypeScript Type Generation (Feb 17)
+
+### The Problem
+
+Backend C# enum and DTO changes weren't propagating to the frontend automatically. The original bug — `OwnProfileRevealed` and `ProtectedDataAccessed` audit actions appearing as raw i18n keys in the audit table — was a symptom of a systemic issue: 9 hand-written TypeScript type files manually mirrored backend DTOs and could drift silently. When the backend added new `AuditAction` values, nobody updated the frontend types, translations, or UI action-label maps.
+
+### Design Decisions
+
+**Build-time spec generation over runtime export**: `Microsoft.Extensions.ApiDescription.Server` generates the OpenAPI spec during `dotnet build` by launching the app via the `GetDocument.Insider` assembly. This required restructuring `Program.cs` with a guard pattern — all service registration (DI, JWT, CORS) stays unconditional for parameter inference, while only runtime behavior (Serilog, DB migration, seeding, middleware) is guarded behind `!isBuildTimeDocGen`.
+
+**Document transformer for enum enrichment**: Priority, TaskStatus, and NotificationType are serialized as `string` in DTOs (via `.ToString()` in mappers), so the OpenAPI generator emits them as plain `string`. A document transformer walks `components.schemas` and enriches these properties with their enum values. `AuditAction` already uses `[JsonStringEnumConverter]` and appears automatically.
+
+**Selective re-export over wholesale replacement**: The generated types have two quirks — `number | string` for integer fields (OpenAPI int32 format) and `optional` properties where the frontend expects `required + nullable`. Rather than accepting these incompatibilities, the migration strategy derives enum types from the schema while keeping response interfaces hand-written. This delivers the core value (enum drift detection) without breaking 400+ existing tests.
+
+**`satisfies` compile-time guards**: Priority and TaskStatus const objects use `as const satisfies { [K in SchemaType]: K }` which produces a compile error if the backend adds an enum value not in the const object. This catches drift at `tsc` time, before tests even run.
+
+### Technical Challenges
+
+1. **Microsoft.OpenApi 2.0 namespace change**: `OpenApiSchema` moved from `Microsoft.OpenApi.Models` to `Microsoft.OpenApi`. The `IOpenApiSchema` interface has a read-only `Enum` property — required casting to the concrete `OpenApiSchema` class.
+
+2. **`GetDocument.Insider` needs full DI**: The initial approach guarded ALL service registration behind `!isBuildTimeDocGen`, causing "failure to infer one or more parameters" errors. The OpenAPI generator needs DI-injected handler parameters resolved to generate the spec, so service registration must be unconditional.
+
+3. **Missing response schemas**: The first successful build produced only 18 schemas (request types only). Minimal API endpoints returning `Task<IResult>` via `Results.Ok()` don't carry type information. Adding `.Produces<T>()` metadata to all endpoint mappings across 7 files brought the count to 35 schemas.
+
+### What Was Built
+
+| Component | Details |
+|-----------|---------|
+| Backend spec generation | `Microsoft.Extensions.ApiDescription.Server` + document transformer in `Program.cs` |
+| Frontend type generation | `openapi-typescript` v7.13.0 producing `schema.d.ts` from committed `openapi.json` |
+| Type migration | 7 files migrated: enums derived from schema, compatible DTOs re-exported, incompatible kept hand-written |
+| Translation guard | 9 tests (AuditAction × 3 locales, Priority × 3, TaskStatus × 3) reading directly from `openapi.json` |
+| CLI integration | `./dev generate` command, `./dev verify` updated to 6 checks, CI workflow updated |
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/LemonDo.Api/LemonDo.Api.csproj` | Added `Microsoft.Extensions.ApiDescription.Server` + MSBuild props |
+| `src/LemonDo.Api/Program.cs` | `isBuildTimeDocGen` guard pattern + document transformer for enum enrichment |
+| `src/LemonDo.Api/Endpoints/*.cs` (6 files) | Added `.Produces<T>()` metadata for response schemas |
+| `src/client/openapi.json` | **New**: Generated OpenAPI spec (35 schemas, committed to git) |
+| `src/client/src/api/schema.d.ts` | **New**: Generated TypeScript types (gitignored, derived from spec) |
+| `src/client/package.json` | Added `openapi-typescript` devDependency + `generate:api` script |
+| `src/client/src/domains/*/types/*.ts` (7 files) | Migrated to schema re-exports |
+| `src/client/src/i18n/enum-translation-coverage.test.ts` | **New**: Enum translation guard test |
+| `dev` | Added `generate` command, updated `verify` to 6 checks |
+| `.github/workflows/deploy.yml` | Added `generate:api` step before frontend type-check/build |
+| `.gitignore` | Added `src/client/src/api/schema.d.ts` |
+
+### Verification
+
+- **406** backend tests pass
+- **471** frontend tests pass (462 existing + 9 new enum coverage)
+- `./dev generate` produces spec + types end-to-end
+- `./dev verify` passes all 6 checks
+
+### Lessons Learned
+
+1. **Build-time OpenAPI generation requires careful DI partitioning.** The `GetDocument.Insider` tool bootstraps the full app to discover endpoints. Service registration must be unconditional — only runtime behavior (middleware, migration, seeding) should be guarded.
+
+2. **`IOpenApiSchema.Enum` is read-only in Microsoft.OpenApi 2.0.** The interface property can't be set; cast to the concrete `OpenApiSchema` class for the settable version.
+
+3. **`.Produces<T>()` is essential for minimal API response types.** Without it, `Results.Ok(dto)` appears as an untyped response in the spec. Every endpoint that returns a typed DTO needs explicit metadata.
+
+4. **`number | string` from openapi-typescript is intentional.** The tool generates this for OpenAPI integer/double formats because JSON can represent numbers as strings. Pragmatic approach: derive enums from schema (high drift risk), keep interfaces hand-written (low drift risk, incompatible types).
+
+5. **`satisfies` with mapped types is the cleanest compile-time guard.** `as const satisfies { [K in SchemaType]: K }` fails at compile time if the schema has values missing from the const — no unused type aliases, no runtime code.
+
+---
+
+## Post-Release: Theme & Visual Polish
+
+**Date: February 17, 2026**
+
+A focused pass on color readability and visual hierarchy across both themes.
+
+### Changes
+
+1. **Light mode primary → purple**: The lime primary (`oklch(0.94 0.24 116)`) was unreadable on white backgrounds. Switched to the highlight purple (`oklch(0.47 0.27 303)`) which gives ~6.5:1 contrast on white. Dark mode primary stays lime.
+
+2. **Brand token**: Added `--brand` / `--brand-foreground` (always lime, both themes) for elements that must stay on-brand regardless of theme — CTA buttons (GlowButton), nav active states. Added a `brand` variant to the shadcn Button component.
+
+3. **Logo color**: Uses `text-primary` — lime in dark, purple in light. Readable in both.
+
+4. **Dark surface lightness bump**: Cards and components were too close to the pure black background. Bumped `--card`, `--popover`, `--secondary`, `--muted`, `--accent`, `--input` from ~0.13–0.17 to ~0.18–0.22 in oklch lightness. Borders from 0.26 to 0.30. Sidebar from 0.06 to 0.10.
+
+5. **Task list view surface**: Added `bg-card/60` to list view rows for subtle separation from background.
+
+6. **DevOps pipeline icons**: Added lucide icons (DatabaseIcon, ShieldCheckIcon, ContainerIcon, RefreshCwIcon) to the four pipeline detail cards.
+
+7. **Navbar CTA**: Get Started button converted to GlowButton with pulsing glow effect.
+
+### Decision: Three-Token Color Strategy
+
+| Token | Dark | Light | Used For |
+|-------|------|-------|----------|
+| `primary` | Lime | Purple | General UI, logo, buttons, focus rings |
+| `brand` | Lime | Lime | CTAs, nav active states (always on-brand) |
+| `highlight` | Lime | Purple | Accent text on contextual backgrounds |
 
 ---
 

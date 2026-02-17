@@ -17,7 +17,7 @@ public sealed record RevealTaskNoteCommand(
     ProtectedDataRevealReason Reason,
     string? ReasonDetails,
     string? Comments,
-    string AdminPassword);
+    ProtectedValue AdminPassword);
 
 /// <summary>Structured audit details for task note reveal actions.</summary>
 public sealed record TaskNoteRevealAuditDetails(
@@ -28,7 +28,7 @@ public sealed record TaskNoteRevealAuditDetails(
 
 /// <summary>
 /// Handles <see cref="RevealTaskNoteCommand"/> with break-the-glass controls:
-/// validates justification, re-authenticates the admin, decrypts the note, and records audit.
+/// validates justification, re-authenticates the admin, returns encrypted note as RevealedField, and records audit.
 /// </summary>
 public sealed class RevealTaskNoteCommandHandler(
     ITaskRepository taskRepository,
@@ -37,14 +37,14 @@ public sealed class RevealTaskNoteCommandHandler(
     IRequestContext requestContext)
 {
     /// <summary>Reveals a task's sensitive note after validation and re-authentication.</summary>
-    public async Task<Result<string, DomainError>> HandleAsync(
+    public async Task<Result<RevealedField, DomainError>> HandleAsync(
         RevealTaskNoteCommand command, CancellationToken ct = default)
     {
         // 1. Validate: "Other" reason requires details
         if (command.Reason == ProtectedDataRevealReason.Other
             && string.IsNullOrWhiteSpace(command.ReasonDetails))
         {
-            return Result<string, DomainError>.Failure(
+            return Result<RevealedField, DomainError>.Failure(
                 DomainError.Validation("reasonDetails",
                     "Reason details are required when reason is 'Other'."));
         }
@@ -52,26 +52,26 @@ public sealed class RevealTaskNoteCommandHandler(
         // 2. Verify the task exists and has a sensitive note
         var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);
         if (task is null)
-            return Result<string, DomainError>.Failure(
+            return Result<RevealedField, DomainError>.Failure(
                 DomainError.NotFound("Task", command.TaskId.ToString()));
 
         if (task.RedactedSensitiveNote is null)
-            return Result<string, DomainError>.Failure(
+            return Result<RevealedField, DomainError>.Failure(
                 DomainError.NotFound("SensitiveNote", command.TaskId.ToString()));
 
         // 3. Re-authenticate the acting admin
         var adminUserId = requestContext.UserId
             ?? throw new InvalidOperationException("No authenticated user in request context.");
         var passwordResult = await authService.VerifyPasswordAsync(
-            adminUserId, command.AdminPassword, ct);
+            adminUserId, command.AdminPassword.Value, ct);
         if (passwordResult.IsFailure)
-            return Result<string, DomainError>.Failure(passwordResult.Error);
+            return Result<RevealedField, DomainError>.Failure(passwordResult.Error);
 
-        // 4. Decrypt the note
-        var decryptResult = await taskRepository.GetDecryptedSensitiveNoteAsync(
+        // 4. Get encrypted note as RevealedField (decryption deferred to JSON serialization)
+        var revealResult = await taskRepository.GetEncryptedSensitiveNoteAsync(
             TaskId.From(command.TaskId), ct);
-        if (decryptResult.IsFailure)
-            return Result<string, DomainError>.Failure(decryptResult.Error);
+        if (revealResult.IsFailure)
+            return Result<RevealedField, DomainError>.Failure(revealResult.Error);
 
         // 5. Record structured audit entry
         var auditDetails = new TaskNoteRevealAuditDetails(
@@ -87,6 +87,6 @@ public sealed class RevealTaskNoteCommandHandler(
             JsonSerializer.Serialize(auditDetails),
             cancellationToken: ct);
 
-        return Result<string, DomainError>.Success(decryptResult.Value);
+        return Result<RevealedField, DomainError>.Success(revealResult.Value);
     }
 }

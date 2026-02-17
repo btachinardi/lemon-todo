@@ -11,7 +11,7 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 
 /// <summary>
 /// EF Core implementation of <see cref="ITaskRepository"/>. Eagerly loads tags.
-/// Handles transparent encryption of sensitive notes via shadow properties.
+/// Handles transparent storage of encrypted sensitive notes via shadow properties.
 /// </summary>
 public sealed class TaskRepository(LemonDoDbContext context, IFieldEncryptionService encryptionService) : ITaskRepository
 {
@@ -83,19 +83,19 @@ public sealed class TaskRepository(LemonDoDbContext context, IFieldEncryptionSer
     }
 
     /// <inheritdoc/>
-    public async System.Threading.Tasks.Task AddAsync(TaskEntity task, SensitiveNote? sensitiveNote = null, CancellationToken ct = default)
+    public async System.Threading.Tasks.Task AddAsync(TaskEntity task, EncryptedField? encryptedNote = null, CancellationToken ct = default)
     {
         await context.Tasks.AddAsync(task, ct);
 
-        if (sensitiveNote is not null)
+        if (encryptedNote is not null)
         {
             var entry = context.Entry(task);
-            entry.Property("EncryptedSensitiveNote").CurrentValue = encryptionService.Encrypt(sensitiveNote.Value);
+            entry.Property("EncryptedSensitiveNote").CurrentValue = encryptedNote.Encrypted;
         }
     }
 
     /// <inheritdoc/>
-    public System.Threading.Tasks.Task UpdateAsync(TaskEntity task, SensitiveNote? sensitiveNote = null, bool clearSensitiveNote = false, CancellationToken ct = default)
+    public System.Threading.Tasks.Task UpdateAsync(TaskEntity task, EncryptedField? encryptedNote = null, bool clearSensitiveNote = false, CancellationToken ct = default)
     {
         context.Tasks.Update(task);
 
@@ -104,10 +104,10 @@ public sealed class TaskRepository(LemonDoDbContext context, IFieldEncryptionSer
             var entry = context.Entry(task);
             entry.Property("EncryptedSensitiveNote").CurrentValue = null;
         }
-        else if (sensitiveNote is not null)
+        else if (encryptedNote is not null)
         {
             var entry = context.Entry(task);
-            entry.Property("EncryptedSensitiveNote").CurrentValue = encryptionService.Encrypt(sensitiveNote.Value);
+            entry.Property("EncryptedSensitiveNote").CurrentValue = encryptedNote.Encrypted;
         }
 
         return System.Threading.Tasks.Task.CompletedTask;
@@ -126,5 +126,20 @@ public sealed class TaskRepository(LemonDoDbContext context, IFieldEncryptionSer
                 DomainError.NotFound("SensitiveNote", taskId.Value.ToString()));
 
         return Result<string, DomainError>.Success(encryptionService.Decrypt(encrypted));
+    }
+
+    /// <inheritdoc/>
+    public async System.Threading.Tasks.Task<Result<RevealedField, DomainError>> GetEncryptedSensitiveNoteAsync(TaskId taskId, CancellationToken ct = default)
+    {
+        var task = await context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId, ct);
+        if (task is null)
+            return Result<RevealedField, DomainError>.Failure(DomainError.NotFound("Task", taskId.Value.ToString()));
+
+        var encrypted = context.Entry(task).Property<string?>("EncryptedSensitiveNote").CurrentValue;
+        if (encrypted is null)
+            return Result<RevealedField, DomainError>.Failure(
+                DomainError.NotFound("SensitiveNote", taskId.Value.ToString()));
+
+        return Result<RevealedField, DomainError>.Success(new RevealedField(encrypted));
     }
 }

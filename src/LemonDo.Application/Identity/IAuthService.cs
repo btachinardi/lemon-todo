@@ -27,6 +27,15 @@ public interface IAuthService
         CancellationToken ct = default);
 
     /// <summary>
+    /// Authenticates by pre-computed email hash and password.
+    /// Used when the caller already has the hash (e.g., from EncryptedField).
+    /// Returns the user ID on success, or an error on failure (wrong credentials, lockout).
+    /// </summary>
+    Task<Result<UserId, DomainError>> AuthenticateByHashAsync(
+        string emailHash, string password,
+        CancellationToken ct = default);
+
+    /// <summary>
     /// Generates a new JWT access token + refresh token for the given user.
     /// Loads roles from Identity. Stores the refresh token hash.
     /// </summary>

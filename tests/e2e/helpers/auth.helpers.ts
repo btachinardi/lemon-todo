@@ -1,3 +1,14 @@
+/**
+ * Auth helpers for creating isolated test users and logging into the browser.
+ *
+ * Each E2E describe block should call one of these in `beforeAll` to get its
+ * own user with a clean board. The stored token is shared with API helpers
+ * in other files (e.g. `api.helpers.ts`, `notification.helpers.ts`) via
+ * {@link getAuthToken}.
+ *
+ * @module
+ */
+
 import type { Page } from '@playwright/test';
 import { API_BASE } from './e2e.config';
 
@@ -31,11 +42,22 @@ function extractRefreshToken(res: Response): string {
 }
 
 /**
- * Creates a unique test user via the register endpoint.
- * Sets the auth token for API helpers (createTask, getDefaultBoard, etc.).
+ * Creates a unique test user via the register endpoint and stores the access
+ * token for headless API helpers (`createTask`, `getDefaultBoard`, etc.).
  *
- * Use in `beforeAll` for API-only describe blocks that don't need a browser.
+ * Use in `beforeAll` for describe blocks that only need API access (no browser).
  * Each call creates a fresh user with an empty board — no cleanup needed.
+ *
+ * @throws If registration fails (non-2xx response).
+ *
+ * @example
+ * test.describe('card ordering', () => {
+ *   test.beforeAll(async () => {
+ *     await createTestUser();
+ *     // API helpers are now authenticated as this user
+ *     await createTask({ title: 'First task' });
+ *   });
+ * });
  */
 export async function createTestUser(): Promise<void> {
   const email = uniqueEmail();
@@ -52,8 +74,10 @@ export async function createTestUser(): Promise<void> {
 }
 
 /**
- * Returns the auth token for the current test user.
- * Throws if no user has been created — call `createTestUser()` or `loginViaApi()` first.
+ * Returns the access token for the current test user. Used internally by all
+ * API helper files to authenticate requests.
+ *
+ * @throws If no user has been created — call {@link createTestUser} or {@link loginViaApi} in `beforeAll` first.
  */
 export async function getAuthToken(): Promise<string> {
   if (!currentToken) {
@@ -63,19 +87,32 @@ export async function getAuthToken(): Promise<string> {
 }
 
 /**
- * Creates a unique test user and logs into the browser for E2E tests.
+ * Creates a unique test user and logs into the browser for full E2E tests.
  *
  * 1. Registers a fresh user via API (unique email per call)
  * 2. Injects the refresh cookie into the Playwright browser context
- * 3. Navigates to `/` — AuthHydrationProvider performs silent refresh
+ * 3. Navigates to `/board` — AuthHydrationProvider performs silent refresh
  * 4. Waits for the refresh response and verifies it succeeded
- * 5. Waits for the authenticated UI to render
+ * 5. Waits for the authenticated UI (nav bar) to render
  *
- * Also sets the auth token for API helpers (createTask, etc.) so they
- * operate against the same user's data.
+ * Also stores the access token for headless API helpers (`createTask`, etc.)
+ * so they operate against the same user's data.
  *
- * Call once per `beforeAll` and reuse the same page/context across tests.
- * Each call creates a fresh user with an empty board — no cleanup needed.
+ * **Side effect**: Navigates the page to `/board`. If your test needs a
+ * different starting URL, navigate after this call returns.
+ *
+ * @throws If registration or silent refresh fails.
+ *
+ * @example
+ * test.describe('task management', () => {
+ *   let page: Page;
+ *   test.beforeAll(async ({ browser }) => {
+ *     const context = await browser.newContext();
+ *     page = await context.newPage();
+ *     await loginViaApi(page);
+ *     // Browser is now authenticated and showing /board
+ *   });
+ * });
  */
 export async function loginViaApi(page: Page): Promise<void> {
   const email = uniqueEmail();

@@ -105,10 +105,11 @@ public sealed class EmailTests
     }
 
     [TestMethod]
-    public void Should_ReturnValue_When_ToString()
+    public void Should_ReturnRedacted_When_ToString()
     {
         var email = Email.Create("test@example.com").Value;
-        Assert.AreEqual("test@example.com", email.ToString());
+        // IProtectedData VOs return redacted form from ToString() to prevent accidental logging
+        Assert.AreEqual("t***@example.com", email.ToString());
     }
 
     // --- Redacted ---

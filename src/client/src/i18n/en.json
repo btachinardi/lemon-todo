@@ -349,12 +349,15 @@
     "goHome": "Go home"
   },
   "assignmentBanner": {
+    "title": "A Message to Evaluators",
     "greeting": "Hi, I'm Bruno.",
-    "message": "This project was built from scratch as a take-home assignment for a healthcare full-stack role. It is a technical demo — not a medical product — and uses synthetic data only.",
-    "thanks": "Thanks for reviewing. I hope the methodology and engineering decisions speak for themselves.",
-    "ctaMethodology": "View Methodology",
+    "message": "This is a lemon.io take-home assignment for a Full Stack Developer role at a healthcare startup that uses MRI to detect early-stage cancers across multiple organs.",
+    "process": "When I read \"add any features you would add for a real production MVP,\" my mind immediately went to what production actually means in regulated healthcare: compliance awareness, offline reliability for hospital networks, Azure deployment to match your stack, and product analytics to validate hypotheses. Every feature in this app traces back to that reasoning.",
+    "branding": "Even the branding is intentional — I named the project after lemon.io and built a visual identity around it to show I can adapt frontend design to any brand guidelines.",
+    "personal": "I had a genuine blast building this. The idea of working on technology that helps detect cancer early — and potentially saves lives — is the kind of work I want to do. I hope the code, the architecture, and the decisions behind them speak for themselves.",
+    "ctaMethodology": "View Full Methodology",
     "ctaPortfolio": "Portfolio",
-    "dismiss": "Got it"
+    "dismiss": "Close"
   },
   "pwa": {
     "installPrompt": "Install Lemon.DO for a faster experience",
@@ -507,13 +510,47 @@
     "hero": {
       "titleLine1": "From Empty Folder to",
       "titleHighlight": "Production",
-      "titleLine2": "in 3 Days",
-      "subtitle": "A take-home build focused on practical product delivery, DDD boundaries, strict testing discipline, and compliance-oriented design choices for healthcare-adjacent workflows."
+      "titleLine2": "",
+      "subtitle": "A lemon.io take-home for a healthcare startup that detects early-stage cancers via MRI — interpreted through the lens of what 'production MVP' means in a regulated environment. 5 planning documents, 5 shippable checkpoints, 3 architectural redesigns, and 1,034 tests."
+    },
+    "rationale": {
+      "title": "Why These Features, Why This Scope",
+      "highlight": "Why",
+      "subtitle": "The assignment asked for a todo app with any features I'd add for a real production MVP. The target company operates in regulated healthcare. That context shaped every decision.",
+      "promptLabel": "The Assignment",
+      "prompt": "Build a task management application using .NET with SQLite on the backend, React on the frontend. Add any features you would add for a real production MVP.",
+      "interpretation": "A production MVP in healthcare is not just working code. It means compliance awareness, offline reliability for unstable hospital networks, Azure deployment to match the company's stack, observability for incident response, and product analytics to validate hypotheses. Each feature was chosen with this lens.",
+      "steps": [
+        {
+          "title": "The Assignment",
+          "description": "Todo app with .NET/SQLite backend, React frontend, and any features for a real production MVP."
+        },
+        {
+          "title": "Healthcare Context",
+          "description": "The target company detects early-stage cancers via MRI. Healthcare means regulated environments, data protection, and audit requirements."
+        },
+        {
+          "title": "Compliance Awareness",
+          "description": "HIPAA-aware patterns: AES-256 encryption at rest, protected data redaction, immutable audit trail, break-the-glass reveal with justification."
+        },
+        {
+          "title": "Offline-First",
+          "description": "Hospital wifi is unreliable. If the product stops working when connectivity drops, it becomes a liability. PWA with IndexedDB mutation queue."
+        },
+        {
+          "title": "Azure Deployment",
+          "description": "The company uses Azure. Terraform IaC, Container Apps, SQL Server for production, GitHub Actions CI/CD — demonstrating infrastructure fluency."
+        },
+        {
+          "title": "Product Analytics",
+          "description": "An MVP without analytics cannot answer the questions it exists to answer. Privacy-first event tracking with hashed identifiers, no PII in events."
+        }
+      ]
     },
     "vision": {
       "title": "5 Documents Before One Line of Code",
       "highlight": "One Line",
-      "subtitle": "Before writing code, I produced five planning artifacts: PRD draft, tech compatibility research, UX scenarios, domain boundary draft, and release checkpoint plan. This reduced rework and made implementation decisions traceable.",
+      "subtitle": "The target company operates in regulated healthcare. Before writing code, I produced five planning artifacts to ensure compliance, offline reliability, and deployment concerns were addressed from the start — not as afterthoughts.",
       "items": [
         {
           "title": "Product Requirements",
@@ -588,6 +625,62 @@
           "tests": "908",
           "tag": "v1.0.0",
           "summary": "Shipped PWA with offline queue, onboarding tour, Web Push, analytics, mobile UX overhaul, and this landing page."
+        }
+      ]
+    },
+    "problemSolving": {
+      "title": "3 Redesigns, Not 3 Patches",
+      "highlight": "Redesigns",
+      "subtitle": "When architectural problems surfaced, they were fixed at the root — not worked around. Each redesign touched dozens of files across all layers and left the system in a better state than before.",
+      "items": [
+        {
+          "title": "Column-Status Invariant",
+          "problem": "Tasks had two independent sources of truth for lifecycle state — a Status enum and a Column position. They desynchronized after multiple moves, leaving tasks in undefined states.",
+          "solution": "Made Column the single source of truth. Each Column stores a TargetStatus; when a task moves to a column, its status is atomically set. Removed redundant Complete/Uncomplete methods.",
+          "outcome": "Eliminated an entire class of synchronization bugs. Every task's status is now deterministic and derived from board position."
+        },
+        {
+          "title": "Bounded Context Split",
+          "problem": "Task and Board were tightly coupled in a single bounded context. Task stored ColumnId and Position (board spatial concerns), and every status change required loading the Board aggregate.",
+          "solution": "Split into Task (upstream, owns lifecycle) and Board (downstream conformist, owns spatial placement via TaskCard value object). Application handlers coordinate cross-context operations.",
+          "outcome": "98 files changed across all layers. Each context now has clear aggregate boundaries and can evolve independently."
+        },
+        {
+          "title": "Card Ordering Redesign",
+          "problem": "Dense integer positions caused position drift — dragging cards created collisions (two cards at position 1). Delete and archive left orphaned card entries on the board.",
+          "solution": "Replaced with sparse decimal ranks (midpoint insertion). Changed API from index-based to neighbor-based (previousTaskId/nextTaskId) — intent-based contract that survives backend strategy changes.",
+          "outcome": "O(1) moves with zero position collisions. The API contract is strategy-agnostic — switching from decimal ranks to LexoRank would only change backend computation."
+        }
+      ]
+    },
+    "testing": {
+      "title": "Testing as a Design Constraint",
+      "highlight": "Design Constraint",
+      "subtitle": "Not just high coverage — diverse testing strategies that catch different classes of bugs. Property-based testing on both stacks, dual-database CI, visual regression, and compile-time API contract guards.",
+      "items": [
+        {
+          "title": "Property-Based Testing",
+          "description": "FsCheck on .NET, fast-check on TypeScript. Value objects validated with randomized inputs — any string within bounds creates a valid title, any empty string fails. Tests the invariants, not just examples."
+        },
+        {
+          "title": "Dual-Database CI",
+          "description": "Every push runs the full backend suite against both SQLite and SQL Server in parallel. Catches provider-specific SQL differences before they reach production."
+        },
+        {
+          "title": "Visual Regression",
+          "description": "26 Playwright screenshot baselines across light/dark themes, desktop/mobile viewports, and key pages. Pixel-level comparison catches unintended UI changes."
+        },
+        {
+          "title": "WCAG Contrast Testing",
+          "description": "Automated contrast ratio checks against WCAG 2.1 AA thresholds. Every color pairing in the design system verified programmatically across both themes."
+        },
+        {
+          "title": "E2E Data Isolation",
+          "description": "Each E2E describe block creates a unique user with a timestamp-based email. No shared state, no cleanup between tests. True isolation without test-order dependencies."
+        },
+        {
+          "title": "OpenAPI Enum Guards",
+          "description": "TypeScript enums are derived from the OpenAPI spec at build time. When the backend adds an enum value, the frontend fails to compile until the const is updated — and translation coverage tests verify all languages."
         }
       ]
     },
@@ -715,23 +808,23 @@
         },
         "mstest": {
           "name": "MSTest 4",
-          "description": "Backend unit and integration tests"
+          "description": "413 tests, dual-database CI gate"
         },
         "fscheck": {
           "name": "FsCheck",
-          "description": "Property-based testing for .NET"
+          "description": "100 randomized cases per domain invariant"
         },
         "vitest": {
           "name": "Vitest",
-          "description": "Fast frontend test runner"
+          "description": "469 tests with TypeScript type-check gate"
         },
         "fastcheck": {
           "name": "fast-check",
-          "description": "Property-based testing for JS"
+          "description": "Filter, scoring, and rendering invariants"
         },
         "playwright": {
           "name": "Playwright",
-          "description": "Cross-browser E2E testing"
+          "description": "Visual snapshots, WCAG contrast, 6 browsers"
         },
         "azure": {
           "name": "Azure",
@@ -760,7 +853,7 @@
       "highlight": "Evidence",
       "items": [
         {
-          "value": "908",
+          "value": "1,034",
           "label": "Tests",
           "detail": "Backend + Frontend + E2E"
         },
@@ -770,14 +863,24 @@
           "detail": "Each one shippable"
         },
         {
-          "value": "3",
-          "label": "Languages",
-          "detail": "EN, PT-BR, ES"
+          "value": "286",
+          "label": "Commits",
+          "detail": "Conventional Commits"
         },
         {
           "value": "5",
           "label": "Contexts",
           "detail": "DDD bounded contexts"
+        },
+        {
+          "value": "3",
+          "label": "Redesigns",
+          "detail": "Architecture fixes, not patches"
+        },
+        {
+          "value": "3",
+          "label": "Languages",
+          "detail": "EN, PT-BR, ES"
         },
         {
           "value": "9",
@@ -836,7 +939,7 @@
     "hero": {
       "titleLine1": "This Is Just",
       "titleHighlight": "The Beginning.",
-      "subtitle": "908 tests. Production deployed. Five checkpoints shipped. Here's what comes next — from AI-powered workflows to enterprise compliance."
+      "subtitle": "1,034 tests. Production deployed. Five checkpoints shipped. Here's what comes next — from AI-powered workflows to enterprise compliance."
     },
     "horizons": {
       "near": {
@@ -973,10 +1076,10 @@
         { "title": "Deploy", "detail": "Container App + Static Web App" }
       ],
       "details": [
-        { "title": "Dual Database Testing", "description": "Every push runs the full backend test suite against both SQLite and SQL Server in parallel." },
+        { "title": "Dual Database Testing", "description": "413 backend tests run against both SQLite and SQL Server. Per-instance database isolation — each test class gets its own DB, dropped on cleanup." },
+        { "title": "Frontend Quality Gate", "description": "API types generated from OpenAPI spec, TypeScript type-checked, 469 tests with property invariants, lint verified — all before build." },
         { "title": "Docker Multi-Stage Build", "description": "SDK build stage, aspnet runtime stage. Non-root user, health-checked, tagged by commit SHA." },
-        { "title": "Zero-Downtime Deploy", "description": "Container App rolling updates with /alive probe verification every 30 seconds." },
-        { "title": "Parallel Execution", "description": "4 CI jobs run concurrently — total pipeline time under 5 minutes." }
+        { "title": "Zero-Downtime Deploy", "description": "Container App rolling updates with /alive probe verification every 30 seconds." }
       ]
     },
     "infra": {

@@ -1,32 +1,16 @@
+import type { components } from '../../../api/schema';
+
 /** Payload for `POST /api/auth/register`. */
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  displayName: string;
-}
+export type RegisterRequest = components['schemas']['RegisterRequest'];
 
 /** Payload for `POST /api/auth/login`. */
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
+export type LoginRequest = components['schemas']['LoginRequest'];
 
 /** User profile returned in auth responses and from `GET /api/auth/me`. */
-export interface UserProfile {
-  id: string;
-  email: string;
-  displayName: string;
-  roles: string[];
-}
+export type UserProfile = components['schemas']['UserResponse'];
 
 /** Response from login, register, and refresh endpoints. Access token in body, refresh token in HttpOnly cookie. */
-export interface AuthResponse {
-  accessToken: string;
-  user: UserProfile;
-}
+export type AuthResponse = components['schemas']['AuthResponse'];
 
 /** Response from `POST /api/auth/reveal-profile` containing unredacted profile data. */
-export interface RevealedProfile {
-  email: string;
-  displayName: string;
-}
+export type RevealedProfile = components['schemas']['RevealedProfileResponse'];

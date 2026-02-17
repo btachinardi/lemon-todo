@@ -6,6 +6,7 @@ import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore } from '@/stores/use-theme-store';
 import { cn } from '@/lib/utils';
+import { GlowButton } from '@/domains/landing/components/atoms/GlowButton';
 import { AssignmentBanner } from '@/domains/landing/components/widgets/AssignmentBanner';
 
 interface LandingLayoutProps {
@@ -50,7 +51,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             <img src="/lemondo-icon.png" alt="" className="size-7 sm:size-8" />
             <span className="font-[var(--font-brand)] text-lg font-black tracking-tight sm:text-xl">
               <span className="text-foreground">{t('brand.lemon')}</span>
-              <span className="text-highlight">{t('brand.do')}</span>
+              <span className="text-primary">{t('brand.do')}</span>
             </span>
           </Link>
 
@@ -90,12 +91,9 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             >
               {t('landing.nav.login')}
             </Link>
-            <Link
-              to="/register"
-              className="rounded-lg bg-primary px-3.5 py-1.5 text-sm font-bold text-primary-foreground transition-all hover:shadow-[0_0_16px_rgba(220,255,2,0.3)]"
-            >
+            <GlowButton to="/register" className="px-3.5 py-1.5 text-sm">
               {t('landing.nav.getStarted')}
-            </Link>
+            </GlowButton>
           </nav>
 
           {/* Mobile controls — visible only below md breakpoint */}
@@ -151,13 +149,9 @@ export function LandingLayout({ children }: LandingLayoutProps) {
               >
                 {t('landing.nav.login')}
               </Link>
-              <Link
-                to="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mt-2 rounded-lg bg-primary px-3.5 py-2 text-center text-base font-bold text-primary-foreground transition-all hover:shadow-[0_0_16px_rgba(220,255,2,0.3)]"
-              >
+              <GlowButton to="/register" className="mt-2 text-center text-base">
                 {t('landing.nav.getStarted')}
-              </Link>
+              </GlowButton>
             </div>
           </nav>
         )}
@@ -172,7 +166,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             <img src="/lemondo-icon.png" alt="" className="size-6" />
             <span className="font-[var(--font-brand)] text-lg font-black tracking-tight">
               <span className="text-foreground">{t('brand.lemon')}</span>
-              <span className="text-highlight">{t('brand.do')}</span>
+              <span className="text-primary">{t('brand.do')}</span>
             </span>
           </div>
           <p className="text-sm text-muted-foreground">{t('landing.footer.tagline')}</p>
@@ -192,10 +186,10 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             <Link to="/login" className="hover:text-foreground">{t('landing.nav.login')}</Link>
             <Link to="/register" className="hover:text-foreground">{t('landing.nav.getStarted')}</Link>
           </nav>
-          <p className="text-xs text-muted-foreground/50">
+          <p className="text-xs text-muted-foreground">
             {t('landing.footer.disclaimer')}
           </p>
-          <p className="text-xs text-muted-foreground/50">
+          <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Lemon.DO &middot; v{__APP_VERSION__}
           </p>
         </div>

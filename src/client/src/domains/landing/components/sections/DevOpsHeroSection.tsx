@@ -92,17 +92,17 @@ export function DevOpsHeroSection() {
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">backend-test</span>{' '}
-                <span className="text-foreground/60">406 passed (SQLite)</span>
+                <span className="text-foreground/60">413 passed (SQLite)</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">backend-test-sql</span>{' '}
-                <span className="text-foreground/60">406 passed (SQL Server)</span>
+                <span className="text-foreground/60">413 passed (SQL Server)</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">frontend-test</span>{' '}
-                <span className="text-foreground/60">406 passed + lint clean</span>
+                <span className="text-foreground/60">469 passed + lint clean</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}

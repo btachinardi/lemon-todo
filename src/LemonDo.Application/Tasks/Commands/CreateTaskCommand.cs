@@ -19,7 +19,7 @@ public sealed record CreateTaskCommand(
     Priority Priority = Priority.None,
     DateTimeOffset? DueDate = null,
     IReadOnlyList<string>? Tags = null,
-    string? SensitiveNote = null);
+    EncryptedField? SensitiveNote = null);
 
 /// <summary>
 /// Creates a task and places it on the user's default board in the initial (Todo) column.
@@ -64,15 +64,11 @@ public sealed class CreateTaskCommandHandler(
             }
         }
 
-        // Validate sensitive note if provided
+        // SensitiveNote is already validated + encrypted by the JSON converter.
+        // Reconstruct domain VO from redacted value for the domain entity.
         SensitiveNote? sensitiveNote = null;
         if (command.SensitiveNote is not null)
-        {
-            var noteResult = SensitiveNote.Create(command.SensitiveNote);
-            if (noteResult.IsFailure)
-                return Result<TaskDto, DomainError>.Failure(noteResult.Error);
-            sensitiveNote = noteResult.Value;
-        }
+            sensitiveNote = SensitiveNote.Reconstruct(command.SensitiveNote.Redacted);
 
         // Create task (defaults to Todo status)
         var taskResult = TaskEntity.Create(
@@ -101,7 +97,7 @@ public sealed class CreateTaskCommandHandler(
         if (placeResult.IsFailure)
             return Result<TaskDto, DomainError>.Failure(placeResult.Error);
 
-        await taskRepository.AddAsync(task, sensitiveNote, ct);
+        await taskRepository.AddAsync(task, command.SensitiveNote, ct);
         await boardRepository.UpdateAsync(board, ct);
         await unitOfWork.SaveChangesAsync(ct);
         metrics.TaskCreated();

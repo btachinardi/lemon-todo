@@ -3,6 +3,7 @@ namespace LemonDo.Api.Endpoints;
 using LemonDo.Api.Contracts;
 using LemonDo.Api.Extensions;
 using LemonDo.Application.Boards.Commands;
+using LemonDo.Application.Tasks.DTOs;
 using LemonDo.Application.Tasks.Queries;
 
 /// <summary>Minimal API endpoint definitions for the <c>/api/boards</c> route group.</summary>
@@ -17,12 +18,12 @@ public static class BoardEndpoints
     {
         var group = app.MapGroup("/api/boards").WithTags("Boards").RequireAuthorization();
 
-        group.MapGet("/default", GetDefaultBoard);
-        group.MapGet("/{id:guid}", GetBoardById);
-        group.MapPost("/{id:guid}/columns", AddColumn);
-        group.MapPut("/{id:guid}/columns/{colId:guid}", RenameColumn);
+        group.MapGet("/default", GetDefaultBoard).Produces<BoardDto>();
+        group.MapGet("/{id:guid}", GetBoardById).Produces<BoardDto>();
+        group.MapPost("/{id:guid}/columns", AddColumn).Produces<ColumnDto>(StatusCodes.Status201Created);
+        group.MapPut("/{id:guid}/columns/{colId:guid}", RenameColumn).Produces<BoardDto>();
         group.MapDelete("/{id:guid}/columns/{colId:guid}", RemoveColumn);
-        group.MapPost("/{id:guid}/columns/reorder", ReorderColumn);
+        group.MapPost("/{id:guid}/columns/reorder", ReorderColumn).Produces<BoardDto>();
 
         return group;
     }

@@ -13,8 +13,8 @@ public static class OnboardingEndpoints
     {
         var group = app.MapGroup("/api/onboarding").WithTags("Onboarding").RequireAuthorization();
 
-        group.MapGet("/status", GetStatus);
-        group.MapPost("/complete", Complete);
+        group.MapGet("/status", GetStatus).Produces<OnboardingStatusResponse>();
+        group.MapPost("/complete", Complete).Produces<OnboardingStatusResponse>();
 
         return group;
     }

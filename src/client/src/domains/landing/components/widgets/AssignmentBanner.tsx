@@ -1,100 +1,157 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
-import { XIcon } from 'lucide-react';
+import { XIcon, MailIcon } from 'lucide-react';
 
-const STORAGE_KEY = 'lemondo-banner-dismissed';
+const ease = [0.25, 0.46, 0.45, 0.94] as const;
+const SEEN_KEY = 'lemondo-evaluator-seen';
 
-/** Dismissible chat-bubble banner with personal attribution for recruiter review. */
+/**
+ * Floating avatar bubble (always visible on landing pages) that opens
+ * a "Message to Evaluators" modal. Auto-opens once on first visit;
+ * after that, evaluators can re-open via the bubble.
+ */
 export function AssignmentBanner() {
   const { t } = useTranslation();
-  const [visible, setVisible] = useState(false);
+  const [bubbleVisible, setBubbleVisible] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
+    // Delay bubble entrance so it appears after page paint
+    const timer = setTimeout(() => setBubbleVisible(true), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // Auto-open modal on first visit
     try {
-      if (!localStorage.getItem(STORAGE_KEY)) {
-        // Small delay so it appears after page load, not during
-        const timer = setTimeout(() => setVisible(true), 800);
+      if (bubbleVisible && !localStorage.getItem(SEEN_KEY)) {
+        const timer = setTimeout(() => setModalOpen(true), 1200);
         return () => clearTimeout(timer);
       }
     } catch {
-      // localStorage unavailable — don't show
+      // localStorage unavailable — skip auto-open
+    }
+  }, [bubbleVisible]);
+
+  const openModal = useCallback(() => setModalOpen(true), []);
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+    try {
+      localStorage.setItem(SEEN_KEY, '1');
+    } catch {
+      // Ignore
     }
   }, []);
 
-  function dismiss() {
-    setVisible(false);
-    try {
-      localStorage.setItem(STORAGE_KEY, '1');
-    } catch {
-      // Ignore storage errors
-    }
-  }
-
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="fixed bottom-6 right-6 z-50 w-[min(380px,calc(100vw-3rem))]"
-        >
-          <div className="relative rounded-2xl border-2 border-primary/30 bg-card/95 p-5 shadow-2xl shadow-primary/10 backdrop-blur-xl">
-            {/* Chat tail */}
-            <div className="absolute -bottom-2 right-8 size-4 rotate-45 border-b-2 border-r-2 border-primary/30 bg-card/95" />
-
-            {/* Close button */}
-            <button
-              onClick={dismiss}
-              className="absolute right-3 top-3 rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground"
-              aria-label={t('assignmentBanner.dismiss')}
-            >
-              <XIcon className="size-4" />
-            </button>
-
-            {/* Header with photo */}
-            <div className="mb-3 flex items-center gap-3">
+    <>
+      {/* ── Floating avatar bubble ─────────────────────────── */}
+      <AnimatePresence>
+        {bubbleVisible && !modalOpen && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.4, ease }}
+            onClick={openModal}
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full border-2 border-primary/30 bg-card/95 py-2 pl-2.5 pr-4 shadow-2xl shadow-primary/10 backdrop-blur-xl transition-all hover:border-primary/50 hover:shadow-primary/20"
+            aria-label={t('assignmentBanner.title')}
+          >
+            <div className="relative">
               <img
                 src="/bruno-profile.webp"
                 alt="Bruno Tachinardi"
-                className="size-10 shrink-0 rounded-full object-cover ring-2 ring-primary/30"
+                className="size-9 shrink-0 rounded-full object-cover ring-2 ring-primary/30"
               />
-              <p className="text-sm font-bold">{t('assignmentBanner.greeting')}</p>
+              <MailIcon className="absolute -right-1 -top-1 size-4 rounded-full bg-primary p-0.5 text-primary-foreground" />
             </div>
+            <span className="text-xs font-bold text-muted-foreground">
+              {t('assignmentBanner.title')}
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
-            {/* Message body */}
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {t('assignmentBanner.message')}
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {t('assignmentBanner.thanks')}
-            </p>
+      {/* ── Modal overlay ──────────────────────────────────── */}
+      <AnimatePresence>
+        {modalOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
+              onClick={closeModal}
+              aria-hidden="true"
+            />
 
-            {/* CTAs */}
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link
-                to="/methodology"
-                onClick={dismiss}
-                className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground transition-all hover:shadow-[0_0_12px_rgba(220,255,2,0.3)]"
+            {/* Modal panel */}
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.96 }}
+              transition={{ duration: 0.35, ease }}
+              className="fixed inset-x-4 bottom-4 top-auto z-50 mx-auto max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border-2 border-primary/30 bg-card/98 p-6 shadow-2xl shadow-primary/10 backdrop-blur-xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t('assignmentBanner.title')}
+            >
+              {/* Close */}
+              <button
+                onClick={closeModal}
+                className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={t('assignmentBanner.dismiss')}
               >
-                {t('assignmentBanner.ctaMethodology')}
-              </Link>
-              <a
-                href="https://btas.dev"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={dismiss}
-                className="rounded-lg border border-border/50 px-3.5 py-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {t('assignmentBanner.ctaPortfolio')}
-              </a>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+                <XIcon className="size-4" />
+              </button>
+
+              {/* Header */}
+              <div className="flex items-center gap-3">
+                <img
+                  src="/bruno-profile.webp"
+                  alt="Bruno Tachinardi"
+                  className="size-12 shrink-0 rounded-full object-cover ring-2 ring-primary/30"
+                />
+                <div>
+                  <h2 className="text-lg font-extrabold">{t('assignmentBanner.title')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('assignmentBanner.greeting')}</p>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="mt-5 space-y-3 text-sm leading-relaxed text-muted-foreground">
+                <p>{t('assignmentBanner.message')}</p>
+                <p>{t('assignmentBanner.process')}</p>
+                <p>{t('assignmentBanner.branding')}</p>
+                <p className="font-medium text-foreground">{t('assignmentBanner.personal')}</p>
+              </div>
+
+              {/* CTAs */}
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  to="/methodology"
+                  onClick={closeModal}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-all hover:shadow-[0_0_16px_rgba(220,255,2,0.3)]"
+                >
+                  {t('assignmentBanner.ctaMethodology')}
+                </Link>
+                <a
+                  href="https://btas.dev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg border border-border/50 px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t('assignmentBanner.ctaPortfolio')}
+                </a>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

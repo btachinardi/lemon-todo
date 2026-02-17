@@ -17,6 +17,18 @@ public sealed class RegisterUserCommandHandlerTests
     private IUnitOfWork _unitOfWork = null!;
     private RegisterUserCommandHandler _handler = null!;
 
+    // Test helper: creates an EncryptedField for email with a fake hash
+    private static EncryptedField TestEmailField(string redacted = "t***@example.com", string hash = "test-email-hash")
+        => new("encrypted-email", redacted, hash);
+
+    // Test helper: creates an EncryptedField for display name
+    private static EncryptedField TestDisplayNameField(string redacted = "T***r")
+        => new("encrypted-displayname", redacted);
+
+    // Test helper: creates a ProtectedValue for password
+    private static ProtectedValue TestPassword(string raw = "ValidPass123!")
+        => new(raw);
+
     [TestInitialize]
     public void Setup()
     {
@@ -41,7 +53,7 @@ public sealed class RegisterUserCommandHandlerTests
     [TestMethod]
     public async Task Should_RegisterUser_When_ValidCommand()
     {
-        var command = new RegisterUserCommand("test@example.com", "ValidPass123!", "Test User");
+        var command = new RegisterUserCommand(TestEmailField(), TestPassword(), TestDisplayNameField());
 
         var result = await _handler.HandleAsync(command);
 
@@ -49,55 +61,22 @@ public sealed class RegisterUserCommandHandlerTests
         Assert.AreEqual("t***@example.com", result.Value.RedactedEmail);
         Assert.AreEqual("T***r", result.Value.RedactedDisplayName);
 
-        // Verify credentials were created
+        // Verify credentials were created with hash and raw password
         await _authService.Received(1).CreateCredentialsAsync(
-            Arg.Any<UserId>(), Arg.Any<string>(), "ValidPass123!", Arg.Any<CancellationToken>());
+            Arg.Any<UserId>(), "test-email-hash", "ValidPass123!", Arg.Any<CancellationToken>());
 
-        // Verify domain User was persisted
+        // Verify domain User was persisted with EncryptedFields
         await _userRepository.Received(1).AddAsync(
             Arg.Any<LemonDo.Domain.Identity.Entities.User>(),
-            Arg.Any<Email>(), Arg.Any<DisplayName>(), Arg.Any<CancellationToken>());
+            Arg.Any<EncryptedField>(), Arg.Any<EncryptedField>(), Arg.Any<CancellationToken>());
 
         // Verify unit of work was committed (events dispatched)
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
-    [TestMethod]
-    public async Task Should_Fail_When_InvalidEmail()
-    {
-        var command = new RegisterUserCommand("not-an-email", "ValidPass123!", "Test User");
-
-        var result = await _handler.HandleAsync(command);
-
-        Assert.IsTrue(result.IsFailure);
-        Assert.Contains("email", result.Error.Code);
-
-        // Auth service should not be called
-        await _authService.DidNotReceive().CreateCredentialsAsync(
-            Arg.Any<UserId>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
-    }
-
-    [TestMethod]
-    public async Task Should_Fail_When_EmptyDisplayName()
-    {
-        var command = new RegisterUserCommand("test@example.com", "ValidPass123!", "");
-
-        var result = await _handler.HandleAsync(command);
-
-        Assert.IsTrue(result.IsFailure);
-        Assert.Contains("displayName", result.Error.Code);
-    }
-
-    [TestMethod]
-    public async Task Should_Fail_When_DisplayNameTooShort()
-    {
-        var command = new RegisterUserCommand("test@example.com", "ValidPass123!", "A");
-
-        var result = await _handler.HandleAsync(command);
-
-        Assert.IsTrue(result.IsFailure);
-        Assert.Contains("displayName", result.Error.Code);
-    }
+    // Note: Validation tests for invalid email, empty display name, and short display name
+    // have been removed. Validation now happens at the JSON converter level (API boundary)
+    // during deserialization into EncryptedField. The handler receives pre-validated data.
 
     [TestMethod]
     public async Task Should_PropagateAuthServiceError_When_CredentialCreationFails()
@@ -107,7 +86,7 @@ public sealed class RegisterUserCommandHandlerTests
             .Returns(Result<DomainError>.Failure(
                 DomainError.Conflict("auth", "Email already registered.")));
 
-        var command = new RegisterUserCommand("dupe@example.com", "ValidPass123!", "Test User");
+        var command = new RegisterUserCommand(TestEmailField(), TestPassword(), TestDisplayNameField());
 
         var result = await _handler.HandleAsync(command);
 
@@ -117,6 +96,6 @@ public sealed class RegisterUserCommandHandlerTests
         // Domain User should NOT be persisted when credentials fail
         await _userRepository.DidNotReceive().AddAsync(
             Arg.Any<LemonDo.Domain.Identity.Entities.User>(),
-            Arg.Any<Email>(), Arg.Any<DisplayName>(), Arg.Any<CancellationToken>());
+            Arg.Any<EncryptedField>(), Arg.Any<EncryptedField>(), Arg.Any<CancellationToken>());
     }
 }

@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// The ONLY authorized path for decrypting protected data from encrypted shadow properties on the <c>Users</c> table.
-/// Every decryption is recorded in the audit trail — whether initiated by an admin or by the system.
+/// The ONLY authorized path for accessing protected data from encrypted shadow properties on the <c>Users</c> table.
+/// Every access is recorded in the audit trail — whether initiated by an admin or by the system.
 /// </summary>
 public sealed class ProtectedDataAccessService(
     LemonDoDbContext dbContext,
@@ -23,9 +23,10 @@ public sealed class ProtectedDataAccessService(
     public async Task<Result<DecryptedProtectedData, DomainError>> AccessForSystemAsync(
         Guid userId, SystemProtectedDataAccessReason reason, string? details, CancellationToken ct)
     {
-        var result = await DecryptProtectedDataAsync(userId, ct);
-        if (result.IsFailure)
-            return result;
+        var encrypted = await GetEncryptedDataAsync(userId, ct);
+        if (encrypted is null)
+            return Result<DecryptedProtectedData, DomainError>.Failure(
+                DomainError.NotFound("user", userId.ToString()));
 
         logger.LogInformation("System protected data access for user {UserId}: {Reason}", userId, reason);
 
@@ -37,26 +38,45 @@ public sealed class ProtectedDataAccessService(
             actorIdOverride: null, // null = system actor
             cancellationToken: ct);
 
-        return result;
+        // System access decrypts immediately (no HTTP response to serialize into)
+        var email = encryptionService.Decrypt(encrypted.Value.EncryptedEmail);
+        var displayName = encryptionService.Decrypt(encrypted.Value.EncryptedDisplayName);
+
+        return Result<DecryptedProtectedData, DomainError>.Success(new DecryptedProtectedData(email, displayName));
     }
 
     /// <inheritdoc />
-    public async Task<Result<DecryptedProtectedData, DomainError>> RevealForAdminAsync(
+    public async Task<Result<RevealedProtectedData, DomainError>> RevealForAdminAsync(
         Guid userId, CancellationToken ct)
     {
         // Audit is recorded by the calling RevealProtectedDataCommandHandler with admin-specific context
-        return await DecryptProtectedDataAsync(userId, ct);
+        return await GetRevealedDataAsync(userId, ct);
     }
 
     /// <inheritdoc />
-    public async Task<Result<DecryptedProtectedData, DomainError>> RevealForOwnerAsync(
+    public async Task<Result<RevealedProtectedData, DomainError>> RevealForOwnerAsync(
         Guid userId, CancellationToken ct)
     {
         // Audit is recorded by the calling RevealOwnProfileCommandHandler
-        return await DecryptProtectedDataAsync(userId, ct);
+        return await GetRevealedDataAsync(userId, ct);
     }
 
-    private async Task<Result<DecryptedProtectedData, DomainError>> DecryptProtectedDataAsync(
+    private async Task<Result<RevealedProtectedData, DomainError>> GetRevealedDataAsync(
+        Guid userId, CancellationToken ct)
+    {
+        var encrypted = await GetEncryptedDataAsync(userId, ct);
+        if (encrypted is null)
+            return Result<RevealedProtectedData, DomainError>.Failure(
+                DomainError.NotFound("user", userId.ToString()));
+
+        // Return RevealedFields — decryption deferred to JSON serialization
+        return Result<RevealedProtectedData, DomainError>.Success(
+            new RevealedProtectedData(
+                new RevealedField(encrypted.Value.EncryptedEmail),
+                new RevealedField(encrypted.Value.EncryptedDisplayName)));
+    }
+
+    private async Task<(string EncryptedEmail, string EncryptedDisplayName)?> GetEncryptedDataAsync(
         Guid userId, CancellationToken ct)
     {
         var targetId = UserId.Reconstruct(userId);
@@ -72,12 +92,8 @@ public sealed class ProtectedDataAccessService(
             .FirstOrDefaultAsync(ct);
 
         if (encryptedData is null)
-            return Result<DecryptedProtectedData, DomainError>.Failure(
-                DomainError.NotFound("user", userId.ToString()));
+            return null;
 
-        var email = encryptionService.Decrypt(encryptedData.EncryptedEmail);
-        var displayName = encryptionService.Decrypt(encryptedData.EncryptedDisplayName);
-
-        return Result<DecryptedProtectedData, DomainError>.Success(new DecryptedProtectedData(email, displayName));
+        return (encryptedData.EncryptedEmail, encryptedData.EncryptedDisplayName);
     }
 }
