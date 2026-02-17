@@ -33,8 +33,14 @@ vi.mock('@/domains/config/hooks/use-config', () => ({
   useDemoAccountsEnabled: () => mockUseDemoAccountsEnabled(),
 }));
 
-function createWrapper() {
-  const queryClient = new QueryClient({
+// Mock AppLoadingScreen to render a testable element
+vi.mock('@/ui/feedback/AppLoadingScreen', () => ({
+  AppLoadingScreen: ({ message }: { message?: string }) =>
+    createElement('div', { role: 'status', 'aria-live': 'polite' }, message ?? 'Loading...'),
+}));
+
+function createWrapper(existingClient?: QueryClient) {
+  const queryClient = existingClient ?? new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -222,6 +228,105 @@ describe('DevAccountSwitcher', () => {
 
     const userButton = screen.getByText('User').closest('button')!;
     expect(userButton).toBeDisabled();
+  });
+
+  it('should clear query cache when switching accounts while authenticated', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const clearSpy = vi.spyOn(queryClient, 'clear');
+
+    useAuthStore.setState({
+      accessToken: 'existing-token',
+      user: { id: '1', email: 'dev.user@lemondo.dev', displayName: 'D** U***', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    const user = userEvent.setup();
+    render(<DevAccountSwitcher />, { wrapper: createWrapper(queryClient) });
+
+    await user.click(screen.getByText('Admin'));
+
+    await vi.waitFor(() => {
+      expect(clearSpy).toHaveBeenCalled();
+    });
+  });
+
+  it('should keep isAuthenticated true during the switch to prevent login page flash', async () => {
+    let resolveLogin: (value: unknown) => void;
+    mockLogin.mockReturnValue(new Promise((resolve) => { resolveLogin = resolve; }));
+
+    useAuthStore.setState({
+      accessToken: 'existing-token',
+      user: { id: '1', email: 'dev.user@lemondo.dev', displayName: 'D** U***', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    const user = userEvent.setup();
+    render(<DevAccountSwitcher />, { wrapper: createWrapper() });
+
+    await user.click(screen.getByText('Admin'));
+
+    // While the login is in-flight, isAuthenticated must remain true
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+
+    // Resolve to clean up
+    resolveLogin!({
+      accessToken: 'new-token',
+      user: { id: '2', email: 'd***@l***.dev', displayName: 'D** A***', roles: ['User', 'Admin'] },
+    });
+  });
+
+  it('should render a full-screen overlay when switching from authenticated state', async () => {
+    let resolveLogin: (value: unknown) => void;
+    mockLogin.mockReturnValue(new Promise((resolve) => { resolveLogin = resolve; }));
+
+    useAuthStore.setState({
+      accessToken: 'existing-token',
+      user: { id: '1', email: 'dev.user@lemondo.dev', displayName: 'D** U***', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    const user = userEvent.setup();
+    render(<DevAccountSwitcher />, { wrapper: createWrapper() });
+
+    await user.click(screen.getByText('Admin'));
+
+    // Should render a full-screen overlay with status role (same as AppLoadingScreen)
+    expect(screen.getByRole('status')).toBeInTheDocument();
+
+    // Resolve to clean up
+    resolveLogin!({
+      accessToken: 'new-token',
+      user: { id: '2', email: 'd***@l***.dev', displayName: 'D** A***', roles: ['User', 'Admin'] },
+    });
+  });
+
+  it('should call logout and clear cache when login fails during authenticated switch', async () => {
+    mockLogin.mockRejectedValue(new Error('login failed'));
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const clearSpy = vi.spyOn(queryClient, 'clear');
+
+    useAuthStore.setState({
+      accessToken: 'existing-token',
+      user: { id: '1', email: 'dev.user@lemondo.dev', displayName: 'D** U***', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    const user = userEvent.setup();
+    render(<DevAccountSwitcher />, { wrapper: createWrapper(queryClient) });
+
+    await user.click(screen.getByText('Admin'));
+
+    await vi.waitFor(() => {
+      // After failure, should clear auth state
+      expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    });
+    // And clear the query cache
+    expect(clearSpy).toHaveBeenCalled();
   });
 });
 

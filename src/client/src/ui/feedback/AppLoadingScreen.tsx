@@ -29,7 +29,7 @@ export function AppLoadingScreen({ message = 'Loading...' }: AppLoadingScreenPro
         <div className="mt-2 h-2 w-16 animate-app-loading-shadow rounded-full bg-brand/20 blur-sm" />
 
         {/* Ripple container — positioned at the "floor" */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2">
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
           <div
             data-testid="ripple"
             className="absolute left-1/2 top-1/2 size-8 -translate-x-1/2 -translate-y-1/2 animate-app-loading-ripple rounded-full border border-brand/40"

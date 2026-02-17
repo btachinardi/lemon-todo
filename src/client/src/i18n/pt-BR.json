@@ -95,6 +95,7 @@
       "title": "Login Rápido",
       "subtitle": "Contas de desenvolvimento",
       "switching": "Alternando...",
+      "switchingOverlay": "Alternando conta...",
       "switchAccount": "Trocar conta demo",
       "roles": {
         "user": "Usuário",
@@ -512,7 +513,7 @@
       "titleLine1": "De Pasta Vazia a",
       "titleHighlight": "Produção",
       "titleLine2": "",
-      "subtitle": "Um teste técnico da lemon.io para uma startup de saúde que detecta cânceres em estágio inicial via ressonância — sob a ótica do que 'MVP de produção' significa em saúde regulamentada. 5 documentos, 5 checkpoints entregáveis, 3 redesigns, 1.034 testes."
+      "subtitle": "Um teste técnico da lemon.io para uma startup de saúde que detecta cânceres em estágio inicial via ressonância — sob a ótica do que 'MVP de produção' significa em saúde regulamentada. 5 documentos, 5 checkpoints entregáveis, 3 redesigns, 1.086 testes."
     },
     "rationale": {
       "title": "Por Que Essas Funcionalidades",
@@ -809,7 +810,7 @@
         },
         "mstest": {
           "name": "MSTest 4",
-          "description": "413 testes, gate CI dual-database"
+          "description": "403 testes, gate CI dual-database"
         },
         "fscheck": {
           "name": "FsCheck",
@@ -817,7 +818,7 @@
         },
         "vitest": {
           "name": "Vitest",
-          "description": "469 testes com gate de verificação TypeScript"
+          "description": "531 testes com gate de verificação TypeScript"
         },
         "fastcheck": {
           "name": "fast-check",
@@ -854,7 +855,7 @@
       "highlight": "Evidência",
       "items": [
         {
-          "value": "1.034",
+          "value": "1.086",
           "label": "Testes",
           "detail": "Backend + Frontend + E2E"
         },
@@ -940,7 +941,7 @@
     "hero": {
       "titleLine1": "Isso É Apenas",
       "titleHighlight": "O Começo.",
-      "subtitle": "1.034 testes. Deploy em produção. Cinco checkpoints entregues. Aqui está o que vem a seguir — de fluxos com IA até conformidade empresarial."
+      "subtitle": "1.086 testes. Deploy em produção. Cinco checkpoints entregues. Aqui está o que vem a seguir — de fluxos com IA até conformidade empresarial."
     },
     "horizons": {
       "near": {
@@ -1077,8 +1078,8 @@
         { "title": "Deploy", "detail": "Container App + Static Web App" }
       ],
       "details": [
-        { "title": "Teste Dual de BD", "description": "413 testes backend contra SQLite e SQL Server. Isolamento por instância de banco — cada classe de teste recebe seu próprio BD, removido na limpeza." },
-        { "title": "Gate de Qualidade Frontend", "description": "Tipos API gerados da spec OpenAPI, verificação de tipos TypeScript, 469 testes com invariantes de propriedade, lint verificado — tudo antes do build." },
+        { "title": "Teste Dual de BD", "description": "403 testes backend contra SQLite e SQL Server. Isolamento por instância de banco — cada classe de teste recebe seu próprio BD, removido na limpeza." },
+        { "title": "Gate de Qualidade Frontend", "description": "Tipos API gerados da spec OpenAPI, verificação de tipos TypeScript, 531 testes com invariantes de propriedade, lint verificado — tudo antes do build." },
         { "title": "Build Multi-Stage Docker", "description": "Estágio de build com SDK, estágio runtime com aspnet. Usuário não-root, health-checked, tagueado por SHA do commit." },
         { "title": "Deploy Sem Downtime", "description": "Atualizações rolling do Container App com verificação de probe /alive a cada 30 segundos." }
       ]

@@ -102,12 +102,12 @@ export function StoryHeroSection() {
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">Backend Tests</span>{' '}
-                <span className="text-primary font-bold">413 passed</span>
+                <span className="text-primary font-bold">403 passed</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">Frontend Tests</span>{' '}
-                <span className="text-primary font-bold">469 passed</span>
+                <span className="text-primary font-bold">531 passed</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}

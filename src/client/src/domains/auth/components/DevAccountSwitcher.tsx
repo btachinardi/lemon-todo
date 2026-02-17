@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { CheckIcon, FlaskConicalIcon, ShieldIcon, CrownIcon, UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDemoAccountsEnabled } from '@/domains/config/hooks/use-config';
+import { AppLoadingScreen } from '@/ui/feedback/AppLoadingScreen';
 import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../stores/use-auth-store';
 
@@ -62,6 +65,7 @@ export function getActiveDevAccount(email: string | undefined): DevAccount | und
 export function DevAccountSwitcher() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const userEmail = useAuthStore((s) => s.user?.email);
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -74,25 +78,34 @@ export function DevAccountSwitcher() {
   if (!demoEnabled) return null;
 
   async function handleSwitch(account: DevAccount) {
+    const wasAuthenticated = useAuthStore.getState().isAuthenticated;
     setSwitchingRole(account.roleKey);
     try {
-      if (isAuthenticated) {
+      // Server-side logout only — do NOT call logout() on the store here,
+      // because that sets isAuthenticated=false and triggers ProtectedRoute
+      // to redirect to /login, causing a visible flash.
+      if (wasAuthenticated) {
         try {
           await authApi.logout();
         } catch {
-          // Server logout may fail if token is already expired — clear local state and proceed
+          // Server logout may fail if token is already expired — proceed anyway
         }
-        logout();
       }
 
       const response = await authApi.login({
         email: account.email,
         password: account.password,
       });
+      // Clear stale data from the previous user before setting new auth
+      queryClient.clear();
       setAuth(response.accessToken, response.user);
       navigate('/board', { replace: true });
     } catch {
-      // Login failed — stay on current page
+      // Login failed — if we already logged out server-side, clear client state too
+      if (wasAuthenticated) {
+        logout();
+        queryClient.clear();
+      }
     } finally {
       setSwitchingRole(null);
     }
@@ -156,6 +169,10 @@ export function DevAccountSwitcher() {
           );
         })}
       </div>
+      {isSwitching && isAuthenticated && createPortal(
+        <AppLoadingScreen message={t('auth.devSwitcher.switchingOverlay')} />,
+        document.body,
+      )}
     </div>
   );
 }
