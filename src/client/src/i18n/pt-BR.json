@@ -511,15 +511,15 @@
       "titleLine1": "De Pasta Vazia a",
       "titleHighlight": "Produção",
       "titleLine2": "",
-      "subtitle": "Um teste técnico da lemon.io para uma startup de saúde que detecta cânceres em estágio inicial via ressonância magnética — interpretado sob a ótica do que 'MVP de produção' significa em ambientes regulados. 5 documentos de planejamento, 5 checkpoints entregáveis, 3 redesigns arquiteturais e 1.034 testes."
+      "subtitle": "Um teste técnico da lemon.io para uma startup de saúde que detecta cânceres em estágio inicial via ressonância — sob a ótica do que 'MVP de produção' significa em saúde regulamentada. 5 documentos, 5 checkpoints entregáveis, 3 redesigns, 1.034 testes."
     },
     "rationale": {
-      "title": "Por Que Essas Funcionalidades, Por Que Esse Escopo",
+      "title": "Por Que Essas Funcionalidades",
       "highlight": "Por Que",
       "subtitle": "O teste pediu um app de tarefas com quaisquer funcionalidades que eu adicionaria para um MVP de produção real. A empresa-alvo opera em saúde regulamentada. Esse contexto moldou cada decisão.",
       "promptLabel": "O Teste",
       "prompt": "Construa uma aplicação de gerenciamento de tarefas usando .NET com SQLite no backend, React no frontend. Adicione quaisquer funcionalidades que você adicionaria para um MVP de produção real.",
-      "interpretation": "Um MVP de produção em saúde não é apenas código funcionando. Significa conformidade regulatória, confiabilidade offline para redes hospitalares instáveis, deploy em Azure para corresponder à stack da empresa, observabilidade para resposta a incidentes e analytics de produto para validar hipóteses. Cada funcionalidade foi escolhida com essa lente.",
+      "interpretation": "Um MVP de produção em saúde significa mais que código funcionando — significa conformidade, confiabilidade offline para redes hospitalares, deploy em Azure para corresponder à stack deles, observabilidade e analytics para validar hipóteses.",
       "steps": [
         {
           "title": "O Teste",
@@ -527,7 +527,7 @@
         },
         {
           "title": "Contexto de Saúde",
-          "description": "A empresa-alvo detecta cânceres em estágio inicial via ressonância. Saúde significa ambientes regulados, proteção de dados e requisitos de auditoria."
+          "description": "Saúde significa ambientes regulados, proteção de dados e requisitos de auditoria."
         },
         {
           "title": "Conformidade",
@@ -535,22 +535,22 @@
         },
         {
           "title": "Offline-First",
-          "description": "WiFi hospitalar é instável. Se o produto para de funcionar sem conexão, vira um problema. PWA com fila de mutações em IndexedDB."
+          "description": "WiFi hospitalar é instável — um produto que falha offline vira um problema. PWA com fila de mutações em IndexedDB."
         },
         {
           "title": "Deploy em Azure",
-          "description": "A empresa usa Azure. Terraform IaC, Container Apps, SQL Server para produção, GitHub Actions CI/CD — demonstrando fluência em infraestrutura."
+          "description": "Terraform IaC, Container Apps, SQL Server, GitHub Actions CI/CD — correspondendo à stack Azure da empresa."
         },
         {
           "title": "Analytics de Produto",
-          "description": "Um MVP sem analytics não responde às perguntas que existe para responder. Rastreamento de eventos privacy-first com identificadores hasheados, sem PII nos eventos."
+          "description": "Um MVP sem analytics não valida suas próprias hipóteses. Rastreamento privacy-first com identificadores hasheados, sem PII."
         }
       ]
     },
     "vision": {
       "title": "5 Documentos Antes de Uma Linha de Código",
       "highlight": "Uma Linha",
-      "subtitle": "A empresa-alvo opera em saúde regulamentada. Antes de escrever código, produzi cinco artefatos de planejamento para garantir que conformidade, confiabilidade offline e requisitos de deploy fossem tratados desde o início — não como adendos.",
+      "subtitle": "Antes de escrever código, produzi cinco artefatos de planejamento para garantir que conformidade, confiabilidade offline e deploy fossem tratados desde o início — não como adendos.",
       "items": [
         {
           "title": "Requisitos do Produto",
@@ -631,7 +631,7 @@
     "problemSolving": {
       "title": "3 Redesigns, Não 3 Gambiarras",
       "highlight": "Redesigns",
-      "subtitle": "Quando problemas arquiteturais surgiram, foram corrigidos na raiz — não contornados. Cada redesign alterou dezenas de arquivos em todas as camadas e deixou o sistema em um estado melhor.",
+      "subtitle": "Quando problemas arquiteturais surgiram, foram corrigidos na raiz — não contornados. Cada redesign alterou dezenas de arquivos em todas as camadas.",
       "items": [
         {
           "title": "Invariante Coluna-Status",
@@ -656,7 +656,7 @@
     "testing": {
       "title": "Testes como Restrição de Design",
       "highlight": "Restrição de Design",
-      "subtitle": "Não apenas alta cobertura — estratégias diversas de teste que capturam classes diferentes de bugs. Testes baseados em propriedades em ambos os stacks, CI com banco de dados dual, regressão visual e guards de contrato de API em tempo de compilação.",
+      "subtitle": "Estratégias diversas de teste que capturam classes diferentes de bugs. Testes baseados em propriedades em ambos os stacks, CI com banco de dados dual, regressão visual e guards de contrato de API em tempo de compilação.",
       "items": [
         {
           "title": "Testes Baseados em Propriedades",
@@ -899,7 +899,7 @@
     "highlights": {
       "title": "Destaques de Engenharia",
       "highlight": "Destaques",
-      "subtitle": "Escolhas de implementação que melhoram confiabilidade e manutenibilidade em sistemas reais, especialmente onde rastreabilidade e comportamento previsível importam.",
+      "subtitle": "Escolhas de implementação que melhoram confiabilidade e manutenibilidade, especialmente onde rastreabilidade e comportamento previsível importam.",
       "items": [
         {
           "title": "Transições de Status Determinísticas",
