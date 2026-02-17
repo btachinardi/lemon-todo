@@ -395,8 +395,8 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div ref={scrollContainerRef} className={cn('w-full overflow-x-auto sm:snap-none', !isDragging && 'snap-x snap-mandatory', className)}>
-        <div className="flex min-h-full gap-4 p-4 sm:p-6" data-onboarding="board-columns">
+      <div ref={scrollContainerRef} className={cn('w-full overflow-x-auto scrollbar-thin sm:snap-none', !isDragging && 'snap-x snap-mandatory', className)}>
+        <div className="flex min-h-full min-w-max gap-4 p-4 sm:p-6" data-onboarding="board-columns">
           {sortedColumns.map((column, index) => (
               <KanbanColumn
                 key={column.id}

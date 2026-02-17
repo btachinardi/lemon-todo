@@ -949,3 +949,21 @@ describe('KanbanBoard mobile height stretching', () => {
     expect(innerFlex.className).toContain('min-h-full');
   });
 });
+
+describe('KanbanBoard scroll styling', () => {
+  it('should apply scrollbar-thin class on the scroll container for a subtle scrollbar', () => {
+    const board = createBoard();
+    const { container } = render(<KanbanBoard board={board} tasks={[]} />);
+    const scrollContainer = container.querySelector('.overflow-x-auto')!;
+
+    expect(scrollContainer.className).toContain('scrollbar-thin');
+  });
+
+  it('should apply min-w-max on inner flex container so trailing padding is scrollable', () => {
+    const board = createBoard();
+    const { container } = render(<KanbanBoard board={board} tasks={[]} />);
+    const innerFlex = container.querySelector('[data-onboarding="board-columns"]')!;
+
+    expect(innerFlex.className).toContain('min-w-max');
+  });
+});
