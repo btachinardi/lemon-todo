@@ -228,6 +228,26 @@ describe('DashboardLayout', () => {
     expect(screen.getByTestId('pwa-install-prompt')).toBeInTheDocument();
   });
 
+  it('should render main as a flex column container for child height propagation', () => {
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    const main = screen.getByRole('main');
+    expect(main.className).toContain('flex');
+    expect(main.className).toContain('flex-col');
+  });
+
   it('should render a mobile menu toggle button in the header', () => {
     useAuthStore.setState({
       accessToken: 'token',

@@ -473,31 +473,49 @@ describe('KanbanBoard mobile touch support', () => {
     expect(options?.activationConstraint?.tolerance).toBeGreaterThanOrEqual(5);
   });
 
+  it('should apply snap scroll classes on the scroll container (overflow element), not inner flex', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Snap container test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const scrollContainer = container.querySelector('.overflow-x-auto')!;
+    const innerFlex = container.querySelector('[data-onboarding="board-columns"]')!;
+
+    // snap-x and snap-mandatory MUST be on the scroll container for CSS scroll snapping to work
+    expect(scrollContainer.className).toContain('snap-x');
+    expect(scrollContainer.className).toContain('snap-mandatory');
+
+    // inner flex container should NOT have snap classes (they have no effect there)
+    expect(innerFlex.className).not.toContain('snap-x');
+    expect(innerFlex.className).not.toContain('snap-mandatory');
+  });
+
   it('should disable snap scroll during active drag to prevent layout jumps', () => {
     const board = createBoard();
     const task = createTask({ title: 'Snap test' });
     board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
 
     const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
-    const columnsContainer = container.querySelector('[data-onboarding="board-columns"]')!;
+    const scrollContainer = container.querySelector('.overflow-x-auto')!;
 
-    // Before drag: snap scroll should be active for mobile swipe navigation
-    expect(columnsContainer.className).toContain('snap-x');
-    expect(columnsContainer.className).toContain('snap-mandatory');
+    // Before drag: snap scroll should be active on the scroll container
+    expect(scrollContainer.className).toContain('snap-x');
+    expect(scrollContainer.className).toContain('snap-mandatory');
 
     // During drag: snap must be disabled so dropping doesn't cause layout jump
     act(() => {
       dndHandlers.onDragStart?.(makeDndEvent(task.id));
     });
-    expect(columnsContainer.className).not.toContain('snap-x');
-    expect(columnsContainer.className).not.toContain('snap-mandatory');
+    expect(scrollContainer.className).not.toContain('snap-x');
+    expect(scrollContainer.className).not.toContain('snap-mandatory');
 
     // After drag ends: snap should be restored
     act(() => {
       dndHandlers.onDragEnd?.(makeDndEvent(task.id, task.id));
     });
-    expect(columnsContainer.className).toContain('snap-x');
-    expect(columnsContainer.className).toContain('snap-mandatory');
+    expect(scrollContainer.className).toContain('snap-x');
+    expect(scrollContainer.className).toContain('snap-mandatory');
   });
 
   it('should restore snap scroll on drag cancel', () => {
@@ -506,12 +524,12 @@ describe('KanbanBoard mobile touch support', () => {
     board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
 
     const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
-    const columnsContainer = container.querySelector('[data-onboarding="board-columns"]')!;
+    const scrollContainer = container.querySelector('.overflow-x-auto')!;
 
     act(() => {
       dndHandlers.onDragStart?.(makeDndEvent(task.id));
     });
-    expect(columnsContainer.className).not.toContain('snap-x');
+    expect(scrollContainer.className).not.toContain('snap-x');
 
     act(() => {
       dndHandlers.onDragCancel?.({
@@ -519,8 +537,8 @@ describe('KanbanBoard mobile touch support', () => {
         over: null,
       } as unknown as DragCancelEvent);
     });
-    expect(columnsContainer.className).toContain('snap-x');
-    expect(columnsContainer.className).toContain('snap-mandatory');
+    expect(scrollContainer.className).toContain('snap-x');
+    expect(scrollContainer.className).toContain('snap-mandatory');
   });
 });
 
@@ -670,5 +688,15 @@ describe('KanbanBoard mobile column-snap auto-scroll', () => {
     });
 
     expect(mockScrollTo).not.toHaveBeenCalled();
+  });
+});
+
+describe('KanbanBoard mobile height stretching', () => {
+  it('should apply min-h-full on inner flex container so columns stretch to fill viewport', () => {
+    const board = createBoard();
+    const { container } = render(<KanbanBoard board={board} tasks={[]} />);
+    const innerFlex = container.querySelector('[data-onboarding="board-columns"]')!;
+
+    expect(innerFlex.className).toContain('min-h-full');
   });
 });

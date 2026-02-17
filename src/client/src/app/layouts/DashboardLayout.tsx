@@ -151,7 +151,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </Sheet>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-7xl flex-1">{children}</main>
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col">{children}</main>
       {demoEnabled && (
         <div className="fixed bottom-14 left-3 z-50 sm:bottom-3">
           <Popover>
