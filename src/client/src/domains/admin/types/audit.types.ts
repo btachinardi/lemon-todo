@@ -11,7 +11,9 @@ export type AuditAction =
   | 'TaskDeleted'
   | 'UserDeactivated'
   | 'UserReactivated'
-  | 'SensitiveNoteRevealed';
+  | 'ProtectedDataAccessed'
+  | 'SensitiveNoteRevealed'
+  | 'OwnProfileRevealed';
 
 /** A single audit trail entry. */
 export interface AuditEntry {

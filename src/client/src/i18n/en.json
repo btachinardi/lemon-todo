@@ -278,7 +278,9 @@
         "TaskDeleted": "Task Deleted",
         "UserDeactivated": "User Deactivated",
         "UserReactivated": "User Reactivated",
-        "SensitiveNoteRevealed": "Sensitive Note Revealed"
+        "SensitiveNoteRevealed": "Sensitive Note Revealed",
+        "ProtectedDataAccessed": "Protected Data Accessed",
+        "OwnProfileRevealed": "Own Profile Revealed"
       }
     },
     "protectedDataRevealDialog": {

@@ -278,7 +278,9 @@
         "TaskDeleted": "Tarefa Excluída",
         "UserDeactivated": "Usuário Desativado",
         "UserReactivated": "Usuário Reativado",
-        "SensitiveNoteRevealed": "Nota Sensível Revelada"
+        "SensitiveNoteRevealed": "Nota Sensível Revelada",
+        "ProtectedDataAccessed": "Dados Protegidos Acessados",
+        "OwnProfileRevealed": "Perfil Próprio Revelado"
       }
     },
     "protectedDataRevealDialog": {
