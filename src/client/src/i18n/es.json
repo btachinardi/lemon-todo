@@ -146,7 +146,9 @@
       "deleteTitle": "¿Eliminar esta tarea?",
       "deleteButton": "Eliminar tarea",
       "saving": "Guardando...",
-      "saved": "Guardado"
+      "saved": "Guardado",
+      "loading": "Cargando tarea...",
+      "error": "Error"
     },
     "filter": {
       "searchPlaceholder": "Buscar tareas...",
