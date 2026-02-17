@@ -9,6 +9,7 @@
     "test:ui": "node scripts/cleanup.mjs && playwright test --ui"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@playwright/test": "^1.52.0"
   }
 }
