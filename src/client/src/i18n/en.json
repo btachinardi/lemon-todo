@@ -513,7 +513,7 @@
       "titleLine1": "From Empty Folder to",
       "titleHighlight": "Production",
       "titleLine2": "",
-      "subtitle": "A lemon.io take-home for a healthcare startup that detects early-stage cancers via MRI — built through the lens of what 'production MVP' means in regulated healthcare. 5 planning docs, 5 shippable checkpoints, 3 redesigns, 1,086 tests."
+      "subtitle": "A lemon.io take-home for a healthcare startup that detects early-stage cancers via MRI — built through the lens of what 'production MVP' means in regulated healthcare. 5 planning docs, 5 shippable checkpoints, 3 redesigns, 1,094 tests."
     },
     "rationale": {
       "title": "Why These Features",
@@ -818,7 +818,7 @@
         },
         "vitest": {
           "name": "Vitest",
-          "description": "531 tests with TypeScript type-check gate"
+          "description": "539 tests with TypeScript type-check gate"
         },
         "fastcheck": {
           "name": "fast-check",
@@ -855,7 +855,7 @@
       "highlight": "Evidence",
       "items": [
         {
-          "value": "1,086",
+          "value": "1,094",
           "label": "Tests",
           "detail": "Backend + Frontend + E2E"
         },
@@ -941,7 +941,7 @@
     "hero": {
       "titleLine1": "This Is Just",
       "titleHighlight": "The Beginning.",
-      "subtitle": "1,086 tests. Production deployed. Five checkpoints shipped. Here's what comes next — from AI-powered workflows to enterprise compliance."
+      "subtitle": "1,094 tests. Production deployed. Five checkpoints shipped. Here's what comes next — from AI-powered workflows to enterprise compliance."
     },
     "horizons": {
       "near": {
@@ -1079,7 +1079,7 @@
       ],
       "details": [
         { "title": "Dual Database Testing", "description": "403 backend tests run against both SQLite and SQL Server. Per-instance database isolation — each test class gets its own DB, dropped on cleanup." },
-        { "title": "Frontend Quality Gate", "description": "API types generated from OpenAPI spec, TypeScript type-checked, 531 tests with property invariants, lint verified — all before build." },
+        { "title": "Frontend Quality Gate", "description": "API types generated from OpenAPI spec, TypeScript type-checked, 539 tests with property invariants, lint verified — all before build." },
         { "title": "Docker Multi-Stage Build", "description": "SDK build stage, aspnet runtime stage. Non-root user, health-checked, tagged by commit SHA." },
         { "title": "Zero-Downtime Deploy", "description": "Container App rolling updates with /alive probe verification every 30 seconds." }
       ]

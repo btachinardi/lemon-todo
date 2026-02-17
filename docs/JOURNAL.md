@@ -2184,6 +2184,23 @@ Updated all documentation and landing pages with current test counts: 403 backen
 
 ---
 
+## Release: v1.0.7
+
+**Date: February 17, 2026**
+
+Patch release fixing stale data after account switch and loading screen ripple alignment.
+
+### What shipped
+
+- **Stale data on account switch**: `queryClient.clear()` removes queries from the TanStack Query cache map but does NOT notify mounted observers — they keep rendering stale data. Replaced with `queryClient.resetQueries()` across all auth flows (account switch, login, register, logout). `resetQueries()` calls `query.reset()` which notifies observers (data becomes undefined, triggers loading state), then `refetchQueries({ type: 'active' })` to fetch fresh data with the new token.
+- **Loading screen ripple alignment**: CSS `translate` property (from Tailwind `-translate-x/y-1/2`) and `transform: translate(-50%, -50%)` in the keyframe both applied independently, doubling the centering offset. Fixed by using `absolute inset-0 m-auto` centering (no translate needed), elliptical ripples for perspective, and rendering ripples behind the logo.
+
+### Key insight: queryClient.clear() vs resetQueries()
+
+This is a subtle TanStack Query gotcha. `clear()` is designed for complete teardown (unmounting the QueryClientProvider). It removes all queries from the internal cache map but does nothing about mounted `useQuery` observers. Those observers still hold references to the old query data and never re-render. `resetQueries()` is the correct tool for "forget everything and start fresh" while the app is still mounted — it notifies observers, shows loading states, and triggers refetches.
+
+---
+
 ## What's Next
 
 See `docs/ROADMAP.md` for future capability tiers.

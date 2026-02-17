@@ -10,11 +10,13 @@ import type { LoginRequest, RegisterRequest } from '../types/auth.types';
  *          On success, automatically stores the access token and user in the auth store.
  */
 export function useRegister() {
+  const queryClient = useQueryClient();
   const setAuth = useAuthStore((s) => s.setAuth);
   return useMutation({
     mutationFn: (request: RegisterRequest) => authApi.register(request),
     onSuccess: (data) => {
       setAuth(data.accessToken, data.user);
+      queryClient.resetQueries();
     },
   });
 }
@@ -26,11 +28,13 @@ export function useRegister() {
  *          On success, automatically stores the access token and user in the auth store.
  */
 export function useLogin() {
+  const queryClient = useQueryClient();
   const setAuth = useAuthStore((s) => s.setAuth);
   return useMutation({
     mutationFn: (request: LoginRequest) => authApi.login(request),
     onSuccess: (data) => {
       setAuth(data.accessToken, data.user);
+      queryClient.resetQueries();
     },
   });
 }
@@ -48,7 +52,7 @@ export function useLogout() {
     mutationFn: () => authApi.logout(),
     onSettled: () => {
       logout();
-      queryClient.clear();
+      queryClient.resetQueries();
     },
   });
 }

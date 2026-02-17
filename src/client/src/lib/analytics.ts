@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './api-client';
+import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
 interface AnalyticsEvent {
   eventName: string;
@@ -40,12 +41,18 @@ function getDeviceContext(): Record<string, string> {
 async function flush(): Promise<void> {
   if (eventBuffer.length === 0) return;
 
+  const token = useAuthStore.getState().accessToken;
+  if (!token) return;
+
   const events = eventBuffer.splice(0);
 
   try {
     await fetch(`${API_BASE_URL}/api/analytics/events`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({
         events: events.map((e) => ({
           eventName: e.eventName,
