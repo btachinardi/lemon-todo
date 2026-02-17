@@ -33,7 +33,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <span className="text-foreground">{t('brand.lemon')}</span>
                 <span className="text-primary">{t('brand.do')}</span>
               </span>
-              <span className="ml-1 text-xs text-muted-foreground">{t('brand.admin')}</span>
+              <span className="ml-1 text-sm text-muted-foreground">{t('brand.admin')}</span>
             </h1>
           </div>
           <nav
@@ -44,7 +44,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               to="/admin/users"
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
+                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-base font-semibold transition-all duration-300 sm:px-3.5',
                   isActive
                     ? 'bg-brand text-brand-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
@@ -58,7 +58,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               to="/admin/audit"
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
+                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-base font-semibold transition-all duration-300 sm:px-3.5',
                   isActive
                     ? 'bg-brand text-brand-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
@@ -73,7 +73,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className="hidden items-center gap-1 md:flex">
             <NavLink
               to="/board"
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-base text-muted-foreground hover:text-foreground"
             >
               <ArrowLeftIcon className="size-3.5" />
               <span className="hidden sm:inline">{t('common.back')}</span>
@@ -111,7 +111,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <NavLink
                   to="/board"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-base text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeftIcon className="size-4" />
                   {t('common.back')}

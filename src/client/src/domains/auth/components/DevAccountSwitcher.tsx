@@ -94,13 +94,13 @@ export function DevAccountSwitcher() {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <div className="h-px flex-1 bg-border" />
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <FlaskConicalIcon className="size-3" />
           <span>{t('auth.devSwitcher.title')}</span>
         </div>
         <div className="h-px flex-1 bg-border" />
       </div>
-      <p className="text-center text-[11px] text-muted-foreground">
+      <p className="text-center text-xs text-muted-foreground">
         {t('auth.devSwitcher.subtitle')}
       </p>
       <div className="grid gap-2 overflow-hidden">
@@ -129,10 +129,10 @@ export function DevAccountSwitcher() {
                 <Icon className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-base font-medium text-foreground">
                   {isActive ? t('auth.devSwitcher.switching') : t(account.labelKey)}
                 </p>
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="truncate text-sm text-muted-foreground">
                   {t(account.descKey)}
                 </p>
               </div>

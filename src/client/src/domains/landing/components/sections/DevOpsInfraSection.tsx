@@ -79,7 +79,7 @@ export function DevOpsInfraSection() {
 
               {/* Header */}
               <h3 className="text-xl font-extrabold tracking-tight">{stage.name}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{stage.tagline}</p>
+              <p className="mt-1 text-base text-muted-foreground">{stage.tagline}</p>
 
               {/* Cost */}
               <p className="mt-4 text-3xl font-black tracking-tight text-primary">{stage.cost}</p>
@@ -88,7 +88,7 @@ export function DevOpsInfraSection() {
               {/* Resources */}
               <ul className="mt-6 flex-1 space-y-2">
                 {stage.resources.map((resource, j) => (
-                  <li key={j} className="flex items-start gap-2 text-sm">
+                  <li key={j} className="flex items-start gap-2 text-base">
                     <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/60" />
                     <span className="text-muted-foreground">{resource}</span>
                   </li>
@@ -102,7 +102,7 @@ export function DevOpsInfraSection() {
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : { opacity: 0 }}
           transition={{ duration: 0.6, delay: 0.6, ease }}
-          className="mt-6 text-center text-xs text-muted-foreground/50"
+          className="mt-6 text-center text-sm text-muted-foreground/50"
         >
           {t('devops.infra.costNote')}
         </motion.p>

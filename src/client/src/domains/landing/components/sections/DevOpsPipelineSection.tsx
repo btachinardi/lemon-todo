@@ -22,8 +22,8 @@ function JobCard({ name, time }: { name: string; time: string }) {
   return (
     <div className="flex items-center gap-2.5 px-3 py-2">
       <CheckCircle2Icon className="size-4 shrink-0 text-success-foreground" />
-      <span className="min-w-0 truncate text-sm font-semibold">{name}</span>
-      <span className="ml-auto shrink-0 whitespace-nowrap text-xs text-muted-foreground">{time}</span>
+      <span className="min-w-0 truncate text-base font-semibold">{name}</span>
+      <span className="ml-auto shrink-0 whitespace-nowrap text-sm text-muted-foreground">{time}</span>
     </div>
   );
 }
@@ -172,8 +172,8 @@ export function DevOpsPipelineSection() {
           <div className="mx-auto max-w-4xl rounded-2xl border-2 border-border/40 bg-card/30 p-6 shadow-2xl shadow-primary/5 backdrop-blur-md sm:p-8">
             {/* Header: deploy.yml / on: push */}
             <div className="mb-6">
-              <p className="text-sm font-bold">deploy.yml</p>
-              <p className="text-xs text-muted-foreground">on: push</p>
+              <p className="text-base font-bold">deploy.yml</p>
+              <p className="text-sm text-muted-foreground">on: push</p>
             </div>
 
             {/* Desktop diagram */}
@@ -206,9 +206,9 @@ export function DevOpsPipelineSection() {
                   <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
                     <Icon className="size-5" />
                   </div>
-                  <h3 className="text-sm font-bold">{detail.title}</h3>
+                  <h3 className="text-base font-bold">{detail.title}</h3>
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{detail.description}</p>
+                <p className="mt-3 text-base leading-relaxed text-muted-foreground">{detail.description}</p>
               </motion.div>
             );
           })}

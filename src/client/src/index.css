@@ -84,6 +84,9 @@
   /* Custom animations */
   --animate-fade-in-up: fade-in-up 0.4s ease-out both;
   --animate-fade-in: fade-in 0.3s ease-out both;
+  --animate-app-loading-bounce: app-loading-bounce 0.8s ease-in-out infinite;
+  --animate-app-loading-shadow: app-loading-shadow 0.8s ease-in-out infinite;
+  --animate-app-loading-ripple: app-loading-ripple 1.2s ease-out infinite;
 }
 
 /* ========================================
@@ -330,6 +333,21 @@
 @keyframes highlight-pulse {
   0%, 100% { box-shadow: 0 0 20px rgba(220,255,2,0.25); }
   50% { box-shadow: 0 0 32px rgba(220,255,2,0.45); }
+}
+
+@keyframes app-loading-bounce {
+  0%, 100% { transform: translateY(0); animation-timing-function: ease-out; }
+  50% { transform: translateY(-24px); animation-timing-function: ease-in; }
+}
+
+@keyframes app-loading-shadow {
+  0%, 100% { transform: scaleX(1); opacity: 0.3; }
+  50% { transform: scaleX(0.5); opacity: 0.1; }
+}
+
+@keyframes app-loading-ripple {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
 }
 
 /* Landing page utilities */

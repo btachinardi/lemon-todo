@@ -24,7 +24,7 @@ export function SecurityCard({ icon, title, description, index }: SecurityCardPr
       </div>
       <div>
         <h3 className="font-bold">{title}</h3>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{description}</p>
+        <p className="mt-1 text-base leading-relaxed text-muted-foreground">{description}</p>
       </div>
     </motion.div>
   );

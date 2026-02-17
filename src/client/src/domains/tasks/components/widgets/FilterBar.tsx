@@ -91,7 +91,7 @@ export function FilterBar({
         value={filterPriority ?? '__all__'}
         onValueChange={(v) => onFilterPriorityChange(v === '__all__' ? undefined : v)}
       >
-        <SelectTrigger className="h-9 w-auto min-w-[110px] sm:w-[130px] text-sm" aria-label="Filter by priority">
+        <SelectTrigger className="h-9 w-auto min-w-[110px] sm:w-[130px] text-base" aria-label="Filter by priority">
           <SelectValue placeholder="Priority" />
         </SelectTrigger>
         <SelectContent>
@@ -110,7 +110,7 @@ export function FilterBar({
         value={filterStatus ?? '__all__'}
         onValueChange={(v) => onFilterStatusChange(v === '__all__' ? undefined : v)}
       >
-        <SelectTrigger className="h-9 w-auto min-w-[110px] sm:w-[130px] text-sm" aria-label="Filter by status">
+        <SelectTrigger className="h-9 w-auto min-w-[110px] sm:w-[130px] text-base" aria-label="Filter by status">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
@@ -140,7 +140,7 @@ export function FilterBar({
         <Button
           variant="ghost"
           size="sm"
-          className="h-9 gap-1.5 text-sm"
+          className="h-9 gap-1.5 text-base"
           onClick={handleReset}
         >
           <XIcon className="size-3.5" />

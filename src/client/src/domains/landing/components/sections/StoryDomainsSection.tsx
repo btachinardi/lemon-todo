@@ -284,7 +284,7 @@ export function StoryDomainsSection() {
                           </p>
                           <p
                             className={cn(
-                              'text-[11px] font-semibold uppercase tracking-wider',
+                              'text-sm font-semibold uppercase tracking-wider',
                               node.iconText,
                             )}
                           >
@@ -347,7 +347,7 @@ export function StoryDomainsSection() {
                     </h4>
                     <p
                       className={cn(
-                        'text-xs font-semibold uppercase tracking-wider',
+                        'text-sm font-semibold uppercase tracking-wider',
                         node.iconText,
                       )}
                     >
@@ -355,7 +355,7 @@ export function StoryDomainsSection() {
                     </p>
                   </div>
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                   {t(`story.domains.contexts.${node.id}.description`)}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-1.5">

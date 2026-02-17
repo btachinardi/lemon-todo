@@ -31,8 +31,8 @@ export function TechCard({ icon, name, description, index, className }: TechCard
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-bold">{name}</p>
-        <p className="truncate text-xs text-muted-foreground">{description}</p>
+        <p className="text-base font-bold">{name}</p>
+        <p className="truncate text-sm text-muted-foreground">{description}</p>
       </div>
     </motion.div>
   );

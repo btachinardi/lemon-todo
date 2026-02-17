@@ -40,14 +40,14 @@ export function AuditLogCard({ entry }: AuditLogCardProps) {
   return (
     <div className="rounded-lg border p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <Badge variant={actionVariant[entry.action] ?? 'outline'} className="text-xs">
+        <Badge variant={actionVariant[entry.action] ?? 'outline'} className="text-sm">
           {t(`admin.audit.actions.${entry.action}`)}
         </Badge>
-        <span className="shrink-0 text-[11px] text-muted-foreground">
+        <span className="shrink-0 text-xs text-muted-foreground">
           {formatTimestamp(entry.timestamp)}
         </span>
       </div>
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span>{entry.resourceType}</span>
         {entry.resourceId && (
           <>
@@ -57,7 +57,7 @@ export function AuditLogCard({ entry }: AuditLogCardProps) {
         )}
       </div>
       {entry.details && (
-        <p className="text-xs text-muted-foreground/80 line-clamp-2">{entry.details}</p>
+        <p className="text-sm text-muted-foreground/80 line-clamp-2">{entry.details}</p>
       )}
     </div>
   );

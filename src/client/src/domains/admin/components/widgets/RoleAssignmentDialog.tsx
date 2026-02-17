@@ -73,7 +73,7 @@ export function RoleAssignmentDialog({
             </SelectContent>
           </Select>
           {assignableRoles.length === 0 && (
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-2 text-base text-muted-foreground">
               {t('admin.roleDialog.allRolesAssigned')}
             </p>
           )}

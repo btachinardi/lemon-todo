@@ -77,9 +77,9 @@ export function DevOpsHeroSection() {
               <div className="size-3 rounded-full bg-destructive/60" />
               <div className="size-3 rounded-full bg-warning-foreground/40" />
               <div className="size-3 rounded-full bg-success-foreground/40" />
-              <span className="ml-2 text-xs text-muted-foreground">deploy pipeline</span>
+              <span className="ml-2 text-sm text-muted-foreground">deploy pipeline</span>
             </div>
-            <div className="space-y-2 font-mono text-xs leading-relaxed sm:text-sm">
+            <div className="space-y-2 font-mono text-sm leading-relaxed sm:text-base">
               <p>
                 <span className="text-primary">$</span>{' '}
                 <span className="text-muted-foreground">git push origin main</span>

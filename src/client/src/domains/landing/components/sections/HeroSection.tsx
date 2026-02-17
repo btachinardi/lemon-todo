@@ -76,12 +76,12 @@ export function HeroSection() {
               <div className="size-3 rounded-full bg-destructive/60" />
               <div className="size-3 rounded-full bg-warning-foreground/40" />
               <div className="size-3 rounded-full bg-success-foreground/40" />
-              <span className="ml-2 text-xs text-muted-foreground">Lemon.DO</span>
+              <span className="ml-2 text-sm text-muted-foreground">Lemon.DO</span>
             </div>
             <div className="grid grid-cols-3 gap-3">
               {(['To Do', 'In Progress', 'Done'] as const).map((col) => (
                 <div key={col} className="rounded-lg bg-background/60 p-3">
-                  <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <h4 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
                     {col}
                   </h4>
                   <div className="space-y-2">
@@ -135,7 +135,7 @@ function MockCard({
     <div className="rounded-md border border-border/30 bg-card/80 px-3 py-2">
       <div className="flex items-center gap-2">
         <span className={`size-1.5 rounded-full ${dotColors[priority]}`} />
-        <span className={`text-xs ${done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+        <span className={`text-sm ${done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
           {label}
         </span>
       </div>

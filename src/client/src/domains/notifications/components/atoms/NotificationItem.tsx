@@ -34,13 +34,13 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
         <Icon className="size-3.5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className={cn('text-sm leading-tight', !notification.isRead && 'font-semibold')}>
+        <p className={cn('text-base leading-tight', !notification.isRead && 'font-semibold')}>
           {notification.title}
         </p>
         {notification.body && (
-          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{notification.body}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">{notification.body}</p>
         )}
-        <p className="mt-1 text-[11px] text-muted-foreground/70">{timeAgo}</p>
+        <p className="mt-1 text-xs text-muted-foreground/70">{timeAgo}</p>
       </div>
       {!notification.isRead && (
         <div className="mt-2 size-2 shrink-0 rounded-full bg-primary" />

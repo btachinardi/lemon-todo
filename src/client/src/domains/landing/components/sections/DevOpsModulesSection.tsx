@@ -79,8 +79,8 @@ export function DevOpsModulesSection() {
                   <Icon className="size-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-mono text-sm font-bold">{item.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+                  <p className="font-mono text-base font-bold">{item.name}</p>
+                  <p className="truncate text-sm text-muted-foreground">{item.description}</p>
                 </div>
               </motion.div>
             );

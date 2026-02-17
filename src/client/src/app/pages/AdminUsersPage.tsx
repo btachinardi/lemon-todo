@@ -14,7 +14,7 @@ export function AdminUsersPage() {
       <div className="space-y-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{t('admin.users.title')}</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             {t('admin.users.subtitle')}
           </p>
         </div>

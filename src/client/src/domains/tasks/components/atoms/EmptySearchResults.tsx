@@ -17,7 +17,7 @@ export function EmptySearchResults({ onClearFilters }: EmptySearchResultsProps) 
       </div>
       <div className="text-center">
         <p className="text-lg font-semibold">{t('tasks.empty.searchTitle')}</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-base text-muted-foreground">
           {t('tasks.empty.searchSubtitle')}
         </p>
       </div>

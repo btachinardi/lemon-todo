@@ -30,7 +30,7 @@ export function FeatureCard({ icon, title, description, index, className }: Feat
         {icon}
       </div>
       <h3 className="mb-2 text-lg font-bold">{title}</h3>
-      <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
+      <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
     </motion.div>
   );
 }

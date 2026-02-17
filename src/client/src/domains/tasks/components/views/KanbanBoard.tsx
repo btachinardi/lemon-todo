@@ -28,7 +28,7 @@ const DROP_ANIMATION = { duration: 200, easing: 'ease-out' } as const;
 /** Pixels from the viewport edge that trigger column-snap auto-scroll during drag. */
 const EDGE_THRESHOLD_PX = 60;
 /** Minimum ms between column snaps — allows the smooth scroll animation to settle. */
-const SNAP_COOLDOWN_MS = 400;
+const SNAP_COOLDOWN_MS = 800;
 /** Minimum horizontal distance (px) from the last snap point to trigger the next snap. */
 const SNAP_DISTANCE_PX = 80;
 /** Tailwind `sm` breakpoint — column snap only applies below this width. */
@@ -150,12 +150,24 @@ export function KanbanBoard({
   const snapAnchorXRef = useRef(0);
   const hasLeftEdgeZoneRef = useRef(true);
 
+  // Native pointer tracking — immune to dnd-kit's scroll-offset compensation.
+  // On real devices, dnd-kit's event.delta includes scroll adjustments from
+  // scrollToColumn(), corrupting our viewport-relative edge zone detection.
+  // Tracking the raw pointer via native events gives the true viewport position.
+  const lastPointerClientXRef = useRef<number | null>(null);
+  const pointerTrackingCleanupRef = useRef<(() => void) | null>(null);
+
   // Disable dnd-kit's built-in auto-scroll for the horizontal board container.
   // Vertical auto-scroll within column ScrollAreas is still allowed.
   // We replace horizontal auto-scroll with custom column-snap logic in handleDragMove.
   const autoScrollConfig = useMemo(() => ({
     canScroll: (element: Element) => element !== scrollContainerRef.current,
   }), []);
+
+  // Clean up native pointer listeners if the component unmounts mid-drag.
+  useEffect(() => {
+    return () => { pointerTrackingCleanupRef.current?.(); };
+  }, []);
 
   // Re-sync with server state when board data changes
   useEffect(() => {
@@ -191,6 +203,21 @@ export function KanbanBoard({
     snapAnchorXRef.current = pointerX;
     hasLeftEdgeZoneRef.current = true;
 
+    // Start tracking raw pointer position via native events.
+    // This is immune to dnd-kit's scroll-offset compensation in event.delta.
+    lastPointerClientXRef.current = null;
+    pointerTrackingCleanupRef.current?.();
+    const onPointerMove = (e: PointerEvent) => { lastPointerClientXRef.current = e.clientX; };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches[0]) lastPointerClientXRef.current = e.touches[0].clientX;
+    };
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    pointerTrackingCleanupRef.current = () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('touchmove', onTouchMove);
+    };
+
     // Record which column is currently visible
     if (scrollContainerRef.current) {
       currentColumnIndexRef.current = getCurrentColumnIndex(scrollContainerRef.current);
@@ -207,7 +234,11 @@ export function KanbanBoard({
     const container = scrollContainerRef.current;
     if (!container || !initialPointerRef.current || window.innerWidth >= SM_BREAKPOINT) return;
 
-    const pointerX = initialPointerRef.current.x + event.delta.x;
+    // Prefer raw pointer position from native events (immune to dnd-kit's scroll
+    // compensation). Falls back to delta-based calculation in test environments
+    // where native pointer events don't fire.
+    const pointerX = lastPointerClientXRef.current
+      ?? (initialPointerRef.current.x + event.delta.x);
     const inRightZone = pointerX > window.innerWidth - EDGE_THRESHOLD_PX;
     const inLeftZone = pointerX < EDGE_THRESHOLD_PX;
 
@@ -282,6 +313,9 @@ export function KanbanBoard({
       lastSnapTimeRef.current = 0;
       snapAnchorXRef.current = 0;
       hasLeftEdgeZoneRef.current = true;
+      lastPointerClientXRef.current = null;
+      pointerTrackingCleanupRef.current?.();
+      pointerTrackingCleanupRef.current = null;
 
       const originCol = dragOriginColRef.current;
       dragOriginColRef.current = null;
@@ -337,6 +371,9 @@ export function KanbanBoard({
     lastSnapTimeRef.current = 0;
     snapAnchorXRef.current = 0;
     hasLeftEdgeZoneRef.current = true;
+    lastPointerClientXRef.current = null;
+    pointerTrackingCleanupRef.current?.();
+    pointerTrackingCleanupRef.current = null;
   }, [board]);
 
   const activeTask = activeId ? tasksById.get(activeId) ?? null : null;

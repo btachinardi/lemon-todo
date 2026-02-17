@@ -71,7 +71,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
                 key={link.to}
                 to={link.to}
                 className={cn(
-                  'rounded-md px-3 py-1.5 text-sm font-semibold transition-colors',
+                  'rounded-md px-3 py-1.5 text-base font-semibold transition-colors',
                   isActive(link.to, pathname)
                     ? 'text-foreground'
                     : 'text-muted-foreground hover:text-foreground',
@@ -87,11 +87,11 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             {themeToggle}
             <Link
               to="/login"
-              className="rounded-md px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              className="rounded-md px-3 py-1.5 text-base font-semibold text-muted-foreground transition-colors hover:text-foreground"
             >
               {t('landing.nav.login')}
             </Link>
-            <GlowButton to="/register" className="px-3.5 py-1.5 text-sm">
+            <GlowButton to="/register" className="px-3.5 py-1.5 text-base">
               {t('landing.nav.getStarted')}
             </GlowButton>
           </nav>
@@ -169,8 +169,8 @@ export function LandingLayout({ children }: LandingLayoutProps) {
               <span className="text-primary">{t('brand.do')}</span>
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">{t('landing.footer.tagline')}</p>
-          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">{t('landing.footer.tagline')}</p>
+          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-base text-muted-foreground">
             <a href="#features" className="hover:text-foreground">{t('landing.footer.features')}</a>
             <a href="#security" className="hover:text-foreground">{t('landing.footer.security')}</a>
             <Link to="/methodology" className="hover:text-foreground">{t('landing.footer.story')}</Link>
@@ -186,10 +186,10 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             <Link to="/login" className="hover:text-foreground">{t('landing.nav.login')}</Link>
             <Link to="/register" className="hover:text-foreground">{t('landing.nav.getStarted')}</Link>
           </nav>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             {t('landing.footer.disclaimer')}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             &copy; {new Date().getFullYear()} Lemon.DO &middot; v{__APP_VERSION__}
           </p>
         </div>

@@ -59,7 +59,7 @@ export function ListViewToolbar({
         aria-pressed={splitCompleted}
         onClick={() => onSplitCompletedChange(!splitCompleted)}
         className={cn(
-          'gap-1.5 text-xs',
+          'gap-1.5 text-sm',
           splitCompleted && 'border-lime-500/50 bg-lime-500/10 text-lime-400 hover:bg-lime-500/20 hover:text-lime-300',
         )}
       >

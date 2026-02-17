@@ -11,7 +11,7 @@ export function AdminAuditPage() {
       <div className="space-y-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{t('admin.audit.title')}</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             {t('admin.audit.subtitle')}
           </p>
         </div>

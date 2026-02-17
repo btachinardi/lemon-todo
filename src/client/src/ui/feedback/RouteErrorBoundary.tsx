@@ -47,7 +47,7 @@ export class RouteErrorBoundary extends Component<Props, State> {
           </div>
           <div className="text-center">
             <p className="text-lg font-semibold">{i18next.t('error.title')}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-base text-muted-foreground">
               {i18next.t('error.description')}
             </p>
           </div>

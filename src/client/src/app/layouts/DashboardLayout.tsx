@@ -56,7 +56,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               end
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
+                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-base font-semibold transition-all duration-300 sm:px-3.5',
                   isActive
                     ? 'bg-brand text-brand-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
@@ -70,7 +70,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               to="/list"
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
+                  'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-base font-semibold transition-all duration-300 sm:px-3.5',
                   isActive
                     ? 'bg-brand text-brand-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
@@ -86,7 +86,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {isAdmin && (
               <NavLink
                 to="/admin/users"
-                className="inline-flex items-center justify-center gap-1 rounded-md p-2 text-xs text-muted-foreground hover:text-foreground sm:px-2 sm:py-1.5"
+                className="inline-flex items-center justify-center gap-1 rounded-md p-2 text-sm text-muted-foreground hover:text-foreground sm:px-2 sm:py-1.5"
               >
                 <ShieldIcon className="size-4 sm:size-3" />
                 <span className="hidden sm:inline">{t('nav.admin')}</span>
@@ -127,7 +127,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <NavLink
                     to="/admin/users"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                    className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-base text-muted-foreground hover:text-foreground"
                   >
                     <ShieldIcon className="size-4" />
                     {t('nav.admin')}
@@ -162,7 +162,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 className="gap-1.5 border-dashed border-amber-500/30 bg-amber-500/5 text-amber-800 shadow-lg hover:bg-amber-500/10 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
               >
                 <FlaskConicalIcon className="size-3.5" />
-                <span className="text-xs">Dev</span>
+                <span className="text-sm">Dev</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent side="top" align="start" className="w-72 p-3">

@@ -120,7 +120,7 @@ export function ProtectedDataRevealDialog({
                 rows={2}
               />
               {isOther && reasonDetails.trim().length === 0 && (
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-destructive">
                   {t('admin.protectedDataRevealDialog.reasonDetailsRequired')}
                 </p>
               )}
@@ -153,12 +153,12 @@ export function ProtectedDataRevealDialog({
               }}
             />
             {isPasswordError && (
-              <p className="text-xs text-destructive">
+              <p className="text-sm text-destructive">
                 {t('admin.protectedDataRevealDialog.passwordError')}
               </p>
             )}
             {isGenericError && (
-              <p className="text-xs text-destructive">
+              <p className="text-sm text-destructive">
                 {t('admin.protectedDataRevealDialog.genericError')}
               </p>
             )}
@@ -179,7 +179,7 @@ export function ProtectedDataRevealDialog({
           {/* Audit warning */}
           <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
             <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-xs text-amber-700 dark:text-amber-300">
+            <p className="text-sm text-amber-700 dark:text-amber-300">
               {t('admin.protectedDataRevealDialog.auditWarning')}
             </p>
           </div>

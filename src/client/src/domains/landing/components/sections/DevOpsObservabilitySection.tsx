@@ -66,7 +66,7 @@ export function DevOpsObservabilitySection() {
                   </div>
                   <h3 className="text-lg font-bold">{item.title}</h3>
                 </div>
-                <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+                <p className="text-base leading-relaxed text-muted-foreground">{item.description}</p>
               </motion.div>
             );
           })}

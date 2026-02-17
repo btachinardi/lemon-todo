@@ -47,12 +47,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-base text-destructive">
           {error}
         </div>
       )}
       <div className="space-y-2">
-        <label htmlFor="login-email" className="text-sm font-medium text-foreground">
+        <label htmlFor="login-email" className="text-base font-medium text-foreground">
           {t('auth.fields.email')}
         </label>
         <Input
@@ -67,7 +67,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         />
       </div>
       <div className="space-y-2">
-        <label htmlFor="login-password" className="text-sm font-medium text-foreground">
+        <label htmlFor="login-password" className="text-base font-medium text-foreground">
           {t('auth.fields.password')}
         </label>
         <Input

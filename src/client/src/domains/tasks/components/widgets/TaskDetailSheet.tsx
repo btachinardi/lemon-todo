@@ -329,7 +329,7 @@ function TaskDetailContent({
           {t('tasks.detail.error')}
         </SheetDescription>
         <div className="flex flex-col items-center gap-4 p-6">
-          <p className="text-sm text-muted-foreground">{t('tasks.detail.loadError')}</p>
+          <p className="text-base text-muted-foreground">{t('tasks.detail.loadError')}</p>
           <Button variant="outline" size="sm" onClick={onClose}>
             {t('common.close')}
           </Button>
@@ -386,7 +386,7 @@ function TaskDetailContent({
           </SheetTitle>
         )}
         <SheetDescription className="sr-only">Edit task details</SheetDescription>
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground" role="status" aria-live="polite">
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground" role="status" aria-live="polite">
           {saveStatus === 'pending' && (
             <>
               <LoaderCircleIcon className="size-3 animate-spin" />
@@ -513,7 +513,7 @@ function TaskDetailContent({
                   setTimeout(() => setTagInputFocused(false), 150);
                 }}
                 placeholder={t('tasks.detail.tagPlaceholder')}
-                className="h-8 text-sm"
+                className="h-8 text-base"
                 aria-label="New tag"
               />
               <Button
@@ -537,7 +537,7 @@ function TaskDetailContent({
                     key={tag}
                     role="option"
                     aria-selected={false}
-                    className="cursor-pointer rounded-sm px-2 py-1 text-sm hover:bg-accent hover:text-accent-foreground"
+                    className="cursor-pointer rounded-sm px-2 py-1 text-base hover:bg-accent hover:text-accent-foreground"
                     onMouseDown={(e) => {
                       e.preventDefault(); // Prevent blur before click
                       handleSelectSuggestion(tag);
@@ -560,7 +560,7 @@ function TaskDetailContent({
 
           {task.sensitiveNote && (
             <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
-              <span className="text-sm text-amber-700 dark:text-amber-300">
+              <span className="text-base text-amber-700 dark:text-amber-300">
                 {t('tasks.sensitiveNote.hasNote')}
               </span>
               <Button
@@ -581,7 +581,7 @@ function TaskDetailContent({
             placeholder={t('tasks.sensitiveNote.placeholder')}
             className="min-h-[60px] resize-none"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {t('tasks.sensitiveNote.encryptionWarning')}
           </p>
 
@@ -608,7 +608,7 @@ function TaskDetailContent({
         <div className="border-t border-border/50 pt-4">
           {showDeleteConfirm ? (
             <div className="flex items-center gap-2">
-              <p className="text-sm text-destructive">{t('tasks.detail.deleteTitle')}</p>
+              <p className="text-base text-destructive">{t('tasks.detail.deleteTitle')}</p>
               <Button
                 variant="destructive"
                 size="sm"

@@ -88,17 +88,17 @@ export function RoadmapHeroSection() {
               <div className="size-3 rounded-full bg-destructive/60" />
               <div className="size-3 rounded-full bg-warning-foreground/40" />
               <div className="size-3 rounded-full bg-success-foreground/40" />
-              <span className="ml-2 text-xs text-muted-foreground">roadmap</span>
+              <span className="ml-2 text-sm text-muted-foreground">roadmap</span>
             </div>
 
             {/* Completed checkpoints */}
             <div className="space-y-1.5">
               {checkpoints.map((cp, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="flex size-5 items-center justify-center text-xs text-success-foreground">
+                  <span className="flex size-5 items-center justify-center text-sm text-success-foreground">
                     &#10003;
                   </span>
-                  <span className="text-xs text-muted-foreground/70">
+                  <span className="text-sm text-muted-foreground/70">
                     CP{i + 1} &middot; {cp}
                   </span>
                 </div>
@@ -122,7 +122,7 @@ export function RoadmapHeroSection() {
                     />
                   </span>
                   <span
-                    className={`text-xs ${i < 2 ? 'font-semibold text-primary' : 'text-muted-foreground/50'}`}
+                    className={`text-sm ${i < 2 ? 'font-semibold text-primary' : 'text-muted-foreground/50'}`}
                   >
                     Tier {i + 1} &middot; {tier}
                   </span>

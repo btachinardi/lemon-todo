@@ -55,7 +55,7 @@ export function StoryVisionSection() {
                 <Icon className="size-5" />
               </div>
               <h3 className="text-lg font-bold">{t(`story.vision.items.${i}.title`)}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-1 text-base leading-relaxed text-muted-foreground">
                 {t(`story.vision.items.${i}.description`)}
               </p>
             </motion.div>
