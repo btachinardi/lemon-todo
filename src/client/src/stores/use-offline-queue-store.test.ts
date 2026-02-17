@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { useOfflineQueueStore } from './use-offline-queue-store';
+import { useOfflineQueueStore, initOfflineQueue } from './use-offline-queue-store';
 import type { QueuedMutation } from '@/lib/offline-queue';
 
 // Mock the offline-queue module (IndexedDB doesn't exist in jsdom)
@@ -197,6 +197,136 @@ describe('useOfflineQueueStore', () => {
       await useOfflineQueueStore.getState().drain();
 
       expect(useOfflineQueueStore.getState().isSyncing).toBe(false);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should dispatch offline-queue-drained event after successful drain', async () => {
+      const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      const eventHandler = vi.fn();
+      window.addEventListener('offline-queue-drained', eventHandler);
+
+      const store = useOfflineQueueStore.getState();
+      await store.enqueueMutation('POST', '/api/tasks', { title: 'Test' });
+
+      await useOfflineQueueStore.getState().drain();
+
+      expect(eventHandler).toHaveBeenCalledTimes(1);
+
+      window.removeEventListener('offline-queue-drained', eventHandler);
+      vi.unstubAllGlobals();
+    });
+
+    it('should dispatch offline-queue-drained event even after partial drain with conflicts', async () => {
+      const fetchSpy = vi.fn()
+        .mockResolvedValueOnce({ ok: true, status: 200 }) // refresh
+        .mockResolvedValueOnce({ ok: false, status: 409 }); // conflict
+      vi.stubGlobal('fetch', fetchSpy);
+
+      const eventHandler = vi.fn();
+      window.addEventListener('offline-queue-drained', eventHandler);
+
+      const store = useOfflineQueueStore.getState();
+      await store.enqueueMutation('PUT', '/api/tasks/1', { title: 'Conflict' });
+
+      await useOfflineQueueStore.getState().drain();
+
+      expect(eventHandler).toHaveBeenCalledTimes(1);
+
+      window.removeEventListener('offline-queue-drained', eventHandler);
+      vi.unstubAllGlobals();
+    });
+
+    it('should not dispatch offline-queue-drained when queue is empty', async () => {
+      const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      const eventHandler = vi.fn();
+      window.addEventListener('offline-queue-drained', eventHandler);
+
+      // Drain with empty queue
+      await useOfflineQueueStore.getState().drain();
+
+      expect(eventHandler).not.toHaveBeenCalled();
+
+      window.removeEventListener('offline-queue-drained', eventHandler);
+      vi.unstubAllGlobals();
+    });
+  });
+
+  describe('initOfflineQueue', () => {
+    it('should register an online event listener', () => {
+      const addEventSpy = vi.spyOn(window, 'addEventListener');
+
+      initOfflineQueue();
+
+      expect(addEventSpy).toHaveBeenCalledWith('online', expect.any(Function));
+    });
+
+    it('should drain on startup when already online with pending mutations', async () => {
+      // Simulate online state with pending mutations
+      Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
+
+      // Pre-seed the queue with a mutation
+      const store = useOfflineQueueStore.getState();
+      await store.enqueueMutation('POST', '/api/tasks', { title: 'Pending' });
+      expect(useOfflineQueueStore.getState().pendingCount).toBe(1);
+
+      const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      initOfflineQueue();
+
+      // Allow the async drain to complete
+      await vi.waitFor(() => {
+        expect(useOfflineQueueStore.getState().pendingCount).toBe(0);
+      });
+
+      // Fetch should have been called (token refresh + mutation replay)
+      expect(fetchSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should not drain on startup when offline', async () => {
+      Object.defineProperty(navigator, 'onLine', { value: false, writable: true, configurable: true });
+
+      // Pre-seed the queue
+      const store = useOfflineQueueStore.getState();
+      await store.enqueueMutation('POST', '/api/tasks', { title: 'Pending' });
+
+      const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      initOfflineQueue();
+
+      // Give async operations time to settle
+      await new Promise((r) => setTimeout(r, 100));
+
+      // Drain should not have fired — only refreshCount reads the count
+      // The mutation is still pending
+      expect(useOfflineQueueStore.getState().pendingCount).toBe(1);
+      // Only the refreshCount read, no fetch calls for drain
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should not drain on startup when online but queue is empty', async () => {
+      Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
+
+      const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      initOfflineQueue();
+
+      // Give async operations time to settle
+      await new Promise((r) => setTimeout(r, 100));
+
+      // No drain should fire (queue is empty)
+      expect(fetchSpy).not.toHaveBeenCalled();
 
       vi.unstubAllGlobals();
     });

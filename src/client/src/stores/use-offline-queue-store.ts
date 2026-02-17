@@ -131,6 +131,9 @@ export const useOfflineQueueStore = create<OfflineQueueState & OfflineQueueActio
         const result = hadConflicts ? 'partial' : 'success';
         set({ lastSyncResult: result });
 
+        // Notify listeners (e.g. QueryProvider) to invalidate caches
+        window.dispatchEvent(new CustomEvent('offline-queue-drained'));
+
         // Clear the success indicator after 3 seconds
         setTimeout(() => {
           if (get().lastSyncResult === result) {
@@ -147,11 +150,19 @@ export const useOfflineQueueStore = create<OfflineQueueState & OfflineQueueActio
 /**
  * Initializes the offline queue by reading the current count and
  * setting up the `online` event listener for automatic drain.
+ * Also drains immediately if the app starts online with pending mutations
+ * (e.g. user closed the app while offline, then reopened with connection).
  * Call once at app startup.
  */
 export function initOfflineQueue(): void {
-  // Read initial count
-  useOfflineQueueStore.getState().refreshCount();
+  const store = useOfflineQueueStore.getState();
+
+  // Read initial count, then drain if online with pending mutations
+  store.refreshCount().then(() => {
+    if (navigator.onLine && useOfflineQueueStore.getState().pendingCount > 0) {
+      useOfflineQueueStore.getState().drain();
+    }
+  });
 
   // Drain on reconnect
   window.addEventListener('online', () => {
