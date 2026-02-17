@@ -169,6 +169,8 @@ cmd_test() {
       cmd_test backend:sql "$@"
       ;;
     frontend)
+      header "Frontend Type Check"
+      (cd "$CLIENT_DIR" && pnpm exec tsc -b)
       header "Frontend Tests (Vitest)"
       (cd "$CLIENT_DIR" && pnpm test "$@")
       ;;

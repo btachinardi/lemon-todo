@@ -102,6 +102,10 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: src/client
 
+      - name: Type Check
+        run: pnpm exec tsc -b
+        working-directory: src/client
+
       - name: Lint
         run: pnpm lint
         working-directory: src/client
