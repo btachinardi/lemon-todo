@@ -14,6 +14,7 @@ import { TaskListRoute } from './TaskListRoute';
 import { AdminUsersPage } from '../pages/AdminUsersPage';
 import { AdminAuditPage } from '../pages/AdminAuditPage';
 import { LandingLayout } from '../layouts/LandingLayout';
+import { LoadingPreviewPage } from '../pages/LoadingPreviewPage';
 
 /**
  * Application route tree.
@@ -101,6 +102,10 @@ export const router = createBrowserRouter([
         element: <AdminAuditPage />,
       },
     ],
+  },
+  {
+    path: '/loading',
+    element: <LoadingPreviewPage />,
   },
   {
     path: '*',
