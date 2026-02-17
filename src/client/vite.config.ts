@@ -78,7 +78,7 @@ export default defineConfig({
     port: parseInt(process.env.PORT || '5173'),
     proxy: {
       '/api': {
-        target: process.env.services__api__https__0 || 'https://localhost:5001',
+        target: process.env.services__api__https__0 || 'http://localhost:5155',
         changeOrigin: true,
         secure: false,
       },
