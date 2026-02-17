@@ -102,6 +102,10 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: src/client
 
+      - name: Generate API types
+        run: pnpm run generate:api
+        working-directory: src/client
+
       - name: Type Check
         run: pnpm exec tsc -b
         working-directory: src/client
@@ -181,7 +185,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Build frontend
-        run: pnpm install --frozen-lockfile && pnpm build
+        run: pnpm install --frozen-lockfile && pnpm run generate:api && pnpm build
         working-directory: src/client
         env:
           VITE_API_BASE_URL: https://api.lemondo.btas.dev
