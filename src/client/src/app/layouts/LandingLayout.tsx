@@ -26,6 +26,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
     { to: '/', label: t('landing.nav.home') },
     { to: '/methodology', label: t('story.nav') },
     { to: '/devops', label: t('devops.nav') },
+    { to: '/roadmap', label: t('roadmap.nav') },
   ];
 
   return (
