@@ -1,4 +1,6 @@
 using LemonDo.Api.Logging;
+using LemonDo.Domain.Identity.ValueObjects;
+using LemonDo.Domain.Tasks.ValueObjects;
 using Serilog;
 using Serilog.Events;
 
@@ -52,6 +54,71 @@ public sealed class ProtectedDataMaskingEnricherTests
 
         Assert.IsNotNull(capturedEvent);
         Assert.AreEqual("\"A***h\"", capturedEvent.Properties["DisplayName"].ToString());
+    }
+
+    // --- End-to-end: IProtectedData value objects through full pipeline ---
+
+    [TestMethod]
+    public void Should_MaskSensitiveNote_When_DestructuredWithAnyPropertyName()
+    {
+        LogEvent? capturedEvent = null;
+        var logger = new LoggerConfiguration()
+            .Destructure.With<ProtectedDataDestructuringPolicy>()
+            .Enrich.With<ProtectedDataMaskingEnricher>()
+            .WriteTo.Sink(new DelegateSink(e => capturedEvent = e))
+            .CreateLogger();
+
+        var note = SensitiveNote.Reconstruct("my secret medical info");
+
+        // Using {@Note} — destructuring operator triggers TryDestructure
+        logger.Information("Task note: {@Note}", note);
+
+        Assert.IsNotNull(capturedEvent);
+        var noteProp = capturedEvent.Properties["Note"];
+        Assert.AreEqual("\"[PROTECTED]\"", noteProp.ToString(),
+            "SensitiveNote should be redacted via IProtectedData.Redacted, not logged raw");
+    }
+
+    [TestMethod]
+    public void Should_MaskEmailVO_When_DestructuredWithNonStandardPropertyName()
+    {
+        LogEvent? capturedEvent = null;
+        var logger = new LoggerConfiguration()
+            .Destructure.With<ProtectedDataDestructuringPolicy>()
+            .Enrich.With<ProtectedDataMaskingEnricher>()
+            .WriteTo.Sink(new DelegateSink(e => capturedEvent = e))
+            .CreateLogger();
+
+        var email = Email.Reconstruct("user@example.com");
+
+        // Property name "RecipientEmail" is NOT in the hardcoded name list
+        logger.Information("Sent to {@RecipientEmail}", email);
+
+        Assert.IsNotNull(capturedEvent);
+        var prop = capturedEvent.Properties["RecipientEmail"];
+        Assert.AreEqual("\"u***@example.com\"", prop.ToString(),
+            "Email VO should be redacted via IProtectedData.Redacted regardless of property name");
+    }
+
+    [TestMethod]
+    public void Should_MaskDisplayNameVO_When_DestructuredWithNonStandardPropertyName()
+    {
+        LogEvent? capturedEvent = null;
+        var logger = new LoggerConfiguration()
+            .Destructure.With<ProtectedDataDestructuringPolicy>()
+            .Enrich.With<ProtectedDataMaskingEnricher>()
+            .WriteTo.Sink(new DelegateSink(e => capturedEvent = e))
+            .CreateLogger();
+
+        var name = DisplayName.Reconstruct("Alice Smith");
+
+        // Property name "AuthorName" is NOT in the hardcoded name list
+        logger.Information("Written by {@AuthorName}", name);
+
+        Assert.IsNotNull(capturedEvent);
+        var prop = capturedEvent.Properties["AuthorName"];
+        Assert.AreEqual("\"A***h\"", prop.ToString(),
+            "DisplayName VO should be redacted via IProtectedData.Redacted regardless of property name");
     }
 
     /// <summary>Simple Serilog sink that delegates to a callback for test capture.</summary>
