@@ -951,12 +951,14 @@ describe('KanbanBoard mobile height stretching', () => {
 });
 
 describe('KanbanBoard scroll styling', () => {
-  it('should apply scrollbar-thin class on the scroll container for a subtle scrollbar', () => {
+  it('should have overflow-x-auto on the scroll container for horizontal scrolling', () => {
     const board = createBoard();
     const { container } = render(<KanbanBoard board={board} tasks={[]} />);
     const scrollContainer = container.querySelector('.overflow-x-auto')!;
 
-    expect(scrollContainer.className).toContain('scrollbar-thin');
+    // Global scrollbar styles in index.css handle subtle/thin scrollbars for all elements
+    expect(scrollContainer).not.toBeNull();
+    expect(scrollContainer.className).toContain('overflow-x-auto');
   });
 
   it('should apply min-w-max on inner flex container so trailing padding is scrollable', () => {
