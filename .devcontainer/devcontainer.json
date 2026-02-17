@@ -1,0 +1,26 @@
+{
+  "name": "LemonDo",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    }
+  },
+  "postCreateCommand": "corepack enable && corepack prepare pnpm@latest --activate && ./dev install",
+  "forwardPorts": [5155, 5173, 15082, 17022],
+  "portsAttributes": {
+    "5155": { "label": "API (HTTP)", "onAutoForward": "notify" },
+    "5173": { "label": "Frontend (Vite)", "onAutoForward": "openBrowser" },
+    "15082": { "label": "Aspire Dashboard (HTTP)", "onAutoForward": "notify" },
+    "17022": { "label": "Aspire Dashboard (HTTPS)", "onAutoForward": "notify" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "bradlc.vscode-tailwindcss",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
+}

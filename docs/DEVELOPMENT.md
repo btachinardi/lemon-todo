@@ -11,6 +11,8 @@
 - [pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) (optional, for SQL Server)
 
+> **Dev Container**: If you use VS Code or GitHub Codespaces, open the project in the [dev container](./.devcontainer/devcontainer.json) — all prerequisites are pre-installed and `./dev install` runs automatically.
+
 ## Quick Start
 
 ```bash
