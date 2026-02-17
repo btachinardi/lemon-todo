@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import type {
@@ -15,7 +15,7 @@ import { createBoard, createTask, createTaskCard } from '@/test/factories';
 import { TaskStatus } from '../../types/task.types';
 
 /** Spy on useSensor calls to verify sensor configuration. */
-const mockUseSensor = vi.hoisted(() => vi.fn(() => ({})));
+const mockUseSensor = vi.hoisted(() => vi.fn<[sensor: { name: string }, options?: Record<string, unknown>]>(() => ({})));
 
 /**
  * Captured DndContext event handlers. Updated on every render of KanbanBoard

@@ -145,7 +145,7 @@ describe('NotificationDropdown', () => {
     mockGetUnreadCount.mockResolvedValue({ count: 0 });
     mockList.mockResolvedValue({ items: [], totalCount: 0, page: 1, pageSize: 20 });
 
-    render(createElement(NotificationDropdown, { showLabel: true }), { wrapper: createWrapper() });
+    render(<NotificationDropdown showLabel />, { wrapper: createWrapper() });
 
     // The label "Notifications" should be visible (not sr-only)
     expect(await screen.findByText('Notifications')).toBeVisible();
