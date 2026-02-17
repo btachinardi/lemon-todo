@@ -1833,8 +1833,30 @@ Several React 19 and ESLint strictness issues surfaced during verification:
 
 ---
 
+## Release: v1.0.0 — First Stable Release
+
+**Date: February 16, 2026**
+
+### What Shipped
+
+All 5 checkpoints complete. This is the first stable release, promoted from the originally planned v0.5.0 to v1.0.0 to signal production readiness.
+
+- **CP1**: Core Task Management — DDD domain, kanban board, list view
+- **CP2**: Auth & Authorization — JWT + cookie refresh, user-scoped data
+- **CP3**: Rich UX — dark mode, filters, task detail sheet, loading skeletons, error boundaries
+- **CP4**: Production Hardening — Serilog, audit trail, admin panel, AES-256-GCM encryption, i18n (en + pt-BR), Azure deployment, CI/CD
+- **CP5**: Advanced & Delight — PWA, offline (read + mutation queue), onboarding tour, notifications (in-app + Web Push), analytics, Spanish i18n, password strength meter, landing page, mobile responsiveness, Lemon.DO branding, multi-browser E2E, visual regression
+
+### Final Numbers
+
+- **808 tests**: 375 backend + 337 frontend + 96 E2E
+- **5 bounded contexts**: Tasks, Boards, Identity, Administration, Notifications
+- **3 languages**: English, Portuguese (Brazil), Spanish
+- **Cloud**: Azure Container Apps + Static Web App, custom domains with managed TLS
+- **Infrastructure**: Terraform (10 modules, 3 stages), GitHub Actions CI/CD, Docker
+
+---
+
 ## What's Next
 
-### Remaining CP5 Tasks
-
-*Planned: Onboarding flow, offline read support, offline mutation queue, in-app notifications, Playwright E2E cross-browser tests, visual regression baselines.*
+See `docs/ROADMAP.md` for future capability tiers.

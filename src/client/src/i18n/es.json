@@ -578,7 +578,7 @@
           "description": "PWA con cola de mutaciones offline, tour de onboarding, notificaciones Web Push, analytics, rediseño mobile, landing page.",
           "decision": "Cola de mutaciones IndexedDB para sync offline",
           "tests": "808",
-          "tag": "v0.5.0",
+          "tag": "v1.0.0",
           "summary": "Envió PWA con cola offline, tour de onboarding, Web Push, analytics, rediseño de UX mobile y esta landing page."
         }
       ]

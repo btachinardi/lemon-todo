@@ -305,6 +305,7 @@
 | 2026-02-16 | Debounced description auto-save (1s) with flush on unmount | Prevents data loss on quick exits. useRef tracks draft, cleanup flushes pending save. |
 | 2026-02-16 | Multi-browser E2E locally, Chromium-only in CI | Firefox + WebKit add ~2x CI time for minimal additional coverage. Local multi-browser catches rendering differences. |
 | 2026-02-16 | Visual regression with toHaveScreenshot | Built-in Playwright, no external service. Light + dark theme baselines at 1280x720 with reducedMotion. |
+| 2026-02-16 | Release v1.0.0 (skip v0.5.0) | All 5 checkpoints complete. CP5 was planned as v0.5.0 but the app is feature-complete with 808 tests, cloud deployment, PWA, i18n, and admin tooling — warrants 1.0.0 stable designation. |
 
 ---
 
@@ -366,6 +367,7 @@
   - E2E: 41 new specs (language, onboarding, notifications, offline, PWA, visual regression)
   - Multi-browser: Chromium + Firefox + WebKit + device emulation (iPhone 14, iPad Mini, Pixel 7)
   - Visual regression: Light + dark theme baselines via Playwright toHaveScreenshot()
+- **Release v1.0.0**: First stable release — all 5 checkpoints shipped
 
 ---
 

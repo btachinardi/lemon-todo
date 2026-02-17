@@ -578,7 +578,7 @@
           "description": "PWA com fila de mutações offline, tour de onboarding, notificações Web Push, analytics, reformulação mobile, landing page.",
           "decision": "Fila de mutações IndexedDB para sync offline",
           "tests": "808",
-          "tag": "v0.5.0",
+          "tag": "v1.0.0",
           "summary": "Entregou PWA com fila offline, tour de onboarding, Web Push, analytics, reformulação mobile UX e esta landing page."
         }
       ]
