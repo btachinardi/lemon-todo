@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `./dev verify` now includes API type generation (6 checks, up from 5)
+- CI/CD workflow generates TypeScript types before frontend type-check and build
+- Frontend type files derive enum types from OpenAPI schema instead of hand-written string unions
+
 ### Fixed
 
 - Offline queue not draining on app startup when reopening online with pending IndexedDB mutations
@@ -15,6 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **OpenAPI-based TypeScript type generation** — backend contract changes now propagate to the frontend automatically
+  - Build-time OpenAPI spec generation via `Microsoft.Extensions.ApiDescription.Server`
+  - `openapi-typescript` generates TypeScript types from the committed `openapi.json`
+  - 7 frontend type files migrated to re-export from generated schema (enums, DTOs, request types)
+  - `satisfies` compile-time guards on Priority and TaskStatus const objects detect schema drift
+  - `.Produces<T>()` metadata on all minimal API endpoints for response type schemas
+  - Document transformer enriches Priority, TaskStatus, and NotificationType string properties with enum values
+- **Enum translation coverage guard test** — 9 tests (3 enums × 3 locales) ensuring every backend enum value has an i18n key
+- **`./dev generate` CLI command** — regenerates `openapi.json` + TypeScript types in one step
 - `offline-queue-drained` CustomEvent dispatched after drain completes, listened by QueryProvider
 - `initOfflineQueue()` now drains immediately when app starts online with pending mutations
 - 20 admin E2E tests across 5 spec files covering all admin/system admin features:

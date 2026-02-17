@@ -1929,6 +1929,138 @@ Docstrings can lie. The store's JSDoc described cache invalidation after drain, 
 
 ---
 
+## Post-Release: Admin E2E Coverage & Auth Race Fix (Feb 17)
+
+### The Problem
+
+A coverage audit revealed that admin/system admin features had virtually no E2E test coverage. Of 9 admin API endpoints and 2 frontend pages, only the PII reveal flow had a single E2E test. The user management page, audit log viewer, route guards, and role management were entirely untested at the E2E level.
+
+### What Was Built
+
+**20 admin E2E tests** across 5 spec files, plus a shared helper module:
+
+| Spec | Tests | What It Covers |
+|------|-------|----------------|
+| `admin-users.spec.ts` | 7 | Page rendering for SystemAdmin/Admin, search filtering, role filter dropdown, role assignment dialog, user deactivation, user reactivation |
+| `admin-audit.spec.ts` | 4 | Page access for Admin role, audit entries from registration, action filter, resource type filter |
+| `admin-role-management.spec.ts` | 3 | Role removal via actions menu, audit log reflection, "all roles assigned" message |
+| `admin-route-guard.spec.ts` | 5 | Unauthenticated redirect, regular user redirect to `/board`, admin access, sysadmin access to audit page |
+| `admin-pii-reveal.spec.ts` | 1 | Refactored to use shared helpers (removed ~70 lines of inline auth code) |
+
+**Shared helpers** (`tests/e2e/helpers/admin.helpers.ts`):
+- Account constants: `SYSADMIN`, `ADMIN`, `DEV_USER` with credentials
+- Headless API helpers: `loginAsAdmin()`, `registerTestUser()`, `assignRole()`, `removeRole()`, `deactivateUser()`, `reactivateUser()`, `searchAuditLog()`
+- Browser helpers: `loginAdminViaApi()`, `waitForUsersTable()`, `waitForAuditTable()`
+
+**Development approach**: Wrote the first spec (`admin-users.spec.ts`) manually to establish patterns, then delegated the remaining 4 specs to 3 parallel subagents. This cut development time significantly while maintaining consistency through the shared helper module.
+
+### The Flaky 401 Bug
+
+During admin E2E testing, an intermittent 401 error surfaced on the silent token refresh during page load. Investigation revealed a race condition in `AuthHydrationProvider.tsx`:
+
+**Root cause**: React StrictMode double-fires `useEffect` (mount → unmount → mount). The original code used `AbortController`:
+1. Mount #1: sends `POST /api/auth/refresh` with token A
+2. Cleanup: `controller.abort()` cancels the response client-side — but the server already rotated token A (revoked it, issued token B)
+3. The `abort()` discards the `Set-Cookie` response from mount #1, so the browser never receives token B's cookie
+4. Mount #2: sends refresh with token A again (cookie unchanged) — server sees token A is revoked → 401
+
+**Fix**: Extracted `performSilentRefresh()` as a standalone async function and used `useRef<Promise<void> | null>` to share the promise between StrictMode mounts. The fetch fires exactly once, both mount cycles share the same promise, and the `Set-Cookie` response is never discarded.
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `tests/e2e/helpers/admin.helpers.ts` | **New**: shared utilities for admin E2E tests |
+| `tests/e2e/specs/admin-users.spec.ts` | **New**: 7 tests for user management page |
+| `tests/e2e/specs/admin-audit.spec.ts` | **New**: 4 tests for audit log viewer |
+| `tests/e2e/specs/admin-role-management.spec.ts` | **New**: 3 tests for role management |
+| `tests/e2e/specs/admin-route-guard.spec.ts` | **New**: 5 tests for route authorization |
+| `tests/e2e/specs/admin-pii-reveal.spec.ts` | Refactored to use shared helpers |
+| `src/client/src/app/providers/AuthHydrationProvider.tsx` | Fixed StrictMode race condition |
+
+### Lessons Learned
+
+1. **Refresh token rotation + React StrictMode = danger zone.** Any `useEffect` that calls a non-idempotent endpoint needs protection against double-fire. `AbortController` is not sufficient because it only cancels the client-side response — the server has already committed the mutation.
+
+2. **Shared E2E helpers pay for themselves fast.** The `admin.helpers.ts` module eliminated ~70 lines of boilerplate per spec and ensured consistent login/seed patterns across all admin tests.
+
+3. **Playwright strict mode catches real bugs.** Multiple fixes were needed for selectors like `getByText('Audit Log')` matching both a nav link and heading, `getByRole('option', { name: 'Admin' })` matching "Admin" and "SystemAdmin", etc. Every strict mode violation pointed to a real ambiguity in the selector.
+
+4. **Subagent parallelization works well for test writing** when there's a clear pattern to follow. The key was establishing the pattern manually first, then delegating with explicit shared utilities.
+
+---
+
+## Post-Release: OpenAPI-Based TypeScript Type Generation (Feb 17)
+
+### The Problem
+
+Backend C# enum and DTO changes weren't propagating to the frontend automatically. The original bug — `OwnProfileRevealed` and `ProtectedDataAccessed` audit actions appearing as raw i18n keys in the audit table — was a symptom of a systemic issue: 9 hand-written TypeScript type files manually mirrored backend DTOs and could drift silently. When the backend added new `AuditAction` values, nobody updated the frontend types, translations, or UI action-label maps.
+
+### Design Decisions
+
+**Build-time spec generation over runtime export**: `Microsoft.Extensions.ApiDescription.Server` generates the OpenAPI spec during `dotnet build` by launching the app via the `GetDocument.Insider` assembly. This required restructuring `Program.cs` with a guard pattern — all service registration (DI, JWT, CORS) stays unconditional for parameter inference, while only runtime behavior (Serilog, DB migration, seeding, middleware) is guarded behind `!isBuildTimeDocGen`.
+
+**Document transformer for enum enrichment**: Priority, TaskStatus, and NotificationType are serialized as `string` in DTOs (via `.ToString()` in mappers), so the OpenAPI generator emits them as plain `string`. A document transformer walks `components.schemas` and enriches these properties with their enum values. `AuditAction` already uses `[JsonStringEnumConverter]` and appears automatically.
+
+**Selective re-export over wholesale replacement**: The generated types have two quirks — `number | string` for integer fields (OpenAPI int32 format) and `optional` properties where the frontend expects `required + nullable`. Rather than accepting these incompatibilities, the migration strategy derives enum types from the schema while keeping response interfaces hand-written. This delivers the core value (enum drift detection) without breaking 400+ existing tests.
+
+**`satisfies` compile-time guards**: Priority and TaskStatus const objects use `as const satisfies { [K in SchemaType]: K }` which produces a compile error if the backend adds an enum value not in the const object. This catches drift at `tsc` time, before tests even run.
+
+### Technical Challenges
+
+1. **Microsoft.OpenApi 2.0 namespace change**: `OpenApiSchema` moved from `Microsoft.OpenApi.Models` to `Microsoft.OpenApi`. The `IOpenApiSchema` interface has a read-only `Enum` property — required casting to the concrete `OpenApiSchema` class.
+
+2. **`GetDocument.Insider` needs full DI**: The initial approach guarded ALL service registration behind `!isBuildTimeDocGen`, causing "failure to infer one or more parameters" errors. The OpenAPI generator needs DI-injected handler parameters resolved to generate the spec, so service registration must be unconditional.
+
+3. **Missing response schemas**: The first successful build produced only 18 schemas (request types only). Minimal API endpoints returning `Task<IResult>` via `Results.Ok()` don't carry type information. Adding `.Produces<T>()` metadata to all endpoint mappings across 7 files brought the count to 35 schemas.
+
+### What Was Built
+
+| Component | Details |
+|-----------|---------|
+| Backend spec generation | `Microsoft.Extensions.ApiDescription.Server` + document transformer in `Program.cs` |
+| Frontend type generation | `openapi-typescript` v7.13.0 producing `schema.d.ts` from committed `openapi.json` |
+| Type migration | 7 files migrated: enums derived from schema, compatible DTOs re-exported, incompatible kept hand-written |
+| Translation guard | 9 tests (AuditAction × 3 locales, Priority × 3, TaskStatus × 3) reading directly from `openapi.json` |
+| CLI integration | `./dev generate` command, `./dev verify` updated to 6 checks, CI workflow updated |
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/LemonDo.Api/LemonDo.Api.csproj` | Added `Microsoft.Extensions.ApiDescription.Server` + MSBuild props |
+| `src/LemonDo.Api/Program.cs` | `isBuildTimeDocGen` guard pattern + document transformer for enum enrichment |
+| `src/LemonDo.Api/Endpoints/*.cs` (6 files) | Added `.Produces<T>()` metadata for response schemas |
+| `src/client/openapi.json` | **New**: Generated OpenAPI spec (35 schemas, committed to git) |
+| `src/client/src/api/schema.d.ts` | **New**: Generated TypeScript types (gitignored, derived from spec) |
+| `src/client/package.json` | Added `openapi-typescript` devDependency + `generate:api` script |
+| `src/client/src/domains/*/types/*.ts` (7 files) | Migrated to schema re-exports |
+| `src/client/src/i18n/enum-translation-coverage.test.ts` | **New**: Enum translation guard test |
+| `dev` | Added `generate` command, updated `verify` to 6 checks |
+| `.github/workflows/deploy.yml` | Added `generate:api` step before frontend type-check/build |
+| `.gitignore` | Added `src/client/src/api/schema.d.ts` |
+
+### Verification
+
+- **406** backend tests pass
+- **471** frontend tests pass (462 existing + 9 new enum coverage)
+- `./dev generate` produces spec + types end-to-end
+- `./dev verify` passes all 6 checks
+
+### Lessons Learned
+
+1. **Build-time OpenAPI generation requires careful DI partitioning.** The `GetDocument.Insider` tool bootstraps the full app to discover endpoints. Service registration must be unconditional — only runtime behavior (middleware, migration, seeding) should be guarded.
+
+2. **`IOpenApiSchema.Enum` is read-only in Microsoft.OpenApi 2.0.** The interface property can't be set; cast to the concrete `OpenApiSchema` class for the settable version.
+
+3. **`.Produces<T>()` is essential for minimal API response types.** Without it, `Results.Ok(dto)` appears as an untyped response in the spec. Every endpoint that returns a typed DTO needs explicit metadata.
+
+4. **`number | string` from openapi-typescript is intentional.** The tool generates this for OpenAPI integer/double formats because JSON can represent numbers as strings. Pragmatic approach: derive enums from schema (high drift risk), keep interfaces hand-written (low drift risk, incompatible types).
+
+5. **`satisfies` with mapped types is the cleanest compile-time guard.** `as const satisfies { [K in SchemaType]: K }` fails at compile time if the schema has values missing from the const — no unused type aliases, no runtime code.
+
+---
+
 ## What's Next
 
 See `docs/ROADMAP.md` for future capability tiers.

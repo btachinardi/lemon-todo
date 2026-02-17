@@ -61,7 +61,7 @@ Five bounded contexts: **Tasks**, **Boards**, **Identity**, **Administration**, 
 ```bash
 git clone https://github.com/btachinardi/lemon-todo.git
 cd lemon-todo
-cd src/client && pnpm install && cd ../..
+./dev install
 ./dev start
 ```
 

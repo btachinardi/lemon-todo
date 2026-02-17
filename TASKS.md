@@ -200,6 +200,16 @@
 
 ---
 
+## Post-Release Quality
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| PR.1 | Offline queue startup drain + cache invalidation | DONE | `initOfflineQueue()` drains on startup if online with pending mutations; `offline-queue-drained` event for QueryProvider cache invalidation |
+| PR.2 | Admin E2E test coverage | DONE | 20 tests across 5 specs (users, audit, roles, route guards, PII reveal). Shared `admin.helpers.ts` module. |
+| PR.3 | Fix AuthHydrationProvider StrictMode race | DONE | `useRef` shared promise prevents double-fire of non-idempotent refresh token rotation |
+
+---
+
 ## Decision Log
 
 | Date | Decision | Rationale |
@@ -310,6 +320,15 @@
 | 2026-02-17 | Startup drain for offline queue | `initOfflineQueue()` only listened for `online` event transitions. App reopening online with queued IndexedDB mutations would never drain. Fixed: await `refreshCount()` then drain if `navigator.onLine && pendingCount > 0`. |
 | 2026-02-17 | Cache invalidation after drain via CustomEvent | `drain()` replayed mutations via raw `fetch()` but never invalidated TanStack Query caches — UI showed stale data until manual reload. Fixed: drain dispatches `offline-queue-drained` event, QueryProvider listens and calls `queryClient.invalidateQueries()`. |
 | 2026-02-17 | QueryProvider tests | QueryProvider had zero tests. Added 3 tests for drain-complete cache invalidation, unrelated event immunity, and cleanup on unmount. |
+| 2026-02-17 | useRef shared promise for AuthHydrationProvider | React StrictMode double-fires `useEffect`. `AbortController` discards the `Set-Cookie` from mount #1, causing mount #2 to send a revoked token. `useRef<Promise>` shares the refresh promise between mounts — fetch fires once, both cycles use the same result. |
+| 2026-02-17 | Shared admin E2E helpers over inline auth code | 20 admin tests need identical login/seed patterns. `admin.helpers.ts` centralizes credentials, API calls, and browser helpers. Reduced ~70 lines per spec. |
+| 2026-02-17 | Subagent parallelization for E2E test writing | Wrote first spec manually to establish patterns, then delegated 4 remaining specs to 3 parallel subagents. Shared helper module ensured consistency across all specs. |
+| 2026-02-17 | Build-time OpenAPI spec generation over runtime export | `Microsoft.Extensions.ApiDescription.Server` generates spec during `dotnet build` via `GetDocument.Insider`. Restructured `Program.cs`: service registration unconditional (DI needed for parameter inference), only runtime behavior guarded behind `!isBuildTimeDocGen`. |
+| 2026-02-17 | Document transformer for enum enrichment | Priority, TaskStatus, NotificationType use `.ToString()` in mappers → OpenAPI sees `string`. Transformer walks `components.schemas` and adds `enum` arrays. `AuditAction` auto-detected via `[JsonStringEnumConverter]`. |
+| 2026-02-17 | Selective schema re-export over wholesale replacement | Generated types have `number \| string` (int32 quirk) and `optional` vs `required+nullable` differences. Derive enums from schema (high drift risk), keep interfaces hand-written (low risk, incompatible types). |
+| 2026-02-17 | `satisfies` compile-time guards for enum const objects | `as const satisfies { [K in SchemaType]: K }` produces compile error if backend adds value not in const. Cleaner than unused type aliases — no warnings, no runtime code. |
+| 2026-02-17 | Enum translation coverage guard test | Import `openapi.json` directly in Vitest, extract enum arrays, assert every value has matching i18n key in all 3 locales. Catches missing translations when backend adds new enum values. |
+| 2026-02-17 | `.Produces<T>()` metadata on all endpoints | Minimal API `Results.Ok(dto)` doesn't carry type info. Without `.Produces<T>()`, OpenAPI spec only has request schemas, no response schemas. Added to all 7 endpoint files. |
 
 ---
 
@@ -374,6 +393,8 @@
 - **Release v1.0.0**: First stable release — all 5 checkpoints shipped
 - **Release v1.0.1**: Patch — 12 bug fixes (mobile responsiveness, accessibility, timezone, CSP, config)
 - **Post-release fix**: Offline queue startup drain + cache invalidation (462 frontend tests, +13 new)
+- **Post-release quality**: Admin E2E coverage (20 tests across 5 specs) + AuthHydrationProvider StrictMode race fix
+- **Post-release DX**: OpenAPI-based TypeScript type generation (471 frontend tests, +9 enum coverage guard tests)
 
 ---
 

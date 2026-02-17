@@ -111,6 +111,17 @@
 | **Empty states** | Dedicated empty state components with CTAs | Inline conditional text | Dedicated components provide better UX with illustrations and actionable CTAs; reusable across views |
 | **Bundle size** | Single chunk (691 KB JS) | Code-splitting with dynamic imports | All CP3 features are used on every page load; code-splitting deferred to CP4/CP5 when the admin panel is added and other lazy-loaded routes |
 
+### API Contract & Type Safety (Post-Release)
+
+| Trade-off | Chosen approach | Alternative forgone | Why |
+|---|---|---|---|
+| **Type generation strategy** | Build-time OpenAPI spec via `Microsoft.Extensions.ApiDescription.Server` | Runtime spec export or manual spec authoring | Build-time catches spec changes in CI before deployment; manual authoring drifts from implementation; runtime export requires a running server |
+| **Schema enrichment** | Document transformer adds enum values to string-typed properties | `[JsonStringEnumConverter]` on all DTOs or enum-typed DTO properties | DTOs intentionally use `string` for priority/status (mapper flexibility); converter attribute would leak serialization concerns into DTOs; transformer enriches at spec generation time without touching domain code |
+| **Type migration scope** | Selective: derive enums from schema, keep interfaces hand-written | Wholesale replacement of all types with generated re-exports | Generated types have `number \| string` for int32 fields and `optional` where frontend expects `required+nullable`; fixing these globally would break 400+ tests for minimal gain; enum drift is the actual bug class |
+| **Enum const guard** | `satisfies { [K in SchemaType]: K }` on const objects | Unused type-level assertions or runtime checks | `satisfies` produces a real compile error (not just a type resolving to `never`); no unused warnings; no runtime overhead; fails exactly when a backend enum value is missing from the const |
+| **Spec artifact** | `openapi.json` committed to git, `schema.d.ts` gitignored | Both committed or both gitignored | Spec is the contract artifact (reviewable in PRs); generated types are derived and deterministic — committing them creates merge noise; CI regenerates types from the committed spec |
+| **Translation guard** | Vitest test importing `openapi.json` directly | TypeScript compile-time check or runtime i18next fallback key detection | Tests produce clear failure messages ("es is missing audit action translations: NewAction"); compile-time can't check JSON translation files; runtime detection only fires when the UI renders that specific path |
+
 ---
 
 ## Scalability Considerations

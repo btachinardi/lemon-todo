@@ -49,7 +49,10 @@ All common commands are available via the `./dev` script at the project root.
 
 # Lint & Verify
 ./dev lint                  # Frontend ESLint
-./dev verify                # Full gate: build + all tests + lint
+./dev verify                # Full gate: build + generate + all tests + lint
+
+# Code Generation
+./dev generate              # Regenerate OpenAPI spec + TypeScript types
 
 # Start services
 ./dev start                 # Full stack via Aspire
