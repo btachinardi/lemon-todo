@@ -401,9 +401,11 @@ BrowserStack provides 3500+ real browsers and devices in the cloud. Playwright t
   - Project constraint: `required_version = ">= 1.5"` (compatible)
 - **Provider**: `hashicorp/azurerm` 4.x (latest: 4.60.0)
   - Project constraint: `~> 4.0` (compatible)
-- **Target**: Azure App Service (API) + Azure Static Web Apps (frontend)
+- **Target**: Azure Container Apps (API) + Azure Static Web Apps (frontend)
+  - Originally planned for App Service; migrated to Container Apps due to VM quota limitations (see JOURNAL.md)
 - **Resources**:
-  - Azure App Service (API with staging slot)
+  - Azure Container Apps (API with auto-scaling 0-N replicas)
+  - Azure Container Registry (Docker images tagged by commit SHA)
   - Azure Static Web Apps (frontend SPA)
   - Azure SQL Database (production)
   - Azure Key Vault for secrets
@@ -448,7 +450,7 @@ BrowserStack provides 3500+ real browsers and devices in the cloud. Playwright t
 | OTel Browser SDK | ES2022+ browsers | Aspire Dashboard (OTLP HTTP) |
 | Playwright 1.58 | .NET 8+ | .NET 10, Chromium, Firefox, WebKit |
 | Terraform 1.14 | - | azurerm 4.x, Azure backends |
-| azurerm 4.x | Terraform 1.x | Azure App Service, SQL, Static Web Apps |
+| azurerm 4.x | Terraform 1.x | Azure Container Apps, SQL, Static Web Apps |
 | SQL Server 2025 | Docker / Azure SQL | .NET 10, EF Core 10, Ubuntu 22.04 |
 | Node.js 24 (LTS) | - | Vite 7, pnpm 10, Playwright |
 | GitHub Actions | ubuntu-24.04 | .NET 10, Node 24, pnpm 10 |

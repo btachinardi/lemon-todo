@@ -10,14 +10,30 @@
 
 **Date: February 13, 2026**
 
-LemonDo started with an empty folder and a clear vision: build a production-grade task management platform that proves you can have great UX AND compliance. Not one or the other.
+LemonDo is a **lemon.io take-home assignment** for a Full Stack Developer position at a healthcare startup that detects early-stage cancers across multiple organs through a single MRI scan. The assignment asked for a todo/task management app with .NET/SQLite on the backend, React on the frontend, and "any features you would add for a real production MVP."
 
-The constraints:
-- .NET Aspire for cloud-native orchestration
-- React + Shadcn/ui for a premium frontend
-- Strict TDD methodology
-- DDD architecture throughout
-- HIPAA-level data protection
+### The Reasoning Chain
+
+When I read "production MVP," my mind went into what I think of as full product mode. A production MVP is not only about working code — it is about DevOps, telemetry, quick iterations, and compliance in regulated industries. An MVP without product analytics cannot answer the questions it exists to validate.
+
+The target company operates in healthcare, one of the most regulated industries. That immediately drove several decisions:
+
+- **Compliance awareness**: HIPAA-level patterns — AES-256 field encryption at rest, protected data redaction, immutable audit trail, break-the-glass reveal with justification logging.
+- **Offline-first**: From experience, hospital wifi is unreliable. If the product stops working when connectivity drops, it becomes a liability, not a tool. Full PWA with IndexedDB mutation queue.
+- **Azure deployment**: The company uses Azure. The project should demonstrate infrastructure fluency — Terraform IaC, Container Apps, SQL Server for production, GitHub Actions CI/CD.
+- **Dual-database support**: SQLite for blazing-fast development and testing, SQL Server for production. Same codebase, same tests, both providers in CI.
+- **Product analytics**: Privacy-first event tracking with hashed identifiers. No PII in events. Because an MVP exists to validate hypotheses, and you need data to do that.
+- **Incremental delivery**: The vision was ambitious. I broke it into 5 checkpoints — each a complete, shippable application. This meant I'd have a working product within hours, and a comprehensive MVP by the end.
+
+Even the branding was deliberate: I named the project after lemon.io and built a visual identity around it to show I can adapt frontend design to any brand guidelines.
+
+### Technical Constraints
+
+- .NET 10 (current LTS) + Aspire 13 for cloud-native orchestration
+- React 19 + Shadcn/ui for a premium, accessible frontend
+- Strict TDD methodology (RED-GREEN-VALIDATE)
+- DDD architecture with strict layer boundaries
+- HIPAA-aware data protection patterns
 
 ## Phase 1: Planning Before Code
 
