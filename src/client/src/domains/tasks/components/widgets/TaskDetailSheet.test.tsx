@@ -493,6 +493,22 @@ describe('TaskDetailSheet', () => {
 
       vi.useRealTimers();
     });
+
+    it('should not auto-save when server returns empty string description', () => {
+      vi.useFakeTimers();
+      const onUpdateDescription = vi.fn();
+      // Task created without description — backend returns "" (empty string)
+      const emptyDescTask = createTask({ description: '' });
+      renderSheet({ task: emptyDescTask, onUpdateDescription });
+
+      // Let Radix animations settle + well beyond debounce delay
+      act(() => vi.advanceTimersByTime(3000));
+
+      expect(onUpdateDescription).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
+
   });
 
   describe('accessibility: dialog title and description', () => {

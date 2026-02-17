@@ -216,13 +216,18 @@ function TaskDetailContent({
 
   // Track the last description value we've sent to the server, to avoid
   // duplicate saves when both the debounce timer and blur fire in sequence.
-  const lastSavedDescRef = useRef(task?.description ?? null);
+  // Always store the **normalized** form (trimmed, empty→null) so the comparison
+  // in the auto-save effect is consistent with `descDraft.trim() || null`.
+  const lastSavedDescRef = useRef((task?.description ?? '').trim() || null);
 
   // Update the "last saved" baseline when the server data changes
   // (e.g. after a mutation round-trip).
   useEffect(() => {
-    if (task && (task.description ?? null) !== lastSavedDescRef.current) {
-      lastSavedDescRef.current = task.description ?? null;
+    if (task) {
+      const normalized = (task.description ?? '').trim() || null;
+      if (normalized !== lastSavedDescRef.current) {
+        lastSavedDescRef.current = normalized;
+      }
     }
   }, [task]);
 
