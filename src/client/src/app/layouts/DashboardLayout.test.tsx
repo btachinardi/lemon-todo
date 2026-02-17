@@ -10,9 +10,13 @@ const { onboardingState, mockDemoEnabled } = vi.hoisted(() => ({
   mockDemoEnabled: { data: true, isLoading: false },
 }));
 
-// Mock sonner to avoid layout complexity
+// Mock sonner — capture props for Toaster configuration assertions
 vi.mock('sonner', () => ({
-  Toaster: () => null,
+  Toaster: (props: Record<string, unknown>) => (
+    <div data-testid="sonner-toaster" {...Object.fromEntries(
+      Object.entries(props).map(([k, v]) => [`data-${k.toLowerCase()}`, typeof v === 'object' ? JSON.stringify(v) : String(v)])
+    )} />
+  ),
 }));
 
 // Mock UserMenu to avoid auth mutation hooks — captures variant prop
@@ -229,6 +233,44 @@ describe('DashboardLayout', () => {
     );
 
     expect(screen.getByTestId('pwa-install-prompt')).toBeInTheDocument();
+  });
+
+  it('should configure toaster with mobile offset to clear the bottom quick-add bar', () => {
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    const toaster = screen.getByTestId('sonner-toaster');
+    expect(toaster).toHaveAttribute('data-mobileoffset', JSON.stringify({ bottom: '4.5rem' }));
+  });
+
+  it('should configure toaster with a close button for manual dismissal', () => {
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    const toaster = screen.getByTestId('sonner-toaster');
+    expect(toaster).toHaveAttribute('data-closebutton', 'true');
   });
 
   it('should render main as a flex column container for child height propagation', () => {

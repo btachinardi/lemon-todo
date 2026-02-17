@@ -179,7 +179,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </footer>
       {onboardingStatus?.completed && <PWAInstallPrompt />}
       <OnboardingTour />
-      <Toaster theme={resolvedTheme} />
+      <Toaster theme={resolvedTheme} closeButton mobileOffset={{ bottom: '4.5rem' }} />
     </div>
   );
 }
