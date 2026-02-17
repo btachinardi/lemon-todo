@@ -3,6 +3,7 @@ namespace LemonDo.Api.Middleware;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
+using LemonDo.Api.Serialization;
 
 /// <summary>
 /// Catches unhandled exceptions and returns a structured JSON error response (500).
@@ -26,6 +27,33 @@ public sealed class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorH
         try
         {
             await next(context);
+        }
+        catch (ProtectedDataValidationException pdex)
+        {
+            var elapsedMs = Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
+            logger.LogWarning(
+                "Protected data validation failed on {Method} {Path} after {ElapsedMs:F1}ms: {ErrorCode}",
+                context.Request.Method,
+                context.Request.Path,
+                elapsedMs,
+                pdex.Error.Code);
+
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.ContentType = "application/json";
+
+            var field = pdex.Error.Code.Contains('.') ? pdex.Error.Code[..pdex.Error.Code.IndexOf('.')] : pdex.Error.Code;
+            var response = new
+            {
+                type = "validation_error",
+                title = pdex.Error.Message,
+                status = 400,
+                errors = new Dictionary<string, string[]>
+                {
+                    [field] = [pdex.Error.Message]
+                }
+            };
+
+            await context.Response.WriteAsJsonAsync(response);
         }
         catch (Exception ex)
         {

@@ -2,10 +2,12 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json.Nodes;
 using Microsoft.OpenApi;
+using Microsoft.AspNetCore.Http.Json;
 using LemonDo.Api.Auth;
 using LemonDo.Api.Endpoints;
 using LemonDo.Api.Logging;
 using LemonDo.Api.Middleware;
+using LemonDo.Api.Serialization;
 using LemonDo.Api.Services;
 using LemonDo.Application.Common;
 using LemonDo.Application.Extensions;
@@ -20,6 +22,7 @@ using DomainTaskStatus = LemonDo.Domain.Tasks.ValueObjects.TaskStatus;
 using LemonDo.Infrastructure.Extensions;
 using LemonDo.Infrastructure.Identity;
 using LemonDo.Infrastructure.Persistence;
+using LemonDo.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -99,6 +102,10 @@ builder.Services.AddOpenApi(options =>
 // them to infer endpoint parameter sources. Only runtime *behavior* is guarded.
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+if (!isBuildTimeDocGen)
+    builder.Services.AddSingleton<IConfigureOptions<JsonOptions>, ProtectedDataJsonConfigurator>();
+
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<LemonDoDbContext>("database", tags: ["ready"]);
 
@@ -227,6 +234,7 @@ if (!isBuildTimeDocGen)
         {
             var registerHandler = scope.ServiceProvider.GetRequiredService<RegisterUserCommandHandler>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var encryptionService = scope.ServiceProvider.GetRequiredService<IFieldEncryptionService>();
 
             (string Email, string Password, string DisplayName, string Role)[] devAccounts =
             [
@@ -242,8 +250,13 @@ if (!isBuildTimeDocGen)
                 if (await userManager.FindByNameAsync(emailHash) is not null)
                     continue;
 
+                // Create EncryptedFields programmatically for seeding (bypassing JSON deserialization)
+                var encryptedEmail = EncryptedEmailConverter.Create(email, encryptionService);
+                var encryptedDisplayName = EncryptedDisplayNameConverter.Create(displayName, encryptionService);
+                var protectedPassword = new ProtectedValue(password);
+
                 // RegisterUserCommandHandler creates credentials + domain User + board (via event)
-                var command = new RegisterUserCommand(email, password, displayName);
+                var command = new RegisterUserCommand(encryptedEmail, protectedPassword, encryptedDisplayName);
                 var registerResult = await registerHandler.HandleAsync(command);
 
                 if (registerResult.IsSuccess)

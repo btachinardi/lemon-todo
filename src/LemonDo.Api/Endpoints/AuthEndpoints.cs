@@ -43,7 +43,7 @@ public static class AuthEndpoints
         IOptions<JwtSettings> jwtSettings,
         CancellationToken ct)
     {
-        var command = new RegisterUserCommand(request.Email, request.Password, request.DisplayName);
+        var command = new RegisterUserCommand(request.Email!, request.Password!, request.DisplayName!);
         var result = await handler.HandleAsync(command, ct);
 
         return result.ToHttpResult(
@@ -58,7 +58,7 @@ public static class AuthEndpoints
         IOptions<JwtSettings> jwtSettings,
         CancellationToken ct)
     {
-        var command = new LoginUserCommand(request.Email, request.Password);
+        var command = new LoginUserCommand(request.Email!, request.Password!);
         var result = await handler.HandleAsync(command, ct);
 
         return result.ToHttpResult(
@@ -125,7 +125,7 @@ public static class AuthEndpoints
         HttpContext httpContext,
         CancellationToken ct)
     {
-        var command = new RevealOwnProfileCommand(request.Password);
+        var command = new RevealOwnProfileCommand(request.Password!);
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(
             data => Results.Ok(new RevealedProfileResponse(data.Email, data.DisplayName)),

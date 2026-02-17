@@ -202,7 +202,7 @@ public static class TaskEndpoints
         HttpContext httpContext,
         CancellationToken ct)
     {
-        var command = new ViewTaskNoteCommand(id, request.Password);
+        var command = new ViewTaskNoteCommand(id, request.Password!);
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(note => Results.Ok(new { Note = note }), httpContext: httpContext);
     }
