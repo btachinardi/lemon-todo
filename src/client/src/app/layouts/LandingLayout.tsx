@@ -50,7 +50,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             <img src="/lemondo-icon.png" alt="" className="size-7 sm:size-8" />
             <span className="font-[var(--font-brand)] text-lg font-black tracking-tight sm:text-xl">
               <span className="text-foreground">{t('brand.lemon')}</span>
-              <span className="text-lemon">{t('brand.do')}</span>
+              <span className="text-highlight">{t('brand.do')}</span>
             </span>
           </Link>
 
@@ -172,7 +172,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             <img src="/lemondo-icon.png" alt="" className="size-6" />
             <span className="font-[var(--font-brand)] text-lg font-black tracking-tight">
               <span className="text-foreground">{t('brand.lemon')}</span>
-              <span className="text-lemon">{t('brand.do')}</span>
+              <span className="text-highlight">{t('brand.do')}</span>
             </span>
           </div>
           <p className="text-sm text-muted-foreground">{t('landing.footer.tagline')}</p>

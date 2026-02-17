@@ -31,7 +31,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <img src="/lemondo-icon.png" alt="" className="size-7 sm:size-8" />
               <span className="font-[var(--font-brand)] text-lg font-black tracking-tight sm:text-xl">
                 <span className="text-foreground">{t('brand.lemon')}</span>
-                <span className="text-lemon">{t('brand.do')}</span>
+                <span className="text-highlight">{t('brand.do')}</span>
               </span>
               <span className="ml-1 text-xs text-muted-foreground">{t('brand.admin')}</span>
             </h1>

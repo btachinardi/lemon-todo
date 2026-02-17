@@ -73,9 +73,9 @@
   --color-status-done: var(--status-done);
   --color-status-done-foreground: var(--status-done-foreground);
 
-  /* Lemon brand token */
-  --color-lemon: var(--lemon);
-  --color-lemon-foreground: var(--lemon-foreground);
+  /* Highlight brand token */
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
 
   /* Custom animations */
   --animate-fade-in-up: fade-in-up 0.4s ease-out both;
@@ -168,9 +168,9 @@
   --status-done: oklch(0.20 0.05 155);
   --status-done-foreground: oklch(0.78 0.12 155);
 
-  /* Lemon brand */
-  --lemon: oklch(0.94 0.24 116);
-  --lemon-foreground: oklch(0.05 0 0);
+  /* Highlight brand */
+  --highlight: oklch(0.94 0.24 116);
+  --highlight-foreground: oklch(0.05 0 0);
 }
 
 /* Dark class inherits root (dark-first design) */
@@ -263,12 +263,12 @@
   --status-done: oklch(0.93 0.04 155);
   --status-done-foreground: oklch(0.35 0.10 155);
 
-  /* Lemon brand — lemon.io secondary purple #832CE0 for text-on-white contexts.
+  /* Highlight brand — lemon.io secondary purple #832CE0 for text-on-white contexts.
      The lime brand works on dark backgrounds but lacks readability on white;
      lemon.io itself uses this purple for accent text on light backgrounds.
      WCAG AA on white: ~6.5:1 contrast ratio */
-  --lemon: oklch(0.47 0.27 303);
-  --lemon-foreground: oklch(0.98 0 0);
+  --highlight: oklch(0.47 0.27 303);
+  --highlight-foreground: oklch(0.98 0 0);
 }
 
 @layer base {
@@ -317,7 +317,7 @@
   100% { transform: scale(1); }
 }
 
-@keyframes lemon-pulse {
+@keyframes highlight-pulse {
   0%, 100% { box-shadow: 0 0 20px rgba(220,255,2,0.25); }
   50% { box-shadow: 0 0 32px rgba(220,255,2,0.45); }
 }

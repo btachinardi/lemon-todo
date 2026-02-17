@@ -3,13 +3,13 @@ import { cn } from '@/lib/utils';
 interface SectionHeadingProps {
   title: string;
   subtitle?: string;
-  /** Highlighted word(s) in lemon color. If present, must be a substring of title. */
+  /** Highlighted word(s) in highlight color. If present, must be a substring of title. */
   highlight?: string;
   align?: 'left' | 'center';
   className?: string;
 }
 
-/** Styled section heading with optional lemon-highlighted text and subtitle. */
+/** Styled section heading with optional highlighted text and subtitle. */
 export function SectionHeading({
   title,
   subtitle,
@@ -26,7 +26,7 @@ export function SectionHeading({
     return (
       <>
         {title.slice(0, idx)}
-        <span className="text-lemon">{highlight}</span>
+        <span className="text-highlight">{highlight}</span>
         {title.slice(idx + highlight.length)}
       </>
     );

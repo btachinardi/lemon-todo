@@ -31,7 +31,7 @@ export function DevOpsHeroSection() {
             className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"
           >
             {t('devops.hero.titleLine1')}{' '}
-            <span className="text-lemon glow-text">{t('devops.hero.titleHighlight')}</span>
+            <span className="text-highlight glow-text">{t('devops.hero.titleHighlight')}</span>
             <br />
             {t('devops.hero.titleLine2')}
           </motion.h1>

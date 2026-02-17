@@ -59,7 +59,7 @@ export function UserMenu({ variant = 'dropdown' }: UserMenuProps) {
       <>
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3 px-3 py-2">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-semibold text-lemon">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-semibold text-highlight">
               {initials}
             </span>
             <div className="flex min-w-0 flex-col">
@@ -123,7 +123,7 @@ export function UserMenu({ variant = 'dropdown' }: UserMenuProps) {
             size="sm"
             className="gap-2 text-muted-foreground hover:text-foreground"
           >
-            <span className="flex size-8 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-lemon sm:size-7">
+            <span className="flex size-8 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-highlight sm:size-7">
               {initials}
             </span>
             <span className="hidden text-sm sm:inline">{user.displayName}</span>

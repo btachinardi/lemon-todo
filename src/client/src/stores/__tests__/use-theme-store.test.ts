@@ -135,26 +135,26 @@ describe('theme design tokens (index.css)', () => {
     expect(darkBlock).not.toBeNull();
   });
 
-  describe('--lemon in light theme', () => {
+  describe('--highlight in light theme', () => {
     it('should use purple #832ce0 (oklch hue ~303) instead of lime-green', () => {
-      const lemonValue = extractCssVar(lightBlock!, '--lemon');
-      expect(lemonValue).not.toBeNull();
+      const highlightValue = extractCssVar(lightBlock!, '--highlight');
+      expect(highlightValue).not.toBeNull();
       // Must NOT be the old lime-green value (hue 120)
-      expect(lemonValue).not.toContain('120');
+      expect(highlightValue).not.toContain('120');
       // Must be in the purple hue range (~303 in oklch)
-      expect(lemonValue).toContain('303');
+      expect(highlightValue).toContain('303');
     });
 
-    it('should not use the old lime-green value for --lemon', () => {
-      const lemonValue = extractCssVar(lightBlock!, '--lemon');
-      expect(lemonValue).not.toBe('oklch(0.52 0.22 120)');
+    it('should not use the old lime-green value for --highlight', () => {
+      const highlightValue = extractCssVar(lightBlock!, '--highlight');
+      expect(highlightValue).not.toBe('oklch(0.52 0.22 120)');
     });
   });
 
-  describe('--lemon in dark theme', () => {
+  describe('--highlight in dark theme', () => {
     it('should keep the original lime-green value', () => {
-      const lemonValue = extractCssVar(darkBlock!, '--lemon');
-      expect(lemonValue).toBe('oklch(0.94 0.24 116)');
+      const highlightValue = extractCssVar(darkBlock!, '--highlight');
+      expect(highlightValue).toBe('oklch(0.94 0.24 116)');
     });
   });
 });

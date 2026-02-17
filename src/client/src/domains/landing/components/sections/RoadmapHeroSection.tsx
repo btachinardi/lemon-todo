@@ -44,7 +44,7 @@ export function RoadmapHeroSection() {
             className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"
           >
             {t('roadmap.hero.titleLine1')}{' '}
-            <span className="text-lemon glow-text">{t('roadmap.hero.titleHighlight')}</span>
+            <span className="text-highlight glow-text">{t('roadmap.hero.titleHighlight')}</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 24 }}

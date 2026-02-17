@@ -31,7 +31,7 @@ export function StoryHeroSection() {
             className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"
           >
             {t('story.hero.titleLine1')}{' '}
-            <span className="text-lemon glow-text">{t('story.hero.titleHighlight')}</span>{' '}
+            <span className="text-highlight glow-text">{t('story.hero.titleHighlight')}</span>{' '}
             {t('story.hero.titleLine2')}
           </motion.h1>
           <motion.p
