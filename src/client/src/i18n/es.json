@@ -513,7 +513,7 @@
       "titleLine1": "De Carpeta Vacía a",
       "titleHighlight": "Producción",
       "titleLine2": "",
-      "subtitle": "Una prueba técnica de lemon.io para una startup de salud que detecta cánceres en etapa temprana vía resonancia — bajo la óptica de lo que 'MVP de producción' significa en salud regulada. 5 documentos, 5 checkpoints entregables, 3 rediseños, 1.034 tests."
+      "subtitle": "Una prueba técnica de lemon.io para una startup de salud que detecta cánceres en etapa temprana vía resonancia — bajo la óptica de lo que 'MVP de producción' significa en salud regulada. 5 documentos, 5 checkpoints entregables, 3 rediseños, 1.084 tests."
     },
     "rationale": {
       "title": "Por Qué Estas Funcionalidades",
@@ -810,7 +810,7 @@
         },
         "mstest": {
           "name": "MSTest 4",
-          "description": "413 tests, gate CI dual-database"
+          "description": "403 tests, gate CI dual-database"
         },
         "fscheck": {
           "name": "FsCheck",
@@ -818,7 +818,7 @@
         },
         "vitest": {
           "name": "Vitest",
-          "description": "469 tests con gate de verificación TypeScript"
+          "description": "529 tests con gate de verificación TypeScript"
         },
         "fastcheck": {
           "name": "fast-check",
@@ -855,7 +855,7 @@
       "highlight": "Evidencia",
       "items": [
         {
-          "value": "1.034",
+          "value": "1.084",
           "label": "Tests",
           "detail": "Backend + Frontend + E2E"
         },
@@ -941,7 +941,7 @@
     "hero": {
       "titleLine1": "Esto Es Solo",
       "titleHighlight": "El Comienzo.",
-      "subtitle": "1,034 tests. Desplegado en producción. Cinco checkpoints completados. Esto es lo que viene — desde flujos impulsados por IA hasta cumplimiento empresarial."
+      "subtitle": "1,084 tests. Desplegado en producción. Cinco checkpoints completados. Esto es lo que viene — desde flujos impulsados por IA hasta cumplimiento empresarial."
     },
     "horizons": {
       "near": {
@@ -1078,8 +1078,8 @@
         { "title": "Deploy", "detail": "Container App + Static Web App" }
       ],
       "details": [
-        { "title": "Testing Dual de BD", "description": "413 tests backend contra SQLite y SQL Server. Aislamiento por instancia de base de datos — cada clase de test obtiene su propia BD, eliminada al finalizar." },
-        { "title": "Gate de Calidad Frontend", "description": "Tipos API generados desde spec OpenAPI, verificación de tipos TypeScript, 469 tests con invariantes de propiedad, lint verificado — todo antes del build." },
+        { "title": "Testing Dual de BD", "description": "403 tests backend contra SQLite y SQL Server. Aislamiento por instancia de base de datos — cada clase de test obtiene su propia BD, eliminada al finalizar." },
+        { "title": "Gate de Calidad Frontend", "description": "Tipos API generados desde spec OpenAPI, verificación de tipos TypeScript, 529 tests con invariantes de propiedad, lint verificado — todo antes del build." },
         { "title": "Build Multi-Stage Docker", "description": "Etapa de build con SDK, etapa runtime con aspnet. Usuario no-root, health-checked, etiquetado por SHA del commit." },
         { "title": "Deploy Sin Inactividad", "description": "Actualizaciones rolling de Container App con verificación de probe /alive cada 30 segundos." }
       ]

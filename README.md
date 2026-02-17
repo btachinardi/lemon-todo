@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/btachinardi/lemon-todo/actions/workflows/deploy.yml"><img src="https://github.com/btachinardi/lemon-todo/actions/workflows/deploy.yml/badge.svg?branch=main" alt="CI/CD" /></a>
-  <a href="https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.3"><img src="https://img.shields.io/badge/release-v1.0.3-brightgreen" alt="Release" /></a>
+  <a href="https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.6"><img src="https://img.shields.io/badge/release-v1.0.6-brightgreen" alt="Release" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
 </p>
 
@@ -31,7 +31,7 @@ The feature scope was driven by your company's domain. A production MVP in regul
 
 Every feature traces back to this reasoning. The branding itself is intentional: named after lemon.io to demonstrate the ability to adapt frontend design to any brand guidelines.
 
-The project was built from an empty folder, with **5 planning documents created before any code**, delivered across **5 incremental checkpoints** (each a complete, shippable application), backed by **1,034 tests**, and **deployed to Azure** with Terraform IaC. See the [Methodology page](https://lemondo.btas.dev/methodology) for the full rationale and journey.
+The project was built from an empty folder, with **5 planning documents created before any code**, delivered across **5 incremental checkpoints** (each a complete, shippable application), backed by **1,084 tests**, and **deployed to Azure** with Terraform IaC. See the [Methodology page](https://lemondo.btas.dev/methodology) for the full rationale and journey.
 
 I get really invested in all projects I work on, and I couldn't help myself even though this was only a take-home assignment; everything was built as if this were a real product I wanted to see succeed in the market. I hope you like it!
 
@@ -48,7 +48,7 @@ Lemon.DO is a Kanban + list task manager built with **.NET 10 / Aspire 13** and 
 - PWA with offline reads, mutation queue, and sync-on-reconnect
 - Dark/light theme, i18n (English, Portuguese, Spanish), and guided onboarding
 - In-app notifications + Web Push with due date reminders
-- **1,034 tests** (413 backend + 469 frontend + 152 E2E) — property-based invariants, 26 visual regression baselines, WCAG contrast coverage, dual-database CI, and enum translation guards generated from the OpenAPI spec
+- **1,084 tests** (403 backend + 529 frontend + 152 E2E) — property-based invariants, 26 visual regression baselines, WCAG contrast coverage, dual-database CI, and enum translation guards generated from the OpenAPI spec
 - CI/CD via GitHub Actions, Docker, and Azure (Container Apps + Static Web App)
 
 ## Architecture
@@ -113,6 +113,9 @@ infra/                        # Terraform (3 stages, 10 modules)
 
 | Version | Milestone | Tests |
 |---------|-----------|-------|
+| [v1.0.6](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.6) | Smooth demo account switching, kanban scroll polish | 1,084 |
+| [v1.0.5](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.5) | Mobile UX polish — toast overlay, drag-scroll, banner overflow, demo switcher redesign | 1,084 |
+| [v1.0.4](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.4) | Keyboard-aware dialogs, auth loading screen, font hierarchy, mobile polish | 1,084 |
 | [v1.0.3](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.3) | Dev container, fresh-clone DX fixes, zero-config onboarding | 1,034 |
 | [v1.0.2](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.2) | OpenAPI type generation, admin E2E, offline queue fixes, theme polish | 1,034 |
 | [v1.0.1](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.1) | Mobile, accessibility & CI bug fixes | 908 |
