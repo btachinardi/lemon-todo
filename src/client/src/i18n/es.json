@@ -218,7 +218,8 @@
     "admin": "Admin",
     "adminNav": "Navegación admin",
     "users": "Usuarios",
-    "auditLog": "Registro de Auditoría"
+    "auditLog": "Registro de Auditoría",
+    "language": "Idioma"
   },
   "admin": {
     "users": {

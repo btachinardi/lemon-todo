@@ -116,9 +116,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <ArrowLeftIcon className="size-4" />
                   {t('common.back')}
                 </NavLink>
-                <LanguageSwitcher />
+                <LanguageSwitcher showLabel />
                 <ThemeToggle
                   theme={theme}
+                  showLabel
                   onToggle={() => {
                     const themes: Array<typeof theme> = ['light', 'dark', 'system'];
                     const idx = themes.indexOf(theme);

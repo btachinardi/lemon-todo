@@ -36,9 +36,11 @@ vi.mock('@/domains/onboarding/hooks/use-onboarding', () => ({
   onboardingKeys: { all: ['onboarding'], status: () => ['onboarding', 'status'] },
 }));
 
-// Mock NotificationDropdown to avoid TanStack Query dependency
+// Mock NotificationDropdown to avoid TanStack Query dependency — captures props
 vi.mock('@/domains/notifications/components/widgets/NotificationDropdown', () => ({
-  NotificationDropdown: () => <div data-testid="notification-dropdown" />,
+  NotificationDropdown: (props: Record<string, unknown>) => (
+    <div data-testid="notification-dropdown" data-show-label={props.showLabel ? 'true' : undefined} />
+  ),
 }));
 
 // Mock SyncIndicator to avoid offline queue store dependency
@@ -262,5 +264,30 @@ describe('DashboardLayout', () => {
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByTestId('notification-dropdown')).toBeInTheDocument();
     expect(within(dialog).getByTestId('user-menu')).toBeInTheDocument();
+  });
+
+  it('should pass showLabel to notification dropdown in mobile menu', async () => {
+    const user = userEvent.setup();
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    const header = screen.getByRole('banner');
+    const menuButton = within(header).getByRole('button', { name: /menu/i });
+    await user.click(menuButton);
+
+    const dialog = screen.getByRole('dialog');
+    const notifDropdown = within(dialog).getByTestId('notification-dropdown');
+    expect(notifDropdown).toHaveAttribute('data-show-label', 'true');
   });
 });

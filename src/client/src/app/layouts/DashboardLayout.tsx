@@ -131,10 +131,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     {t('nav.admin')}
                   </NavLink>
                 )}
-                <NotificationDropdown />
-                <LanguageSwitcher />
+                <NotificationDropdown showLabel />
+                <LanguageSwitcher showLabel />
                 <ThemeToggle
                   theme={theme}
+                  showLabel
                   onToggle={() => {
                     const themes: Array<typeof theme> = ['light', 'dark', 'system'];
                     const idx = themes.indexOf(theme);

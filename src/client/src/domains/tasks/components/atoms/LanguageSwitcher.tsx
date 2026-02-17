@@ -14,21 +14,34 @@ const languages = [
   { code: 'es', label: 'Español' },
 ] as const;
 
+interface LanguageSwitcherProps {
+  /** When true, renders a visible text label next to the icon. */
+  showLabel?: boolean;
+}
+
 /**
  * Dropdown to switch between available languages.
  * Self-contained — manages its own i18n state via `useTranslation`.
  */
-export function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+export function LanguageSwitcher({ showLabel }: LanguageSwitcherProps = {}) {
+  const { t, i18n } = useTranslation();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-9 sm:size-8">
-          <GlobeIcon className="size-[18px] sm:size-4" />
-          <span className="sr-only">
-            {i18n.language === 'pt-BR' ? 'Idioma' : 'Language'}
-          </span>
+        <Button
+          variant="ghost"
+          size={showLabel ? 'sm' : 'icon'}
+          className={showLabel ? 'justify-start gap-2 px-3 py-2' : 'size-9 sm:size-8'}
+        >
+          <GlobeIcon className={showLabel ? 'size-4' : 'size-[18px] sm:size-4'} />
+          {showLabel ? (
+            <span className="text-sm">{t('nav.language')}</span>
+          ) : (
+            <span className="sr-only">
+              {i18n.language === 'pt-BR' ? 'Idioma' : 'Language'}
+            </span>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

@@ -218,7 +218,8 @@
     "admin": "Admin",
     "adminNav": "Admin navigation",
     "users": "Users",
-    "auditLog": "Audit Log"
+    "auditLog": "Audit Log",
+    "language": "Language"
   },
   "admin": {
     "users": {
