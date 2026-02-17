@@ -13,7 +13,9 @@ import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitc
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 import { NotificationDropdown } from '@/domains/notifications/components/widgets/NotificationDropdown';
+import { useOnboardingStatus } from '@/domains/onboarding/hooks/use-onboarding';
 import { OnboardingTour } from '@/domains/onboarding/components/widgets/OnboardingTour';
+import { PWAInstallPrompt } from '@/ui/feedback/PWAInstallPrompt';
 import { SyncIndicator } from '@/ui/feedback/SyncIndicator';
 
 /** Props for {@link DashboardLayout}. */
@@ -28,6 +30,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const resolvedTheme = resolveTheme(theme);
   const roles = useAuthStore((s) => s.user?.roles);
   const isAdmin = roles?.some((r) => r === 'Admin' || r === 'SystemAdmin') ?? false;
+  const { data: onboardingStatus } = useOnboardingStatus();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -125,6 +128,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           v{__APP_VERSION__}
         </span>
       </footer>
+      {onboardingStatus?.completed && <PWAInstallPrompt />}
       <OnboardingTour />
       <Toaster theme={resolvedTheme} />
     </div>

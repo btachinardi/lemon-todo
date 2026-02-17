@@ -4,6 +4,10 @@ import { MemoryRouter } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
+const { onboardingState } = vi.hoisted(() => ({
+  onboardingState: { completed: false, completedAt: null as string | null },
+}));
+
 // Mock sonner to avoid layout complexity
 vi.mock('sonner', () => ({
   Toaster: () => null,
@@ -24,6 +28,13 @@ vi.mock('@/domains/onboarding/components/widgets/OnboardingTour', () => ({
   OnboardingTour: () => null,
 }));
 
+// Mock useOnboardingStatus to control onboarding gate per test
+vi.mock('@/domains/onboarding/hooks/use-onboarding', () => ({
+  useOnboardingStatus: () => ({ data: onboardingState, isLoading: false }),
+  useCompleteOnboarding: () => ({ mutate: vi.fn() }),
+  onboardingKeys: { all: ['onboarding'], status: () => ['onboarding', 'status'] },
+}));
+
 // Mock NotificationDropdown to avoid TanStack Query dependency
 vi.mock('@/domains/notifications/components/widgets/NotificationDropdown', () => ({
   NotificationDropdown: () => <div data-testid="notification-dropdown" />,
@@ -32,6 +43,11 @@ vi.mock('@/domains/notifications/components/widgets/NotificationDropdown', () =>
 // Mock SyncIndicator to avoid offline queue store dependency
 vi.mock('@/ui/feedback/SyncIndicator', () => ({
   SyncIndicator: () => null,
+}));
+
+// Mock PWAInstallPrompt as a detectable stub (uses browser PWA APIs internally)
+vi.mock('@/ui/feedback/PWAInstallPrompt', () => ({
+  PWAInstallPrompt: () => <div data-testid="pwa-install-prompt" />,
 }));
 
 describe('DashboardLayout', () => {
@@ -136,5 +152,47 @@ describe('DashboardLayout', () => {
     expect(screen.queryByTestId('dev-account-switcher')).not.toBeInTheDocument();
 
     vi.unstubAllEnvs();
+  });
+
+  it('should not render install prompt when onboarding is not completed', () => {
+    onboardingState.completed = false;
+    onboardingState.completedAt = null;
+
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByTestId('pwa-install-prompt')).not.toBeInTheDocument();
+  });
+
+  it('should render install prompt when onboarding is completed', () => {
+    onboardingState.completed = true;
+    onboardingState.completedAt = '2024-01-01T00:00:00Z';
+
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId('pwa-install-prompt')).toBeInTheDocument();
   });
 });
