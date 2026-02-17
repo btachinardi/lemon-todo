@@ -1669,13 +1669,42 @@
             }
           },
           "sensitiveNote": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EncryptedField"
+              }
             ]
           }
         },
         "description": "Creates a new task with optional metadata."
+      },
+      "EncryptedField": {
+        "required": [
+          "encrypted",
+          "redacted"
+        ],
+        "type": "object",
+        "properties": {
+          "encrypted": {
+            "type": "string",
+            "description": "The encrypted ciphertext (Base64). Stored in shadow properties."
+          },
+          "redacted": {
+            "type": "string",
+            "description": "A human-readable redacted form, safe for display and logging."
+          },
+          "hash": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional deterministic hash for database lookups (e.g., SHA-256 of email).\r\nNull for fields that don't need lookup capability."
+          }
+        },
+        "description": "Sealed container for encrypted protected data. The raw plaintext is never stored.\r\nCreated by JSON converters during deserialization: validate → encrypt → discard raw.\r\nImplements IProtectedData so the Serilog destructuring policy masks it."
       },
       "LoginRequest": {
         "required": [
@@ -1685,10 +1714,10 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "$ref": "#/components/schemas/EncryptedField"
           },
           "password": {
-            "type": "string"
+            "$ref": "#/components/schemas/ProtectedValue"
           }
         },
         "description": "Authenticates a user with email and password credentials."
@@ -2020,6 +2049,25 @@
         },
         "description": "Represents a paginated result set."
       },
+      "ProtectedValue": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The raw value. Only consumed by services that need it (e.g., password verification)."
+          },
+          "redacted": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Wraps a raw sensitive value (e.g., a password) to prevent accidental logging.\r\nNot encrypted — the consuming service needs raw access.\r\nImplements IProtectedData so the Serilog destructuring policy masks it."
+      },
       "RegisterRequest": {
         "required": [
           "email",
@@ -2029,13 +2077,13 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "$ref": "#/components/schemas/EncryptedField"
           },
           "password": {
-            "type": "string"
+            "$ref": "#/components/schemas/ProtectedValue"
           },
           "displayName": {
-            "type": "string"
+            "$ref": "#/components/schemas/EncryptedField"
           }
         },
         "description": "Registers a new user account with email and password."
@@ -2074,6 +2122,19 @@
         },
         "description": "Reorders a column within the board's column list."
       },
+      "RevealedField": {
+        "required": [
+          "encrypted"
+        ],
+        "type": "object",
+        "properties": {
+          "encrypted": {
+            "type": "string",
+            "description": "The encrypted ciphertext to be decrypted during JSON serialization."
+          }
+        },
+        "description": "Holds encrypted ciphertext that will be decrypted at JSON serialization time.\r\nThe raw value only exists in the JSON output stream — never in a C# property.\r\nUsed for admin reveal and owner reveal responses."
+      },
       "RevealedProfileResponse": {
         "required": [
           "email",
@@ -2082,10 +2143,10 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "$ref": "#/components/schemas/RevealedField"
           },
           "displayName": {
-            "type": "string"
+            "$ref": "#/components/schemas/RevealedField"
           }
         },
         "description": "Response containing the user's unredacted profile data after password re-authentication."
@@ -2098,13 +2159,13 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "$ref": "#/components/schemas/RevealedField"
           },
           "displayName": {
-            "type": "string"
+            "$ref": "#/components/schemas/RevealedField"
           }
         },
-        "description": "DTO returned when protected data is revealed."
+        "description": "DTO returned when protected data is revealed. RevealedField values are decrypted at JSON serialization."
       },
       "RevealProfileRequest": {
         "required": [
@@ -2113,7 +2174,7 @@
         "type": "object",
         "properties": {
           "password": {
-            "type": "string"
+            "$ref": "#/components/schemas/ProtectedValue"
           }
         },
         "description": "Request body for `POST /api/auth/reveal-profile`."
@@ -2143,7 +2204,7 @@
             ]
           },
           "password": {
-            "type": "string"
+            "$ref": "#/components/schemas/ProtectedValue"
           }
         },
         "description": "Reveals a user's protected data via break-the-glass authentication."
@@ -2173,7 +2234,7 @@
             ]
           },
           "password": {
-            "type": "string"
+            "$ref": "#/components/schemas/ProtectedValue"
           }
         },
         "description": "Reveals a task's sensitive note via break-the-glass authentication."
@@ -2383,9 +2444,13 @@
             "default": false
           },
           "sensitiveNote": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EncryptedField"
+              }
             ]
           },
           "clearSensitiveNote": {
@@ -2430,7 +2495,7 @@
         "type": "object",
         "properties": {
           "password": {
-            "type": "string"
+            "$ref": "#/components/schemas/ProtectedValue"
           }
         },
         "description": "Views a task's sensitive note via break-the-glass authentication."
