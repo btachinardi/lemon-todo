@@ -580,7 +580,7 @@
           "subtitle": "CP5 — Experiencia",
           "description": "PWA con cola de mutaciones offline, tour de onboarding, notificaciones Web Push, analytics, rediseño mobile, landing page.",
           "decision": "Cola de mutaciones IndexedDB para sync offline",
-          "tests": "808",
+          "tests": "908",
           "tag": "v1.0.0",
           "summary": "Envió PWA con cola offline, tour de onboarding, Web Push, analytics, rediseño de UX mobile y esta landing page."
         }
@@ -755,7 +755,7 @@
       "highlight": "Evidencia",
       "items": [
         {
-          "value": "808",
+          "value": "908",
           "label": "Tests",
           "detail": "Backend + Frontend + E2E"
         },
@@ -831,7 +831,7 @@
     "hero": {
       "titleLine1": "Esto Es Solo",
       "titleHighlight": "El Comienzo.",
-      "subtitle": "808 tests. Desplegado en producción. Cinco checkpoints completados. Esto es lo que viene — desde flujos impulsados por IA hasta cumplimiento empresarial."
+      "subtitle": "908 tests. Desplegado en producción. Cinco checkpoints completados. Esto es lo que viene — desde flujos impulsados por IA hasta cumplimiento empresarial."
     },
     "horizons": {
       "near": {

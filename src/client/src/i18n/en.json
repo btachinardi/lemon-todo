@@ -580,7 +580,7 @@
           "subtitle": "CP5 — Experience",
           "description": "PWA with offline mutation queue, onboarding tour, Web Push notifications, analytics, mobile overhaul, landing page.",
           "decision": "IndexedDB mutation queue for offline sync",
-          "tests": "808",
+          "tests": "908",
           "tag": "v1.0.0",
           "summary": "Shipped PWA with offline queue, onboarding tour, Web Push, analytics, mobile UX overhaul, and this landing page."
         }
@@ -755,7 +755,7 @@
       "highlight": "Evidence",
       "items": [
         {
-          "value": "808",
+          "value": "908",
           "label": "Tests",
           "detail": "Backend + Frontend + E2E"
         },
@@ -831,7 +831,7 @@
     "hero": {
       "titleLine1": "This Is Just",
       "titleHighlight": "The Beginning.",
-      "subtitle": "808 tests. Production deployed. Five checkpoints shipped. Here's what comes next — from AI-powered workflows to enterprise compliance."
+      "subtitle": "908 tests. Production deployed. Five checkpoints shipped. Here's what comes next — from AI-powered workflows to enterprise compliance."
     },
     "horizons": {
       "near": {

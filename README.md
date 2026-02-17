@@ -14,7 +14,7 @@
 
 <p align="center">
   <a href="https://github.com/btachinardi/lemon-todo/actions/workflows/deploy.yml"><img src="https://github.com/btachinardi/lemon-todo/actions/workflows/deploy.yml/badge.svg?branch=main" alt="CI/CD" /></a>
-  <a href="https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.0"><img src="https://img.shields.io/badge/release-v1.0.0-brightgreen" alt="Release" /></a>
+  <a href="https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.1"><img src="https://img.shields.io/badge/release-v1.0.1-brightgreen" alt="Release" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
 </p>
 
@@ -33,7 +33,7 @@ Lemon.DO is a Kanban + list task manager built with **.NET 10 / Aspire 13** and 
 - PWA with offline reads, mutation queue, and sync-on-reconnect
 - Dark/light theme, i18n (English, Portuguese, Spanish), and guided onboarding
 - In-app notifications + Web Push with due date reminders
-- **854 tests** (397 backend + 361 frontend + 96 E2E) with property-based testing
+- **908 tests** (406 backend + 406 frontend + 96 E2E) with property-based testing
 - CI/CD via GitHub Actions, Docker, and Azure (Container Apps + Static Web App)
 
 ## Architecture
@@ -88,6 +88,7 @@ infra/                        # Terraform (3 stages, 10 modules)
 
 | Version | Milestone | Tests |
 |---------|-----------|-------|
+| [v1.0.1](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.1) | Mobile, accessibility & CI bug fixes | 908 |
 | [v1.0.0](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.0) | PWA, offline, onboarding, notifications, analytics, landing page | 854 |
 | [v0.4.0](https://github.com/btachinardi/lemon-todo/releases/tag/v0.4.0) | Observability, admin panel, encryption, i18n, Azure deploy | 668 |
 | [v0.3.0](https://github.com/btachinardi/lemon-todo/releases/tag/v0.3.0) | Dark mode, filters, task detail sheet, E2E | 478 |

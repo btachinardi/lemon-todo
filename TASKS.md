@@ -305,7 +305,7 @@
 | 2026-02-16 | Debounced description auto-save (1s) with flush on unmount | Prevents data loss on quick exits. useRef tracks draft, cleanup flushes pending save. |
 | 2026-02-16 | Multi-browser E2E locally, Chromium-only in CI | Firefox + WebKit add ~2x CI time for minimal additional coverage. Local multi-browser catches rendering differences. |
 | 2026-02-16 | Visual regression with toHaveScreenshot | Built-in Playwright, no external service. Light + dark theme baselines at 1280x720 with reducedMotion. |
-| 2026-02-16 | Release v1.0.0 (skip v0.5.0) | All 5 checkpoints complete. CP5 was planned as v0.5.0 but the app is feature-complete with 808 tests, cloud deployment, PWA, i18n, and admin tooling — warrants 1.0.0 stable designation. |
+| 2026-02-16 | Release v1.0.0 (skip v0.5.0) | All 5 checkpoints complete. CP5 was planned as v0.5.0 but the app is feature-complete with 908 tests, cloud deployment, PWA, i18n, and admin tooling — warrants 1.0.0 stable designation. |
 | 2026-02-16 | v1.0.1 patch release | 12 bug fixes: mobile responsiveness (touch drag, nav menus, column-snap scroll), accessibility (DialogTitle, sr-only keys, visible button labels), due date timezone fix, CSP for Scalar docs, feature flag for demo accounts. |
 
 ---
@@ -350,7 +350,7 @@
   - Infrastructure: Terraform Azure (bootstrap + 3 stages, 10 modules incl. container-app), GitHub Actions CI/CD, Docker
   - Azure deployment: 15 resources live (Container Apps, ACR, SQL, Key Vault, SWA, App Insights, Log Analytics)
   - Developer CLI: `./dev` script with build, test, lint, start, migrate, docker, verify, infra commands
-- **Checkpoint 5**: DONE (Advanced & Delight — 375 backend + 337 frontend + 96 E2E = 808 tests)
+- **Checkpoint 5**: DONE (Advanced & Delight — 406 backend + 406 frontend + 96 E2E = 908 tests)
   - PWA: Service worker via vite-plugin-pwa, install/update prompts, Workbox runtime caching
   - Offline: Read support (NetworkFirst caching, offlineFirst query mode) + mutation queue (IndexedDB, FIFO drain, 409 conflict handling)
   - Onboarding: 3-step tooltip tour with auto-advance, celebration animation, skip button, server-side state

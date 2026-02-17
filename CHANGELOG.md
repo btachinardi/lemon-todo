@@ -93,7 +93,7 @@ First stable release. Checkpoint 5: Advanced & Delight — PWA, offline support,
 - **Multi-browser E2E testing** — Chromium + Firefox + WebKit + device emulation (iPhone 14, iPad Mini, Pixel 7)
 - **Visual regression baselines** — Playwright `toHaveScreenshot()` for board, list, auth, and landing views in light + dark themes
 - **41 new E2E tests**: language (5), onboarding (7), notifications (9), offline (6), PWA (4), visual regression (10)
-- **808 tests** total (375 backend + 337 frontend + 96 E2E), up from 668
+- **908 tests** total (406 backend + 406 frontend + 96 E2E), up from 668
 
 ### Changed
 
