@@ -689,6 +689,137 @@ describe('KanbanBoard mobile column-snap auto-scroll', () => {
 
     expect(mockScrollTo).not.toHaveBeenCalled();
   });
+
+  it('should not re-trigger same edge zone snap until pointer leaves the zone', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Re-entry test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { mockScrollTo } = setupScrollContainerMocks(container);
+
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // First move to right edge → snap fires
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    // Advance past cooldown but pointer STAYS in right edge zone → should NOT snap again
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 125) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1); // still 1, no re-trigger
+
+    vi.restoreAllMocks();
+  });
+
+  it('should allow reverse-direction snap by moving pointer back from the snap position', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Reverse snap test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { scrollContainer, mockScrollTo } = setupScrollContainerMocks(container);
+
+    // Start scrolled at column 1 so there's room to go right then back left
+    Object.defineProperty(scrollContainer, 'scrollLeft', { value: 335, configurable: true, writable: true });
+
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // Snap right via edge zone
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    // Advance past cooldown, then drag left by ≥80px from the snap position (320 → 230)
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 30) as unknown as DragMoveEvent);
+    });
+
+    // Should have snapped left (2 total scrolls: one right, one left)
+    expect(mockScrollTo).toHaveBeenCalledTimes(2);
+
+    vi.restoreAllMocks();
+  });
+
+  it('should not trigger distance-based snap when movement is less than snap distance threshold', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Below-threshold test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { scrollContainer, mockScrollTo } = setupScrollContainerMocks(container);
+
+    Object.defineProperty(scrollContainer, 'scrollLeft', { value: 335, configurable: true, writable: true });
+
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // Snap right
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    // Advance past cooldown, move left but only 50px from snap point (320 → 270)
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 70) as unknown as DragMoveEvent);
+    });
+
+    // Should NOT have snapped — still only 1 scroll
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    vi.restoreAllMocks();
+  });
+
+  it('should support a full right-then-left snap sequence in a single drag', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Full sequence test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { mockScrollTo } = setupScrollContainerMocks(container);
+
+    // Start at column 0
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // 1. Snap RIGHT: drag to right edge (pointerX = 200+120 = 320 > 375-60 = 315)
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    // 2. Advance time, move slightly left but stay within snap distance threshold
+    //    Snap anchor is at 320. Move to 260 (60px away, below 80px threshold).
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 60) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1); // no snap, within threshold
+
+    // 3. Snap LEFT: continue dragging left (pointerX = 200-120 = 80)
+    //    That's 240px left of the snap anchor (320), well above 80px threshold
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 2000);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, -120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(2); // one right + one left
+
+    vi.restoreAllMocks();
+  });
 });
 
 describe('KanbanBoard mobile height stretching', () => {
