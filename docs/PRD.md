@@ -9,7 +9,7 @@
 
 ## Review Summary
 
-After creating detailed user scenarios and personas (SCENARIOS.md), several insights emerged that refine our initial PRD:
+After creating detailed user scenarios and personas (SCENARIOS.md), several insights emerged that refine the initial PRD:
 
 ### Key Insights from Scenario Analysis
 
@@ -23,7 +23,7 @@ After creating detailed user scenarios and personas (SCENARIOS.md), several insi
 
 5. **Offline-first is table stakes for mobile**: Sarah's flight scenario proves PWA offline must work for core operations (view, create, complete tasks).
 
-6. **Analytics must be privacy-first**: HIPAA requires all analytics events to hash or exclude protected data. Our analytics architecture must be designed with this constraint from day one.
+6. **Analytics must be privacy-first**: HIPAA requires all analytics events to hash or exclude protected data. The analytics architecture must be designed with this constraint from day one.
 
 ---
 
@@ -162,7 +162,7 @@ No changes needed.
 
 ### 3.1 Task Creation Strategy
 
-Based on scenarios, we need two creation paths:
+Based on scenarios, the application requires two creation paths:
 
 ```
 Quick-Add Path (Sarah):
@@ -235,7 +235,7 @@ In Analytics:
 
 ## 4. Updated Success Criteria
 
-Based on scenario analysis, we refine our success metrics:
+Based on scenario analysis, the success metrics are refined as follows:
 
 | Metric | Original Target | Revised Target | Rationale |
 |--------|----------------|----------------|-----------|

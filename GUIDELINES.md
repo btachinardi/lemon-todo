@@ -6,7 +6,7 @@
 
 ## 1. Development Methodology: TDD
 
-We follow strict Test-Driven Development with RED-GREEN-VALIDATE phases.
+LemonDo follows strict Test-Driven Development with RED-GREEN-VALIDATE phases.
 
 ### The TDD Cycle
 
@@ -354,7 +354,7 @@ components (Domain Views, Widgets, Atoms) and domain-agnostic primitives (Design
 
 Within the Components tier, UI pieces are organized by **domain awareness** and
 **composition granularity**. This answers: *"how big is this component, and does it
-know about our business domain?"*
+know about the business domain?"*
 
 ```
 Domain Views    ← Large compositions that fill a page region
@@ -380,7 +380,7 @@ like "variant", "size", "children".
 
 ##### Design System (Domain-Agnostic)
 
-**Responsibility**: The Design System is our library of generic, reusable visual
+**Responsibility**: The Design System is the project's library of generic, reusable visual
 primitives. These components have ZERO knowledge of any business domain. Shadcn/ui
 components live here, along with any custom primitives built on Radix.
 
@@ -399,7 +399,7 @@ components live here, along with any custom primitives built on Radix.
 - Business logic or conditional rendering based on domain state
 
 **Accessibility is paramount in the Design System**: Since all UI ultimately renders
-through these primitives, this is where we enforce WCAG 2.1 AA compliance. Radix
+through these primitives, this is where WCAG 2.1 AA compliance is enforced. Radix
 primitives handle focus management, keyboard navigation, and ARIA attributes. Every
 Design System component must:
 - Be keyboard accessible
@@ -527,7 +527,7 @@ Domain Components **CAN**:
 - Use `useTranslation` for i18n
 
 > **Note**: The Views/Widgets/Atoms taxonomy is organizational - not a permission
-> boundary. All three share the same import rules. However, we recommend that Atoms
+> boundary. All three share the same import rules. However, the recommendation is that Atoms
 > prefer pure props over State hooks to maximize reusability and testability.
 
 ---

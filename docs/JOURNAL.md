@@ -2,7 +2,7 @@
 
 > **Date**: 2026-02-13
 > **Status**: Active
-> **Purpose**: Captures our complete thought process, from inception to production - every decision, phase, and lesson learned.
+> **Purpose**: Captures the complete thought process, from inception to production - every decision, phase, and lesson learned.
 
 ---
 
@@ -10,9 +10,9 @@
 
 **Date: February 13, 2026**
 
-We started with an empty folder and a clear vision: build a production-grade task management platform that proves you can have great UX AND compliance. Not one or the other.
+LemonDo started with an empty folder and a clear vision: build a production-grade task management platform that proves you can have great UX AND compliance. Not one or the other.
 
-Our constraints:
+The constraints:
 - .NET Aspire for cloud-native orchestration
 - React + Shadcn/ui for a premium frontend
 - Strict TDD methodology
@@ -21,70 +21,70 @@ Our constraints:
 
 ## Phase 1: Planning Before Code
 
-We believe planning is not wasted time. It's compressed debugging. We created five foundational documents before writing a single line of code:
+Planning is not wasted time. It's compressed debugging. Five foundational documents were created before writing a single line of code:
 
 ### 1.1 Product Requirements Document (PRD)
 
-Our first document ([PRD.draft.md](./PRD.draft.md)) captured everything we knew we needed:
+The first document ([PRD.draft.md](./PRD.draft.md)) captured everything known at that stage:
 - 10 functional requirement groups (FR-001 through FR-010)
 - 10 non-functional requirement groups (NFR-001 through NFR-010)
 - Success metrics with concrete targets
 - Risk assessment with mitigations
 - Clear "out of scope" boundaries to prevent scope creep
 
-**Decision**: We chose Scalar over Swagger for API documentation. Starting with .NET 9, Scalar became the modern default. It loads faster, has better search, and its dark mode matches our premium UI goals.
+**Decision**: Scalar over Swagger for API documentation. Starting with .NET 9, Scalar became the modern default. It loads faster, has better search, and its dark mode matches the premium UI goals.
 
-**Decision**: SQLite for MVP. Some might call this controversial for a "HIPAA-compliant" app. Our reasoning: SQLite is more than capable for our MVP scale, the repository pattern makes swapping to PostgreSQL a one-file change, and it eliminates infrastructure complexity during development.
+**Decision**: SQLite for MVP. Some might call this controversial for a "HIPAA-compliant" app. The reasoning: SQLite is more than capable for the MVP scale, the repository pattern makes swapping to PostgreSQL a one-file change, and it eliminates infrastructure complexity during development.
 
 ### 1.2 Technology Research
 
-We researched every technology we'd use ([RESEARCH.md](./RESEARCH.md)), verifying:
+Every technology in the stack was researched ([RESEARCH.md](./RESEARCH.md)), verifying:
 - Latest stable versions (not bleeding edge, not outdated)
 - Compatibility between all pieces of the stack
-- Features relevant to our requirements
+- Features relevant to the project's requirements
 
 Key findings:
-- **.NET 10** is the current LTS (3-year support). We're using 10.0.103.
-- **Aspire 13** dropped the ".NET" prefix and added `AddJavaScriptApp` which auto-generates Dockerfiles for our React frontend.
+- **.NET 10** is the current LTS (3-year support). LemonDo uses 10.0.103.
+- **Aspire 13** dropped the ".NET" prefix and added `AddJavaScriptApp` which auto-generates Dockerfiles for the React frontend.
 - **Vite 7** is the latest major version (7.3.1). Vite 6 is now in maintenance.
 - **React 19.2** brought the React Compiler for automatic memoization.
 - **Shadcn/ui** added component styles (Vega, Nova, etc.) and Base UI support in February 2026.
 
 ### 1.3 User Scenarios
 
-This is where our planning leveled up. Instead of jumping to domain design, we wrote detailed storyboards ([SCENARIOS.md](./SCENARIOS.md)) from the USER's perspective:
+This is where the planning leveled up. Instead of jumping to domain design, detailed storyboards were written ([SCENARIOS.md](./SCENARIOS.md)) from the USER's perspective:
 
-We created three personas:
+Three personas were created:
 - **Sarah** (Freelancer): Needs quick task capture on mobile
 - **Marcus** (Team Lead): Needs Kanban with compliance
 - **Diana** (System Admin): Needs audit trails and PII management
 
-Then we walked through 10 scenarios step-by-step, documenting:
+Then 10 scenarios were walked through step-by-step, documenting:
 - What the user sees at each step
 - What they expect to happen
 - What emotions they should feel
-- What analytics events we should track
+- What analytics events should be tracked
 
-**Insight**: This exercise revealed that quick-add (title-only, one tap) is THE killer feature. Our PRD originally required title + description for task creation. The scenario analysis showed that Sarah creates tasks in 2-second bursts while walking between meetings. We changed the minimum to title-only.
+**Insight**: This exercise revealed that quick-add (title-only, one tap) is THE killer feature. The original PRD required title + description for task creation. The scenario analysis showed that Sarah creates tasks in 2-second bursts while walking between meetings. The minimum was changed to title-only.
 
 **Insight**: Offline support isn't a nice-to-have. Sarah's airplane scenario proved that creating and completing tasks offline is essential, not just viewing.
 
-**Our North Star Metric**: Weekly Active Task Completers (WATC). A user who completes at least one task per week. This measures actual value delivery, correlates with retention, and is not gameable.
+**The North Star Metric**: Weekly Active Task Completers (WATC). A user who completes at least one task per week. This measures actual value delivery, correlates with retention, and is not gameable.
 
 ### 1.4 Revised PRD
 
-After scenarios, we created [PRD.md](./PRD.md) - our official requirements document, incorporating everything we learned. Key changes:
+After scenarios, [PRD.md](./PRD.md) was created - the official requirements document, incorporating everything learned. Key changes:
 - Quick-add promoted to P0
 - Onboarding celebrations upgraded from P1 to P0
 - Offline CRUD (not just viewing) became a requirement
 - PII default-redacted in admin views (not opt-in redaction, but opt-in reveal)
 - New NFR section for micro-interactions and UX polish
 
-We kept the original PRD intact to show our evolution.
+The original PRD was kept intact to show the project's evolution.
 
 ### 1.5 Domain Design
 
-With requirements solid, we designed our domain ([DOMAIN.md](./DOMAIN.md)):
+With requirements solid, the domain was designed ([DOMAIN.md](./DOMAIN.md)):
 
 **6 Bounded Contexts**:
 1. **Identity** - Users, roles, authentication
@@ -103,7 +103,7 @@ With requirements solid, we designed our domain ([DOMAIN.md](./DOMAIN.md)):
 
 ## Phase 2: Development Guidelines
 
-Before touching code, we established our rules of engagement ([../GUIDELINES.md](../GUIDELINES.md)):
+Before touching code, the rules of engagement were established ([../GUIDELINES.md](../GUIDELINES.md)):
 
 - **Strict TDD**: RED-GREEN-VALIDATE. No production code without a failing test.
 - **Frontend Architecture**: Two orthogonal systems - Architecture Tiers (Routing -> Pages & Layouts -> State Management -> Components) for separation of concerns, and Component Taxonomy (Design System -> Domain Atoms -> Domain Widgets -> Domain Views) for composition granularity.
@@ -113,26 +113,26 @@ Before touching code, we established our rules of engagement ([../GUIDELINES.md]
 
 ### Interlude: The State Management Gap
 
-During our checkpoint review of GUIDELINES.md, we realized we had a significant blind spot: **no explicit state management strategy for the frontend**. Our original component architecture described what components render, but not how they get their data.
+During a checkpoint review of GUIDELINES.md, a significant blind spot was identified: **no explicit state management strategy for the frontend**. The original component architecture described what components render, but not how they get their data.
 
-We added two critical libraries to the stack:
+Two critical libraries were added to the stack:
 
 **TanStack Query 5** for server state (data from the API):
 - Replaces the `useState` + `useEffect` + `fetch` anti-pattern
 - Automatic caching, deduplication, and background refetching
-- Offline mutation queue - critical for our PWA scenario (Sarah on a plane)
+- Offline mutation queue - critical for the PWA scenario (Sarah on a plane)
 - Optimistic updates for that instant-feeling UI
 
 **Zustand 5** for client state (UI preferences, form drafts, offline queue):
 - No provider wrapper needed (unlike Redux or Context)
 - Built-in `persist` middleware for localStorage/IndexedDB
-- Tiny (~1KB) - important for our mobile-first PWA
+- Tiny (~1KB) - important for a mobile-first PWA
 
 The key rule: **TanStack Query owns all server data, Zustand owns all client state, React Context is only for low-frequency cross-cutting providers.** Components never mix `fetch` calls with rendering.
 
 ### Interlude: Untangling "Layers"
 
-We realized we were conflating two orthogonal concepts under the same "layer" word. What we actually have are two independent organizational systems:
+A realization emerged: two orthogonal concepts were being conflated under the same "layer" word. What the codebase actually has are two independent organizational systems:
 
 **Architecture Tiers** answer *"what is this code responsible for?"* - separation of concerns:
 ```
@@ -148,9 +148,9 @@ The old L1/L2/L3 labels tried to do both jobs at once and created confusion. The
 
 ### Interlude: Rethinking Delivery Strategy
 
-After running review agents against our documentation, we faced a hard truth: we were planning to build everything at once. Six bounded contexts, HIPAA compliance, three languages, offline CRUD, analytics - all marked as P0. The reviewers flagged this as over-engineering, and they were right.
+After running review agents against the documentation, a hard truth surfaced: the plan was to build everything at once. Six bounded contexts, HIPAA compliance, three languages, offline CRUD, analytics - all marked as P0. The reviewers flagged this as over-engineering, and they were right.
 
-But the ambition isn't wrong - the delivery order is. We restructured into **checkpoint-based delivery**: five incremental checkpoints where each one produces a complete, runnable application. If we stop at any checkpoint, we have something presentable that demonstrates real architecture and thought process.
+But the ambition isn't wrong - the delivery order is. The project restructured into **checkpoint-based delivery**: five incremental checkpoints where each one produces a complete, runnable application. Stopping at any checkpoint still yields something presentable that demonstrates real architecture and thought process.
 
 **The key insight**: Checkpoint 1 addresses *every* core evaluation criteria (API design, data structures, component design, F/E↔B/E communication, clean code). Later checkpoints layer on production features progressively.
 
@@ -162,9 +162,9 @@ But the ambition isn't wrong - the delivery order is. We restructured into **che
 | **CP4: Production** | Observability, PII, audit, i18n | "HIPAA-Ready" not certified |
 | **CP5: Advanced** | PWA, onboarding, analytics, E2E | Lightweight implementations proving architecture |
 
-**Decision**: Tasks before Auth. A bold but deliberate choice. CP1 runs in single-user mode so we can demonstrate clean architecture end-to-end without auth complexity. The repository pattern means adding user-scoped queries in CP2 is a one-line change - proving the architecture's extensibility.
+**Decision**: Tasks before Auth. A bold but deliberate choice. CP1 runs in single-user mode to demonstrate clean architecture end-to-end without auth complexity. The repository pattern means adding user-scoped queries in CP2 is a one-line change - proving the architecture's extensibility.
 
-**Decision**: HIPAA downgraded from P0 to "HIPAA-Ready infrastructure." Full HIPAA compliance requires BAAs, legal review, workforce training, and incident response procedures - that's a business framework, not a codebase feature. We implement the *technical controls* (encryption, audit trails, PII redaction) and document what's needed for full certification.
+**Decision**: HIPAA downgraded from P0 to "HIPAA-Ready infrastructure." Full HIPAA compliance requires BAAs, legal review, workforce training, and incident response procedures - that's a business framework, not a codebase feature. The project implements the *technical controls* (encryption, audit trails, PII redaction) and documents what's needed for full certification.
 
 See [../TASKS.md](../TASKS.md) for the complete checkpoint breakdown with every task.
 
@@ -174,14 +174,14 @@ See [../TASKS.md](../TASKS.md) for the complete checkpoint breakdown with every 
 
 **Date: February 14, 2026**
 
-This phase brought our planning to life. We scaffolded the entire .NET Aspire solution, React frontend, test infrastructure, and wired everything together. The build is clean (9/9 projects, 0 warnings) and all smoke tests pass.
+This phase brought the planning to life. The entire .NET Aspire solution, React frontend, test infrastructure were scaffolded and wired together. The build is clean (9/9 projects, 0 warnings) and all smoke tests pass.
 
 ### 3.1 .NET Aspire Solution
 
-We discovered several .NET 10 changes during bootstrapping:
+Several .NET 10 changes surfaced during bootstrapping:
 
 - **`.slnx` format**: `dotnet new sln` now creates `.slnx` (XML-based) by default, not the legacy `.sln`. Lighter and cleaner.
-- **Aspire workload deprecated**: Aspire is now distributed as NuGet packages. We install templates via `dotnet new install Aspire.ProjectTemplates` (v13.1.1).
+- **Aspire workload deprecated**: Aspire is now distributed as NuGet packages. Templates are installed via `dotnet new install Aspire.ProjectTemplates` (v13.1.1).
 - **`dotnet test --solution` syntax**: .NET 10 requires the `--solution` flag for solution paths; positional arguments no longer work.
 
 The solution follows strict DDD layering: Domain ← Application ← Infrastructure ← Api ← AppHost. ServiceDefaults provides health checks (`/health`, `/alive`), OpenTelemetry, and resilience. Scalar serves API docs at `/scalar/v1`.
@@ -190,22 +190,22 @@ The solution follows strict DDD layering: Domain ← Application ← Infrastruct
 
 Vite 7 + React 19 + TypeScript 5.9 with Tailwind CSS 4 (CSS-first, `@tailwindcss/vite` plugin - no PostCSS). Shadcn/ui initialized with path aliases (`@/*` → `./src/*`). All state management libraries installed: TanStack Query 5, Zustand 5, react-i18next.
 
-Frontend folder structure follows our Architecture Tiers + Component Taxonomy from GUIDELINES.md: `app/` (routing, pages, layouts, providers), `domains/` (feature modules), `ui/` (design system), `lib/` (utilities).
+Frontend folder structure follows the Architecture Tiers + Component Taxonomy from GUIDELINES.md: `app/` (routing, pages, layouts, providers), `domains/` (feature modules), `ui/` (design system), `lib/` (utilities).
 
 ### 3.3 The MSTest Decision
 
-**This was our most important technical decision during bootstrap.**
+**This was the most important technical decision during bootstrap.**
 
-We initially chose xUnit v3, following community convention. But during setup, the xUnit v3 template defaulted to `net8.0` instead of auto-detecting our .NET 10 SDK. This caused immediate compatibility errors when adding project references.
+The initial choice was xUnit v3, following community convention. But during setup, the xUnit v3 template defaulted to `net8.0` instead of auto-detecting the .NET 10 SDK. This caused immediate compatibility errors when adding project references.
 
-Rather than force-fixing the target framework, we stopped and asked: *"If we're fighting the tooling at bootstrap, did we pick the wrong tool?"*
+Rather than force-fixing the target framework, the team stopped and asked: *"If the tooling is fighting back at bootstrap, is this the wrong tool?"*
 
-Research confirmed our instincts:
+Research confirmed the instinct:
 - **xUnit v3 has an active .NET 10 bug** (GitHub issue #3413) - "catastrophic failure" in CI environments
 - **xUnit v3 templates don't auto-detect SDK version** - they hardcode `net8.0`
 - **MSTest is first-party** - maintained by Microsoft, ships with every .NET SDK, guaranteed same-day compatibility
 
-We switched to **MSTest 4.0.1 with Microsoft.Testing.Platform (MTP)**:
+The project switched to **MSTest 4.0.1 with Microsoft.Testing.Platform (MTP)**:
 - `dotnet new mstest` → auto-targeted `net10.0` with zero friction
 - All project references added without conflicts
 - MTP is the modern test runner replacing VSTest (configured via `global.json`)
@@ -319,7 +319,7 @@ The core redesign. Key design decisions:
 
 6. **Board invariants enforced**. Board must always have at least one Todo column and one Done column. `GetInitialColumn()` and `GetDoneColumn()` provide entry/exit points.
 
-7. **WipLimit renamed to MaxTasks**. The "WIP" terminology had no place in our domain vocabulary.
+7. **WipLimit renamed to MaxTasks**. The "WIP" terminology had no place in the domain vocabulary.
 
 ### Key Files Changed
 
@@ -362,9 +362,9 @@ Application handlers coordinate cross-context operations. There is no domain-lev
 
 1. **Board gains TaskCard value object**. Instead of Task storing `ColumnId` and `Position`, the Board aggregate owns a `Cards: List<TaskCard>` collection where each `TaskCard` holds `TaskId + ColumnId + Position`. Spatial placement is a board concern, not a task concern.
 
-2. **Entity renamed from BoardTask to Task**. Tasks exist independently of boards. The `BoardTask` name from the previous redesign implied tasks were owned by boards, which is no longer true. For `System.Threading.Tasks.Task` collisions, we use qualified names (`using TaskEntity = LemonDo.Domain.Tasks.Task`).
+2. **Entity renamed from BoardTask to Task**. Tasks exist independently of boards. The `BoardTask` name from the previous redesign implied tasks were owned by boards, which is no longer true. For `System.Threading.Tasks.Task` collisions, qualified names are used (`using TaskEntity = LemonDo.Domain.Tasks.Task`).
 
-3. **Board is conformist to Task context**. The Board context imports `TaskId` and `TaskStatus` directly from the Task context. No anti-corruption layer needed -- the conformist relationship keeps things simple since we own both contexts.
+3. **Board is conformist to Task context**. The Board context imports `TaskId` and `TaskStatus` directly from the Task context. No anti-corruption layer needed -- the conformist relationship keeps things simple since both contexts share a single codebase.
 
 4. **Application-layer cross-context coordination**. Handlers orchestrate between the two aggregates:
    - `CreateTask` = `Task.Create()` + `board.PlaceTask()`
@@ -401,7 +401,7 @@ The KanbanBoard view was rewritten to use `board.cards` for task-to-column mappi
 
 2. **Bounded context splits are major refactors but they pay off.** ~98 files changed across all layers, but the result is clearer responsibilities and simpler aggregates. Each context can now evolve independently.
 
-3. **The conformist relationship keeps things simple.** Since we own both contexts and they live in the same process, Board just imports types from Task directly. No anti-corruption layer, no translation, no mapping -- just direct dependency. This is the right trade-off for a monolith.
+3. **The conformist relationship keeps things simple.** Since both contexts share the same codebase and live in the same process, Board just imports types from Task directly. No anti-corruption layer, no translation, no mapping -- just direct dependency. This is the right trade-off for a monolith.
 
 ---
 
@@ -419,7 +419,7 @@ After completing the bounded context split, manual testing revealed two interrel
 
 ### Investigation
 
-We traced the full execution path: frontend drag handler → API → domain `Board.MoveCard()` → EF Core persistence → query/DTO response → frontend sort.
+The full execution path was traced: frontend drag handler → API → domain `Board.MoveCard()` → EF Core persistence → query/DTO response → frontend sort.
 
 **Root cause of position drift** (`Board.MoveCard()` in `Board.cs:210-232`): The frontend sent the visual array index (0, 1, 2...) as the position. The backend stored it verbatim on the new `TaskCard` without reindexing other cards in the column. After multiple moves, position collisions accumulated — two cards with position=1 produced an unstable sort, making cards appear in the wrong order on the next load.
 
@@ -431,7 +431,7 @@ Example: Column has A(pos=0), B(pos=1), C(pos=2). Drag C between A and B → fro
 
 #### For the ordering problem
 
-We evaluated four strategies to replace the broken dense-integer positioning:
+Four strategies were evaluated to replace the broken dense-integer positioning:
 
 **1. Sparse numeric ranks** — Store ranks as 1000, 2000, 3000. Insert between A and B by computing `(rankA + rankB) / 2`. Only the moved row is updated. Rebalance a local window when gaps become too small. Use DECIMAL, not float (precision drift). *Simple, well-understood, good default.*
 
@@ -441,7 +441,7 @@ We evaluated four strategies to replace the broken dense-integer positioning:
 
 **4. CRDT sequence identifiers** — Logoot/LSEQ/RGA variants for concurrent collaborative editing. *Massive overkill for a single-user todo app.*
 
-**Decision**: Sparse numeric ranks with `decimal`. It's the simplest strategy that eliminates the bug class, it only updates one row per move, and decimal arithmetic avoids float precision drift. Rebalancing is a rare local operation. LexoRank was tempting but adds unnecessary complexity for our scale.
+**Decision**: Sparse numeric ranks with `decimal`. It's the simplest strategy that eliminates the bug class, it only updates one row per move, and decimal arithmetic avoids float precision drift. Rebalancing is a rare local operation. LexoRank was tempting but adds unnecessary complexity for this scale.
 
 #### For the API contract
 
@@ -449,7 +449,7 @@ The next question was how the frontend communicates the desired position to the 
 
 **Option A: Frontend sends array index** (current approach) — The frontend sends `position: 2` meaning "put this at index 2 in the column." The backend must load all cards in the column, sort them by rank, find the neighbors at that index, and compute the midpoint rank. *Frontend stays simple but backend does an extra read-to-sort on every move.*
 
-**Option B: Frontend sends the rank directly** — The frontend knows the ranks of neighboring cards (from the board DTO) and computes the midpoint itself. The backend just stores it. *Leaks the ranking system into the frontend. If we change strategies, the frontend must change too.*
+**Option B: Frontend sends the rank directly** — The frontend knows the ranks of neighboring cards (from the board DTO) and computes the midpoint itself. The backend just stores it. *Leaks the ranking system into the frontend. If the strategy changes, the frontend must change too.*
 
 **Option C: Frontend sends neighbor card IDs** — The frontend sends `previousTaskId` and `nextTaskId` — the cards directly above and below the drop target. The backend looks up those two cards' ranks (O(1) each) and computes the midpoint. Null values handle edge cases: `previous=null` means top of column; `next=null` means bottom; both null means only card. *Frontend stays dumb, backend avoids read-to-sort, API contract is explicit about intent.*
 
@@ -457,7 +457,7 @@ The next question was how the frontend communicates the desired position to the 
 - The frontend already knows which cards are above and below from its visual state (the `columnItems` array). Extracting neighbor IDs at the drop index is trivial.
 - The backend doesn't need to load and sort all column cards — just two O(1) lookups by TaskId.
 - The API contract is unambiguous: "place this card between these two cards" has exactly one correct interpretation, unlike "position 2" which is meaningless when positions are corrupted.
-- If we later switch from sparse numeric to LexoRank or any other strategy, only the backend rank-computation changes. The API contract and frontend are unaffected.
+- If a later switch from sparse numeric to LexoRank or any other strategy occurs, only the backend rank-computation changes. The API contract and frontend are unaffected.
 
 ### The Final Design
 
@@ -522,7 +522,7 @@ POST /api/tasks/{id}/move
 
 ### The Problem
 
-During E2E test authoring for card ordering, we discovered that `Task.Archive()` required the task to be in `Done` status. This forced a `completeTask()` → `archiveTask()` sequence in tests, and more importantly, it was a design flaw: archiving is a visibility/organizational concept, not a lifecycle one.
+During E2E test authoring for card ordering, it was discovered that `Task.Archive()` required the task to be in `Done` status. This forced a `completeTask()` → `archiveTask()` sequence in tests, and more importantly, it was a design flaw: archiving is a visibility/organizational concept, not a lifecycle one.
 
 A user should be able to archive any task regardless of its status — a stale Todo task, an abandoned InProgress task, or a completed Done task. Requiring completion first is an unnecessary constraint that doesn't serve the user's intent.
 
@@ -556,7 +556,7 @@ These axes should never be coupled. A task can be archived at any point on the s
 
 ### Version Strategy
 
-We adopted **pre-1.0 SemVer** (`0.MINOR.PATCH`) for initial development. v0.1.0 signals "first feature-complete checkpoint" rather than production stability. The `1.0.0` release will come when the app has authentication, polish, and production hardening (likely after CP3 or CP4).
+The project adopted **pre-1.0 SemVer** (`0.MINOR.PATCH`) for initial development. v0.1.0 signals "first feature-complete checkpoint" rather than production stability. The `1.0.0` release will come when the app has authentication, polish, and production hardening (likely after CP3 or CP4).
 
 ### Release Infrastructure
 
@@ -613,7 +613,7 @@ Every value object in the codebase repeated the same boilerplate: a `Value` prop
 
 ### Design Decision: No Static Interface for Create()
 
-We deliberately did **not** create an `ICreatable<TSelf, TInput>` interface to standardize the `Create()` factory pattern. The reason: `Create()` methods are inherently non-uniform:
+A deliberate decision was made **not** to create an `ICreatable<TSelf, TInput>` interface to standardize the `Create()` factory pattern. The reason: `Create()` methods are inherently non-uniform:
 
 - **ID types** (TaskId, BoardId, etc.) have no `Create()` at all — they use `New()` / `From()`
 - **String VOs** return `Result<TSelf, DomainError>` but differ in parameters and normalization logic (Tag lowercases, Email validates format + lowercases, DisplayName enforces min length, TaskDescription allows null/empty)
@@ -727,7 +727,7 @@ After completing CP2's initial auth implementation, a security review identified
 
 ### The Architecture: Memory-Only Access Token + HttpOnly Refresh Cookie
 
-We adopted a split-token architecture that eliminates localStorage entirely:
+A split-token architecture was adopted that eliminates localStorage entirely:
 
 **Access token** — kept in JavaScript memory (Zustand store, NOT persisted). Lost on page refresh. Sent as `Authorization: Bearer` header on API calls. Short-lived (15 min).
 
@@ -964,7 +964,7 @@ Note: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` were already ad
 
 **Per-route error boundaries**: A single global error boundary would unmount the entire app on any error. Per-route boundaries (using React Router's `errorElement`) contain failures to the affected route while leaving navigation and other routes functional.
 
-**date-fns over dayjs/moment**: Tree-shakeable (only import what you use), pure functional API (no global mutation), excellent TypeScript support. At our usage level (formatting + relative dates), the bundle impact is minimal.
+**date-fns over dayjs/moment**: Tree-shakeable (only import what you use), pure functional API (no global mutation), excellent TypeScript support. At this usage level (formatting + relative dates), the bundle impact is minimal.
 
 ### 3.5 Architecture Patterns
 
@@ -1162,7 +1162,7 @@ This violated DDD's separation of concerns: Identity should handle **credentials
 
 ### The Architecture Redesign
 
-We split responsibilities across two tables with a shared ID:
+Responsibilities were split across two tables with a shared ID:
 
 **AspNetUsers** (Identity — credentials only):
 - `Id` (PK)
@@ -1185,7 +1185,7 @@ We split responsibilities across two tables with a shared ID:
 | **UserRepository handles encryption transparently** | `AddAsync(user, email, displayName)` receives validated VOs, computes hash/redacted/encrypted forms, stores via EF shadow properties. Callers don't see encryption details. |
 | **IAuthService becomes credential-focused** | Removed `RegisterAsync` (returned AuthResult with user data). Now: `CreateCredentialsAsync(userId, emailHash, password)` → no user profile. Handlers orchestrate Identity + domain User separately. |
 | **AuthTokens record separates tokens from user data** | New `AuthTokens(AccessToken, RefreshToken, Roles)` record. Handlers load domain User, generate tokens, combine into `AuthResult` at the last mile. |
-| **Identity.UserName stores email hash** | Identity's `FindByNameAsync(emailHash)` provides O(1) login lookup. No need for a separate `EmailHash` column on `AspNetUsers` — we repurposed an existing indexed field. |
+| **Identity.UserName stores email hash** | Identity's `FindByNameAsync(emailHash)` provides O(1) login lookup. No need for a separate `EmailHash` column on `AspNetUsers` — repurposes an existing indexed field. |
 | **Admin search via exact email hash** | Admin search by partial string no longer works (was searching redacted values). Now: search by exact email (hashed) or partial redacted display name. |
 | **ISensitivePii marker on VOs** | `Email` and `DisplayName` VOs implement `ISensitivePii` with a `Redacted` property. This makes PII awareness a domain-level concern, not an infrastructure detail. |
 | **CreateDefaultBoardOnUserRegistered event handler** | Domain User is now persisted, so `UserRegisteredEvent` is dispatched via `SaveChangesAsync`. Event handler creates default board for new users. |
@@ -1316,11 +1316,11 @@ Tasks often contain sensitive information (medical notes, legal references, conf
 
 ### The Problem
 
-When we added SQL Server support in CP4, we used `EnsureCreatedAsync()` for SQL Server and `MigrateAsync()` for SQLite — a pragmatic hack. But `EnsureCreated` doesn't support incremental schema changes, so any future migration would break SQL Server deployments.
+When SQL Server support was added in CP4, `EnsureCreatedAsync()` was used for SQL Server and `MigrateAsync()` for SQLite — a pragmatic hack. But `EnsureCreated` doesn't support incremental schema changes, so any future migration would break SQL Server deployments.
 
 ### The Solution: Separate Migration Assemblies
 
-EF Core allows only one `ModelSnapshot` per `DbContext` per assembly, and SQLite and SQL Server produce different column types (e.g., `TEXT` vs `datetimeoffset`). We created dedicated migration assemblies:
+EF Core allows only one `ModelSnapshot` per `DbContext` per assembly, and SQLite and SQL Server produce different column types (e.g., `TEXT` vs `datetimeoffset`). Dedicated migration assemblies were created:
 
 - **`LemonDo.Migrations.Sqlite`** — houses all 11 SQLite migrations (moved from Infrastructure)
 - **`LemonDo.Migrations.SqlServer`** — houses a single `InitialCreate` migration covering the full schema
@@ -1447,11 +1447,11 @@ Multi-stage build:
 
 #### The Quota Problem
 
-After bootstrapping the Terraform state backend and deploying 12 of 14 resources successfully, the App Service Plan consistently failed — Azure reported **0 VM quota** for all tiers (Basic, Standard, and even Free) in East US 2. We upgraded from Free Trial to Pay-As-You-Go, but quota requests were denied.
+After bootstrapping the Terraform state backend and deploying 12 of 14 resources successfully, the App Service Plan consistently failed — Azure reported **0 VM quota** for all tiers (Basic, Standard, and even Free) in East US 2. An upgrade from Free Trial to Pay-As-You-Go was attempted, but quota requests were denied.
 
 #### The Solution: Azure Container Apps
 
-Container Apps run on a consumption-based model that **doesn't require VM quotas**. Key advantages over B1 App Service for our MVP:
+Container Apps run on a consumption-based model that **doesn't require VM quotas**. Key advantages over B1 App Service for the MVP:
 
 | Capability | App Service (B1) | Container Apps |
 |------------|------------------|----------------|
