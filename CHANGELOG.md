@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-02-17
+
+Patch release improving developer experience for fresh clones — zero-config onboarding via `./dev install` and a dev container.
+
+### Added
+
+- **Dev container** (`.devcontainer/devcontainer.json`) for zero-setup onboarding in VS Code / GitHub Codespaces
+  - Pre-installed .NET 10 SDK, Node 22, and pnpm
+  - `postCreateCommand` runs `./dev install` automatically
+  - Port forwarding for API (5155), Vite (5173), and Aspire Dashboard (15082/17022)
+  - VS Code extensions: C# Dev Kit, Tailwind CSS IntelliSense, ESLint
+
+### Fixed
+
+- **Fresh clone `./dev start` crash** — `./dev install` now generates gitignored dev config files (`appsettings.Development.json`, `launchSettings.json`) with safe defaults; existing files are never overwritten
+- **Aspire HTTPS crash on Linux** — `./dev install` now runs `dotnet dev-certs https` as step 1 (no-ops if cert exists)
+- **Missing TypeScript API types** — `./dev install` now generates `schema.d.ts` from the committed OpenAPI spec
+- Node.js prerequisite relaxed from 24+ to 22+ (no `engines` constraint exists)
+
 ## [1.0.2] - 2026-02-17
 
 Patch release with OpenAPI-based type generation, protected data refactoring, offline queue fixes, admin E2E coverage, theme polish, and CI/CD improvements.
@@ -406,7 +425,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.2...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/btachinardi/lemon-todo/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/btachinardi/lemon-todo/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/btachinardi/lemon-todo/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/btachinardi/lemon-todo/compare/v0.4.1...v1.0.0

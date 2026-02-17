@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://github.com/btachinardi/lemon-todo/actions/workflows/deploy.yml"><img src="https://github.com/btachinardi/lemon-todo/actions/workflows/deploy.yml/badge.svg?branch=main" alt="CI/CD" /></a>
-  <a href="https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.2"><img src="https://img.shields.io/badge/release-v1.0.2-brightgreen" alt="Release" /></a>
+  <a href="https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.3"><img src="https://img.shields.io/badge/release-v1.0.3-brightgreen" alt="Release" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
 </p>
 
@@ -113,6 +113,7 @@ infra/                        # Terraform (3 stages, 10 modules)
 
 | Version | Milestone | Tests |
 |---------|-----------|-------|
+| [v1.0.3](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.3) | Dev container, fresh-clone DX fixes, zero-config onboarding | 1,034 |
 | [v1.0.2](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.2) | OpenAPI type generation, admin E2E, offline queue fixes, theme polish | 1,034 |
 | [v1.0.1](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.1) | Mobile, accessibility & CI bug fixes | 908 |
 | [v1.0.0](https://github.com/btachinardi/lemon-todo/releases/tag/v1.0.0) | PWA, offline, onboarding, notifications, analytics, landing page | 854 |

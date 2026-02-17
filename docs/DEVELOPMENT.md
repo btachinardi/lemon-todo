@@ -7,22 +7,29 @@
 ## Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Node.js 24+](https://nodejs.org/)
+- [Node.js 22+](https://nodejs.org/) (LTS recommended)
 - [pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) (optional, for SQL Server)
+
+> **Dev Container**: If you use VS Code or GitHub Codespaces, open the project in the [dev container](./.devcontainer/devcontainer.json) — all prerequisites are pre-installed and `./dev install` runs automatically.
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/btachinardi/lemon-todo.git
 cd lemon-todo
-
-# Install frontend dependencies
-cd src/client && pnpm install && cd ../..
-
-# Run with Aspire (orchestrates API + frontend together)
-./dev start
+./dev install   # Restores packages, generates dev config files + API types
+./dev start     # Starts API + frontend via Aspire
 ```
+
+`./dev install` handles everything a fresh clone needs:
+
+1. HTTPS dev certificate (`dotnet dev-certs https`) — required for Aspire; no-ops if already present
+2. .NET package restore (`dotnet restore`)
+3. Frontend packages (`pnpm install` in `src/client/`)
+4. E2E packages (`pnpm install` in `tests/e2e/`)
+5. Dev config files — creates `appsettings.Development.json` and `launchSettings.json` with safe dev defaults (skips if they already exist)
+6. TypeScript API types — generates `src/client/src/api/schema.d.ts` from the committed OpenAPI spec
 
 The Aspire Dashboard URL (with login token) will appear in the console output. From there you can see all service URLs, logs, traces, and metrics.
 
