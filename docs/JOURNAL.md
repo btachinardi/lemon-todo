@@ -2109,6 +2109,27 @@ A focused pass on color readability and visual hierarchy across both themes.
 
 ---
 
+## Release: v1.0.2
+
+**Date: February 17, 2026**
+
+Patch release consolidating work from the `feature/openapi-type-generation` branch and three previously-merged feature branches (`cp5-advanced-delight`, `custom-domains`, `offline-sync-e2e-tests`).
+
+### What shipped
+
+- **OpenAPI-based TypeScript type generation**: Backend contract changes now propagate to the frontend automatically via `openapi-typescript`. Seven frontend type files migrated to re-export from generated schema. Enum translation coverage guard tests ensure every backend enum value has an i18n key.
+- **Protected data refactoring**: Domain-level `EncryptedField`, `ProtectedValue`, and `RevealedField` types replace the previous application-layer string-based approach, with JSON serialization and validation pipeline.
+- **Offline queue reliability**: Fixed drain-on-startup bug, added UI cache invalidation after drain, and fixed React StrictMode double-firing refresh token rotation.
+- **Admin E2E coverage**: 20 new E2E tests across 5 spec files covering all admin/system admin features with shared helpers.
+- **Theme polish**: Purple primary in light mode, brand token for CTAs, lucide icons on DevOps cards, semi-transparent list view rows, and new story page sections.
+- **CI/CD for release branches**: Workflow now triggers on `release/*` branches for pre-merge verification (tests only, no deploy to Azure).
+
+### Release process improvements
+
+Added `release/*` branch pattern to the CI/CD workflow trigger. This ensures the verification gate runs in GitHub Actions before merging to main, catching environment-specific failures (e.g., Linux vs Windows path handling, SQL Server service container issues) that local verification cannot surface.
+
+---
+
 ## What's Next
 
 See `docs/ROADMAP.md` for future capability tiers.

@@ -96,6 +96,21 @@ builder.Services.AddOpenApi(options =>
 
         return Task.CompletedTask;
     });
+
+    // Protected data types (EncryptedField, ProtectedValue, RevealedField) use custom JSON
+    // converters that read/write plain strings on the wire, but the OpenAPI generator sees the
+    // C# record properties. Override their schemas to reflect the actual wire format.
+    options.AddSchemaTransformer((schema, context, _) =>
+    {
+        var type = context.JsonTypeInfo.Type;
+        if (type == typeof(EncryptedField) || type == typeof(ProtectedValue) || type == typeof(RevealedField))
+        {
+            schema.Type = JsonSchemaType.String;
+            schema.Properties?.Clear();
+            schema.Required?.Clear();
+        }
+        return Task.CompletedTask;
+    });
 });
 
 // Register all services unconditionally — the OpenAPI build-time generator needs

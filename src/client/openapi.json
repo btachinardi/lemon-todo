@@ -1682,28 +1682,7 @@
         "description": "Creates a new task with optional metadata."
       },
       "EncryptedField": {
-        "required": [
-          "encrypted",
-          "redacted"
-        ],
-        "type": "object",
-        "properties": {
-          "encrypted": {
-            "type": "string",
-            "description": "The encrypted ciphertext (Base64). Stored in shadow properties."
-          },
-          "redacted": {
-            "type": "string",
-            "description": "A human-readable redacted form, safe for display and logging."
-          },
-          "hash": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Optional deterministic hash for database lookups (e.g., SHA-256 of email).\r\nNull for fields that don't need lookup capability."
-          }
-        },
+        "type": "string",
         "description": "Sealed container for encrypted protected data. The raw plaintext is never stored.\r\nCreated by JSON converters during deserialization: validate → encrypt → discard raw.\r\nImplements IProtectedData so the Serilog destructuring policy masks it."
       },
       "LoginRequest": {
@@ -2050,22 +2029,7 @@
         "description": "Represents a paginated result set."
       },
       "ProtectedValue": {
-        "required": [
-          "value"
-        ],
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string",
-            "description": "The raw value. Only consumed by services that need it (e.g., password verification)."
-          },
-          "redacted": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
+        "type": "string",
         "description": "Wraps a raw sensitive value (e.g., a password) to prevent accidental logging.\r\nNot encrypted — the consuming service needs raw access.\r\nImplements IProtectedData so the Serilog destructuring policy masks it."
       },
       "RegisterRequest": {
@@ -2123,16 +2087,7 @@
         "description": "Reorders a column within the board's column list."
       },
       "RevealedField": {
-        "required": [
-          "encrypted"
-        ],
-        "type": "object",
-        "properties": {
-          "encrypted": {
-            "type": "string",
-            "description": "The encrypted ciphertext to be decrypted during JSON serialization."
-          }
-        },
+        "type": "string",
         "description": "Holds encrypted ciphertext that will be decrypted at JSON serialization time.\r\nThe raw value only exists in the JSON output stream — never in a C# property.\r\nUsed for admin reveal and owner reveal responses."
       },
       "RevealedProfileResponse": {
