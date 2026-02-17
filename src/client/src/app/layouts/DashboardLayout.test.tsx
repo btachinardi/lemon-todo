@@ -132,6 +132,28 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('Dev')).toBeInTheDocument();
   });
 
+  it('should position dev button above mobile quick-add bar', () => {
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    const devButton = screen.getByText('Dev');
+    const devContainer = devButton.closest('div.fixed');
+    expect(devContainer).not.toBeNull();
+    expect(devContainer!.className).toMatch(/bottom-1[4-6]/);
+    expect(devContainer!.className).toMatch(/sm:bottom-3/);
+  });
+
   it('should hide dev account switcher trigger in production mode', () => {
     vi.stubEnv('DEV', false);
 

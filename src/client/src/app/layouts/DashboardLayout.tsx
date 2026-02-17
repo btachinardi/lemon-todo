@@ -150,7 +150,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1">{children}</main>
       {import.meta.env.DEV && (
-        <div className="fixed bottom-3 left-3 z-50">
+        <div className="fixed bottom-14 left-3 z-50 sm:bottom-3">
           <Popover>
             <PopoverTrigger asChild>
               <Button
