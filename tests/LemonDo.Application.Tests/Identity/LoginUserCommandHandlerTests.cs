@@ -18,6 +18,14 @@ public sealed class LoginUserCommandHandlerTests
 
     private static readonly UserId TestUserId = UserId.New();
 
+    // Test helper: creates an EncryptedField for email with a fake hash
+    private static EncryptedField TestEmailField(string redacted = "u***@example.com", string hash = "test-email-hash")
+        => new("encrypted-email", redacted, hash);
+
+    // Test helper: creates a ProtectedValue for password
+    private static ProtectedValue TestPassword(string raw = "Pass123!")
+        => new(raw);
+
     [TestInitialize]
     public void Setup()
     {
@@ -33,8 +41,8 @@ public sealed class LoginUserCommandHandlerTests
     [TestMethod]
     public async Task Should_Login_When_ValidCredentials()
     {
-        // Arrange: authenticate returns userId, repo returns user, tokens generated
-        _authService.AuthenticateAsync("user@example.com", "Pass123!", Arg.Any<CancellationToken>())
+        // Arrange: authenticate by hash returns userId, repo returns user, tokens generated
+        _authService.AuthenticateByHashAsync("test-email-hash", "Pass123!", Arg.Any<CancellationToken>())
             .Returns(Result<UserId, DomainError>.Success(TestUserId));
 
         _userRepository.GetByIdAsync(TestUserId, Arg.Any<CancellationToken>())
@@ -43,7 +51,7 @@ public sealed class LoginUserCommandHandlerTests
         _authService.GenerateTokensAsync(TestUserId, Arg.Any<CancellationToken>())
             .Returns(new AuthTokens("access", "refresh", new List<string> { "User" }.AsReadOnly()));
 
-        var command = new LoginUserCommand("user@example.com", "Pass123!");
+        var command = new LoginUserCommand(TestEmailField(), TestPassword());
 
         // Act
         var result = await _handler.HandleAsync(command);
@@ -57,11 +65,13 @@ public sealed class LoginUserCommandHandlerTests
     [TestMethod]
     public async Task Should_ReturnUnauthorized_When_InvalidCredentials()
     {
-        _authService.AuthenticateAsync("bad@example.com", "wrong", Arg.Any<CancellationToken>())
+        _authService.AuthenticateByHashAsync("bad-email-hash", "wrong", Arg.Any<CancellationToken>())
             .Returns(Result<UserId, DomainError>.Failure(
                 DomainError.Unauthorized("auth", "Invalid email or password.")));
 
-        var command = new LoginUserCommand("bad@example.com", "wrong");
+        var command = new LoginUserCommand(
+            new EncryptedField("encrypted-bad", "b***@example.com", "bad-email-hash"),
+            new ProtectedValue("wrong"));
         var result = await _handler.HandleAsync(command);
 
         Assert.IsTrue(result.IsFailure);
@@ -71,11 +81,13 @@ public sealed class LoginUserCommandHandlerTests
     [TestMethod]
     public async Task Should_ReturnRateLimited_When_AccountLocked()
     {
-        _authService.AuthenticateAsync("locked@example.com", "any", Arg.Any<CancellationToken>())
+        _authService.AuthenticateByHashAsync("locked-email-hash", "any", Arg.Any<CancellationToken>())
             .Returns(Result<UserId, DomainError>.Failure(
                 DomainError.RateLimited("auth", "Account temporarily locked.")));
 
-        var command = new LoginUserCommand("locked@example.com", "any");
+        var command = new LoginUserCommand(
+            new EncryptedField("encrypted-locked", "l***@example.com", "locked-email-hash"),
+            new ProtectedValue("any"));
         var result = await _handler.HandleAsync(command);
 
         Assert.IsTrue(result.IsFailure);
@@ -85,13 +97,15 @@ public sealed class LoginUserCommandHandlerTests
     [TestMethod]
     public async Task Should_ReturnUnauthorized_When_UserNotFoundInDomain()
     {
-        _authService.AuthenticateAsync("orphan@example.com", "Pass123!", Arg.Any<CancellationToken>())
+        _authService.AuthenticateByHashAsync("orphan-email-hash", "Pass123!", Arg.Any<CancellationToken>())
             .Returns(Result<UserId, DomainError>.Success(TestUserId));
 
         _userRepository.GetByIdAsync(TestUserId, Arg.Any<CancellationToken>())
             .Returns((User?)null);
 
-        var command = new LoginUserCommand("orphan@example.com", "Pass123!");
+        var command = new LoginUserCommand(
+            new EncryptedField("encrypted-orphan", "o***@example.com", "orphan-email-hash"),
+            new ProtectedValue("Pass123!"));
         var result = await _handler.HandleAsync(command);
 
         Assert.IsTrue(result.IsFailure);
