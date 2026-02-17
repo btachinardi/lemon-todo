@@ -107,7 +107,7 @@ export function StoryHeroSection() {
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">Frontend Tests</span>{' '}
-                <span className="text-primary font-bold">531 passed</span>
+                <span className="text-primary font-bold">539 passed</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-02-17
+
+Patch release fixing stale data on account switch and loading screen ripple alignment.
+
+### Fixed
+
+- **Stale task/board data after switching demo accounts** — replaced `queryClient.clear()` with `queryClient.resetQueries()` in all auth flows (account switch, login, register, logout); `clear()` removes queries from the cache map but does not notify mounted observers, so the board page kept rendering the previous user's data; `resetQueries()` notifies observers and triggers active refetches with the new token
+- **Loading screen ripple effect displaced from icon center** — CSS `translate` property (from Tailwind) and `transform: translate(-50%, -50%)` in the keyframe both applied independently, doubling the offset; replaced with `absolute inset-0 m-auto` centering, elliptical ripples for perspective, and lower opacity for subtlety; added `/loading` debug route for visual testing
+
 ## [1.0.6] - 2026-02-17
 
 Patch release with smooth demo account switching, global scrollbar polish, and loading screen alignment.
@@ -467,7 +476,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.6...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.7...HEAD
+[1.0.7]: https://github.com/btachinardi/lemon-todo/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/btachinardi/lemon-todo/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/btachinardi/lemon-todo/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/btachinardi/lemon-todo/compare/v1.0.3...v1.0.4
