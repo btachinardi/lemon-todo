@@ -2130,6 +2130,35 @@ Added `release/*` branch pattern to the CI/CD workflow trigger. This ensures the
 
 ---
 
+## Release: v1.0.3
+
+**Date: February 17, 2026**
+
+Patch release focused on developer experience — zero-config onboarding via `./dev install` and a dev container for VS Code / GitHub Codespaces.
+
+---
+
+## Release: v1.0.4
+
+**Date: February 17, 2026**
+
+Patch release polishing the mobile experience. Seven commits addressing visual keyboard interaction, modal scrolling, drag behavior, and typography.
+
+### What shipped
+
+- **Keyboard-aware dialogs and sheets**: New `useVisualViewport` hook tracks `window.visualViewport` changes when the mobile virtual keyboard opens. Dialog and Sheet overlays reposition themselves above the keyboard instead of being obscured by it.
+- **Auth loading screen**: Replaced the black screen flash during `AuthHydrationProvider`'s silent refresh with a branded lemon animation. Users see intentional loading UI instead of a blank page.
+- **Evaluator modal fixes**: Modal body now scrolls independently (not the entire panel), and centers correctly on mobile viewports.
+- **Mobile kanban drag-scroll**: Fixed direction lock during horizontal drag-scroll and increased snap cooldown to prevent accidental column jumps during touch interactions.
+- **Font size hierarchy**: Bumped base sizes across headings, body text, and UI elements for improved readability on all screen sizes.
+- **i18n copy tightening**: Rewrote methodology page copy across all 3 locales (en, pt-BR, es) for clarity and consistency.
+
+### Key pattern: useVisualViewport
+
+The virtual keyboard problem on mobile is subtle: the keyboard resizes the *visual* viewport but not the *layout* viewport. Fixed-position overlays (Dialog, Sheet) position relative to the layout viewport, so they end up hidden behind the keyboard. The `useVisualViewport` hook subscribes to `window.visualViewport.resize` and `scroll` events, computing the offset needed to keep overlays visible. This offset is applied via CSS transform on the overlay content.
+
+---
+
 ## What's Next
 
 See `docs/ROADMAP.md` for future capability tiers.
