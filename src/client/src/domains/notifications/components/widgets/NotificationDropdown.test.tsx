@@ -107,4 +107,79 @@ describe('NotificationDropdown', () => {
 
     expect(await screen.findByText('9+')).toBeInTheDocument();
   });
+
+  it('should call markAsRead with notification id when clicking unread notification', async () => {
+    mockGetUnreadCount.mockResolvedValue({ count: 1 });
+    mockList.mockResolvedValue({
+      items: [
+        {
+          id: 'notif-42',
+          type: 'Welcome',
+          title: 'Hello there!',
+          body: null,
+          isRead: false,
+          readAt: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      totalCount: 1,
+      page: 1,
+      pageSize: 20,
+    });
+
+    const user = userEvent.setup();
+    render(createElement(NotificationDropdown), { wrapper: createWrapper() });
+
+    // Open the dropdown
+    const bell = await screen.findByRole('button', { name: /notifications/i });
+    await user.click(bell);
+
+    // Click the unread notification
+    const notification = await screen.findByText('Hello there!');
+    await user.click(notification);
+
+    expect(mockMarkAsRead).toHaveBeenCalledWith('notif-42', expect.anything());
+  });
+
+  it('should call markAllAsRead when clicking mark all read button', async () => {
+    mockGetUnreadCount.mockResolvedValue({ count: 2 });
+    mockList.mockResolvedValue({
+      items: [
+        {
+          id: 'n1',
+          type: 'Welcome',
+          title: 'First notification',
+          body: null,
+          isRead: false,
+          readAt: null,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: 'n2',
+          type: 'DueDateReminder',
+          title: 'Second notification',
+          body: null,
+          isRead: false,
+          readAt: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      totalCount: 2,
+      page: 1,
+      pageSize: 20,
+    });
+
+    const user = userEvent.setup();
+    render(createElement(NotificationDropdown), { wrapper: createWrapper() });
+
+    // Open the dropdown
+    const bell = await screen.findByRole('button', { name: /notifications/i });
+    await user.click(bell);
+
+    // Click the "Mark all read" button
+    const markAllBtn = await screen.findByRole('button', { name: /mark all read/i });
+    await user.click(markAllBtn);
+
+    expect(mockMarkAllAsRead).toHaveBeenCalled();
+  });
 });

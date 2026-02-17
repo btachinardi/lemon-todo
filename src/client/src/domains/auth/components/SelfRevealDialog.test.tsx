@@ -74,4 +74,39 @@ describe('SelfRevealDialog', () => {
 
     expect(screen.getByRole('button', { name: /hide now/i })).toBeInTheDocument();
   });
+
+  describe('dev auto-fill', () => {
+    it('should show auto-fill button when devPassword is provided', () => {
+      renderDialog({ devPassword: 'User1234' });
+      expect(screen.getByText(/auto-fill password/i)).toBeInTheDocument();
+    });
+
+    it('should not show auto-fill button when devPassword is null', () => {
+      renderDialog({ devPassword: null });
+      expect(screen.queryByText(/auto-fill password/i)).not.toBeInTheDocument();
+    });
+
+    it('should not show auto-fill button when devPassword is not provided', () => {
+      renderDialog();
+      expect(screen.queryByText(/auto-fill password/i)).not.toBeInTheDocument();
+    });
+
+    it('should fill password field when auto-fill button is clicked', async () => {
+      const user = userEvent.setup();
+      renderDialog({ devPassword: 'User1234' });
+
+      await user.click(screen.getByText(/auto-fill password/i));
+
+      expect(screen.getByLabelText(/password/i)).toHaveValue('User1234');
+    });
+
+    it('should not show auto-fill button when data is already revealed', () => {
+      renderDialog({
+        devPassword: 'User1234',
+        revealedEmail: 'test@lemondo.dev',
+        revealedDisplayName: 'Test User',
+      });
+      expect(screen.queryByText(/auto-fill password/i)).not.toBeInTheDocument();
+    });
+  });
 });

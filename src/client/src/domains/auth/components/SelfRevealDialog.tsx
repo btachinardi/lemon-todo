@@ -12,7 +12,7 @@ import {
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Label } from '@/ui/label';
-import { ShieldCheckIcon, EyeOffIcon } from 'lucide-react';
+import { ShieldCheckIcon, EyeOffIcon, FlaskConicalIcon } from 'lucide-react';
 import { Progress } from '@/ui/progress';
 
 interface SelfRevealDialogProps {
@@ -23,6 +23,8 @@ interface SelfRevealDialogProps {
   error?: Error | null;
   revealedEmail?: string | null;
   revealedDisplayName?: string | null;
+  /** Dev-only: when provided, shows an auto-fill button that populates the password field with this value. */
+  devPassword?: string | null;
 }
 
 const REVEAL_DURATION_SECONDS = 30;
@@ -36,6 +38,7 @@ export function SelfRevealDialog({
   error,
   revealedEmail,
   revealedDisplayName,
+  devPassword,
 }: SelfRevealDialogProps) {
   const { t } = useTranslation();
   const [password, setPassword] = useState('');
@@ -159,6 +162,18 @@ export function SelfRevealDialog({
                 <p className="text-xs text-destructive">
                   {t('auth.selfReveal.genericError')}
                 </p>
+              )}
+              {devPassword && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-950"
+                  onClick={() => setPassword(devPassword)}
+                >
+                  <FlaskConicalIcon className="size-3" />
+                  {t('common.devAutoFill')}
+                </Button>
               )}
             </div>
 

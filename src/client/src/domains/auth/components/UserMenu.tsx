@@ -18,6 +18,7 @@ import {
 import { useAuthStore } from '../stores/use-auth-store';
 import { useLogout } from '../hooks/use-auth-mutations';
 import { useRevealOwnProfile } from '../hooks/use-reveal-own-profile';
+import { useDevAccountPassword } from '../hooks/use-dev-account-password';
 import { SelfRevealDialog } from './SelfRevealDialog';
 
 /** Header dropdown menu showing user info and sign-out action. */
@@ -26,6 +27,7 @@ export function UserMenu() {
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
   const revealMutation = useRevealOwnProfile();
+  const devPassword = useDevAccountPassword();
   const [revealDialogOpen, setRevealDialogOpen] = useState(false);
 
   if (!user) return null;
@@ -110,6 +112,7 @@ export function UserMenu() {
         error={revealMutation.error}
         revealedEmail={revealMutation.data?.email}
         revealedDisplayName={revealMutation.data?.displayName}
+        devPassword={devPassword}
       />
     </>
   );

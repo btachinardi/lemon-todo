@@ -9,8 +9,8 @@ export const notificationsApi = {
     apiClient.get<UnreadCountResponse>('/api/notifications/unread-count'),
 
   markAsRead: (id: string) =>
-    apiClient.post<void>(`/api/notifications/${id}/read`),
+    apiClient.postVoid(`/api/notifications/${id}/read`),
 
   markAllAsRead: () =>
-    apiClient.post<void>('/api/notifications/read-all'),
+    apiClient.postVoid('/api/notifications/read-all'),
 };
