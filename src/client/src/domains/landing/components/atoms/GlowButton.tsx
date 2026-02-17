@@ -30,10 +30,10 @@ const baseClasses =
   'inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-bold tracking-wide transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring';
 
 const primaryClasses =
-  'bg-primary text-primary-foreground hover:shadow-[0_0_32px_rgba(220,255,2,0.4)] hover:scale-[1.02] animate-[highlight-pulse_3s_ease-in-out_infinite]';
+  'bg-brand text-brand-foreground hover:shadow-[0_0_32px_rgba(220,255,2,0.4)] hover:scale-[1.02] animate-[highlight-pulse_3s_ease-in-out_infinite]';
 
 const outlineClasses =
-  'border-2 border-border bg-transparent text-foreground hover:border-primary/50 hover:text-primary hover:shadow-[0_0_20px_rgba(220,255,2,0.15)]';
+  'border-2 border-border bg-transparent text-foreground hover:border-brand/50 hover:text-brand hover:shadow-[0_0_20px_rgba(220,255,2,0.15)]';
 
 /** CTA button with pulsing highlight glow. Use `to` for internal routes, `href` for external links. */
 export function GlowButton(props: GlowButtonProps) {
