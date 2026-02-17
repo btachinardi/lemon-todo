@@ -29,7 +29,7 @@ export const DEV_ACCOUNTS: DevAccount[] = [
     labelKey: 'auth.devSwitcher.roles.user',
     descKey: 'auth.devSwitcher.roles.userDesc',
     icon: UserIcon,
-    accent: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+    accent: 'text-blue-700 dark:text-blue-400 bg-blue-500/10 border-blue-500/20',
   },
   {
     email: 'dev.admin@lemondo.dev',
@@ -38,7 +38,7 @@ export const DEV_ACCOUNTS: DevAccount[] = [
     labelKey: 'auth.devSwitcher.roles.admin',
     descKey: 'auth.devSwitcher.roles.adminDesc',
     icon: ShieldIcon,
-    accent: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+    accent: 'text-amber-800 dark:text-amber-400 bg-amber-500/10 border-amber-500/20',
   },
   {
     email: 'dev.sysadmin@lemondo.dev',
@@ -47,7 +47,7 @@ export const DEV_ACCOUNTS: DevAccount[] = [
     labelKey: 'auth.devSwitcher.roles.sysadmin',
     descKey: 'auth.devSwitcher.roles.sysadminDesc',
     icon: CrownIcon,
-    accent: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
+    accent: 'text-rose-700 dark:text-rose-400 bg-rose-500/10 border-rose-500/20',
   },
 ];
 
@@ -100,7 +100,7 @@ export function DevAccountSwitcher() {
         </div>
         <div className="h-px flex-1 bg-border" />
       </div>
-      <p className="text-center text-[11px] text-muted-foreground/60">
+      <p className="text-center text-[11px] text-muted-foreground">
         {t('auth.devSwitcher.subtitle')}
       </p>
       <div className="grid gap-2 overflow-hidden">

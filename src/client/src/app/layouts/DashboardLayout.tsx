@@ -159,7 +159,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 border-dashed border-amber-500/30 bg-amber-500/5 text-amber-500 shadow-lg hover:bg-amber-500/10 hover:text-amber-400"
+                className="gap-1.5 border-dashed border-amber-500/30 bg-amber-500/5 text-amber-800 shadow-lg hover:bg-amber-500/10 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
               >
                 <FlaskConicalIcon className="size-3.5" />
                 <span className="text-xs">Dev</span>
@@ -173,7 +173,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       )}
       <footer className="pointer-events-none fixed bottom-2 right-3 flex items-center gap-3">
         <SyncIndicator />
-        <span className="text-[10px] text-muted-foreground/40 select-none">
+        <span className="text-[10px] text-muted-foreground select-none">
           v{__APP_VERSION__}
         </span>
       </footer>

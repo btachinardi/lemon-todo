@@ -192,10 +192,10 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             <Link to="/login" className="hover:text-foreground">{t('landing.nav.login')}</Link>
             <Link to="/register" className="hover:text-foreground">{t('landing.nav.getStarted')}</Link>
           </nav>
-          <p className="text-xs text-muted-foreground/50">
+          <p className="text-xs text-muted-foreground">
             {t('landing.footer.disclaimer')}
           </p>
-          <p className="text-xs text-muted-foreground/50">
+          <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Lemon.DO &middot; v{__APP_VERSION__}
           </p>
         </div>
