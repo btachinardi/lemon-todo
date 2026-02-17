@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { FlaskConicalIcon, ShieldIcon, CrownIcon, UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDemoAccountsEnabled } from '@/domains/config/hooks/use-config';
 import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../stores/use-auth-store';
 
@@ -50,7 +51,7 @@ export const DEV_ACCOUNTS: DevAccount[] = [
   },
 ];
 
-/** Dev-only quick login selector for seeded test accounts. */
+/** Quick login selector for seeded demo accounts (controlled by feature flag). */
 export function DevAccountSwitcher() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -58,8 +59,9 @@ export function DevAccountSwitcher() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const logout = useAuthStore((s) => s.logout);
   const [switchingRole, setSwitchingRole] = useState<string | null>(null);
+  const { data: demoEnabled } = useDemoAccountsEnabled();
 
-  if (!import.meta.env.DEV) return null;
+  if (!demoEnabled) return null;
 
   async function handleSwitch(account: DevAccount) {
     setSwitchingRole(account.roleKey);

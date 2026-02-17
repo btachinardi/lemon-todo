@@ -162,8 +162,9 @@ try
         startupLogger.LogDebug("Default board already exists, skipping seed");
     }
 
-    // Seed development test accounts (one per role)
-    if (app.Environment.IsDevelopment())
+    // Seed demo accounts when feature flag is enabled
+    var enableDemoAccounts = app.Configuration.GetValue<bool>("Features:EnableDemoAccounts");
+    if (enableDemoAccounts)
     {
         var registerHandler = scope.ServiceProvider.GetRequiredService<RegisterUserCommandHandler>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -249,6 +250,9 @@ app.MapAdminEndpoints();
 app.MapAnalyticsEndpoints();
 app.MapOnboardingEndpoints();
 app.MapNotificationEndpoints();
+
+app.MapGet("/api/config", (IConfiguration config) =>
+    Results.Ok(new { EnableDemoAccounts = config.GetValue<bool>("Features:EnableDemoAccounts") }));
 
 app.MapGet("/", () => Results.Redirect("/scalar/v1"));
 

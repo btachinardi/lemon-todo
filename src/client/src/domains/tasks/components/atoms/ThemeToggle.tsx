@@ -13,13 +13,15 @@ const options: { value: Theme; icon: typeof SunIcon; labelKey: string }[] = [
 interface ThemeToggleProps {
   theme: Theme;
   onToggle: () => void;
+  /** When true, renders a visible text label next to the icon. */
+  showLabel?: boolean;
 }
 
 /**
  * Compact theme toggle button. Displays the current theme icon and cycles on click.
  * Receives theme state via props — parent component manages theme store.
  */
-export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
+export function ThemeToggle({ theme, onToggle, showLabel }: ThemeToggleProps) {
   const { t } = useTranslation();
   const currentIndex = options.findIndex((o) => o.value === theme);
   const next = options[(currentIndex + 1) % options.length];
@@ -29,13 +31,14 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
   return (
     <Button
       variant="ghost"
-      size="icon"
-      className="size-9 sm:size-8"
+      size={showLabel ? 'sm' : 'icon'}
+      className={showLabel ? 'justify-start gap-2 px-3 py-2' : 'size-9 sm:size-8'}
       onClick={onToggle}
       aria-label={t(current.labelKey)}
       title={t('theme.toggle', { label: t(current.labelKey), next: t(next.labelKey) })}
     >
       <Icon className="size-4" />
+      {showLabel && <span className="text-sm">{t(current.labelKey)}</span>}
     </Button>
   );
 }

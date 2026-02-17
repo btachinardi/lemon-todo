@@ -22,7 +22,12 @@ export const DueDateLabel = memo(function DueDateLabel({ dueDate, isDone, classN
 
   if (!dueDate) return null;
 
-  const date = new Date(dueDate);
+  // Extract date-only portion (YYYY-MM-DD) to avoid UTC→local timezone shift.
+  // Backend sends DateTimeOffset like "2026-01-15T00:00:00+00:00"; parsing the
+  // full string would shift to the previous day in western timezones.
+  const dateOnly = dueDate.substring(0, 10);
+  const [year, month, day] = dateOnly.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
   const now = new Date();
   const isOverdue = !isDone && date < now;
   const isToday = date.toDateString() === now.toDateString();

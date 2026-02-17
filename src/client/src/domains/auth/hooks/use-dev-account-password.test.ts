@@ -1,19 +1,24 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useDevAccountPassword } from './use-dev-account-password';
 import { useAuthStore } from '../stores/use-auth-store';
 
+// Mock the config hook
+const mockUseDemoAccountsEnabled = vi.fn();
+vi.mock('@/domains/config/hooks/use-config', () => ({
+  useDemoAccountsEnabled: () => mockUseDemoAccountsEnabled(),
+}));
+
 describe('useDevAccountPassword', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     useAuthStore.setState({
       accessToken: null,
       user: null,
       isAuthenticated: false,
     });
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
+    // Default: demo accounts enabled
+    mockUseDemoAccountsEnabled.mockReturnValue({ data: true, isLoading: false });
   });
 
   it('should return password when user is the dev.user demo account', () => {
@@ -65,8 +70,8 @@ describe('useDevAccountPassword', () => {
     expect(result.current).toBeNull();
   });
 
-  it('should return null when not in DEV mode', () => {
-    vi.stubEnv('DEV', false);
+  it('should return null when demo accounts feature flag is disabled', () => {
+    mockUseDemoAccountsEnabled.mockReturnValue({ data: false, isLoading: false });
 
     useAuthStore.setState({
       user: { id: '1', email: 'dev.user@lemondo.dev', displayName: 'Dev User', roles: ['User'] },

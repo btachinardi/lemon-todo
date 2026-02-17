@@ -299,48 +299,66 @@ function TaskDetailContent({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6 p-6" data-testid="task-detail-skeleton">
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-10 w-1/2" />
-        <Skeleton className="h-10 w-1/2" />
-      </div>
+      <>
+        <SheetTitle className="sr-only">{t('tasks.detail.loading')}</SheetTitle>
+        <SheetDescription className="sr-only">
+          {t('tasks.detail.loading')}
+        </SheetDescription>
+        <div className="flex flex-col gap-6 p-6" data-testid="task-detail-skeleton">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-10 w-1/2" />
+          <Skeleton className="h-10 w-1/2" />
+        </div>
+      </>
     );
   }
 
   if (isError || !task) {
     return (
-      <div className="flex flex-col items-center gap-4 p-6">
-        <p className="text-sm text-muted-foreground">{t('tasks.detail.loadError')}</p>
-        <Button variant="outline" size="sm" onClick={onClose}>
-          {t('common.close')}
-        </Button>
-      </div>
+      <>
+        <SheetTitle className="sr-only">{t('tasks.detail.error')}</SheetTitle>
+        <SheetDescription className="sr-only">
+          {t('tasks.detail.error')}
+        </SheetDescription>
+        <div className="flex flex-col items-center gap-4 p-6">
+          <p className="text-sm text-muted-foreground">{t('tasks.detail.loadError')}</p>
+          <Button variant="outline" size="sm" onClick={onClose}>
+            {t('common.close')}
+          </Button>
+        </div>
+      </>
     );
   }
 
-  const parsedDueDate = task.dueDate ? parseISO(task.dueDate) : undefined;
+  // Extract date-only portion to avoid UTC->local timezone shift.
+  // Backend sends "2026-01-15T00:00:00+00:00"; parseISO would create a Date at
+  // UTC midnight which shifts to the previous day in western timezones.
+  const parsedDueDate = task.dueDate ? parseISO(task.dueDate.substring(0, 10)) : undefined;
 
   return (
     <>
       <SheetHeader className="px-6 pt-6 pb-4">
         {editingTitle ? (
-          <Input
-            ref={titleInputRef}
-            value={titleDraft}
-            onChange={(e) => setTitleDraft(e.target.value)}
-            onBlur={handleTitleSave}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleTitleSave();
-              if (e.key === 'Escape') {
-                setTitleDraft(task.title);
-                setEditingTitle(false);
-              }
-            }}
-            className="text-lg font-semibold"
-            aria-label="Task title"
-            autoFocus
-          />
+          <>
+            <SheetTitle className="sr-only">{task.title}</SheetTitle>
+            <Input
+              ref={titleInputRef}
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleTitleSave();
+                if (e.key === 'Escape') {
+                  setTitleDraft(task.title);
+                  setEditingTitle(false);
+                }
+              }}
+              className="text-lg font-semibold"
+              aria-label="Task title"
+              autoFocus
+            />
+          </>
         ) : (
           <SheetTitle
             className="cursor-pointer text-lg font-semibold hover:text-lemon transition-colors"

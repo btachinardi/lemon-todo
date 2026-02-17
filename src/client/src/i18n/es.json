@@ -146,7 +146,9 @@
       "deleteTitle": "¿Eliminar esta tarea?",
       "deleteButton": "Eliminar tarea",
       "saving": "Guardando...",
-      "saved": "Guardado"
+      "saved": "Guardado",
+      "loading": "Cargando tarea...",
+      "error": "Error"
     },
     "filter": {
       "searchPlaceholder": "Buscar tareas...",
@@ -216,7 +218,8 @@
     "admin": "Admin",
     "adminNav": "Navegación admin",
     "users": "Usuarios",
-    "auditLog": "Registro de Auditoría"
+    "auditLog": "Registro de Auditoría",
+    "language": "Idioma"
   },
   "admin": {
     "users": {

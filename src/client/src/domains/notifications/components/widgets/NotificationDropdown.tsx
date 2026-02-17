@@ -6,11 +6,16 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 import { useNotifications, useUnreadCount, useMarkAsRead, useMarkAllAsRead } from '../../hooks/use-notifications';
 import { NotificationItem } from '../atoms/NotificationItem';
 
+interface NotificationDropdownProps {
+  /** When true, renders a visible text label next to the bell icon. */
+  showLabel?: boolean;
+}
+
 /**
  * Notification bell with badge count and dropdown list.
  * Polls for unread count every 30s. Shows up to 20 recent notifications.
  */
-export function NotificationDropdown() {
+export function NotificationDropdown({ showLabel }: NotificationDropdownProps = {}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
@@ -28,12 +33,16 @@ export function NotificationDropdown() {
         <Button
           variant="ghost"
           size="sm"
-          className="relative p-2"
+          className={showLabel ? 'relative justify-start gap-2 px-3 py-2' : 'relative p-2'}
           aria-label={t('notifications.bell', { count: unreadCount })}
         >
           <BellIcon className="size-4" />
+          {showLabel && <span className="text-sm">{t('notifications.title')}</span>}
           {unreadCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+            <span className={showLabel
+              ? 'ml-auto flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground'
+              : 'absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground'
+            }>
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}

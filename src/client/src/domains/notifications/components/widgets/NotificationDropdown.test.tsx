@@ -141,6 +141,28 @@ describe('NotificationDropdown', () => {
     expect(mockMarkAsRead).toHaveBeenCalledWith('notif-42', expect.anything());
   });
 
+  it('should show visible label text when showLabel is true', async () => {
+    mockGetUnreadCount.mockResolvedValue({ count: 0 });
+    mockList.mockResolvedValue({ items: [], totalCount: 0, page: 1, pageSize: 20 });
+
+    render(<NotificationDropdown showLabel />, { wrapper: createWrapper() });
+
+    // The label "Notifications" should be visible (not sr-only)
+    expect(await screen.findByText('Notifications')).toBeVisible();
+  });
+
+  it('should not show visible label text by default', async () => {
+    mockGetUnreadCount.mockResolvedValue({ count: 0 });
+    mockList.mockResolvedValue({ items: [], totalCount: 0, page: 1, pageSize: 20 });
+
+    render(createElement(NotificationDropdown), { wrapper: createWrapper() });
+
+    // Wait for queries to settle, then verify no visible "Notifications" text
+    await vi.waitFor(() => {
+      expect(screen.queryByText('Notifications')).not.toBeInTheDocument();
+    });
+  });
+
   it('should call markAllAsRead when clicking mark all read button', async () => {
     mockGetUnreadCount.mockResolvedValue({ count: 2 });
     mockList.mockResolvedValue({

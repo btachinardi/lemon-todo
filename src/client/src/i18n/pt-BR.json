@@ -146,7 +146,9 @@
       "deleteTitle": "Excluir esta tarefa?",
       "deleteButton": "Excluir tarefa",
       "saving": "Salvando...",
-      "saved": "Salvo"
+      "saved": "Salvo",
+      "loading": "Carregando tarefa...",
+      "error": "Erro"
     },
     "filter": {
       "searchPlaceholder": "Buscar tarefas...",
@@ -216,7 +218,8 @@
     "admin": "Admin",
     "adminNav": "Navegação admin",
     "users": "Usuários",
-    "auditLog": "Log de Auditoria"
+    "auditLog": "Log de Auditoria",
+    "language": "Idioma"
   },
   "admin": {
     "users": {

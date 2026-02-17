@@ -32,4 +32,15 @@ describe('ThemeToggle', () => {
     render(<ThemeToggle theme="system" onToggle={() => {}} />);
     expect(screen.getByRole('button', { name: 'System theme' })).toBeInTheDocument();
   });
+
+  it('should show visible label text when showLabel is true', () => {
+    render(<ThemeToggle theme="dark" onToggle={() => {}} showLabel />);
+    expect(screen.getByText('Dark theme')).toBeVisible();
+  });
+
+  it('should not show visible label text by default', () => {
+    render(<ThemeToggle theme="dark" onToggle={() => {}} />);
+    // "Dark theme" should only exist as aria-label, not as visible text
+    expect(screen.queryByText('Dark theme')).not.toBeInTheDocument();
+  });
 });

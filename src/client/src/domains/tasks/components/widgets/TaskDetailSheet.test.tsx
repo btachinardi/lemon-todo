@@ -144,6 +144,13 @@ describe('TaskDetailSheet', () => {
     expect(dueDateTrigger.className).not.toContain('w-full');
   });
 
+  it('should display the correct date when backend returns a UTC midnight DateTimeOffset', () => {
+    renderSheet({
+      task: createTask({ dueDate: '2026-03-15T00:00:00+00:00' }),
+    });
+    expect(screen.getByRole('button', { name: /march 15/i })).toBeInTheDocument();
+  });
+
   describe('sensitive note', () => {
     it('should show encrypted note indicator when task has a sensitive note', () => {
       renderSheet({
@@ -485,6 +492,45 @@ describe('TaskDetailSheet', () => {
       expect(onUpdateDescription).not.toHaveBeenCalled();
 
       vi.useRealTimers();
+    });
+  });
+
+  describe('accessibility: dialog title and description', () => {
+    it('should have an accessible dialog title when task is loaded', () => {
+      renderSheet();
+      expect(screen.getByRole('dialog')).toHaveAccessibleName();
+    });
+
+    it('should have an accessible dialog title during loading state', () => {
+      renderSheet({ isLoading: true, task: undefined });
+      expect(screen.getByRole('dialog')).toHaveAccessibleName();
+    });
+
+    it('should have an accessible dialog title during error state', () => {
+      renderSheet({ isError: true, task: undefined });
+      expect(screen.getByRole('dialog')).toHaveAccessibleName();
+    });
+
+    it('should retain an accessible dialog title when editing the title', async () => {
+      const user = userEvent.setup();
+      renderSheet();
+      await user.click(screen.getByText('Buy groceries'));
+      expect(screen.getByRole('dialog')).toHaveAccessibleName();
+    });
+
+    it('should have an accessible description in all states', () => {
+      renderSheet();
+      expect(screen.getByRole('dialog')).toHaveAccessibleDescription();
+    });
+
+    it('should have an accessible description during loading state', () => {
+      renderSheet({ isLoading: true, task: undefined });
+      expect(screen.getByRole('dialog')).toHaveAccessibleDescription();
+    });
+
+    it('should have an accessible description during error state', () => {
+      renderSheet({ isError: true, task: undefined });
+      expect(screen.getByRole('dialog')).toHaveAccessibleDescription();
     });
   });
 

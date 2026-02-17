@@ -146,7 +146,9 @@
       "deleteTitle": "Delete this task?",
       "deleteButton": "Delete task",
       "saving": "Saving...",
-      "saved": "Saved"
+      "saved": "Saved",
+      "loading": "Loading task...",
+      "error": "Error"
     },
     "filter": {
       "searchPlaceholder": "Search tasks...",
@@ -216,7 +218,8 @@
     "admin": "Admin",
     "adminNav": "Admin navigation",
     "users": "Users",
-    "auditLog": "Audit Log"
+    "auditLog": "Audit Log",
+    "language": "Language"
   },
   "admin": {
     "users": {

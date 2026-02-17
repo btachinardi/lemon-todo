@@ -130,6 +130,11 @@ resource "azurerm_container_app" "this" {
         }
       }
 
+      env {
+        name  = "Features__EnableDemoAccounts"
+        value = "true"
+      }
+
       liveness_probe {
         transport = "HTTP"
         port      = 8080

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-02-16
+
+Patch release with mobile responsiveness, accessibility, and bug fixes.
+
+### Fixed
+
+- Due date shifting to previous day in western timezones (UTC offset rounding)
+- Scalar API docs blocked by restrictive Content-Security-Policy
+- Missing accessible `DialogTitle` and `DialogDescription` on TaskDetailSheet
+- Missing `sr-only` translation keys for TaskDetailSheet screen reader labels
+- Missing visible text labels on icon-only buttons in mobile menus
+- Mobile kanban drag-and-drop not working on touch devices
+- Mobile navigation missing from landing page header
+- Missing responsive mobile menus in Dashboard and Admin layouts
+- Dev account switcher overlapping mobile quick-add bar
+- Missing column-snap auto-scroll during mobile kanban drag
+- Vite proxy config test failing when `launchSettings.json` is missing
+- Environment detection for demo accounts replaced with explicit feature flag
+
 ## [1.0.0] - 2026-02-16
 
 First stable release. Checkpoint 5: Advanced & Delight — PWA, offline support, onboarding, analytics, notifications, multi-browser E2E, visual regression, and Spanish i18n.
@@ -339,7 +358,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/btachinardi/lemon-todo/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/btachinardi/lemon-todo/compare/v0.4.1...v1.0.0
 [0.4.1]: https://github.com/btachinardi/lemon-todo/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/btachinardi/lemon-todo/compare/v0.3.0...v0.4.0

@@ -26,9 +26,12 @@ describe('TaskCard', () => {
   });
 
   it('renders due date', () => {
-    const today = new Date();
-    today.setHours(23, 59, 59);
-    const task = createTask({ dueDate: today.toISOString() });
+    // Use date-only format (YYYY-MM-DD) to match what the backend sends.
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const task = createTask({ dueDate: `${y}-${m}-${d}` });
     render(<TaskCard task={task} />);
     expect(screen.getByText('Today')).toBeInTheDocument();
   });

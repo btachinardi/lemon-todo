@@ -4,9 +4,11 @@ import {
   DragOverlay,
   closestCorners,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragStartEvent,
+  type DragMoveEvent,
   type DragOverEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
@@ -22,6 +24,47 @@ type ColumnItems = Record<string, string[]>;
 
 /** Stable drop animation config — defined outside the component to avoid creating a new object on every render. */
 const DROP_ANIMATION = { duration: 200, easing: 'ease-out' } as const;
+
+/** Pixels from the viewport edge that trigger column-snap auto-scroll during drag. */
+const EDGE_THRESHOLD_PX = 60;
+/** Minimum ms between column snaps — creates the "lock on column" feel. */
+const SNAP_COOLDOWN_MS = 600;
+/** Tailwind `sm` breakpoint — column snap only applies below this width. */
+const SM_BREAKPOINT = 640;
+
+/** Determines which column is currently centered in the scroll container. */
+function getCurrentColumnIndex(container: HTMLElement): number {
+  const scrollCenter = container.scrollLeft + container.clientWidth / 2;
+  const flexContainer = container.firstElementChild;
+  if (!flexContainer) return 0;
+
+  let closestIndex = 0;
+  let closestDistance = Infinity;
+
+  for (let i = 0; i < flexContainer.children.length; i++) {
+    const child = flexContainer.children[i] as HTMLElement;
+    const childCenter = child.offsetLeft + child.offsetWidth / 2;
+    const distance = Math.abs(scrollCenter - childCenter);
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestIndex = i;
+    }
+  }
+
+  return closestIndex;
+}
+
+/** Smoothly scrolls to center a specific column in the scroll container. */
+function scrollToColumn(container: HTMLElement, columnIndex: number): void {
+  const flexContainer = container.firstElementChild;
+  if (!flexContainer) return;
+
+  const column = flexContainer.children[columnIndex] as HTMLElement | undefined;
+  if (!column) return;
+
+  const scrollTarget = column.offsetLeft - (container.clientWidth - column.offsetWidth) / 2;
+  container.scrollTo({ left: Math.max(0, scrollTarget), behavior: 'smooth' });
+}
 
 /** Builds a map of columnId -> taskId[] sorted by rank from the board's cards. */
 function buildColumnItems(board: Board): ColumnItems {
@@ -97,21 +140,85 @@ export function KanbanBoard({
   // before handleDragEnd fires — the ref is immune to stale closures.
   const dragOriginColRef = useRef<string | null>(null);
 
+  // Column-snap auto-scroll state (mobile only)
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const initialPointerRef = useRef<{ x: number } | null>(null);
+  const lastSnapTimeRef = useRef(0);
+  const currentColumnIndexRef = useRef(0);
+
+  // Disable dnd-kit's built-in auto-scroll for the horizontal board container.
+  // Vertical auto-scroll within column ScrollAreas is still allowed.
+  // We replace horizontal auto-scroll with custom column-snap logic in handleDragMove.
+  const autoScrollConfig = useMemo(() => ({
+    canScroll: (element: Element) => element !== scrollContainerRef.current,
+  }), []);
+
   // Re-sync with server state when board data changes
   useEffect(() => {
     setColumnItems(buildColumnItems(board));
   }, [board]);
 
-  // Require 5px movement before activating drag (prevents accidental drags on click)
+  // PointerSensor for desktop (5px distance prevents accidental drags on click).
+  // TouchSensor for mobile (250ms delay lets quick swipes scroll normally;
+  // press-and-hold initiates drag; 5px tolerance forgives small finger movement).
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
   );
+
+  // Track whether a drag is active to disable snap-scroll during drag.
+  const isDragging = activeId != null;
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const taskId = event.active.id as string;
     setActiveId(taskId);
     dragOriginColRef.current = findColumnOfTask(columnItems, taskId);
+
+    // Capture initial pointer position for column-snap auto-scroll.
+    // Duck-type rather than instanceof — jsdom/test environments may lack TouchEvent.
+    const activator = event.activatorEvent;
+    if ('touches' in activator && (activator as TouchEvent).touches?.[0]) {
+      initialPointerRef.current = { x: (activator as TouchEvent).touches[0].clientX };
+    } else if ('clientX' in activator) {
+      initialPointerRef.current = { x: (activator as MouseEvent).clientX };
+    }
+
+    // Record which column is currently visible
+    if (scrollContainerRef.current) {
+      currentColumnIndexRef.current = getCurrentColumnIndex(scrollContainerRef.current);
+    }
   }, [columnItems]);
+
+  // Column-snap auto-scroll: on mobile, when the pointer nears the viewport
+  // edge during drag, scroll one column at a time with a cooldown pause.
+  const handleDragMove = useCallback((event: DragMoveEvent) => {
+    const container = scrollContainerRef.current;
+    if (!container || !initialPointerRef.current || window.innerWidth >= SM_BREAKPOINT) return;
+
+    const now = Date.now();
+    if (now - lastSnapTimeRef.current < SNAP_COOLDOWN_MS) return;
+
+    const pointerX = initialPointerRef.current.x + event.delta.x;
+    const maxIndex = sortedColumns.length - 1;
+
+    if (pointerX < EDGE_THRESHOLD_PX) {
+      // Near left edge — scroll to previous column
+      const newIndex = Math.max(0, currentColumnIndexRef.current - 1);
+      if (newIndex !== currentColumnIndexRef.current) {
+        scrollToColumn(container, newIndex);
+        currentColumnIndexRef.current = newIndex;
+        lastSnapTimeRef.current = now;
+      }
+    } else if (pointerX > window.innerWidth - EDGE_THRESHOLD_PX) {
+      // Near right edge — scroll to next column
+      const newIndex = Math.min(maxIndex, currentColumnIndexRef.current + 1);
+      if (newIndex !== currentColumnIndexRef.current) {
+        scrollToColumn(container, newIndex);
+        currentColumnIndexRef.current = newIndex;
+        lastSnapTimeRef.current = now;
+      }
+    }
+  }, [sortedColumns.length]);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event;
@@ -146,6 +253,8 @@ export function KanbanBoard({
     (event: DragEndEvent) => {
       const { active, over } = event;
       setActiveId(null);
+      initialPointerRef.current = null;
+      lastSnapTimeRef.current = 0;
 
       const originCol = dragOriginColRef.current;
       dragOriginColRef.current = null;
@@ -197,6 +306,8 @@ export function KanbanBoard({
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
     setColumnItems(buildColumnItems(board));
+    initialPointerRef.current = null;
+    lastSnapTimeRef.current = 0;
   }, [board]);
 
   const activeTask = activeId ? tasksById.get(activeId) ?? null : null;
@@ -227,13 +338,15 @@ export function KanbanBoard({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
+      autoScroll={autoScrollConfig}
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className={cn('w-full overflow-x-auto', className)}>
-        <div className="flex snap-x snap-mandatory gap-4 p-4 sm:snap-none sm:p-6" data-onboarding="board-columns">
+      <div ref={scrollContainerRef} className={cn('w-full overflow-x-auto', className)}>
+        <div className={cn('flex gap-4 p-4 sm:snap-none sm:p-6', !isDragging && 'snap-x snap-mandatory')} data-onboarding="board-columns">
           {sortedColumns.map((column, index) => (
               <KanbanColumn
                 key={column.id}

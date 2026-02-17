@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { AdminLayout } from './AdminLayout';
 
@@ -13,9 +14,11 @@ vi.mock('@/domains/auth/components/UserMenu', () => ({
   UserMenu: () => <div data-testid="user-menu" />,
 }));
 
-// Mock LanguageSwitcher for isolation
+// Mock LanguageSwitcher for isolation — captures props
 vi.mock('@/domains/tasks/components/atoms/LanguageSwitcher', () => ({
-  LanguageSwitcher: () => <div data-testid="language-switcher" />,
+  LanguageSwitcher: (props: Record<string, unknown>) => (
+    <div data-testid="language-switcher" data-show-label={props.showLabel ? 'true' : undefined} />
+  ),
 }));
 
 describe('AdminLayout', () => {
@@ -65,5 +68,57 @@ describe('AdminLayout', () => {
     );
 
     expect(screen.getByText('Admin content')).toBeInTheDocument();
+  });
+
+  it('should render a mobile menu toggle button in the header', () => {
+    render(
+      <MemoryRouter initialEntries={['/admin/users']}>
+        <AdminLayout>
+          <p>Admin content</p>
+        </AdminLayout>
+      </MemoryRouter>,
+    );
+
+    const header = screen.getByRole('banner');
+    const menuButton = within(header).getByRole('button', { name: /menu/i });
+    expect(menuButton).toBeInTheDocument();
+  });
+
+  it('should show tools in mobile menu when toggle is clicked', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/admin/users']}>
+        <AdminLayout>
+          <p>Admin content</p>
+        </AdminLayout>
+      </MemoryRouter>,
+    );
+
+    const header = screen.getByRole('banner');
+    const menuButton = within(header).getByRole('button', { name: /menu/i });
+    await user.click(menuButton);
+
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByTestId('language-switcher')).toBeInTheDocument();
+    expect(within(dialog).getByTestId('user-menu')).toBeInTheDocument();
+  });
+
+  it('should pass showLabel to language switcher in mobile menu', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/admin/users']}>
+        <AdminLayout>
+          <p>Admin content</p>
+        </AdminLayout>
+      </MemoryRouter>,
+    );
+
+    const header = screen.getByRole('banner');
+    const menuButton = within(header).getByRole('button', { name: /menu/i });
+    await user.click(menuButton);
+
+    const dialog = screen.getByRole('dialog');
+    const langSwitcher = within(dialog).getByTestId('language-switcher');
+    expect(langSwitcher).toHaveAttribute('data-show-label', 'true');
   });
 });
