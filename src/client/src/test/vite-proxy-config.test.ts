@@ -1,15 +1,20 @@
 /// <reference types="node" />
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { describe, it, expect } from 'vitest';
 
 describe('Vite proxy configuration', () => {
   it('should use a fallback URL that matches the API http launch profile', () => {
     // Read the API launch settings to get the actual URL
+    // launchSettings.json is gitignored, so skip in CI where it doesn't exist
     const launchSettingsPath = path.resolve(
       __dirname,
       '../../../../src/LemonDo.Api/Properties/launchSettings.json',
     );
+    if (!existsSync(launchSettingsPath)) {
+      // CI: launchSettings.json is gitignored, skip this local consistency check
+      return;
+    }
     const raw = readFileSync(launchSettingsPath, 'utf-8').replace(/^\uFEFF/, '');
     const launchSettings = JSON.parse(raw);
     const httpProfileUrl: string = launchSettings.profiles.http.applicationUrl;
