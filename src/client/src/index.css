@@ -263,11 +263,11 @@
   --status-done: oklch(0.93 0.04 155);
   --status-done-foreground: oklch(0.35 0.10 155);
 
-  /* Lemon brand — readable dark lime for text-on-white contexts
-     lemon.io uses purple #832CE0 for accent text on white;
-     we use a vivid dark lime that stays "lemon" branded.
-     WCAG AA on white: ~5.5:1 contrast ratio */
-  --lemon: oklch(0.52 0.22 120);
+  /* Lemon brand — lemon.io secondary purple #832CE0 for text-on-white contexts.
+     The lime brand works on dark backgrounds but lacks readability on white;
+     lemon.io itself uses this purple for accent text on light backgrounds.
+     WCAG AA on white: ~6.5:1 contrast ratio */
+  --lemon: oklch(0.47 0.27 303);
   --lemon-foreground: oklch(0.98 0 0);
 }
 
