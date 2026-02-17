@@ -10,7 +10,9 @@ import {
   EyeIcon,
   LoaderCircleIcon,
   CheckCircle2Icon,
+  CloudOffIcon,
 } from 'lucide-react';
+import type { SyncStatus } from '../../hooks/use-save-indicator';
 import {
   Sheet,
   SheetContent,
@@ -63,8 +65,8 @@ export interface TaskDetailSheetProps {
   onClearSensitiveNote?: () => void;
   /** Called when the user wants to view the decrypted note. */
   onViewNote?: () => void;
-  /** Mutation status for the update-task operation, drives the save indicator. */
-  saveStatus?: 'idle' | 'pending' | 'success' | 'error';
+  /** Sync status for the update-task operation, drives the always-visible sync indicator. */
+  saveStatus?: SyncStatus;
 }
 
 /** Slide-over panel for viewing and editing all fields of a single task. */
@@ -86,7 +88,7 @@ export function TaskDetailSheet({
   onUpdateSensitiveNote,
   onClearSensitiveNote,
   onViewNote,
-  saveStatus = 'idle',
+  saveStatus = 'synced',
 }: TaskDetailSheetProps) {
   const isOpen = taskId !== null;
 
@@ -145,7 +147,7 @@ interface TaskDetailContentProps {
   onUpdateSensitiveNote?: (note: string) => void;
   onClearSensitiveNote?: () => void;
   onViewNote?: () => void;
-  saveStatus: 'idle' | 'pending' | 'success' | 'error';
+  saveStatus: SyncStatus;
 }
 
 function TaskDetailContent({
@@ -384,18 +386,26 @@ function TaskDetailContent({
           </SheetTitle>
         )}
         <SheetDescription className="sr-only">Edit task details</SheetDescription>
-        {saveStatus === 'pending' && (
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
-            <LoaderCircleIcon className="size-3 animate-spin" />
-            {t('tasks.detail.saving')}
-          </p>
-        )}
-        {saveStatus === 'success' && (
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
-            <CheckCircle2Icon className="size-3 text-green-600 dark:text-green-400" />
-            {t('tasks.detail.saved')}
-          </p>
-        )}
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground" role="status" aria-live="polite">
+          {saveStatus === 'pending' && (
+            <>
+              <LoaderCircleIcon className="size-3 animate-spin" />
+              {t('tasks.detail.saving')}
+            </>
+          )}
+          {saveStatus === 'synced' && (
+            <>
+              <CheckCircle2Icon className="size-3 text-green-600 dark:text-green-400" />
+              {t('tasks.detail.synced')}
+            </>
+          )}
+          {saveStatus === 'not-synced' && (
+            <>
+              <CloudOffIcon className="size-3 text-amber-600 dark:text-amber-400" />
+              {t('tasks.detail.notSynced')}
+            </>
+          )}
+        </p>
       </SheetHeader>
 
       <div className="flex flex-col gap-5 px-6 pb-6">

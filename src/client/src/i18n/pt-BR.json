@@ -147,6 +147,8 @@
       "deleteButton": "Excluir tarefa",
       "saving": "Salvando...",
       "saved": "Salvo",
+      "synced": "Sincronizado",
+      "notSynced": "Não sincronizado",
       "loading": "Carregando tarefa...",
       "error": "Erro"
     },

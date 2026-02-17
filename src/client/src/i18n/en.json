@@ -147,6 +147,8 @@
       "deleteButton": "Delete task",
       "saving": "Saving...",
       "saved": "Saved",
+      "synced": "Synced",
+      "notSynced": "Not synced",
       "loading": "Loading task...",
       "error": "Error"
     },

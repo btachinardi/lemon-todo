@@ -147,6 +147,8 @@
       "deleteButton": "Eliminar tarea",
       "saving": "Guardando...",
       "saved": "Guardado",
+      "synced": "Sincronizado",
+      "notSynced": "No sincronizado",
       "loading": "Cargando tarea...",
       "error": "Error"
     },

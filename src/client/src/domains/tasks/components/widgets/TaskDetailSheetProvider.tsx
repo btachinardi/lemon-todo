@@ -8,6 +8,8 @@ import { useSaveIndicator } from '../../hooks/use-save-indicator';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { TaskNoteRevealDialog } from './TaskNoteRevealDialog';
 import { useDevAccountPassword } from '@/domains/auth/hooks/use-dev-account-password';
+import { useNetworkStatus } from '@/hooks/use-network-status';
+import { useOfflineQueueStore } from '@/stores/use-offline-queue-store';
 
 interface TaskDetailSheetProviderProps {
   taskId: string | null;
@@ -28,7 +30,14 @@ export function TaskDetailSheetProvider({ taskId, onClose }: TaskDetailSheetProv
   const removeTag = useRemoveTag();
   const viewNote = useViewTaskNote();
   const devPassword = useDevAccountPassword();
-  const saveStatus = useSaveIndicator(updateTask.isPending, updateTask.isSuccess, taskId);
+  const isOnline = useNetworkStatus();
+  const pendingCount = useOfflineQueueStore((s) => s.pendingCount);
+  const saveStatus = useSaveIndicator({
+    isPending: updateTask.isPending,
+    isOnline,
+    pendingCount,
+    taskId,
+  });
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
 
   const task = taskQuery.data;

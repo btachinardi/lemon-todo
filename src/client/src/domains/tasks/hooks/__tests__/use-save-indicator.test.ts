@@ -1,87 +1,111 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { useSaveIndicator } from '../use-save-indicator';
 
 describe('useSaveIndicator', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('should return idle initially', () => {
-    const { result } = renderHook(() => useSaveIndicator(false, false, 'task-1'));
-    expect(result.current).toBe('idle');
+  it('should return synced when online, not pending, and no queued mutations', () => {
+    const { result } = renderHook(() =>
+      useSaveIndicator({ isPending: false, isOnline: true, pendingCount: 0, taskId: 'task-1' }),
+    );
+    expect(result.current).toBe('synced');
   });
 
   it('should return pending when isPending is true', () => {
-    const { result } = renderHook(() => useSaveIndicator(true, false, 'task-1'));
+    const { result } = renderHook(() =>
+      useSaveIndicator({ isPending: true, isOnline: true, pendingCount: 0, taskId: 'task-1' }),
+    );
     expect(result.current).toBe('pending');
   });
 
-  it('should return success when isSuccess is true', () => {
-    const { result } = renderHook(() => useSaveIndicator(false, true, 'task-1'));
-    expect(result.current).toBe('success');
-  });
-
-  it('should auto-dismiss success to idle after 2 seconds', () => {
-    const { result } = renderHook(
-      ({ isPending, isSuccess, taskId }) => useSaveIndicator(isPending, isSuccess, taskId),
-      { initialProps: { isPending: false, isSuccess: true, taskId: 'task-1' } },
+  it('should return pending when isPending is true even if offline', () => {
+    const { result } = renderHook(() =>
+      useSaveIndicator({ isPending: true, isOnline: false, pendingCount: 2, taskId: 'task-1' }),
     );
-
-    expect(result.current).toBe('success');
-
-    act(() => vi.advanceTimersByTime(2000));
-
-    expect(result.current).toBe('idle');
+    expect(result.current).toBe('pending');
   });
 
-  it('should reset to idle when taskId changes', () => {
+  it('should return not-synced when offline with pending mutations', () => {
+    const { result } = renderHook(() =>
+      useSaveIndicator({ isPending: false, isOnline: false, pendingCount: 3, taskId: 'task-1' }),
+    );
+    expect(result.current).toBe('not-synced');
+  });
+
+  it('should return not-synced when online but pendingCount is greater than zero', () => {
+    const { result } = renderHook(() =>
+      useSaveIndicator({ isPending: false, isOnline: true, pendingCount: 1, taskId: 'task-1' }),
+    );
+    expect(result.current).toBe('not-synced');
+  });
+
+  it('should return synced when offline but no pending mutations', () => {
+    const { result } = renderHook(() =>
+      useSaveIndicator({ isPending: false, isOnline: false, pendingCount: 0, taskId: 'task-1' }),
+    );
+    expect(result.current).toBe('synced');
+  });
+
+  it('should return synced after mutation completes and no queued mutations', () => {
     const { result, rerender } = renderHook(
-      ({ isPending, isSuccess, taskId }) => useSaveIndicator(isPending, isSuccess, taskId),
-      { initialProps: { isPending: false, isSuccess: true, taskId: 'task-1' } },
+      (props) => useSaveIndicator(props),
+      {
+        initialProps: {
+          isPending: true,
+          isOnline: true,
+          pendingCount: 0,
+          taskId: 'task-1',
+        },
+      },
     );
 
-    expect(result.current).toBe('success');
+    expect(result.current).toBe('pending');
 
-    // Switch to a different task
-    rerender({ isPending: false, isSuccess: true, taskId: 'task-2' });
+    rerender({ isPending: false, isOnline: true, pendingCount: 0, taskId: 'task-1' });
 
-    expect(result.current).toBe('idle');
+    expect(result.current).toBe('synced');
   });
 
-  it('should show pending again when a new mutation starts after success', () => {
+  it('should reset to synced when taskId changes', () => {
     const { result, rerender } = renderHook(
-      ({ isPending, isSuccess, taskId }) => useSaveIndicator(isPending, isSuccess, taskId),
-      { initialProps: { isPending: false, isSuccess: true, taskId: 'task-1' } },
+      (props) => useSaveIndicator(props),
+      {
+        initialProps: {
+          isPending: false,
+          isOnline: false,
+          pendingCount: 2,
+          taskId: 'task-1',
+        },
+      },
     );
 
-    expect(result.current).toBe('success');
+    expect(result.current).toBe('not-synced');
 
-    // New mutation starts
-    rerender({ isPending: true, isSuccess: false, taskId: 'task-1' });
+    rerender({ isPending: false, isOnline: true, pendingCount: 0, taskId: 'task-2' });
 
-    expect(result.current).toBe('pending');
+    expect(result.current).toBe('synced');
   });
 
-  it('should cancel auto-dismiss timer when a new mutation starts during success period', () => {
+  it('should transition from not-synced to synced when queue drains', () => {
     const { result, rerender } = renderHook(
-      ({ isPending, isSuccess, taskId }) => useSaveIndicator(isPending, isSuccess, taskId),
-      { initialProps: { isPending: false, isSuccess: true, taskId: 'task-1' } },
+      (props) => useSaveIndicator(props),
+      {
+        initialProps: {
+          isPending: false,
+          isOnline: false,
+          pendingCount: 2,
+          taskId: 'task-1',
+        },
+      },
     );
 
-    expect(result.current).toBe('success');
+    expect(result.current).toBe('not-synced');
 
-    // Advance only 1 second (less than the 2s dismiss delay)
-    act(() => vi.advanceTimersByTime(1000));
+    // Come back online and queue drained
+    rerender({ isPending: false, isOnline: true, pendingCount: 0, taskId: 'task-1' });
 
-    // New mutation starts before auto-dismiss fires
-    rerender({ isPending: true, isSuccess: false, taskId: 'task-1' });
-
-    expect(result.current).toBe('pending');
-
-    // Advance past the original 2s mark — should not auto-dismiss to idle
-    act(() => vi.advanceTimersByTime(1500));
-
-    // Still pending (the old timer was cancelled)
-    expect(result.current).toBe('pending');
+    expect(result.current).toBe('synced');
   });
 });

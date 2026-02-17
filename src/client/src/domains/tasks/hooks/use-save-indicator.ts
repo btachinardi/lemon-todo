@@ -1,41 +1,33 @@
-import { useState, useEffect, useRef } from 'react';
+export type SyncStatus = 'synced' | 'pending' | 'not-synced';
 
-const DISMISS_DELAY_MS = 2000;
+interface UseSaveIndicatorParams {
+  /** Whether a mutation is currently in flight. */
+  isPending: boolean;
+  /** Whether the browser is online. */
+  isOnline: boolean;
+  /** Number of mutations queued in the offline queue. */
+  pendingCount: number;
+  /** Currently selected task ID. */
+  taskId: string | null;
+}
 
 /**
- * Derives a save indicator state from TanStack Query mutation status.
- * Shows 'pending' during mutations, 'success' briefly after completion,
- * then auto-resets to 'idle'. Resets immediately when `taskId` changes
- * so stale status from a previous task never bleeds through.
+ * Derives a persistent sync indicator from mutation state and offline queue.
+ *
+ * - `'pending'`    — a mutation is in flight
+ * - `'not-synced'` — offline queue has pending mutations (device offline or draining)
+ * - `'synced'`     — all changes are saved to the server
+ *
+ * Unlike the old transient indicator, this value is always meaningful and
+ * the UI should always display it.
  */
-export function useSaveIndicator(
-  isPending: boolean,
-  isSuccess: boolean,
-  taskId: string | null,
-): 'idle' | 'pending' | 'success' {
-  const [indicator, setIndicator] = useState<'idle' | 'pending' | 'success'>('idle');
-  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  useEffect(() => {
-    clearTimeout(timerRef.current);
-    if (isPending) {
-      setIndicator('pending');
-    } else if (isSuccess) {
-      setIndicator('success');
-      timerRef.current = setTimeout(() => setIndicator('idle'), DISMISS_DELAY_MS);
-    }
-    return () => clearTimeout(timerRef.current);
-  }, [isPending, isSuccess]);
-
-  // Reset when switching tasks so stale 'success' doesn't carry over.
-  const prevTaskIdRef = useRef(taskId);
-  useEffect(() => {
-    if (taskId !== prevTaskIdRef.current) {
-      prevTaskIdRef.current = taskId;
-      clearTimeout(timerRef.current);
-      setIndicator('idle');
-    }
-  }, [taskId]);
-
-  return indicator;
+export function useSaveIndicator({
+  isPending,
+  isOnline: _isOnline,
+  pendingCount,
+  taskId: _taskId,
+}: UseSaveIndicatorParams): SyncStatus {
+  if (isPending) return 'pending';
+  if (pendingCount > 0) return 'not-synced';
+  return 'synced';
 }
