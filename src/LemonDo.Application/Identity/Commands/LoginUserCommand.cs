@@ -3,15 +3,14 @@ namespace LemonDo.Application.Identity.Commands;
 using LemonDo.Application.Common;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.Repositories;
-using LemonDo.Domain.Identity.ValueObjects;
 using Microsoft.Extensions.Logging;
 
 /// <summary>Command to authenticate a user with email and password.</summary>
-public sealed record LoginUserCommand(string Email, string Password);
+public sealed record LoginUserCommand(EncryptedField Email, ProtectedValue Password);
 
 /// <summary>
-/// Orchestrates login: authenticates via Identity ACL, loads domain User for profile data,
-/// generates auth tokens, returns AuthResult with redacted protected data.
+/// Orchestrates login: authenticates via Identity ACL using email hash,
+/// loads domain User for profile data, generates auth tokens, returns AuthResult with redacted protected data.
 /// </summary>
 public sealed class LoginUserCommandHandler(
     IAuthService authService,
@@ -21,14 +20,16 @@ public sealed class LoginUserCommandHandler(
     /// <summary>Handles user login.</summary>
     public async Task<Result<AuthResult, DomainError>> HandleAsync(LoginUserCommand command, CancellationToken ct = default)
     {
-        logger.LogInformation("Login attempt for {EmailHash}", LogHelpers.MaskEmail(command.Email));
+        logger.LogInformation("Login attempt for {EmailRedacted}", command.Email.Redacted);
 
         // Authenticate via Identity (hash-based lookup + password check)
-        var authResult = await authService.AuthenticateAsync(command.Email, command.Password, ct);
+        var emailHash = command.Email.Hash
+            ?? throw new InvalidOperationException("EncryptedField for email must have a hash.");
+        var authResult = await authService.AuthenticateByHashAsync(emailHash, command.Password.Value, ct);
         if (authResult.IsFailure)
         {
-            logger.LogWarning("Login failed for {EmailHash}: {ErrorCode}",
-                LogHelpers.MaskEmail(command.Email), authResult.Error.Code);
+            logger.LogWarning("Login failed for {EmailRedacted}: {ErrorCode}",
+                command.Email.Redacted, authResult.Error.Code);
             return Result<AuthResult, DomainError>.Failure(authResult.Error);
         }
 
