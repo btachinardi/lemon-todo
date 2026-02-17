@@ -42,7 +42,7 @@ describe('useLogin', () => {
   it('should clear query cache on successful login', async () => {
     mockLogin.mockResolvedValue(AUTH_RESPONSE);
     const { queryClient, wrapper } = createWrapper();
-    const clearSpy = vi.spyOn(queryClient, 'clear');
+    const resetSpy = vi.spyOn(queryClient, 'resetQueries');
 
     // Seed the cache with stale data from a previous session
     queryClient.setQueryData(['tasks', 'list', undefined], { items: [{ id: 'stale' }] });
@@ -55,7 +55,7 @@ describe('useLogin', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(clearSpy).toHaveBeenCalled();
+    expect(resetSpy).toHaveBeenCalled();
     expect(useAuthStore.getState().accessToken).toBe('new-token');
   });
 });
@@ -69,7 +69,7 @@ describe('useRegister', () => {
   it('should clear query cache on successful registration', async () => {
     mockRegister.mockResolvedValue(AUTH_RESPONSE);
     const { queryClient, wrapper } = createWrapper();
-    const clearSpy = vi.spyOn(queryClient, 'clear');
+    const resetSpy = vi.spyOn(queryClient, 'resetQueries');
 
     // Seed the cache with stale data
     queryClient.setQueryData(['boards', 'default'], { id: 'stale-board' });
@@ -86,7 +86,7 @@ describe('useRegister', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(clearSpy).toHaveBeenCalled();
+    expect(resetSpy).toHaveBeenCalled();
     expect(useAuthStore.getState().accessToken).toBe('new-token');
   });
 });
@@ -104,7 +104,7 @@ describe('useLogout', () => {
   it('should clear auth store and query cache on logout', async () => {
     mockLogout.mockResolvedValue(undefined);
     const { queryClient, wrapper } = createWrapper();
-    const clearSpy = vi.spyOn(queryClient, 'clear');
+    const resetSpy = vi.spyOn(queryClient, 'resetQueries');
 
     const { result } = renderHook(() => useLogout(), { wrapper });
 
@@ -114,7 +114,7 @@ describe('useLogout', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(clearSpy).toHaveBeenCalled();
+    expect(resetSpy).toHaveBeenCalled();
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
 });

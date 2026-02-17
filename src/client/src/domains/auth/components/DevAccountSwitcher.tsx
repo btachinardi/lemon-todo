@@ -96,15 +96,18 @@ export function DevAccountSwitcher() {
         email: account.email,
         password: account.password,
       });
-      // Set new auth FIRST so any refetches triggered by clear() use the new token
+      // Set new auth FIRST so refetches use the new token.
+      // resetQueries() (not clear()) is required because clear() removes queries
+      // from the cache without notifying mounted observers — they keep stale data.
+      // resetQueries() resets data to undefined (shows loading) and triggers refetches.
       setAuth(response.accessToken, response.user);
-      queryClient.clear();
+      queryClient.resetQueries();
       navigate('/board', { replace: true });
     } catch {
       // Login failed — if we already logged out server-side, clear client state too
       if (wasAuthenticated) {
         logout();
-        queryClient.clear();
+        queryClient.resetQueries();
       }
     } finally {
       setSwitchingRole(null);

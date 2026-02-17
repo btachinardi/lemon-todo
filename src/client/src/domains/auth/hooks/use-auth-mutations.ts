@@ -16,7 +16,7 @@ export function useRegister() {
     mutationFn: (request: RegisterRequest) => authApi.register(request),
     onSuccess: (data) => {
       setAuth(data.accessToken, data.user);
-      queryClient.clear();
+      queryClient.resetQueries();
     },
   });
 }
@@ -34,7 +34,7 @@ export function useLogin() {
     mutationFn: (request: LoginRequest) => authApi.login(request),
     onSuccess: (data) => {
       setAuth(data.accessToken, data.user);
-      queryClient.clear();
+      queryClient.resetQueries();
     },
   });
 }
@@ -52,7 +52,7 @@ export function useLogout() {
     mutationFn: () => authApi.logout(),
     onSettled: () => {
       logout();
-      queryClient.clear();
+      queryClient.resetQueries();
     },
   });
 }

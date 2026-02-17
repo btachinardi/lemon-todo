@@ -234,7 +234,7 @@ describe('DevAccountSwitcher', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     });
-    const clearSpy = vi.spyOn(queryClient, 'clear');
+    const resetSpy = vi.spyOn(queryClient, 'resetQueries');
 
     useAuthStore.setState({
       accessToken: 'existing-token',
@@ -248,7 +248,7 @@ describe('DevAccountSwitcher', () => {
     await user.click(screen.getByText('Admin'));
 
     await vi.waitFor(() => {
-      expect(clearSpy).toHaveBeenCalled();
+      expect(resetSpy).toHaveBeenCalled();
     });
   });
 
@@ -261,12 +261,14 @@ describe('DevAccountSwitcher', () => {
     const newUser = { id: '2', email: 'dev.admin@lemondo.dev', displayName: 'D** A***', roles: ['User', 'Admin'] };
     mockLogin.mockResolvedValue({ accessToken: newToken, user: newUser });
 
-    // When queryClient.clear() fires, the new token must already be in the store.
-    // If clear() fires before setAuth(), mounted query observers would refetch
-    // with the old token, returning stale data from the previous user.
-    let tokenAtClearTime: string | null = null;
-    vi.spyOn(queryClient, 'clear').mockImplementation(() => {
-      tokenAtClearTime = useAuthStore.getState().accessToken;
+    // When queryClient.resetQueries() fires, the new token must already be
+    // in the store. resetQueries() notifies mounted observers and triggers
+    // refetches — those refetches must use the new user's credentials.
+    let tokenAtResetTime: string | null = null;
+    const originalReset = queryClient.resetQueries.bind(queryClient);
+    vi.spyOn(queryClient, 'resetQueries').mockImplementation((...args) => {
+      tokenAtResetTime = useAuthStore.getState().accessToken;
+      return originalReset(...args);
     });
 
     useAuthStore.setState({
@@ -281,9 +283,9 @@ describe('DevAccountSwitcher', () => {
     await user.click(screen.getByText('Admin'));
 
     await vi.waitFor(() => {
-      expect(tokenAtClearTime).not.toBeNull();
+      expect(tokenAtResetTime).not.toBeNull();
     });
-    expect(tokenAtClearTime).toBe(newToken);
+    expect(tokenAtResetTime).toBe(newToken);
   });
 
   it('should keep isAuthenticated true during the switch to prevent login page flash', async () => {
@@ -342,7 +344,7 @@ describe('DevAccountSwitcher', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     });
-    const clearSpy = vi.spyOn(queryClient, 'clear');
+    const resetSpy = vi.spyOn(queryClient, 'resetQueries');
 
     useAuthStore.setState({
       accessToken: 'existing-token',
@@ -360,7 +362,7 @@ describe('DevAccountSwitcher', () => {
       expect(useAuthStore.getState().isAuthenticated).toBe(false);
     });
     // And clear the query cache
-    expect(clearSpy).toHaveBeenCalled();
+    expect(resetSpy).toHaveBeenCalled();
   });
 });
 
