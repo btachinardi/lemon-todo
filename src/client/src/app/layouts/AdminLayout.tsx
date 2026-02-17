@@ -31,7 +31,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <img src="/lemondo-icon.png" alt="" className="size-7 sm:size-8" />
               <span className="font-[var(--font-brand)] text-lg font-black tracking-tight sm:text-xl">
                 <span className="text-foreground">{t('brand.lemon')}</span>
-                <span className="text-highlight">{t('brand.do')}</span>
+                <span className="text-primary">{t('brand.do')}</span>
               </span>
               <span className="ml-1 text-xs text-muted-foreground">{t('brand.admin')}</span>
             </h1>
@@ -46,7 +46,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 cn(
                   'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
                   isActive
-                    ? 'bg-primary text-primary-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
+                    ? 'bg-brand text-brand-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
                 )
               }
@@ -60,7 +60,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 cn(
                   'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
                   isActive
-                    ? 'bg-primary text-primary-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
+                    ? 'bg-brand text-brand-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
                 )
               }
