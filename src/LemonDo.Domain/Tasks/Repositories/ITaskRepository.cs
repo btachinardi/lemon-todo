@@ -39,24 +39,30 @@ public interface ITaskRepository
     System.Threading.Tasks.Task<HashSet<TaskId>> GetActiveTaskIdsAsync(UserId ownerId, CancellationToken ct = default);
 
     /// <summary>
-    /// Persists a new task aggregate. If <paramref name="sensitiveNote"/> is provided,
-    /// encrypts it and stores it as a shadow property.
+    /// Persists a new task aggregate. If <paramref name="encryptedNote"/> is provided,
+    /// stores its encrypted value as a shadow property.
     /// </summary>
-    System.Threading.Tasks.Task AddAsync(TaskEntity task, SensitiveNote? sensitiveNote = null, CancellationToken ct = default);
+    System.Threading.Tasks.Task AddAsync(TaskEntity task, EncryptedField? encryptedNote = null, CancellationToken ct = default);
 
     /// <summary>
-    /// Marks an existing task aggregate as modified. If <paramref name="sensitiveNote"/> is provided,
-    /// encrypts and updates the shadow property. Pass <c>null</c> with <paramref name="clearSensitiveNote"/>
+    /// Marks an existing task aggregate as modified. If <paramref name="encryptedNote"/> is provided,
+    /// stores its encrypted value in the shadow property. Pass <c>null</c> with <paramref name="clearSensitiveNote"/>
     /// set to <c>true</c> to remove the note.
     /// </summary>
     /// <param name="task">The modified task aggregate to persist.</param>
-    /// <param name="sensitiveNote">New encrypted note value, or null to leave unchanged.</param>
-    /// <param name="clearSensitiveNote">When true, removes the sensitive note regardless of the sensitiveNote parameter value.</param>
+    /// <param name="encryptedNote">Pre-encrypted note, or null to leave unchanged.</param>
+    /// <param name="clearSensitiveNote">When true, removes the sensitive note regardless of the encryptedNote parameter value.</param>
     /// <param name="ct">Cancellation token.</param>
-    System.Threading.Tasks.Task UpdateAsync(TaskEntity task, SensitiveNote? sensitiveNote = null, bool clearSensitiveNote = false, CancellationToken ct = default);
+    System.Threading.Tasks.Task UpdateAsync(TaskEntity task, EncryptedField? encryptedNote = null, bool clearSensitiveNote = false, CancellationToken ct = default);
 
     /// <summary>
     /// Decrypts and returns the sensitive note for a task, or a not-found error if the task has no note.
     /// </summary>
     System.Threading.Tasks.Task<Result<string, DomainError>> GetDecryptedSensitiveNoteAsync(TaskId taskId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the encrypted sensitive note as a <see cref="RevealedField"/> for JSON-level decryption,
+    /// or a not-found error if the task has no note.
+    /// </summary>
+    System.Threading.Tasks.Task<Result<RevealedField, DomainError>> GetEncryptedSensitiveNoteAsync(TaskId taskId, CancellationToken ct = default);
 }
