@@ -30,6 +30,7 @@ export const SortableTaskCard = memo(function SortableTaskCard({ task, onComplet
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    touchAction: 'none' as const,
   };
 
   return (

@@ -12,6 +12,9 @@ import { KanbanBoard } from './KanbanBoard';
 import { createBoard, createTask, createTaskCard } from '@/test/factories';
 import { TaskStatus } from '../../types/task.types';
 
+/** Spy on useSensor calls to verify sensor configuration. */
+const mockUseSensor = vi.hoisted(() => vi.fn(() => ({})));
+
 /**
  * Captured DndContext event handlers. Updated on every render of KanbanBoard
  * because the mock DndContext re-captures props each time.
@@ -31,9 +34,11 @@ vi.mock('@dnd-kit/core', () => ({
   },
   DragOverlay: ({ children }: { children?: ReactNode }) => <>{children}</>,
   closestCorners: vi.fn(),
-  PointerSensor: class {},
-  useSensor: () => ({}),
-  useSensors: () => [],
+  PointerSensor: class PointerSensor {},
+  TouchSensor: class TouchSensor {},
+  KeyboardSensor: class KeyboardSensor {},
+  useSensor: mockUseSensor,
+  useSensors: (...sensors: unknown[]) => sensors,
   useDroppable: () => ({ setNodeRef: vi.fn(), isOver: false }),
 }));
 
@@ -392,5 +397,86 @@ describe('KanbanBoard drag-and-drop', () => {
       null,      // previousTaskId — top of column
       taskA.id,  // nextTaskId
     );
+  });
+});
+
+describe('KanbanBoard mobile touch support', () => {
+  beforeEach(() => {
+    mockUseSensor.mockClear();
+    dndHandlers = {};
+  });
+
+  it('should configure TouchSensor for mobile drag support', () => {
+    const board = createBoard();
+    render(<KanbanBoard board={board} tasks={[]} />);
+
+    const sensorNames = mockUseSensor.mock.calls.map((call) => call[0]?.name);
+    expect(sensorNames).toContain('TouchSensor');
+  });
+
+  it('should configure TouchSensor with delay activation to avoid conflicting with scroll', () => {
+    const board = createBoard();
+    render(<KanbanBoard board={board} tasks={[]} />);
+
+    const touchSensorCall = mockUseSensor.mock.calls.find(
+      (call) => call[0]?.name === 'TouchSensor',
+    );
+    expect(touchSensorCall).toBeDefined();
+
+    const options = touchSensorCall![1] as { activationConstraint?: { delay?: number; tolerance?: number } };
+    // TouchSensor should use delay-based activation (not just distance) so
+    // a quick swipe scrolls normally while a press-and-hold initiates drag
+    expect(options?.activationConstraint?.delay).toBeGreaterThanOrEqual(200);
+    expect(options?.activationConstraint?.tolerance).toBeGreaterThanOrEqual(5);
+  });
+
+  it('should disable snap scroll during active drag to prevent layout jumps', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Snap test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const columnsContainer = container.querySelector('[data-onboarding="board-columns"]')!;
+
+    // Before drag: snap scroll should be active for mobile swipe navigation
+    expect(columnsContainer.className).toContain('snap-x');
+    expect(columnsContainer.className).toContain('snap-mandatory');
+
+    // During drag: snap must be disabled so dropping doesn't cause layout jump
+    act(() => {
+      dndHandlers.onDragStart?.(makeDndEvent(task.id));
+    });
+    expect(columnsContainer.className).not.toContain('snap-x');
+    expect(columnsContainer.className).not.toContain('snap-mandatory');
+
+    // After drag ends: snap should be restored
+    act(() => {
+      dndHandlers.onDragEnd?.(makeDndEvent(task.id, task.id));
+    });
+    expect(columnsContainer.className).toContain('snap-x');
+    expect(columnsContainer.className).toContain('snap-mandatory');
+  });
+
+  it('should restore snap scroll on drag cancel', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Cancel test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const columnsContainer = container.querySelector('[data-onboarding="board-columns"]')!;
+
+    act(() => {
+      dndHandlers.onDragStart?.(makeDndEvent(task.id));
+    });
+    expect(columnsContainer.className).not.toContain('snap-x');
+
+    act(() => {
+      dndHandlers.onDragCancel?.({
+        ...makeDndEvent(task.id),
+        over: null,
+      } as unknown as DragCancelEvent);
+    });
+    expect(columnsContainer.className).toContain('snap-x');
+    expect(columnsContainer.className).toContain('snap-mandatory');
   });
 });

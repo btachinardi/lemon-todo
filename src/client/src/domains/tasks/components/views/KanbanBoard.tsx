@@ -4,6 +4,7 @@ import {
   DragOverlay,
   closestCorners,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragStartEvent,
@@ -102,10 +103,16 @@ export function KanbanBoard({
     setColumnItems(buildColumnItems(board));
   }, [board]);
 
-  // Require 5px movement before activating drag (prevents accidental drags on click)
+  // PointerSensor for desktop (5px distance prevents accidental drags on click).
+  // TouchSensor for mobile (250ms delay lets quick swipes scroll normally;
+  // press-and-hold initiates drag; 5px tolerance forgives small finger movement).
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
   );
+
+  // Track whether a drag is active to disable snap-scroll during drag.
+  const isDragging = activeId != null;
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const taskId = event.active.id as string;
@@ -233,7 +240,7 @@ export function KanbanBoard({
       onDragCancel={handleDragCancel}
     >
       <div className={cn('w-full overflow-x-auto', className)}>
-        <div className="flex snap-x snap-mandatory gap-4 p-4 sm:snap-none sm:p-6" data-onboarding="board-columns">
+        <div className={cn('flex gap-4 p-4 sm:snap-none sm:p-6', !isDragging && 'snap-x snap-mandatory')} data-onboarding="board-columns">
           {sortedColumns.map((column, index) => (
               <KanbanColumn
                 key={column.id}
