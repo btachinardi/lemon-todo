@@ -1857,6 +1857,40 @@ All 5 checkpoints complete. This is the first stable release, promoted from the 
 
 ---
 
+## Release v1.0.1 — Patch
+
+**Date: February 16, 2026**
+
+First patch release after v1.0.0. All 12 commits are bug fixes — no new features.
+
+### What's Fixed
+
+**Mobile responsiveness (7 fixes):**
+- Touch support for kanban drag-and-drop (was broken on mobile devices)
+- Responsive menus for Dashboard and Admin layouts
+- Responsive navigation for landing page header
+- Column-snap auto-scroll during mobile kanban drag
+- Dev account switcher overlapping mobile quick-add bar
+- Visible text labels on icon-only buttons in mobile menus
+
+**Accessibility (3 fixes):**
+- Missing `DialogTitle` and `DialogDescription` on TaskDetailSheet (Radix warnings)
+- Missing `sr-only` translation keys for TaskDetailSheet screen reader labels
+- Icon-only buttons now have visible text labels on mobile
+
+**Bug fixes (2 fixes):**
+- Due date shifting to previous day in western timezones (UTC offset rounding)
+- Scalar API docs blocked by restrictive Content-Security-Policy
+
+**Configuration (1 fix):**
+- Environment detection for demo accounts replaced with explicit feature flag
+
+### Lesson Learned
+
+Post-release polish catches real user-facing issues. Mobile and accessibility testing in particular revealed gaps that automated tests didn't cover — touch interactions, screen reader announcements, and timezone edge cases all required hands-on testing to discover.
+
+---
+
 ## What's Next
 
 See `docs/ROADMAP.md` for future capability tiers.
