@@ -43,7 +43,7 @@ export function PWAInstallPrompt() {
       className="fixed bottom-16 left-4 right-4 z-50 mx-auto flex max-w-md items-center gap-3 rounded-lg border bg-card p-4 shadow-lg sm:bottom-4 sm:left-auto sm:right-4"
     >
       <DownloadIcon className="size-5 shrink-0 text-primary" />
-      <p className="flex-1 text-sm">{t('pwa.installPrompt')}</p>
+      <p className="flex-1 text-base">{t('pwa.installPrompt')}</p>
       <Button
         size="sm"
         onClick={async () => {

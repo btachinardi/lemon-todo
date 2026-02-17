@@ -511,15 +511,15 @@
       "titleLine1": "From Empty Folder to",
       "titleHighlight": "Production",
       "titleLine2": "",
-      "subtitle": "A lemon.io take-home for a healthcare startup that detects early-stage cancers via MRI — interpreted through the lens of what 'production MVP' means in a regulated environment. 5 planning documents, 5 shippable checkpoints, 3 architectural redesigns, and 1,034 tests."
+      "subtitle": "A lemon.io take-home for a healthcare startup that detects early-stage cancers via MRI — built through the lens of what 'production MVP' means in regulated healthcare. 5 planning docs, 5 shippable checkpoints, 3 redesigns, 1,034 tests."
     },
     "rationale": {
-      "title": "Why These Features, Why This Scope",
+      "title": "Why These Features",
       "highlight": "Why",
       "subtitle": "The assignment asked for a todo app with any features I'd add for a real production MVP. The target company operates in regulated healthcare. That context shaped every decision.",
       "promptLabel": "The Assignment",
       "prompt": "Build a task management application using .NET with SQLite on the backend, React on the frontend. Add any features you would add for a real production MVP.",
-      "interpretation": "A production MVP in healthcare is not just working code. It means compliance awareness, offline reliability for unstable hospital networks, Azure deployment to match the company's stack, observability for incident response, and product analytics to validate hypotheses. Each feature was chosen with this lens.",
+      "interpretation": "A production MVP in healthcare means more than working code — it means compliance, offline reliability for hospital networks, Azure deployment to match their stack, observability, and analytics to validate hypotheses.",
       "steps": [
         {
           "title": "The Assignment",
@@ -527,7 +527,7 @@
         },
         {
           "title": "Healthcare Context",
-          "description": "The target company detects early-stage cancers via MRI. Healthcare means regulated environments, data protection, and audit requirements."
+          "description": "Healthcare means regulated environments, data protection, and audit requirements."
         },
         {
           "title": "Compliance Awareness",
@@ -535,22 +535,22 @@
         },
         {
           "title": "Offline-First",
-          "description": "Hospital wifi is unreliable. If the product stops working when connectivity drops, it becomes a liability. PWA with IndexedDB mutation queue."
+          "description": "Hospital wifi is unreliable — a product that fails offline becomes a liability. PWA with IndexedDB mutation queue."
         },
         {
           "title": "Azure Deployment",
-          "description": "The company uses Azure. Terraform IaC, Container Apps, SQL Server for production, GitHub Actions CI/CD — demonstrating infrastructure fluency."
+          "description": "Terraform IaC, Container Apps, SQL Server, GitHub Actions CI/CD — matching the company's Azure stack."
         },
         {
           "title": "Product Analytics",
-          "description": "An MVP without analytics cannot answer the questions it exists to answer. Privacy-first event tracking with hashed identifiers, no PII in events."
+          "description": "An MVP without analytics can't validate its own hypotheses. Privacy-first tracking with hashed identifiers, no PII."
         }
       ]
     },
     "vision": {
       "title": "5 Documents Before One Line of Code",
       "highlight": "One Line",
-      "subtitle": "The target company operates in regulated healthcare. Before writing code, I produced five planning artifacts to ensure compliance, offline reliability, and deployment concerns were addressed from the start — not as afterthoughts.",
+      "subtitle": "Before writing code, I produced five planning artifacts to ensure compliance, offline reliability, and deployment were addressed from the start — not as afterthoughts.",
       "items": [
         {
           "title": "Product Requirements",
@@ -631,7 +631,7 @@
     "problemSolving": {
       "title": "3 Redesigns, Not 3 Patches",
       "highlight": "Redesigns",
-      "subtitle": "When architectural problems surfaced, they were fixed at the root — not worked around. Each redesign touched dozens of files across all layers and left the system in a better state than before.",
+      "subtitle": "When architectural problems surfaced, they were fixed at the root — not worked around. Each redesign touched dozens of files across all layers.",
       "items": [
         {
           "title": "Column-Status Invariant",
@@ -656,7 +656,7 @@
     "testing": {
       "title": "Testing as a Design Constraint",
       "highlight": "Design Constraint",
-      "subtitle": "Not just high coverage — diverse testing strategies that catch different classes of bugs. Property-based testing on both stacks, dual-database CI, visual regression, and compile-time API contract guards.",
+      "subtitle": "Diverse testing strategies that catch different classes of bugs. Property-based testing on both stacks, dual-database CI, visual regression, and compile-time API contract guards.",
       "items": [
         {
           "title": "Property-Based Testing",
@@ -899,7 +899,7 @@
     "highlights": {
       "title": "Engineering Highlights",
       "highlight": "Highlights",
-      "subtitle": "Implementation choices that improve reliability and maintainability in real-world systems, especially where traceability and predictable behavior matter.",
+      "subtitle": "Implementation choices that improve reliability and maintainability, especially where traceability and predictable behavior matter.",
       "items": [
         {
           "title": "Deterministic Status Transitions",

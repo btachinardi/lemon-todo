@@ -103,7 +103,7 @@ export function TaskBoardPage() {
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold">{t('tasks.errors.loadBoard')}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{t('common.error.connection')}</p>
+          <p className="mt-1 text-base text-muted-foreground">{t('common.error.connection')}</p>
         </div>
         <Button
           variant="outline"

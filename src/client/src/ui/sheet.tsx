@@ -3,6 +3,7 @@ import { XIcon } from "lucide-react"
 import { Dialog as SheetPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { useVisualViewport } from "@/hooks/use-visual-viewport"
 
 /** Slide-out panel root component. Similar to dialog but slides from screen edge. */
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -58,18 +59,39 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
+  style,
+  onFocus: consumerOnFocus,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
   showCloseButton?: boolean
 }) {
+  const { height } = useVisualViewport()
+  const needsMaxHeight = side === "right" || side === "left"
+
+  const handleFocus = React.useCallback(
+    (e: React.FocusEvent<HTMLDivElement>) => {
+      consumerOnFocus?.(e)
+      const target = e.target
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement
+      ) {
+        setTimeout(() => {
+          target.scrollIntoView?.({ block: "nearest", behavior: "smooth" })
+        }, 100)
+      }
+    },
+    [consumerOnFocus],
+  )
+
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 overflow-y-auto shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
           side === "right" &&
             "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
           side === "left" &&
@@ -80,6 +102,13 @@ function SheetContent({
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
           className
         )}
+        style={{
+          ...style,
+          ...(needsMaxHeight && height > 0
+            ? { maxHeight: `${height}px` }
+            : undefined),
+        }}
+        onFocus={handleFocus}
         {...props}
       >
         {children}
@@ -138,7 +167,7 @@ function SheetDescription({
   return (
     <SheetPrimitive.Description
       data-slot="sheet-description"
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-muted-foreground text-base", className)}
       {...props}
     />
   )

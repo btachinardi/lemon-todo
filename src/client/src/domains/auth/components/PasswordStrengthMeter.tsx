@@ -95,10 +95,10 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
       {/* Strength bar */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="text-sm font-medium text-muted-foreground">
             {t('auth.passwordStrength.label')}
           </span>
-          <span className={`text-xs font-semibold ${LEVEL_TEXT_COLORS[level]}`}>
+          <span className={`text-sm font-semibold ${LEVEL_TEXT_COLORS[level]}`}>
             {t(`auth.passwordStrength.${level}`)}
           </span>
         </div>
@@ -113,7 +113,7 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
       {/* Requirement checklist */}
       <div className="space-y-2">
         <div className="space-y-1">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
             {t('auth.passwordStrength.requirements')}
           </span>
           <ul className="space-y-0.5">
@@ -128,7 +128,7 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
         </div>
 
         <div className="space-y-1">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
             {t('auth.passwordStrength.bonus')}
           </span>
           <ul className="space-y-0.5">
@@ -148,7 +148,7 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
 
 function RequirementItem({ label, passed }: { label: string; passed: boolean }) {
   return (
-    <li className="flex items-center gap-2 text-xs">
+    <li className="flex items-center gap-2 text-sm">
       <span
         className={`flex size-4 shrink-0 items-center justify-center rounded-full transition-all duration-300 ${
           passed

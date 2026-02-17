@@ -37,7 +37,7 @@ export function NotificationDropdown({ showLabel }: NotificationDropdownProps = 
           aria-label={t('notifications.bell', { count: unreadCount })}
         >
           <BellIcon className="size-4" />
-          {showLabel && <span className="text-sm">{t('notifications.title')}</span>}
+          {showLabel && <span className="text-base">{t('notifications.title')}</span>}
           {unreadCount > 0 && (
             <span className={showLabel
               ? 'ml-auto flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground'
@@ -54,12 +54,12 @@ export function NotificationDropdown({ showLabel }: NotificationDropdownProps = 
         className="w-80 p-0 sm:w-96"
       >
         <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
-          <h3 className="text-sm font-semibold">{t('notifications.title')}</h3>
+          <h3 className="text-base font-semibold">{t('notifications.title')}</h3>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto gap-1 px-2 py-1 text-xs"
+              className="h-auto gap-1 px-2 py-1 text-sm"
               onClick={() => markAllAsRead.mutate()}
               disabled={markAllAsRead.isPending}
             >
@@ -78,7 +78,7 @@ export function NotificationDropdown({ showLabel }: NotificationDropdownProps = 
               <LoaderIcon className="size-5 animate-spin text-muted-foreground" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
+            <div className="py-8 text-center text-base text-muted-foreground">
               {t('notifications.empty')}
             </div>
           ) : (

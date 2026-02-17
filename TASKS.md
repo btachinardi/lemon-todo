@@ -331,6 +331,8 @@
 | 2026-02-17 | `.Produces<T>()` metadata on all endpoints | Minimal API `Results.Ok(dto)` doesn't carry type info. Without `.Produces<T>()`, OpenAPI spec only has request schemas, no response schemas. Added to all 7 endpoint files. |
 | 2026-02-17 | v1.0.2 patch release | Consolidates OpenAPI type generation, protected data refactoring, offline queue fixes, admin E2E coverage, theme polish, and CI/CD improvements for release branches. |
 | 2026-02-17 | CI/CD for release branches | Added `release/*` to workflow triggers (push + PR). Tests run but deploy is skipped (deploy only on `main` push). Ensures verification gate passes in CI before merging to main. |
+| 2026-02-17 | `useVisualViewport` hook for keyboard-aware overlays | Mobile virtual keyboards resize the visual viewport but not the layout viewport. `useVisualViewport` tracks `window.visualViewport` offset/height changes and applies CSS transform to Dialog/Sheet overlays so they stay visible above the keyboard. |
+| 2026-02-17 | v1.0.4 patch release | Mobile UX polish: keyboard-aware dialogs/sheets, scrollable evaluator modal, drag-scroll direction lock fix, auth loading screen, font size hierarchy bump, i18n copy tightening. |
 
 ---
 
@@ -399,6 +401,8 @@
 - **Post-release DX**: OpenAPI-based TypeScript type generation (471 frontend tests, +9 enum coverage guard tests)
 - **Post-release polish**: Theme refinements — light primary switched to purple, brand token (always lime) for CTAs/logo, dark surfaces lightened, list view card surface, DevOps pipeline icons
 - **Release v1.0.2**: Patch — OpenAPI type generation, protected data refactoring, offline queue fixes, admin E2E coverage (20 tests), theme polish, CI/CD for release branches
+- **Release v1.0.3**: Patch — dev container, `./dev install` for zero-config onboarding, generated dev config files
+- **Release v1.0.4**: Patch — mobile UX polish (keyboard-aware dialogs/sheets, scrollable modals, drag-scroll fix, auth loading screen, font size hierarchy, i18n copy tightening)
 
 ---
 
@@ -550,3 +554,10 @@
 | 80733cb | style(layouts): use primary for logo, brand for nav, GlowButton for CTA | Post-release |
 | f4d356f | feat(landing): add lucide icons to DevOps pipeline detail cards | Post-release |
 | 6ba03f3 | style(tasks): add semi-transparent card surface to list view rows | Post-release |
+| 4cbe54e | fix(ui): center evaluator modal on mobile viewports | v1.0.4 |
+| 8024734 | fix(ui): show loading animation instead of black screen during auth hydration | v1.0.4 |
+| 58cce0b | fix(ui): make evaluator modal body scrollable instead of entire panel | v1.0.4 |
+| bb88652 | fix(ui): make dialogs and sheets keyboard-aware on mobile | v1.0.4 |
+| 3c714a0 | fix(ui): fix mobile kanban drag-scroll direction lock and increase snap cooldown | v1.0.4 |
+| 48833bb | feat(ui): bump font size hierarchy for improved readability | v1.0.4 |
+| 9d432a0 | fix(i18n): tighten methodology page copy across all 3 locales | v1.0.4 |

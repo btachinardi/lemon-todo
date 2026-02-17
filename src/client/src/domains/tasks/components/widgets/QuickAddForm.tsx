@@ -42,7 +42,7 @@ export function QuickAddForm({ onSubmit, isLoading, className }: QuickAddFormPro
           placeholder={t('tasks.quickAdd.placeholder')}
           maxLength={500}
           disabled={isLoading}
-          className="h-10 rounded-lg border-border bg-secondary/60 px-4 text-sm placeholder:text-muted-foreground/60 focus-visible:border-primary/40 focus-visible:bg-secondary/80"
+          className="h-10 rounded-lg border-border bg-secondary/60 px-4 text-base placeholder:text-muted-foreground/60 focus-visible:border-primary/40 focus-visible:bg-secondary/80"
         />
         <Button
           type="submit"

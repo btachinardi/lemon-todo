@@ -24,12 +24,12 @@ export function StepCard({ step, icon, title, description, index }: StepCardProp
         <div className="flex size-16 items-center justify-center rounded-2xl border-2 border-primary/20 bg-primary/10 text-primary">
           {icon}
         </div>
-        <span className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">
+        <span className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full bg-primary text-sm font-black text-primary-foreground">
           {step}
         </span>
       </div>
       <h3 className="mb-2 text-lg font-bold">{title}</h3>
-      <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
+      <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
     </motion.div>
   );
 }

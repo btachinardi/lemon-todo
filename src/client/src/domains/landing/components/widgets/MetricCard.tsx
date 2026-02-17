@@ -65,7 +65,7 @@ export function MetricCard({ value, label, detail, index, isInView, className }:
     >
       <p className="text-4xl font-black tracking-tight text-primary sm:text-5xl">{displayValue}</p>
       <p className="mt-1 text-base font-bold">{label}</p>
-      <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
+      <p className="mt-0.5 text-sm text-muted-foreground">{detail}</p>
     </motion.div>
   );
 }

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-02-17
+
+Patch release improving mobile UX — keyboard-aware dialogs, scrollable modals, better drag-scroll behavior, a loading screen for auth hydration, bumped font size hierarchy, and tightened i18n copy.
+
+### Added
+
+- **Font size hierarchy bump** — increased base sizes across headings, body text, and UI elements for improved readability on all viewports
+- **App loading screen** — branded lemon animation replaces black screen during auth hydration on initial page load
+
+### Fixed
+
+- **Mobile kanban drag-scroll direction lock** — drag axis now locks correctly and snap cooldown increased to prevent accidental column jumps
+- **Dialogs and sheets not keyboard-aware on mobile** — `useVisualViewport` hook repositions Dialog and Sheet overlays above the virtual keyboard when it opens
+- **Evaluator modal body not scrollable** — long content in the evaluator modal now scrolls within the body instead of scrolling the entire panel
+- **Evaluator modal off-center on mobile** — modal now centers correctly on mobile viewports
+- **Methodology page copy inconsistencies** — tightened wording across all 3 locales (en, pt-BR, es) for clarity and consistency
+
 ## [1.0.3] - 2026-02-17
 
 Patch release improving developer experience for fresh clones — zero-config onboarding via `./dev install` and a dev container.
@@ -425,7 +442,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.3...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/btachinardi/lemon-todo/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/btachinardi/lemon-todo/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/btachinardi/lemon-todo/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/btachinardi/lemon-todo/compare/v1.0.0...v1.0.1

@@ -38,7 +38,7 @@ export function RoadmapHorizonSection({
           transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <div className="mb-4 text-center">
-            <span className="inline-block rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-black tracking-widest text-primary">
+            <span className="inline-block rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-black tracking-widest text-primary">
               {t(`roadmap.horizons.${horizonKey}.label`)}
             </span>
           </div>

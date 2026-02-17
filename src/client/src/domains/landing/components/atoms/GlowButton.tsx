@@ -27,7 +27,7 @@ interface GlowButtonAnchorProps extends GlowButtonBaseProps, Omit<ComponentProps
 type GlowButtonProps = GlowButtonLinkProps | GlowButtonAnchorProps;
 
 const baseClasses =
-  'inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-bold tracking-wide transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring';
+  'inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-base font-bold tracking-wide transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring';
 
 const primaryClasses =
   'bg-brand text-brand-foreground hover:shadow-[0_0_32px_rgba(220,255,2,0.4)] hover:scale-[1.02] animate-[highlight-pulse_3s_ease-in-out_infinite]';

@@ -22,7 +22,7 @@ export function PWAUpdatePrompt() {
       className="fixed bottom-4 left-4 right-4 z-50 mx-auto flex max-w-md items-center gap-3 rounded-lg border bg-card p-4 shadow-lg sm:left-auto sm:right-4"
     >
       <RefreshCwIcon className="size-5 shrink-0 text-primary" />
-      <p className="flex-1 text-sm">{t('pwa.updateAvailable')}</p>
+      <p className="flex-1 text-base">{t('pwa.updateAvailable')}</p>
       <Button size="sm" onClick={() => applyUpdate()}>
         {t('pwa.update')}
       </Button>

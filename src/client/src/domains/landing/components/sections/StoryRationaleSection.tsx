@@ -64,13 +64,13 @@ export function StoryRationaleSection() {
             className="lg:col-span-2"
           >
             <div className="rounded-xl border-2 border-primary/20 bg-card/50 p-6 backdrop-blur-sm">
-              <p className="text-sm font-semibold uppercase tracking-wider text-primary">
+              <p className="text-base font-semibold uppercase tracking-wider text-primary">
                 {t('story.rationale.promptLabel')}
               </p>
               <blockquote className="mt-3 border-l-2 border-primary/40 pl-4 text-base italic leading-relaxed text-muted-foreground">
                 {t('story.rationale.prompt')}
               </blockquote>
-              <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-6 text-base leading-relaxed text-muted-foreground">
                 {t('story.rationale.interpretation')}
               </p>
             </div>
@@ -94,8 +94,8 @@ export function StoryRationaleSection() {
                     <Icon className="size-4" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-bold leading-tight">{step.title}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    <h3 className="text-base font-bold leading-tight">{step.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                       {step.description}
                     </p>
                   </div>

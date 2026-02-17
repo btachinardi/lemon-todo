@@ -99,8 +99,8 @@ export function OnboardingTour() {
         position="bottom"
         visible={step === 1}
       >
-        <p className="text-sm font-semibold">{t('onboarding.step1Title')}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{t('onboarding.step1Body')}</p>
+        <p className="text-base font-semibold">{t('onboarding.step1Title')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('onboarding.step1Body')}</p>
         <div className="mt-3 flex items-center justify-between">
           <StepIndicator current={1} total={3} />
           <Button variant="ghost" size="sm" onClick={handleSkip}>
@@ -115,8 +115,8 @@ export function OnboardingTour() {
         position="bottom"
         visible={step === 2}
       >
-        <p className="text-sm font-semibold">{t('onboarding.step2Title')}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{t('onboarding.step2Body')}</p>
+        <p className="text-base font-semibold">{t('onboarding.step2Title')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('onboarding.step2Body')}</p>
         <div className="mt-3 flex items-center justify-between">
           <StepIndicator current={2} total={3} />
           <Button variant="ghost" size="sm" onClick={handleSkip}>
@@ -131,8 +131,8 @@ export function OnboardingTour() {
         position="top"
         visible={step === 3}
       >
-        <p className="text-sm font-semibold">{t('onboarding.step3Title')}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{t('onboarding.step3Body')}</p>
+        <p className="text-base font-semibold">{t('onboarding.step3Title')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('onboarding.step3Body')}</p>
         <div className="mt-3 flex items-center justify-between">
           <StepIndicator current={3} total={3} />
           <Button size="sm" onClick={handleFinish}>

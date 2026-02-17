@@ -15,10 +15,10 @@ export function LoginPage() {
     <div className="space-y-6">
       <div className="space-y-2 text-center">
         <h2 className="text-xl font-semibold text-foreground">{t('auth.login.title')}</h2>
-        <p className="text-sm text-muted-foreground">{t('auth.login.subtitle')}</p>
+        <p className="text-base text-muted-foreground">{t('auth.login.subtitle')}</p>
       </div>
       <LoginForm onSuccess={() => navigate('/board', { replace: true })} />
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-base text-muted-foreground">
         {t('auth.login.noAccount')}{' '}
         <Link to="/register" className="font-medium text-highlight hover:underline">
           {t('auth.login.createOne')}

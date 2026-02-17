@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 import { API_BASE_URL } from '@/lib/api-client';
+import { AppLoadingScreen } from '@/ui/feedback/AppLoadingScreen';
 
 /** Props for {@link AuthHydrationProvider}. */
 interface AuthHydrationProviderProps {
@@ -45,8 +46,8 @@ async function performSilentRefresh(): Promise<void> {
  * Performs a silent token refresh on mount to restore the session
  * from the HttpOnly refresh cookie.
  *
- * Renders nothing until the refresh attempt completes, preventing
- * flash-of-wrong-state. If the refresh fails (no cookie / expired),
+ * Shows an animated loading screen until the refresh attempt completes,
+ * preventing flash-of-wrong-state. If the refresh fails (no cookie / expired),
  * the app renders in unauthenticated state and ProtectedRoute handles redirect.
  */
 export function AuthHydrationProvider({ children }: AuthHydrationProviderProps) {
@@ -71,7 +72,7 @@ export function AuthHydrationProvider({ children }: AuthHydrationProviderProps) 
   }, []);
 
   if (!ready) {
-    return null;
+    return <AppLoadingScreen />;
   }
 
   return <>{children}</>;

@@ -203,7 +203,7 @@ export function UserManagementView() {
       {/* Pagination */}
       {data && data.totalCount > 0 && (
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
+          <span className="text-base text-muted-foreground">
             {t('common.page', { page: data.page, totalPages: data.totalPages, totalCount: data.totalCount, unit: t('nav.users').toLowerCase() })}
           </span>
           <div className="flex gap-2">

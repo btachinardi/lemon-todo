@@ -106,7 +106,7 @@ export function StoryTechSection() {
         <div className="mt-16 space-y-10">
           {categories.map((cat) => (
             <div key={cat.key}>
-              <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-primary">
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-primary">
                 {t(`story.tech.categories.${cat.key}`)}
               </h3>
               <motion.div

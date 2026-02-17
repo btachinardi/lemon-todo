@@ -51,7 +51,7 @@ export function DevOpsLiveSection() {
             href={`https://${t('devops.live.domains.frontend')}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-bold text-primary transition-all hover:bg-primary/20 hover:shadow-[0_0_16px_rgba(220,255,2,0.15)]"
+            className="group inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-base font-bold text-primary transition-all hover:bg-primary/20 hover:shadow-[0_0_16px_rgba(220,255,2,0.15)]"
           >
             <span className="relative flex size-2">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary/60" />
@@ -64,7 +64,7 @@ export function DevOpsLiveSection() {
             href={`https://${t('devops.live.domains.api')}/health`}
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-bold text-primary transition-all hover:bg-primary/20 hover:shadow-[0_0_16px_rgba(220,255,2,0.15)]"
+            className="group inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-base font-bold text-primary transition-all hover:bg-primary/20 hover:shadow-[0_0_16px_rgba(220,255,2,0.15)]"
           >
             <span className="relative flex size-2">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary/60" />
@@ -92,9 +92,9 @@ export function DevOpsLiveSection() {
                   <span className="absolute inline-flex size-full animate-ping rounded-full bg-success-foreground/60" />
                   <span className="relative inline-flex size-2 rounded-full bg-success-foreground" />
                 </span>
-                <h3 className="text-sm font-bold">{comp.name}</h3>
+                <h3 className="text-base font-bold">{comp.name}</h3>
               </div>
-              <p className="text-xs leading-relaxed text-muted-foreground">{comp.detail}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{comp.detail}</p>
             </motion.div>
           ))}
         </motion.div>

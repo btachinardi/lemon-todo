@@ -14,10 +14,10 @@ export function RegisterPage() {
     <div className="space-y-6">
       <div className="space-y-2 text-center">
         <h2 className="text-xl font-semibold text-foreground">{t('auth.register.title')}</h2>
-        <p className="text-sm text-muted-foreground">{t('auth.register.subtitle')}</p>
+        <p className="text-base text-muted-foreground">{t('auth.register.subtitle')}</p>
       </div>
       <RegisterForm onSuccess={() => navigate('/board', { replace: true })} />
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-base text-muted-foreground">
         {t('auth.register.hasAccount')}{' '}
         <Link to="/login" className="font-medium text-highlight hover:underline">
           {t('auth.register.signIn')}

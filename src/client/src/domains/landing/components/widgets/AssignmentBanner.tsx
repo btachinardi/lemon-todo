@@ -67,7 +67,7 @@ export function AssignmentBanner() {
               />
               <MailIcon className="absolute -right-1 -top-1 size-4 rounded-full bg-primary p-0.5 text-primary-foreground" />
             </div>
-            <span className="text-xs font-bold text-muted-foreground">
+            <span className="text-sm font-bold text-muted-foreground">
               {t('assignmentBanner.title')}
             </span>
           </motion.button>
@@ -95,7 +95,7 @@ export function AssignmentBanner() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.96 }}
               transition={{ duration: 0.35, ease }}
-              className="fixed inset-x-4 bottom-4 top-auto z-50 mx-auto max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border-2 border-primary/30 bg-card/98 p-6 shadow-2xl shadow-primary/10 backdrop-blur-xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2"
+              className="fixed inset-4 z-50 m-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border-2 border-primary/30 bg-card/98 p-6 shadow-2xl shadow-primary/10 backdrop-blur-xl"
               role="dialog"
               aria-modal="true"
               aria-label={t('assignmentBanner.title')}
@@ -118,12 +118,12 @@ export function AssignmentBanner() {
                 />
                 <div>
                   <h2 className="text-lg font-extrabold">{t('assignmentBanner.title')}</h2>
-                  <p className="text-sm text-muted-foreground">{t('assignmentBanner.greeting')}</p>
+                  <p className="text-base text-muted-foreground">{t('assignmentBanner.greeting')}</p>
                 </div>
               </div>
 
               {/* Body */}
-              <div className="mt-5 space-y-3 text-sm leading-relaxed text-muted-foreground">
+              <div className="mt-5 min-h-0 space-y-3 overflow-y-auto text-base leading-relaxed text-muted-foreground">
                 <p>{t('assignmentBanner.message')}</p>
                 <p>{t('assignmentBanner.process')}</p>
                 <p>{t('assignmentBanner.branding')}</p>
@@ -135,7 +135,7 @@ export function AssignmentBanner() {
                 <Link
                   to="/methodology"
                   onClick={closeModal}
-                  className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-all hover:shadow-[0_0_16px_rgba(220,255,2,0.3)]"
+                  className="rounded-lg bg-primary px-4 py-2 text-base font-bold text-primary-foreground transition-all hover:shadow-[0_0_16px_rgba(220,255,2,0.3)]"
                 >
                   {t('assignmentBanner.ctaMethodology')}
                 </Link>
@@ -143,7 +143,7 @@ export function AssignmentBanner() {
                   href="https://btas.dev"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg border border-border/50 px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"
+                  className="rounded-lg border border-border/50 px-4 py-2 text-base font-bold text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {t('assignmentBanner.ctaPortfolio')}
                 </a>

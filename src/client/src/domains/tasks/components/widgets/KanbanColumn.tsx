@@ -49,7 +49,7 @@ export const KanbanColumn = memo(function KanbanColumn({
       style={style}
     >
       <div className="mb-3 flex items-center justify-between px-1">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-secondary-foreground">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-secondary-foreground">
           {column.name}
         </h3>
         <span className="inline-flex min-w-5 items-center justify-center rounded-md bg-border px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-muted-foreground">
@@ -71,7 +71,7 @@ export const KanbanColumn = memo(function KanbanColumn({
             ))}
             {tasks.length === 0 && (
               <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-border py-8 text-center">
-                <p className="text-sm text-muted-foreground">{t('tasks.column.noTasks')}</p>
+                <p className="text-base text-muted-foreground">{t('tasks.column.noTasks')}</p>
               </div>
             )}
           </div>

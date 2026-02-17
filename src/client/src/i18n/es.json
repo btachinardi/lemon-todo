@@ -511,15 +511,15 @@
       "titleLine1": "De Carpeta Vacía a",
       "titleHighlight": "Producción",
       "titleLine2": "",
-      "subtitle": "Una prueba técnica de lemon.io para una startup de salud que detecta cánceres en etapa temprana vía resonancia magnética — interpretada bajo la óptica de lo que 'MVP de producción' significa en entornos regulados. 5 documentos de planificación, 5 checkpoints entregables, 3 rediseños arquitectónicos y 1.034 tests."
+      "subtitle": "Una prueba técnica de lemon.io para una startup de salud que detecta cánceres en etapa temprana vía resonancia — bajo la óptica de lo que 'MVP de producción' significa en salud regulada. 5 documentos, 5 checkpoints entregables, 3 rediseños, 1.034 tests."
     },
     "rationale": {
-      "title": "Por Qué Estas Funcionalidades, Por Qué Este Alcance",
+      "title": "Por Qué Estas Funcionalidades",
       "highlight": "Por Qué",
       "subtitle": "La prueba pidió una app de tareas con cualquier funcionalidad que agregaría para un MVP de producción real. La empresa objetivo opera en salud regulada. Ese contexto moldeó cada decisión.",
       "promptLabel": "La Prueba",
       "prompt": "Construye una aplicación de gestión de tareas usando .NET con SQLite en el backend, React en el frontend. Agrega cualquier funcionalidad que agregarías para un MVP de producción real.",
-      "interpretation": "Un MVP de producción en salud no es solo código funcionando. Significa cumplimiento regulatorio, confiabilidad offline para redes hospitalarias inestables, deploy en Azure para corresponder al stack de la empresa, observabilidad para respuesta a incidentes y analytics de producto para validar hipótesis. Cada funcionalidad fue elegida con esta perspectiva.",
+      "interpretation": "Un MVP de producción en salud significa más que código funcionando — significa cumplimiento, confiabilidad offline para redes hospitalarias, deploy en Azure para corresponder a su stack, observabilidad y analytics para validar hipótesis.",
       "steps": [
         {
           "title": "La Prueba",
@@ -527,7 +527,7 @@
         },
         {
           "title": "Contexto de Salud",
-          "description": "La empresa objetivo detecta cánceres en etapa temprana vía resonancia. Salud significa entornos regulados, protección de datos y requisitos de auditoría."
+          "description": "Salud significa entornos regulados, protección de datos y requisitos de auditoría."
         },
         {
           "title": "Cumplimiento",
@@ -535,22 +535,22 @@
         },
         {
           "title": "Offline-First",
-          "description": "El WiFi hospitalario es inestable. Si el producto deja de funcionar sin conexión, se convierte en un problema. PWA con cola de mutaciones en IndexedDB."
+          "description": "El WiFi hospitalario es inestable — un producto que falla offline se vuelve un problema. PWA con cola de mutaciones en IndexedDB."
         },
         {
           "title": "Deploy en Azure",
-          "description": "La empresa usa Azure. Terraform IaC, Container Apps, SQL Server para producción, GitHub Actions CI/CD — demostrando fluidez en infraestructura."
+          "description": "Terraform IaC, Container Apps, SQL Server, GitHub Actions CI/CD — correspondiendo al stack Azure de la empresa."
         },
         {
           "title": "Analytics de Producto",
-          "description": "Un MVP sin analytics no responde las preguntas que existe para responder. Rastreo de eventos privacy-first con identificadores hasheados, sin PII en eventos."
+          "description": "Un MVP sin analytics no puede validar sus propias hipótesis. Rastreo privacy-first con identificadores hasheados, sin PII."
         }
       ]
     },
     "vision": {
       "title": "5 Documentos Antes de Una Línea de Código",
       "highlight": "Una Línea",
-      "subtitle": "La empresa objetivo opera en salud regulada. Antes de escribir código, produje cinco artefactos de planificación para asegurar que cumplimiento, confiabilidad offline y requisitos de deploy se abordaran desde el inicio — no como adiciones posteriores.",
+      "subtitle": "Antes de escribir código, produje cinco artefactos de planificación para asegurar que cumplimiento, confiabilidad offline y deploy se abordaran desde el inicio — no como adiciones posteriores.",
       "items": [
         {
           "title": "Requisitos del Producto",
@@ -631,7 +631,7 @@
     "problemSolving": {
       "title": "3 Rediseños, No 3 Parches",
       "highlight": "Rediseños",
-      "subtitle": "Cuando surgieron problemas arquitectónicos, se corrigieron de raíz — no se esquivaron. Cada rediseño modificó docenas de archivos en todas las capas y dejó el sistema en un estado mejor.",
+      "subtitle": "Cuando surgieron problemas arquitectónicos, se corrigieron de raíz — no se esquivaron. Cada rediseño modificó docenas de archivos en todas las capas.",
       "items": [
         {
           "title": "Invariante Columna-Estado",
@@ -656,7 +656,7 @@
     "testing": {
       "title": "Testing como Restricción de Diseño",
       "highlight": "Restricción de Diseño",
-      "subtitle": "No solo alta cobertura — estrategias diversas de testing que capturan clases diferentes de bugs. Tests basados en propiedades en ambos stacks, CI con base de datos dual, regresión visual y guards de contrato de API en tiempo de compilación.",
+      "subtitle": "Estrategias diversas de testing que capturan clases diferentes de bugs. Tests basados en propiedades en ambos stacks, CI con base de datos dual, regresión visual y guards de contrato de API en tiempo de compilación.",
       "items": [
         {
           "title": "Tests Basados en Propiedades",
@@ -899,7 +899,7 @@
     "highlights": {
       "title": "Destacados de Ingeniería",
       "highlight": "Destacados",
-      "subtitle": "Elecciones de implementación que mejoran la confiabilidad y mantenibilidad en sistemas reales, especialmente donde la trazabilidad y el comportamiento predecible importan.",
+      "subtitle": "Elecciones de implementación que mejoran la confiabilidad y mantenibilidad, especialmente donde la trazabilidad y el comportamiento predecible importan.",
       "items": [
         {
           "title": "Transiciones de Estado Determinísticas",

@@ -19,7 +19,7 @@ export const TagList = memo(function TagList({ tags, className, onRemove }: TagL
   return (
     <div className={cn('flex flex-wrap gap-1', className)}>
       {tags.map((tag) => (
-        <Badge key={tag} variant="secondary" className="text-xs">
+        <Badge key={tag} variant="secondary" className="text-sm">
           {tag}
           {onRemove && (
             <button
