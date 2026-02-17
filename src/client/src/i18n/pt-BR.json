@@ -580,7 +580,7 @@
           "subtitle": "CP5 — Experiência",
           "description": "PWA com fila de mutações offline, tour de onboarding, notificações Web Push, analytics, reformulação mobile, landing page.",
           "decision": "Fila de mutações IndexedDB para sync offline",
-          "tests": "808",
+          "tests": "908",
           "tag": "v1.0.0",
           "summary": "Entregou PWA com fila offline, tour de onboarding, Web Push, analytics, reformulação mobile UX e esta landing page."
         }
@@ -755,7 +755,7 @@
       "highlight": "Evidência",
       "items": [
         {
-          "value": "808",
+          "value": "908",
           "label": "Testes",
           "detail": "Backend + Frontend + E2E"
         },
@@ -831,7 +831,7 @@
     "hero": {
       "titleLine1": "Isso É Apenas",
       "titleHighlight": "O Começo.",
-      "subtitle": "808 testes. Deploy em produção. Cinco checkpoints entregues. Aqui está o que vem a seguir — de fluxos com IA até conformidade empresarial."
+      "subtitle": "908 testes. Deploy em produção. Cinco checkpoints entregues. Aqui está o que vem a seguir — de fluxos com IA até conformidade empresarial."
     },
     "horizons": {
       "near": {
