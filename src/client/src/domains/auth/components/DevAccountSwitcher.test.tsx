@@ -27,6 +27,12 @@ vi.mock('react-router', async () => {
   };
 });
 
+// Mock the config hook — default to enabled
+const mockUseDemoAccountsEnabled = vi.fn();
+vi.mock('@/domains/config/hooks/use-config', () => ({
+  useDemoAccountsEnabled: () => mockUseDemoAccountsEnabled(),
+}));
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -53,9 +59,11 @@ describe('DevAccountSwitcher', () => {
       user: { id: '1', email: 'd***@l***.dev', displayName: 'D** U***', roles: ['User'] },
     });
     mockLogout.mockResolvedValue(undefined);
+    // Default: demo accounts enabled
+    mockUseDemoAccountsEnabled.mockReturnValue({ data: true, isLoading: false });
   });
 
-  it('should render three dev account cards', () => {
+  it('should render three dev account cards when demo accounts are enabled', () => {
     render(<DevAccountSwitcher />, { wrapper: createWrapper() });
 
     expect(screen.getByText('User')).toBeInTheDocument();
@@ -157,14 +165,20 @@ describe('DevAccountSwitcher', () => {
     expect(grid).toHaveClass('overflow-hidden');
   });
 
-  it('should render nothing when not in development mode', () => {
-    vi.stubEnv('DEV', false);
+  it('should render nothing when demo accounts are disabled', () => {
+    mockUseDemoAccountsEnabled.mockReturnValue({ data: false, isLoading: false });
 
     const { container } = render(<DevAccountSwitcher />, { wrapper: createWrapper() });
 
     expect(container.innerHTML).toBe('');
     expect(screen.queryByText(/quick login/i)).not.toBeInTheDocument();
+  });
 
-    vi.unstubAllEnvs();
+  it('should render nothing while feature flag is loading', () => {
+    mockUseDemoAccountsEnabled.mockReturnValue({ data: undefined, isLoading: true });
+
+    const { container } = render(<DevAccountSwitcher />, { wrapper: createWrapper() });
+
+    expect(container.innerHTML).toBe('');
   });
 });

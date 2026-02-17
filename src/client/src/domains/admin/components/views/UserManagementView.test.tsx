@@ -20,6 +20,11 @@ vi.mock('../../hooks/use-admin-queries', () => ({
   useAdminUser: vi.fn().mockReturnValue({ data: undefined }),
 }));
 
+// Mock config hook to avoid QueryClientProvider dependency
+vi.mock('@/domains/config/hooks/use-config', () => ({
+  useDemoAccountsEnabled: () => ({ data: false, isLoading: false }),
+}));
+
 // Mock admin mutation hooks
 vi.mock('../../hooks/use-admin-mutations', () => ({
   useAssignRole: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),

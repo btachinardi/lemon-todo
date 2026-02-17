@@ -5,8 +5,9 @@ import { MemoryRouter } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
-const { onboardingState } = vi.hoisted(() => ({
+const { onboardingState, mockDemoEnabled } = vi.hoisted(() => ({
   onboardingState: { completed: false, completedAt: null as string | null },
+  mockDemoEnabled: { data: true, isLoading: false },
 }));
 
 // Mock sonner to avoid layout complexity
@@ -22,6 +23,11 @@ vi.mock('@/domains/auth/components/UserMenu', () => ({
 // Mock DevAccountSwitcher to avoid auth API dependencies
 vi.mock('@/domains/auth/components/DevAccountSwitcher', () => ({
   DevAccountSwitcher: () => <div data-testid="dev-account-switcher" />,
+}));
+
+// Mock the config hook
+vi.mock('@/domains/config/hooks/use-config', () => ({
+  useDemoAccountsEnabled: () => mockDemoEnabled,
 }));
 
 // Mock OnboardingTour to avoid TanStack Query dependency
@@ -60,6 +66,9 @@ describe('DashboardLayout', () => {
       user: null,
       isAuthenticated: false,
     });
+    // Default: demo accounts enabled
+    mockDemoEnabled.data = true;
+    mockDemoEnabled.isLoading = false;
   });
 
   it('should hide admin link when user has no admin role', () => {
@@ -116,7 +125,7 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('Admin')).toBeInTheDocument();
   });
 
-  it('should render dev account switcher trigger in development mode', () => {
+  it('should render dev account switcher trigger when demo accounts are enabled', () => {
     useAuthStore.setState({
       accessToken: 'token',
       user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
@@ -156,8 +165,8 @@ describe('DashboardLayout', () => {
     expect(devContainer!.className).toMatch(/sm:bottom-3/);
   });
 
-  it('should hide dev account switcher trigger in production mode', () => {
-    vi.stubEnv('DEV', false);
+  it('should hide dev account switcher trigger when demo accounts are disabled', () => {
+    mockDemoEnabled.data = false;
 
     useAuthStore.setState({
       accessToken: 'token',
@@ -175,8 +184,6 @@ describe('DashboardLayout', () => {
 
     expect(screen.queryByText('Dev')).not.toBeInTheDocument();
     expect(screen.queryByTestId('dev-account-switcher')).not.toBeInTheDocument();
-
-    vi.unstubAllEnvs();
   });
 
   it('should not render install prompt when onboarding is not completed', () => {

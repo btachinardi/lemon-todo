@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/ui/sheet';
 import { UserMenu } from '@/domains/auth/components/UserMenu';
 import { DevAccountSwitcher } from '@/domains/auth/components/DevAccountSwitcher';
+import { useDemoAccountsEnabled } from '@/domains/config/hooks/use-config';
 import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
@@ -32,6 +33,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const roles = useAuthStore((s) => s.user?.roles);
   const isAdmin = roles?.some((r) => r === 'Admin' || r === 'SystemAdmin') ?? false;
   const { data: onboardingStatus } = useOnboardingStatus();
+  const { data: demoEnabled } = useDemoAccountsEnabled();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -150,7 +152,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1">{children}</main>
-      {import.meta.env.DEV && (
+      {demoEnabled && (
         <div className="fixed bottom-14 left-3 z-50 sm:bottom-3">
           <Popover>
             <PopoverTrigger asChild>
