@@ -26,12 +26,12 @@ public static class AuthEndpoints
             .WithTags("Auth")
             .RequireRateLimiting("auth");
 
-        group.MapPost("/register", Register).AllowAnonymous();
-        group.MapPost("/login", Login).AllowAnonymous();
-        group.MapPost("/refresh", Refresh).AllowAnonymous();
+        group.MapPost("/register", Register).AllowAnonymous().Produces<AuthResponse>();
+        group.MapPost("/login", Login).AllowAnonymous().Produces<AuthResponse>();
+        group.MapPost("/refresh", Refresh).AllowAnonymous().Produces<AuthResponse>();
         group.MapPost("/logout", Logout).RequireAuthorization();
-        group.MapGet("/me", GetMe).RequireAuthorization();
-        group.MapPost("/reveal-profile", RevealProfile).RequireAuthorization();
+        group.MapGet("/me", GetMe).RequireAuthorization().Produces<UserResponse>();
+        group.MapPost("/reveal-profile", RevealProfile).RequireAuthorization().Produces<RevealedProfileResponse>();
 
         return group;
     }

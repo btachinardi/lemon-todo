@@ -3,8 +3,10 @@ namespace LemonDo.Api.Endpoints;
 using LemonDo.Api.Contracts;
 using LemonDo.Api.Extensions;
 using LemonDo.Application.Common;
+using LemonDo.Application.Tasks.DTOs;
 using LemonDo.Application.Tasks.Commands;
 using LemonDo.Application.Tasks.Queries;
+using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.ValueObjects;
 
 /// <summary>Minimal API endpoint definitions for the <c>/api/tasks</c> route group.</summary>
@@ -20,10 +22,10 @@ public static class TaskEndpoints
     {
         var group = app.MapGroup("/api/tasks").WithTags("Tasks").RequireAuthorization();
 
-        group.MapGet("/", ListTasks);
-        group.MapPost("/", CreateTask);
-        group.MapGet("/{id:guid}", GetTaskById);
-        group.MapPut("/{id:guid}", UpdateTask);
+        group.MapGet("/", ListTasks).Produces<PagedResult<TaskDto>>();
+        group.MapPost("/", CreateTask).Produces<TaskDto>(StatusCodes.Status201Created);
+        group.MapGet("/{id:guid}", GetTaskById).Produces<TaskDto>();
+        group.MapPut("/{id:guid}", UpdateTask).Produces<TaskDto>();
         group.MapDelete("/{id:guid}", DeleteTask);
         group.MapPost("/{id:guid}/complete", CompleteTask);
         group.MapPost("/{id:guid}/uncomplete", UncompleteTask);
