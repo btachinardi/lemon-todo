@@ -87,4 +87,34 @@ describe('UserMenu', () => {
     // The SelfRevealDialog should open — look for the password input
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
   });
+
+  describe('inline variant', () => {
+    it('should render user info directly without a dropdown trigger', () => {
+      render(<UserMenu variant="inline" />, { wrapper: createWrapper() });
+
+      // User name and email should be visible directly (no need to click a trigger)
+      expect(screen.getByText('T***r')).toBeInTheDocument();
+      expect(screen.getByText('t***@lemondo.dev')).toBeInTheDocument();
+
+      // There should be no dropdown trigger button with avatar
+      const buttons = screen.getAllByRole('button');
+      const avatarTrigger = buttons.find((b) => b.textContent?.includes('T*'));
+      // The avatar trigger should not behave as a dropdown — it shouldn't be there
+      expect(avatarTrigger).toBeUndefined();
+    });
+
+    it('should render sign out action directly', () => {
+      render(<UserMenu variant="inline" />, { wrapper: createWrapper() });
+
+      // Sign out should be visible without opening any dropdown
+      expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
+    });
+
+    it('should render reveal action directly', () => {
+      render(<UserMenu variant="inline" />, { wrapper: createWrapper() });
+
+      // Reveal button should be visible without opening any dropdown
+      expect(screen.getByRole('button', { name: /reveal my data/i })).toBeInTheDocument();
+    });
+  });
 });

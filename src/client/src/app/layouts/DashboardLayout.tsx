@@ -145,7 +145,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     useThemeStore.getState().setTheme(next);
                   }}
                 />
-                <UserMenu />
+                <UserMenu variant="inline" />
               </div>
             </SheetContent>
           </Sheet>

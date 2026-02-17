@@ -15,14 +15,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/ui/popover';
+import { Separator } from '@/ui/separator';
 import { useAuthStore } from '../stores/use-auth-store';
 import { useLogout } from '../hooks/use-auth-mutations';
 import { useRevealOwnProfile } from '../hooks/use-reveal-own-profile';
 import { useDevAccountPassword } from '../hooks/use-dev-account-password';
 import { SelfRevealDialog } from './SelfRevealDialog';
 
-/** Header dropdown menu showing user info and sign-out action. */
-export function UserMenu() {
+interface UserMenuProps {
+  /** When "inline", renders user info and actions directly (for mobile sheets). Defaults to "dropdown". */
+  variant?: 'dropdown' | 'inline';
+}
+
+/** Header dropdown menu showing user info and sign-out action. Supports inline rendering for mobile sheets. */
+export function UserMenu({ variant = 'dropdown' }: UserMenuProps) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
@@ -43,6 +49,55 @@ export function UserMenu() {
     setRevealDialogOpen(open);
     if (!open) revealMutation.reset();
   };
+
+  if (variant === 'inline') {
+    return (
+      <>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3 px-3 py-2">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-semibold text-lemon">
+              {initials}
+            </span>
+            <div className="flex min-w-0 flex-col">
+              <p className="truncate text-sm font-medium">{user.displayName}</p>
+              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="justify-start gap-2 px-3 text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400"
+            onClick={() => setRevealDialogOpen(true)}
+          >
+            <ShieldCheckIcon className="size-4" />
+            {t('auth.selfReveal.revealButton')}
+          </Button>
+          <Separator />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="justify-start gap-2 px-3 text-destructive hover:text-destructive"
+            onClick={() => logout.mutate()}
+            disabled={logout.isPending}
+          >
+            <LogOutIcon className="size-4" />
+            {logout.isPending ? t('auth.userMenu.signingOut') : t('auth.userMenu.signOut')}
+          </Button>
+        </div>
+
+        <SelfRevealDialog
+          open={revealDialogOpen}
+          onOpenChange={handleRevealDialogChange}
+          onReveal={(password) => revealMutation.mutate(password)}
+          isPending={revealMutation.isPending}
+          error={revealMutation.error}
+          revealedEmail={revealMutation.data?.email}
+          revealedDisplayName={revealMutation.data?.displayName}
+          devPassword={devPassword}
+        />
+      </>
+    );
+  }
 
   return (
     <>

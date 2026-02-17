@@ -15,9 +15,11 @@ vi.mock('sonner', () => ({
   Toaster: () => null,
 }));
 
-// Mock UserMenu to avoid auth mutation hooks
+// Mock UserMenu to avoid auth mutation hooks — captures variant prop
 vi.mock('@/domains/auth/components/UserMenu', () => ({
-  UserMenu: () => <div data-testid="user-menu" />,
+  UserMenu: (props: Record<string, unknown>) => (
+    <div data-testid="user-menu" data-variant={props.variant ?? undefined} />
+  ),
 }));
 
 // Mock DevAccountSwitcher to avoid auth API dependencies
@@ -316,5 +318,30 @@ describe('DashboardLayout', () => {
     const dialog = screen.getByRole('dialog');
     const notifDropdown = within(dialog).getByTestId('notification-dropdown');
     expect(notifDropdown).toHaveAttribute('data-show-label', 'true');
+  });
+
+  it('should pass variant="inline" to UserMenu in mobile menu', async () => {
+    const user = userEvent.setup();
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    const header = screen.getByRole('banner');
+    const menuButton = within(header).getByRole('button', { name: /menu/i });
+    await user.click(menuButton);
+
+    const dialog = screen.getByRole('dialog');
+    const userMenu = within(dialog).getByTestId('user-menu');
+    expect(userMenu).toHaveAttribute('data-variant', 'inline');
   });
 });

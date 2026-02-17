@@ -127,7 +127,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     useThemeStore.getState().setTheme(next);
                   }}
                 />
-                <UserMenu />
+                <UserMenu variant="inline" />
               </div>
             </SheetContent>
           </Sheet>
