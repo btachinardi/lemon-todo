@@ -1,8 +1,9 @@
-import { createBrowserRouter, Outlet } from 'react-router';
+import { createBrowserRouter, Navigate, Outlet } from 'react-router';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { LandingPage } from '../pages/LandingPage';
 import { StoryPage } from '../pages/StoryPage';
 import { RoadmapPage } from '../pages/RoadmapPage';
+import { DevOpsPage } from '../pages/DevOpsPage';
 import { LoginRoute } from './LoginRoute';
 import { RegisterRoute } from './RegisterRoute';
 import { PublicRoute } from './PublicRoute';
@@ -32,7 +33,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/story',
+    path: '/methodology',
     element: (
       <LandingLayout>
         <StoryPage />
@@ -40,10 +41,22 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/story',
+    element: <Navigate to="/methodology" replace />,
+  },
+  {
     path: '/roadmap',
     element: (
       <LandingLayout>
         <RoadmapPage />
+      </LandingLayout>
+    ),
+  },
+  {
+    path: '/devops',
+    element: (
+      <LandingLayout>
+        <DevOpsPage />
       </LandingLayout>
     ),
   },

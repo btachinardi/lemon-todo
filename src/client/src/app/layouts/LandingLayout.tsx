@@ -1,19 +1,32 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { GithubIcon } from 'lucide-react';
 import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore } from '@/stores/use-theme-store';
+import { cn } from '@/lib/utils';
+import { AssignmentBanner } from '@/domains/landing/components/widgets/AssignmentBanner';
 
 interface LandingLayoutProps {
   children: ReactNode;
+}
+
+function isActive(href: string, pathname: string) {
+  return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 }
 
 /** Minimal landing page layout with transparent header and branded footer. */
 export function LandingLayout({ children }: LandingLayoutProps) {
   const { t } = useTranslation();
   const theme = useThemeStore((s) => s.theme);
+  const { pathname } = useLocation();
+
+  const navLinks = [
+    { to: '/', label: t('landing.nav.home') },
+    { to: '/methodology', label: t('story.nav') },
+    { to: '/devops', label: t('devops.nav') },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -36,18 +49,23 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             >
               <GithubIcon className="size-4" />
             </a>
-            <Link
-              to="/story"
-              className="rounded-md px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t('story.nav')}
-            </Link>
-            <Link
-              to="/roadmap"
-              className="rounded-md px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t('roadmap.nav')}
-            </Link>
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-sm font-semibold transition-colors',
+                  isActive(link.to, pathname)
+                    ? 'text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {link.label}
+                {isActive(link.to, pathname) && (
+                  <span className="mt-0.5 block h-0.5 rounded-full bg-primary" />
+                )}
+              </Link>
+            ))}
             <LanguageSwitcher />
             <ThemeToggle
               theme={theme}
@@ -75,6 +93,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
       </header>
 
       <main className="flex-1">{children}</main>
+      <AssignmentBanner />
 
       <footer className="border-t border-border/20 px-4 py-12 sm:px-6">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-6 text-center">
@@ -89,8 +108,8 @@ export function LandingLayout({ children }: LandingLayoutProps) {
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <a href="#features" className="hover:text-foreground">{t('landing.footer.features')}</a>
             <a href="#security" className="hover:text-foreground">{t('landing.footer.security')}</a>
-            <Link to="/story" className="hover:text-foreground">{t('landing.footer.story')}</Link>
-            <Link to="/roadmap" className="hover:text-foreground">{t('landing.footer.roadmap')}</Link>
+            <Link to="/methodology" className="hover:text-foreground">{t('landing.footer.story')}</Link>
+            <Link to="/devops" className="hover:text-foreground">{t('devops.nav')}</Link>
             <a
               href="https://github.com/btachinardi/lemon-todo"
               target="_blank"
@@ -102,6 +121,9 @@ export function LandingLayout({ children }: LandingLayoutProps) {
             <Link to="/login" className="hover:text-foreground">{t('landing.nav.login')}</Link>
             <Link to="/register" className="hover:text-foreground">{t('landing.nav.getStarted')}</Link>
           </nav>
+          <p className="text-xs text-muted-foreground/50">
+            {t('landing.footer.disclaimer')}
+          </p>
           <p className="text-xs text-muted-foreground/50">
             &copy; {new Date().getFullYear()} Lemon.DO &middot; v{__APP_VERSION__}
           </p>

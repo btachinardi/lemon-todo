@@ -341,6 +341,14 @@
     "title": "Page not found",
     "goHome": "Go home"
   },
+  "assignmentBanner": {
+    "greeting": "Hi, I'm Bruno.",
+    "message": "This project was built from scratch as a take-home assignment for a healthcare full-stack role. It is a technical demo — not a medical product — and uses synthetic data only.",
+    "thanks": "Thanks for reviewing. I hope the methodology and engineering decisions speak for themselves.",
+    "ctaMethodology": "View Methodology",
+    "ctaPortfolio": "Portfolio",
+    "dismiss": "Got it"
+  },
   "pwa": {
     "installPrompt": "Install Lemon.DO for a faster experience",
     "install": "Install",
@@ -349,6 +357,7 @@
   },
   "landing": {
     "nav": {
+      "home": "Home",
       "login": "Log in",
       "getStarted": "Get Started"
     },
@@ -356,13 +365,13 @@
       "titleLine1": "Your Tasks.",
       "titleLine2": "Your Server.",
       "titleHighlight": "Your Rules.",
-      "subtitle": "The open-source task manager with offline support, push notifications, encrypted notes, and full audit trail. Self-host on your infrastructure, stay compliant, ship faster.",
+      "subtitle": "The open-source task manager with offline support, push notifications, encrypted notes, and full audit trail. Self-host on your infrastructure, stay compliant, work offline.",
       "ctaPrimary": "Get Started Free",
       "ctaGithub": "View on GitHub"
     },
     "features": {
       "title": "Everything you need to ship",
-      "subtitle": "From offline-first PWA to encrypted notes and push notifications — everything wrapped in a beautiful interface.",
+      "subtitle": "From offline-first PWA to encrypted notes and push notifications — all in one self-hosted package.",
       "highlight": "ship",
       "items": [
         {
@@ -415,9 +424,9 @@
       "viewGithub": "View on GitHub"
     },
     "security": {
-      "title": "Built for regulated industries",
-      "subtitle": "Healthcare, finance, legal, government. When compliance isn't optional.",
-      "highlight": "regulated industries",
+      "title": "Privacy-by-design architecture",
+      "subtitle": "HIPAA-aware patterns, audit-first design, and compliance-oriented infrastructure for healthcare-adjacent workflows.",
+      "highlight": "Privacy-by-design",
       "items": [
         {
           "title": "Data Sovereignty",
@@ -432,14 +441,14 @@
           "description": "Admin, user, and system roles with granular permissions."
         },
         {
-          "title": "Compliance Ready",
-          "description": "Built-in encrypted notes, protected data reveal with justification, and full audit trail."
+          "title": "Compliance-Oriented Patterns",
+          "description": "Encrypted notes, protected data reveal with justification, and full audit trail — building blocks for regulated environments."
         }
       ]
     },
     "howItWorks": {
       "title": "Up and running in minutes",
-      "subtitle": "Three steps to owning your productivity.",
+      "subtitle": "Three steps to a working deployment.",
       "steps": [
         {
           "title": "Clone & Deploy",
@@ -456,7 +465,7 @@
       ]
     },
     "cta": {
-      "title": "Ready to own your productivity?",
+      "title": "Ready to self-host?",
       "subtitle": "Deploy LemonDo on your infrastructure today. Open source, forever free.",
       "ctaPrimary": "Get Started",
       "ctaGithub": "Star on GitHub"
@@ -465,8 +474,8 @@
       "tagline": "Open-source task management for teams that own their data.",
       "features": "Features",
       "security": "Security",
-      "story": "Our Story",
-      "roadmap": "Roadmap"
+      "story": "Methodology",
+      "disclaimer": "This application is a technical demo built for a hiring assignment. It is not a clinical product and is not intended for real patient data or medical decision-making."
     }
   },
   "onboarding": {
@@ -486,18 +495,17 @@
     "toggle": "Current: {{label}}. Click for {{next}}"
   },
   "story": {
-    "nav": "Our Story",
+    "nav": "Methodology",
     "hero": {
       "titleLine1": "From Empty Folder to",
       "titleHighlight": "Production",
       "titleLine2": "in 3 Days",
-      "subtitle": "The story of building a production-grade, compliance-ready task manager with DDD, strict TDD, and an obsession with doing things right."
+      "subtitle": "A take-home build focused on practical product delivery, DDD boundaries, strict testing discipline, and compliance-oriented design choices for healthcare-adjacent workflows."
     },
     "vision": {
       "title": "5 Documents Before One Line of Code",
       "highlight": "One Line",
-      "subtitle": "Every great product starts with a plan. We wrote five foundational documents before touching a single line of code.",
-      "quote": "Planning is not wasted time. It is compressed debugging.",
+      "subtitle": "Before writing code, I produced five planning artifacts: PRD draft, tech compatibility research, UX scenarios, domain boundary draft, and release checkpoint plan. This reduced rework and made implementation decisions traceable.",
       "items": [
         {
           "title": "Product Requirements",
@@ -524,49 +532,60 @@
     "journey": {
       "title": "5 Checkpoints, 5 Shippable Products",
       "highlight": "5 Shippable Products",
-      "subtitle": "Every checkpoint shipped a complete, working application. Stop at any point and you have something real.",
-      "insight": "Every checkpoint ships a complete app. Stop at any point and you have something real.",
+      "subtitle": "Every checkpoint shipped a complete, working application. Each tag is a runnable snapshot — clone it and see exactly what shipped at that stage.",
+      "tagLinkLabel": "View tag",
+      "runnableNote": "Clone this tag and run ./dev start to see this checkpoint live.",
       "checkpoints": [
         {
           "title": "Core Tasks",
           "subtitle": "CP1 — The Foundation",
           "description": "Full-stack CRUD with DDD from day one. Single-user mode, kanban board, list view, drag-and-drop.",
           "decision": "Column determines status — one source of truth",
-          "tests": "242"
+          "tests": "242",
+          "tag": "v0.1.0",
+          "summary": "Established DDD layers, Result pattern, EF Core with SQLite, 18 API endpoints, and React kanban board."
         },
         {
           "title": "Auth & Security",
           "subtitle": "CP2 — Identity",
           "description": "JWT with HttpOnly cookies, user isolation, role-based access, security headers.",
           "decision": "Cookie-based refresh, memory-only access tokens",
-          "tests": "388"
+          "tests": "388",
+          "tag": "v0.2.0",
+          "summary": "Added cookie-based auth with refresh rotation, user isolation, RBAC, and security headers middleware."
         },
         {
           "title": "Rich UX",
           "subtitle": "CP3 — Polish",
           "description": "Dark mode, priority filters, task detail sheet, drag-and-drop reordering, loading skeletons, toast notifications.",
           "decision": "Sparse decimal ranks for O(1) card moves",
-          "tests": "434"
+          "tests": "434",
+          "tag": "v0.3.0",
+          "summary": "Shipped dark mode, sparse-rank reordering, task detail sheet, priority filters, and loading skeletons."
         },
         {
           "title": "Production Ready",
           "subtitle": "CP4 — Enterprise",
           "description": "Audit trail, AES-256 encryption, admin panel, i18n in 3 languages, Azure deployment, CI/CD, observability.",
           "decision": "AES-256-GCM field encryption at rest",
-          "tests": "668"
+          "tests": "668",
+          "tag": "v0.4.0",
+          "summary": "Added immutable audit trail, AES-256-GCM encryption, admin panel, 3-language i18n, Terraform IaC, and CI/CD."
         },
         {
           "title": "Delight",
           "subtitle": "CP5 — Experience",
           "description": "PWA with offline mutation queue, onboarding tour, Web Push notifications, analytics, mobile overhaul, landing page.",
           "decision": "IndexedDB mutation queue for offline sync",
-          "tests": "808"
+          "tests": "808",
+          "tag": "v0.5.0",
+          "summary": "Shipped PWA with offline queue, onboarding tour, Web Push, analytics, mobile UX overhaul, and this landing page."
         }
       ]
     },
     "arch": {
-      "title": "Five Bounded Contexts, Zero Compromises",
-      "highlight": "Zero Compromises",
+      "title": "Five Bounded Contexts, Strict Boundaries",
+      "highlight": "Strict Boundaries",
       "subtitle": "Clean architecture with strict layer boundaries. Every import direction is intentional.",
       "backendLabel": "Backend Layers",
       "frontendLabel": "Frontend Tiers",
@@ -594,8 +613,7 @@
     "domains": {
       "title": "Five Bounded Contexts, One Cohesive System",
       "highlight": "Cohesive System",
-      "subtitle": "Each context owns its invariants. Domain events flow between them. Zero coupling, total cohesion.",
-      "insight": "The secret isn't microservices — it's clear boundaries. Each context could be extracted into its own service without changing a single domain class.",
+      "subtitle": "Each context owns its invariants. Domain events coordinate between them. Minimal coupling, high cohesion.",
       "contexts": {
         "task": {
           "name": "Task",
@@ -625,9 +643,9 @@
       }
     },
     "tech": {
-      "title": "Built With the Best Tools",
-      "highlight": "Best Tools",
-      "subtitle": "Cutting-edge stack, locked to specific versions, chosen for production readiness.",
+      "title": "Built With Production-Grade Tools",
+      "highlight": "Production-Grade",
+      "subtitle": "Modern stack, pinned to specific versions, validated for production use.",
       "categories": {
         "backend": "Backend",
         "frontend": "Frontend",
@@ -730,18 +748,13 @@
       }
     },
     "numbers": {
-      "title": "The Numbers Speak",
-      "highlight": "Numbers",
+      "title": "Quality Evidence",
+      "highlight": "Evidence",
       "items": [
         {
           "value": "808",
           "label": "Tests",
           "detail": "Backend + Frontend + E2E"
-        },
-        {
-          "value": "11",
-          "label": "Projects",
-          "detail": ".NET solution structure"
         },
         {
           "value": "5",
@@ -756,16 +769,58 @@
         {
           "value": "5",
           "label": "Contexts",
-          "detail": "Task, Board, Identity, Admin, Notification"
+          "detail": "DDD bounded contexts"
         },
         {
-          "value": "3",
-          "label": "Days",
-          "detail": "Empty folder to production"
+          "value": "9",
+          "label": "Terraform Modules",
+          "detail": "Reusable infrastructure"
+        },
+        {
+          "value": "100%",
+          "label": "CI/CD",
+          "detail": "Automated pipeline"
         }
       ],
       "ctaPrimary": "See It In Action",
       "ctaGithub": "Read the Code"
+    },
+    "highlights": {
+      "title": "Engineering Highlights",
+      "highlight": "Highlights",
+      "subtitle": "Implementation choices that improve reliability and maintainability in real-world systems, especially where traceability and predictable behavior matter.",
+      "items": [
+        {
+          "title": "Deterministic Status Transitions",
+          "description": "Column determines status — a task's status is always derived from its board position, eliminating synchronization bugs between UI state and domain state.",
+          "why": "In healthcare workflows, predictable state machines prevent tasks from entering undefined states."
+        },
+        {
+          "title": "Sparse Decimal Ranking",
+          "description": "Card positions use sparse decimal ranks (e.g., 1.0, 2.0), so reordering is O(1) — insert between two neighbors without recalculating all positions.",
+          "why": "Eliminates position drift in concurrent environments and scales to thousands of cards without performance degradation."
+        },
+        {
+          "title": "Immutable Audit Trail",
+          "description": "Every security-relevant action is recorded as an append-only audit entry with actor, timestamp, resource, and request context.",
+          "why": "Non-negotiable for compliance — provides a tamper-evident log for regulatory inquiries and incident response."
+        },
+        {
+          "title": "AES-256-GCM Field Encryption",
+          "description": "Sensitive notes are encrypted at the field level using AES-256-GCM before storage. Decryption requires the user's password and is audit-logged.",
+          "why": "Protects data at rest even if the database is compromised. Access is always authenticated and traceable."
+        },
+        {
+          "title": "Result Pattern Over Exceptions",
+          "description": "Business operations return Result<T> instead of throwing exceptions. Errors are values — typed, composable, and impossible to accidentally ignore.",
+          "why": "Makes failure paths explicit in the type system, reducing surprise runtime errors in critical workflows."
+        },
+        {
+          "title": "Offline Mutation Queue",
+          "description": "When offline, mutations are queued in IndexedDB and replayed in order when connectivity resumes. Reads use cached data from service worker.",
+          "why": "Field workers in healthcare settings often have unreliable connectivity. Offline-first ensures no work is lost."
+        }
+      ]
     }
   },
   "roadmap": {
@@ -773,7 +828,7 @@
     "hero": {
       "titleLine1": "This Is Just",
       "titleHighlight": "The Beginning.",
-      "subtitle": "808 tests. Production deployed. Five checkpoints shipped. Here's everything we're building next — from AI-powered workflows to enterprise compliance."
+      "subtitle": "808 tests. Production deployed. Five checkpoints shipped. Here's what comes next — from AI-powered workflows to enterprise compliance."
     },
     "horizons": {
       "near": {
@@ -835,7 +890,7 @@
       },
       {
         "name": "Reporting & Developer Experience",
-        "tagline": "Built for builders.",
+        "tagline": "APIs, CLIs, and dashboards.",
         "features": [
           { "title": "Dashboards", "description": "Burndown charts, velocity tracking, workload heatmaps. Data-driven productivity." },
           { "title": "Public API & SDK", "description": "Versioned REST API with auto-generated TypeScript and C# client SDKs." },
@@ -845,17 +900,17 @@
       },
       {
         "name": "Platform & Compliance",
-        "tagline": "Everywhere you are. Secure everywhere you go.",
+        "tagline": "Native apps. Enterprise compliance.",
         "features": [
           { "title": "Desktop App", "description": "Tauri-powered native desktop. System tray, global shortcuts, offline-first." },
           { "title": "Mobile Native", "description": "React Native for iOS and Android. Shared types, native performance." },
           { "title": "Enterprise SSO", "description": "SAML 2.0 and OIDC. Okta, Azure AD, Auth0. One login for everything." },
-          { "title": "Full Compliance", "description": "HIPAA certification, GDPR compliance, SOC 2 Type II. Regulated industries welcome." }
+          { "title": "Full Compliance Path", "description": "HIPAA certification readiness, GDPR compliance, SOC 2 Type II preparation. Designed for regulated industries." }
         ]
       },
       {
         "name": "Product & Growth",
-        "tagline": "From product to business.",
+        "tagline": "Monetization and growth tooling.",
         "features": [
           { "title": "Freemium Model", "description": "Free for individuals. Pro for power users. Team for collaboration. Enterprise for compliance." },
           { "title": "Template Gallery", "description": "Sprint Planning, GTD, Content Calendar — start with proven structures, not blank boards." },
@@ -865,7 +920,7 @@
       },
       {
         "name": "UX Excellence",
-        "tagline": "The details that make you fall in love.",
+        "tagline": "The details that save you time.",
         "features": [
           { "title": "Command Palette", "description": "Cmd+K for everything. Tasks, boards, actions, settings. Full speed, zero mouse." },
           { "title": "Undo Everywhere", "description": "5-second undo toast on every destructive action. Faster than confirmation dialogs." },
@@ -875,7 +930,7 @@
       },
       {
         "name": "Reliability & Operations",
-        "tagline": "The boring stuff that makes it bulletproof.",
+        "tagline": "The boring stuff that keeps it running.",
         "features": [
           { "title": "Global CDN", "description": "Frontend from 100+ edge locations. Sub-50ms first-byte times, worldwide." },
           { "title": "Blue/Green Deploys", "description": "Zero-downtime deployments with canary progression and instant rollback." },
@@ -886,9 +941,117 @@
     ],
     "cta": {
       "title": "Want to Shape What's Next?",
-      "subtitle": "LemonDo is open source. Star us, fork us, contribute. The roadmap is a conversation, not a monologue.",
+      "subtitle": "LemonDo is open source. Star the repo, fork it, contribute. Everything here is open for discussion.",
       "ctaPrimary": "Get Started Free",
       "ctaGithub": "Star on GitHub"
+    }
+  },
+  "devops": {
+    "nav": "DevOps",
+    "hero": {
+      "titleLine1": "Infrastructure as",
+      "titleHighlight": "Code.",
+      "titleLine2": "Deployment on Autopilot.",
+      "subtitle": "Three Terraform stages. Automated CI/CD. Azure-native. From $18/month to enterprise scale — every resource provisioned, tested, and observable."
+    },
+    "pipeline": {
+      "title": "Push to Production in Minutes",
+      "highlight": "Minutes",
+      "subtitle": "Every push to main triggers a 4-stage pipeline. Parallel tests, Docker build, and zero-downtime deployment to Azure.",
+      "steps": [
+        { "title": "Push", "detail": "Code merged to main" },
+        { "title": "Test", "detail": "SQLite + SQL Server + Frontend" },
+        { "title": "Build", "detail": "Multi-stage Docker image" },
+        { "title": "Deploy", "detail": "Container App + Static Web App" }
+      ],
+      "details": [
+        { "title": "Dual Database Testing", "description": "Every push runs the full backend test suite against both SQLite and SQL Server in parallel." },
+        { "title": "Docker Multi-Stage Build", "description": "SDK build stage, aspnet runtime stage. Non-root user, health-checked, tagged by commit SHA." },
+        { "title": "Zero-Downtime Deploy", "description": "Container App rolling updates with /alive probe verification every 30 seconds." },
+        { "title": "Parallel Execution", "description": "4 CI jobs run concurrently — total pipeline time under 5 minutes." }
+      ]
+    },
+    "infra": {
+      "title": "Three Stages, One Codebase",
+      "highlight": "Three Stages",
+      "subtitle": "Same Terraform modules, different variables. Scale from proof-of-concept to enterprise by changing one file.",
+      "costNote": "Values are scenario estimates for raw Azure infrastructure, not commercial pricing.",
+      "stages": [
+        {
+          "name": "Stage 1: MVP",
+          "cost": "~$18/mo",
+          "tagline": "Ship fast. Validate ideas.",
+          "badge": "CURRENT",
+          "resources": ["Container App (0.25 CPU, 0.5 GB)", "Azure SQL Basic (5 DTU, 2 GB)", "Container Registry (Basic)", "Key Vault (RBAC + Managed Identity)", "Static Web App (Standard)", "App Insights (Free tier)", "Custom Domains + Managed TLS"]
+        },
+        {
+          "name": "Stage 2: Resilience",
+          "cost": "~$180/mo",
+          "tagline": "Production-ready. Sleep at night.",
+          "badge": "NEXT",
+          "resources": ["VNet + Private Endpoints", "Front Door + WAF (Prevention)", "SQL S1 (20 DTU, geo-backup, 14-day PITR)", "Container App (0.5 CPU, 5 replicas)", "90-day monitoring retention", "DDoS Protection", "Key Vault purge protection"]
+        },
+        {
+          "name": "Stage 3: Scale",
+          "cost": "~$1.7K/mo",
+          "tagline": "Enterprise. Global. Redundant.",
+          "badge": "FUTURE",
+          "resources": ["Redis Premium P1 (2.5 GB)", "CDN + Zone-Redundant Blob Storage", "SQL P1 (zone-redundant, read replica, 35-day PITR)", "Container App (1.0 CPU, auto-scale 0-10)", "Front Door Premium + WAF", "Private Endpoints everywhere", "CPU + HTTP auto-scale rules"]
+        }
+      ]
+    },
+    "modules": {
+      "title": "9 Terraform Modules, Fully Composable",
+      "highlight": "9 Terraform Modules",
+      "subtitle": "Reusable infrastructure blocks. Each stage picks the modules it needs.",
+      "items": [
+        { "name": "container-app", "description": "Registry + Environment + App" },
+        { "name": "sql-database", "description": "Server + Database + Firewall" },
+        { "name": "key-vault", "description": "Secrets + RBAC + Managed Identity" },
+        { "name": "monitoring", "description": "App Insights + Log Analytics" },
+        { "name": "static-web-app", "description": "SPA Hosting + Custom Domain" },
+        { "name": "networking", "description": "VNet + Subnets + Private DNS" },
+        { "name": "frontdoor", "description": "CDN + WAF + Health Probes" },
+        { "name": "redis", "description": "Premium Cache + Private Endpoint" },
+        { "name": "cdn", "description": "Zone-Redundant Storage + CDN Profile" }
+      ]
+    },
+    "live": {
+      "title": "Running Right Now in Azure",
+      "highlight": "Right Now",
+      "subtitle": "Stage 1 infrastructure powering the live MVP at lemondo.btas.dev.",
+      "components": [
+        { "name": "Container App", "detail": "0.25 CPU, 0.5 GB RAM, auto-scale 0-3 replicas" },
+        { "name": "Static Web App", "detail": "React SPA with global edge CDN delivery" },
+        { "name": "Azure SQL", "detail": "Basic 5 DTU, 2 GB max, TLS 1.2 enforced" },
+        { "name": "Key Vault", "detail": "JWT secret + encryption key via managed identity" },
+        { "name": "App Insights", "detail": "Request tracing, dependency tracking, 30-day retention" },
+        { "name": "Container Registry", "detail": "Docker images tagged by commit SHA + latest" },
+        { "name": "Custom Domains", "detail": "Managed TLS certificates, auto-renewed" },
+        { "name": "Log Analytics", "detail": "Container logs, structured KQL queries" }
+      ],
+      "domains": {
+        "label": "Live Domains",
+        "api": "api.lemondo.btas.dev",
+        "frontend": "lemondo.btas.dev"
+      }
+    },
+    "observability": {
+      "title": "Observable by Default",
+      "highlight": "Observable",
+      "subtitle": "Every request traced. Every error captured. Every metric dashboarded.",
+      "items": [
+        { "title": "Application Insights", "description": "End-to-end request tracing, dependency tracking, failure analysis, and live performance metrics." },
+        { "title": "Structured Logging", "description": "ILogger with correlation IDs flowing through every layer. Queryable with KQL in Log Analytics." },
+        { "title": "Health Endpoints", "description": "/health for readiness, /alive for liveness. Container App probes verify every 30 seconds." },
+        { "title": "OpenAPI + Scalar", "description": "Auto-generated interactive API docs at /scalar/v1. Every endpoint documented and testable." }
+      ]
+    },
+    "cta": {
+      "title": "See the Infrastructure Code",
+      "subtitle": "Every Terraform module, every GitHub Action, every Dockerfile — open source and ready to fork.",
+      "ctaPrimary": "Get Started Free",
+      "ctaGithub": "View Infrastructure"
     }
   }
 }
