@@ -820,6 +820,109 @@ describe('KanbanBoard mobile column-snap auto-scroll', () => {
 
     vi.restoreAllMocks();
   });
+
+  it('should block snaps within the 800ms cooldown window', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Extended cooldown test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { scrollContainer, mockScrollTo } = setupScrollContainerMocks(container);
+
+    // Start at column 1 so there's room to snap right then back left
+    Object.defineProperty(scrollContainer, 'scrollLeft', { value: 335, configurable: true, writable: true });
+
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // Snap right via edge zone
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    // Advance 500ms — past old 400ms cooldown but within new 800ms cooldown
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 500);
+
+    // Try to snap left via distance (pointerX=80, dx=80-320=-240, well past threshold)
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, -120) as unknown as DragMoveEvent);
+    });
+
+    // Should NOT have snapped — still within 800ms cooldown
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    vi.restoreAllMocks();
+  });
+
+  it('should use raw pointer position from native pointermove events for edge zone detection', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Raw pointer test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { mockScrollTo } = setupScrollContainerMocks(container);
+
+    // Start drag at x=200
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // Simulate a native pointermove at right edge zone (x=320)
+    // while dnd-kit delta reports 0 (e.g., scroll compensation ate the movement)
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointermove', { clientX: 320 }));
+    });
+
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 0) as unknown as DragMoveEvent);
+    });
+
+    // Raw pointer at 320 > 315 (right edge zone) → should snap right
+    // Delta-based: pointerX = 200+0 = 200 → NOT in edge zone → would NOT snap
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not trigger reverse snap when pointer stays still but delta shifts from scroll compensation', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'No oscillation test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { mockScrollTo } = setupScrollContainerMocks(container);
+
+    // Start drag at x=200
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // Move pointer to right edge and snap
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointermove', { clientX: 320 }));
+    });
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    // After cooldown, finger hasn't moved (still at viewport x=320)
+    // but dnd-kit delta shifted due to scroll compensation: 120 - 335 = -215
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    act(() => {
+      window.dispatchEvent(new PointerEvent('pointermove', { clientX: 320 }));
+    });
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, -215) as unknown as DragMoveEvent);
+    });
+
+    // Should NOT have reverse-snapped — finger is still at 320, no real movement
+    // With raw tracking: pointerX=320, snapAnchor=320, dx=0 → no snap ✓
+    // Without raw tracking: pointerX=200+(-215)=-15, dx=-15-320=-335 → snap left ✗
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    vi.restoreAllMocks();
+  });
 });
 
 describe('KanbanBoard mobile height stretching', () => {
