@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { GithubIcon } from 'lucide-react';
+import { GithubIcon, MenuIcon, XIcon } from 'lucide-react';
 import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore } from '@/stores/use-theme-store';
@@ -21,6 +21,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
   const { t } = useTranslation();
   const theme = useThemeStore((s) => s.theme);
   const { pathname } = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
     { to: '/', label: t('landing.nav.home') },
@@ -28,6 +29,18 @@ export function LandingLayout({ children }: LandingLayoutProps) {
     { to: '/devops', label: t('devops.nav') },
     { to: '/roadmap', label: t('roadmap.nav') },
   ];
+
+  const themeToggle = (
+    <ThemeToggle
+      theme={theme}
+      onToggle={() => {
+        const themes: Array<typeof theme> = ['light', 'dark', 'system'];
+        const idx = themes.indexOf(theme);
+        const next = themes[(idx + 1) % themes.length];
+        useThemeStore.getState().setTheme(next);
+      }}
+    />
+  );
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -40,7 +53,9 @@ export function LandingLayout({ children }: LandingLayoutProps) {
               <span className="text-lemon">{t('brand.do')}</span>
             </span>
           </Link>
-          <nav className="flex items-center gap-1 sm:gap-2">
+
+          {/* Desktop navigation — hidden on mobile */}
+          <nav className="hidden items-center gap-1 md:flex md:gap-2" aria-label="Desktop navigation">
             <a
               href="https://github.com/btachinardi/lemon-todo"
               target="_blank"
@@ -68,15 +83,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
               </Link>
             ))}
             <LanguageSwitcher />
-            <ThemeToggle
-              theme={theme}
-              onToggle={() => {
-                const themes: Array<typeof theme> = ['light', 'dark', 'system'];
-                const idx = themes.indexOf(theme);
-                const next = themes[(idx + 1) % themes.length];
-                useThemeStore.getState().setTheme(next);
-              }}
-            />
+            {themeToggle}
             <Link
               to="/login"
               className="rounded-md px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
@@ -90,7 +97,70 @@ export function LandingLayout({ children }: LandingLayoutProps) {
               {t('landing.nav.getStarted')}
             </Link>
           </nav>
+
+          {/* Mobile controls — visible only below md breakpoint */}
+          <div className="flex items-center gap-1 md:hidden">
+            <LanguageSwitcher />
+            {themeToggle}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            >
+              {mobileMenuOpen ? <XIcon className="size-5" /> : <MenuIcon className="size-5" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile navigation overlay */}
+        {mobileMenuOpen && (
+          <nav
+            className="border-t border-border/20 bg-background/95 px-4 pb-6 pt-4 backdrop-blur-xl md:hidden"
+            aria-label="Mobile navigation"
+          >
+            <div className="flex flex-col gap-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'rounded-md px-3 py-2 text-base font-semibold transition-colors',
+                    isActive(link.to, pathname)
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <hr className="my-2 border-border/20" />
+              <a
+                href="https://github.com/btachinardi/lemon-todo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-base font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <GithubIcon className="size-4" />
+                GitHub
+              </a>
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-md px-3 py-2 text-base font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {t('landing.nav.login')}
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-2 rounded-lg bg-primary px-3.5 py-2 text-center text-base font-bold text-primary-foreground transition-all hover:shadow-[0_0_16px_rgba(220,255,2,0.3)]"
+              >
+                {t('landing.nav.getStarted')}
+              </Link>
+            </div>
+          </nav>
+        )}
       </header>
 
       <main className="flex-1">{children}</main>
