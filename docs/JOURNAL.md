@@ -2077,6 +2077,38 @@ Backend C# enum and DTO changes weren't propagating to the frontend automaticall
 
 ---
 
+## Post-Release: Theme & Visual Polish
+
+**Date: February 17, 2026**
+
+A focused pass on color readability and visual hierarchy across both themes.
+
+### Changes
+
+1. **Light mode primary → purple**: The lime primary (`oklch(0.94 0.24 116)`) was unreadable on white backgrounds. Switched to the highlight purple (`oklch(0.47 0.27 303)`) which gives ~6.5:1 contrast on white. Dark mode primary stays lime.
+
+2. **Brand token**: Added `--brand` / `--brand-foreground` (always lime, both themes) for elements that must stay on-brand regardless of theme — CTA buttons (GlowButton), nav active states. Added a `brand` variant to the shadcn Button component.
+
+3. **Logo color**: Uses `text-primary` — lime in dark, purple in light. Readable in both.
+
+4. **Dark surface lightness bump**: Cards and components were too close to the pure black background. Bumped `--card`, `--popover`, `--secondary`, `--muted`, `--accent`, `--input` from ~0.13–0.17 to ~0.18–0.22 in oklch lightness. Borders from 0.26 to 0.30. Sidebar from 0.06 to 0.10.
+
+5. **Task list view surface**: Added `bg-card/60` to list view rows for subtle separation from background.
+
+6. **DevOps pipeline icons**: Added lucide icons (DatabaseIcon, ShieldCheckIcon, ContainerIcon, RefreshCwIcon) to the four pipeline detail cards.
+
+7. **Navbar CTA**: Get Started button converted to GlowButton with pulsing glow effect.
+
+### Decision: Three-Token Color Strategy
+
+| Token | Dark | Light | Used For |
+|-------|------|-------|----------|
+| `primary` | Lime | Purple | General UI, logo, buttons, focus rings |
+| `brand` | Lime | Lime | CTAs, nav active states (always on-brand) |
+| `highlight` | Lime | Purple | Accent text on contextual backgrounds |
+
+---
+
 ## What's Next
 
 See `docs/ROADMAP.md` for future capability tiers.

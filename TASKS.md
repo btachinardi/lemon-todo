@@ -395,6 +395,7 @@
 - **Post-release fix**: Offline queue startup drain + cache invalidation (462 frontend tests, +13 new)
 - **Post-release quality**: Admin E2E coverage (20 tests across 5 specs) + AuthHydrationProvider StrictMode race fix
 - **Post-release DX**: OpenAPI-based TypeScript type generation (471 frontend tests, +9 enum coverage guard tests)
+- **Post-release polish**: Theme refinements — light primary switched to purple, brand token (always lime) for CTAs/logo, dark surfaces lightened, list view card surface, DevOps pipeline icons
 
 ---
 
@@ -541,3 +542,8 @@
 | 0527416 | fix(client): move OfflineBanner inside QueryProvider to prevent crash | CP5 |
 | c217adc | chore: add Git LFS tracking for .ai files and commit logo | CP5 |
 | 098c65c | fix(client): drain offline queue on startup and invalidate caches after drain | Post-release |
+| aaa65e3 | style(theme): switch light primary to purple and add brand token | Post-release |
+| 2dfdb24 | feat(ui): add brand button variant and update GlowButton to use brand | Post-release |
+| 80733cb | style(layouts): use primary for logo, brand for nav, GlowButton for CTA | Post-release |
+| f4d356f | feat(landing): add lucide icons to DevOps pipeline detail cards | Post-release |
+| 6ba03f3 | style(tasks): add semi-transparent card surface to list view rows | Post-release |
