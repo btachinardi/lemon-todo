@@ -2,7 +2,6 @@ namespace LemonDo.Api.Tests.Auth;
 
 using System.Net;
 using System.Net.Http.Json;
-using LemonDo.Api.Contracts.Auth;
 using LemonDo.Api.Tests.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -36,7 +35,7 @@ public sealed class DevAccountSeedingTests
         foreach (var (email, password) in DevAccounts)
         {
             var response = await client.PostAsJsonAsync(
-                "/api/auth/login", new LoginRequest(email, password));
+                "/api/auth/login", new { Email = email, Password = password });
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode,
                 $"Dev account {email} should be loginable when EnableDemoAccounts=true");
@@ -62,7 +61,7 @@ public sealed class DevAccountSeedingTests
         foreach (var (email, password) in DevAccounts)
         {
             var response = await client.PostAsJsonAsync(
-                "/api/auth/login", new LoginRequest(email, password));
+                "/api/auth/login", new { Email = email, Password = password });
 
             Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
                 $"Dev account {email} should NOT exist when EnableDemoAccounts=false");
@@ -89,7 +88,7 @@ public sealed class DevAccountSeedingTests
         foreach (var (email, password) in DevAccounts)
         {
             var response = await client.PostAsJsonAsync(
-                "/api/auth/login", new LoginRequest(email, password));
+                "/api/auth/login", new { Email = email, Password = password });
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode,
                 $"Dev account {email} should be loginable when EnableDemoAccounts=true even in Production");
@@ -109,7 +108,7 @@ public sealed class DevAccountSeedingTests
         foreach (var (email, password) in DevAccounts)
         {
             var response = await client.PostAsJsonAsync(
-                "/api/auth/login", new LoginRequest(email, password));
+                "/api/auth/login", new { Email = email, Password = password });
 
             Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
                 $"Dev account {email} should NOT exist when flag is missing in Production");

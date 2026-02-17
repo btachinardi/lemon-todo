@@ -1,11 +1,18 @@
+using LemonDo.Domain.Common;
 using Serilog.Core;
 using Serilog.Events;
 
 namespace LemonDo.Api.Logging;
 
 /// <summary>
-/// Serilog destructuring policy that automatically masks protected data properties
-/// (email, displayName, password) in structured log events.
+/// Serilog destructuring policy that automatically masks protected data.
+/// Uses two strategies:
+/// <list type="number">
+/// <item><description>Type-based: any object implementing <see cref="IProtectedData"/> is replaced
+/// with its <see cref="IProtectedData.Redacted"/> value (covers all VOs regardless of property name).</description></item>
+/// <item><description>Name-based: <see cref="MaskIfSensitive"/> masks scalar values whose property name
+/// matches a known sensitive field (defense-in-depth for raw strings).</description></item>
+/// </list>
 /// </summary>
 public sealed class ProtectedDataDestructuringPolicy : IDestructuringPolicy
 {
@@ -29,6 +36,12 @@ public sealed class ProtectedDataDestructuringPolicy : IDestructuringPolicy
     /// <inheritdoc />
     public bool TryDestructure(object value, ILogEventPropertyValueFactory propertyValueFactory, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out LogEventPropertyValue? result)
     {
+        if (value is IProtectedData protectedData)
+        {
+            result = new ScalarValue(protectedData.Redacted);
+            return true;
+        }
+
         result = null;
         return false;
     }

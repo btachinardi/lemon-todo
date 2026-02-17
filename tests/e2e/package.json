@@ -6,9 +6,11 @@
     "cleanup": "node scripts/cleanup.mjs",
     "test": "node scripts/cleanup.mjs && playwright test",
     "test:headed": "node scripts/cleanup.mjs && playwright test --headed",
-    "test:ui": "node scripts/cleanup.mjs && playwright test --ui"
+    "test:ui": "node scripts/cleanup.mjs && playwright test --ui",
+    "test:update-snapshots": "node scripts/cleanup.mjs && playwright test --update-snapshots"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@playwright/test": "^1.52.0"
   }
 }

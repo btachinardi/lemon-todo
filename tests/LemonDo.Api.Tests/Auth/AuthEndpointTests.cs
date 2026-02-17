@@ -3,6 +3,7 @@ namespace LemonDo.Api.Tests.Auth;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using LemonDo.Api.Contracts.Auth;
 using LemonDo.Api.Tests.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -30,7 +31,7 @@ public sealed class AuthEndpointTests
     [TestMethod]
     public async Task Should_Register_When_ValidCredentials()
     {
-        var request = new RegisterRequest("new@lemondo.dev", "NewPass123!", "New User");
+        var request = new { Email = "new@lemondo.dev", Password = "NewPass123!", DisplayName = "New User" };
 
         var response = await _anonymousClient.PostAsJsonAsync("/api/auth/register", request);
 
@@ -50,10 +51,12 @@ public sealed class AuthEndpointTests
     public async Task Should_ReturnConflict_When_DuplicateEmail()
     {
         // Test user is pre-seeded by factory
-        var request = new RegisterRequest(
-            CustomWebApplicationFactory.TestUserEmail,
-            "AnotherPass123!",
-            "Duplicate");
+        var request = new
+        {
+            Email = CustomWebApplicationFactory.TestUserEmail,
+            Password = "AnotherPass123!",
+            DisplayName = "Duplicate"
+        };
 
         var response = await _anonymousClient.PostAsJsonAsync("/api/auth/register", request);
 
@@ -63,7 +66,7 @@ public sealed class AuthEndpointTests
     [TestMethod]
     public async Task Should_ReturnBadRequest_When_WeakPassword()
     {
-        var request = new RegisterRequest("weak@lemondo.dev", "short", "Weak Password");
+        var request = new { Email = "weak@lemondo.dev", Password = "short", DisplayName = "Weak Password" };
 
         var response = await _anonymousClient.PostAsJsonAsync("/api/auth/register", request);
 
@@ -73,9 +76,11 @@ public sealed class AuthEndpointTests
     [TestMethod]
     public async Task Should_Login_When_ValidCredentials()
     {
-        var request = new LoginRequest(
-            CustomWebApplicationFactory.TestUserEmail,
-            CustomWebApplicationFactory.TestUserPassword);
+        var request = new
+        {
+            Email = CustomWebApplicationFactory.TestUserEmail,
+            Password = CustomWebApplicationFactory.TestUserPassword
+        };
 
         var response = await _anonymousClient.PostAsJsonAsync("/api/auth/login", request);
 
@@ -93,9 +98,11 @@ public sealed class AuthEndpointTests
     [TestMethod]
     public async Task Should_ReturnUnauthorized_When_WrongPassword()
     {
-        var request = new LoginRequest(
-            CustomWebApplicationFactory.TestUserEmail,
-            "WrongPassword123!");
+        var request = new
+        {
+            Email = CustomWebApplicationFactory.TestUserEmail,
+            Password = "WrongPassword123!"
+        };
 
         var response = await _anonymousClient.PostAsJsonAsync("/api/auth/login", request);
 
@@ -105,7 +112,7 @@ public sealed class AuthEndpointTests
     [TestMethod]
     public async Task Should_ReturnUnauthorized_When_NonexistentEmail()
     {
-        var request = new LoginRequest("nobody@lemondo.dev", "Pass123!");
+        var request = new { Email = "nobody@lemondo.dev", Password = "Pass123!" };
 
         var response = await _anonymousClient.PostAsJsonAsync("/api/auth/login", request);
 
@@ -135,7 +142,7 @@ public sealed class AuthEndpointTests
     {
         // Login to get refresh token cookie
         var loginResponse = await _anonymousClient.PostAsJsonAsync("/api/auth/login",
-            new LoginRequest(CustomWebApplicationFactory.TestUserEmail, CustomWebApplicationFactory.TestUserPassword));
+            new { Email = CustomWebApplicationFactory.TestUserEmail, Password = CustomWebApplicationFactory.TestUserPassword });
         var auth = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(auth);
 
@@ -187,9 +194,11 @@ public sealed class AuthEndpointTests
     [TestMethod]
     public async Task Should_IncludeRoles_When_LoginResponse()
     {
-        var request = new LoginRequest(
-            CustomWebApplicationFactory.TestUserEmail,
-            CustomWebApplicationFactory.TestUserPassword);
+        var request = new
+        {
+            Email = CustomWebApplicationFactory.TestUserEmail,
+            Password = CustomWebApplicationFactory.TestUserPassword
+        };
 
         var response = await _anonymousClient.PostAsJsonAsync("/api/auth/login", request);
 
@@ -217,9 +226,11 @@ public sealed class AuthEndpointTests
     [TestMethod]
     public async Task Should_IncludeAdminRole_When_AdminLogin()
     {
-        var request = new LoginRequest(
-            CustomWebApplicationFactory.AdminUserEmail,
-            CustomWebApplicationFactory.AdminUserPassword);
+        var request = new
+        {
+            Email = CustomWebApplicationFactory.AdminUserEmail,
+            Password = CustomWebApplicationFactory.AdminUserPassword
+        };
 
         var response = await _anonymousClient.PostAsJsonAsync("/api/auth/login", request);
 
@@ -235,7 +246,7 @@ public sealed class AuthEndpointTests
     {
         // Login to get tokens + cookie
         var loginResponse = await _anonymousClient.PostAsJsonAsync("/api/auth/login",
-            new LoginRequest(CustomWebApplicationFactory.TestUserEmail, CustomWebApplicationFactory.TestUserPassword));
+            new { Email = CustomWebApplicationFactory.TestUserEmail, Password = CustomWebApplicationFactory.TestUserPassword });
         var auth = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(auth);
         var refreshCookie = ExtractRefreshTokenCookie(loginResponse);
@@ -261,23 +272,27 @@ public sealed class AuthEndpointTests
     public async Task Should_RevealProfile_When_ValidPassword()
     {
         using var authedClient = await _factory.CreateAuthenticatedClientAsync();
-        var request = new RevealProfileRequest(CustomWebApplicationFactory.TestUserPassword);
+        var request = new { Password = CustomWebApplicationFactory.TestUserPassword };
 
         var response = await authedClient.PostAsJsonAsync("/api/auth/reveal-profile", request);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        var revealed = await response.Content.ReadFromJsonAsync<RevealedProfileResponse>();
-        Assert.IsNotNull(revealed);
+        // RevealedField is decrypted to plain strings by the server's RevealedFieldConverter,
+        // so we deserialize into a JsonDocument to read strings directly.
+        var json = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.IsNotNull(json);
+        var email = json.RootElement.GetProperty("email").GetString();
+        var displayName = json.RootElement.GetProperty("displayName").GetString();
         // Should return UNREDACTED data
-        Assert.AreEqual(CustomWebApplicationFactory.TestUserEmail, revealed.Email);
-        Assert.AreEqual("Test User", revealed.DisplayName);
+        Assert.AreEqual(CustomWebApplicationFactory.TestUserEmail, email);
+        Assert.AreEqual("Test User", displayName);
     }
 
     [TestMethod]
     public async Task Should_ReturnUnauthorized_When_WrongPasswordOnRevealProfile()
     {
         using var authedClient = await _factory.CreateAuthenticatedClientAsync();
-        var request = new RevealProfileRequest("WrongPassword123!");
+        var request = new { Password = "WrongPassword123!" };
 
         var response = await authedClient.PostAsJsonAsync("/api/auth/reveal-profile", request);
 
@@ -287,7 +302,7 @@ public sealed class AuthEndpointTests
     [TestMethod]
     public async Task Should_ReturnUnauthorized_When_AnonymousRevealProfile()
     {
-        var request = new RevealProfileRequest("AnyPassword123!");
+        var request = new { Password = "AnyPassword123!" };
 
         var response = await _anonymousClient.PostAsJsonAsync("/api/auth/reveal-profile", request);
 

@@ -1,33 +1,10 @@
-/** Actions recorded in the audit trail. Must match backend AuditAction enum. */
-export type AuditAction =
-  | 'UserRegistered'
-  | 'UserLoggedIn'
-  | 'UserLoggedOut'
-  | 'RoleAssigned'
-  | 'RoleRemoved'
-  | 'ProtectedDataRevealed'
-  | 'TaskCreated'
-  | 'TaskCompleted'
-  | 'TaskDeleted'
-  | 'UserDeactivated'
-  | 'UserReactivated'
-  | 'SensitiveNoteRevealed';
+import type { components } from '../../../api/schema';
+
+/** Actions recorded in the audit trail, derived from the backend AuditAction enum via OpenAPI schema. */
+export type AuditAction = components['schemas']['AuditAction'];
 
 /** A single audit trail entry. */
-export interface AuditEntry {
-  id: string;
-  timestamp: string;
-  /** ID of the user who performed the action. Null for system-initiated actions (e.g., automated cleanup). */
-  actorId: string | null;
-  action: AuditAction;
-  resourceType: string;
-  /** ID of the affected resource. Null for non-resource actions (e.g., UserLoggedIn, UserLoggedOut). */
-  resourceId: string | null;
-  /** Optional JSON payload with action-specific metadata (e.g., reveal reason, changed fields). */
-  details: string | null;
-  /** IP address of the client. Null for system-initiated actions or when IP cannot be determined. */
-  ipAddress: string | null;
-}
+export type AuditEntry = components['schemas']['AuditEntryDto'];
 
 /** Paginated result from the audit log endpoint. */
 export interface PagedAuditEntries {

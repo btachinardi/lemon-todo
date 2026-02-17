@@ -97,10 +97,11 @@ public sealed class DisplayNameTests
     }
 
     [TestMethod]
-    public void Should_ReturnValue_When_ToString()
+    public void Should_ReturnRedacted_When_ToString()
     {
         var name = DisplayName.Create("Test User").Value;
-        Assert.AreEqual("Test User", name.ToString());
+        // IProtectedData VOs return redacted form from ToString() to prevent accidental logging
+        Assert.AreEqual("T***r", name.ToString());
     }
 
     // --- Redacted ---

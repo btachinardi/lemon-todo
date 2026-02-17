@@ -473,31 +473,49 @@ describe('KanbanBoard mobile touch support', () => {
     expect(options?.activationConstraint?.tolerance).toBeGreaterThanOrEqual(5);
   });
 
+  it('should apply snap scroll classes on the scroll container (overflow element), not inner flex', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Snap container test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const scrollContainer = container.querySelector('.overflow-x-auto')!;
+    const innerFlex = container.querySelector('[data-onboarding="board-columns"]')!;
+
+    // snap-x and snap-mandatory MUST be on the scroll container for CSS scroll snapping to work
+    expect(scrollContainer.className).toContain('snap-x');
+    expect(scrollContainer.className).toContain('snap-mandatory');
+
+    // inner flex container should NOT have snap classes (they have no effect there)
+    expect(innerFlex.className).not.toContain('snap-x');
+    expect(innerFlex.className).not.toContain('snap-mandatory');
+  });
+
   it('should disable snap scroll during active drag to prevent layout jumps', () => {
     const board = createBoard();
     const task = createTask({ title: 'Snap test' });
     board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
 
     const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
-    const columnsContainer = container.querySelector('[data-onboarding="board-columns"]')!;
+    const scrollContainer = container.querySelector('.overflow-x-auto')!;
 
-    // Before drag: snap scroll should be active for mobile swipe navigation
-    expect(columnsContainer.className).toContain('snap-x');
-    expect(columnsContainer.className).toContain('snap-mandatory');
+    // Before drag: snap scroll should be active on the scroll container
+    expect(scrollContainer.className).toContain('snap-x');
+    expect(scrollContainer.className).toContain('snap-mandatory');
 
     // During drag: snap must be disabled so dropping doesn't cause layout jump
     act(() => {
       dndHandlers.onDragStart?.(makeDndEvent(task.id));
     });
-    expect(columnsContainer.className).not.toContain('snap-x');
-    expect(columnsContainer.className).not.toContain('snap-mandatory');
+    expect(scrollContainer.className).not.toContain('snap-x');
+    expect(scrollContainer.className).not.toContain('snap-mandatory');
 
     // After drag ends: snap should be restored
     act(() => {
       dndHandlers.onDragEnd?.(makeDndEvent(task.id, task.id));
     });
-    expect(columnsContainer.className).toContain('snap-x');
-    expect(columnsContainer.className).toContain('snap-mandatory');
+    expect(scrollContainer.className).toContain('snap-x');
+    expect(scrollContainer.className).toContain('snap-mandatory');
   });
 
   it('should restore snap scroll on drag cancel', () => {
@@ -506,12 +524,12 @@ describe('KanbanBoard mobile touch support', () => {
     board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
 
     const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
-    const columnsContainer = container.querySelector('[data-onboarding="board-columns"]')!;
+    const scrollContainer = container.querySelector('.overflow-x-auto')!;
 
     act(() => {
       dndHandlers.onDragStart?.(makeDndEvent(task.id));
     });
-    expect(columnsContainer.className).not.toContain('snap-x');
+    expect(scrollContainer.className).not.toContain('snap-x');
 
     act(() => {
       dndHandlers.onDragCancel?.({
@@ -519,8 +537,8 @@ describe('KanbanBoard mobile touch support', () => {
         over: null,
       } as unknown as DragCancelEvent);
     });
-    expect(columnsContainer.className).toContain('snap-x');
-    expect(columnsContainer.className).toContain('snap-mandatory');
+    expect(scrollContainer.className).toContain('snap-x');
+    expect(scrollContainer.className).toContain('snap-mandatory');
   });
 });
 
@@ -670,5 +688,146 @@ describe('KanbanBoard mobile column-snap auto-scroll', () => {
     });
 
     expect(mockScrollTo).not.toHaveBeenCalled();
+  });
+
+  it('should not re-trigger same edge zone snap until pointer leaves the zone', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Re-entry test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { mockScrollTo } = setupScrollContainerMocks(container);
+
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // First move to right edge → snap fires
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    // Advance past cooldown but pointer STAYS in right edge zone → should NOT snap again
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 125) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1); // still 1, no re-trigger
+
+    vi.restoreAllMocks();
+  });
+
+  it('should allow reverse-direction snap by moving pointer back from the snap position', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Reverse snap test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { scrollContainer, mockScrollTo } = setupScrollContainerMocks(container);
+
+    // Start scrolled at column 1 so there's room to go right then back left
+    Object.defineProperty(scrollContainer, 'scrollLeft', { value: 335, configurable: true, writable: true });
+
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // Snap right via edge zone
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    // Advance past cooldown, then drag left by ≥80px from the snap position (320 → 230)
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 30) as unknown as DragMoveEvent);
+    });
+
+    // Should have snapped left (2 total scrolls: one right, one left)
+    expect(mockScrollTo).toHaveBeenCalledTimes(2);
+
+    vi.restoreAllMocks();
+  });
+
+  it('should not trigger distance-based snap when movement is less than snap distance threshold', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Below-threshold test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { scrollContainer, mockScrollTo } = setupScrollContainerMocks(container);
+
+    Object.defineProperty(scrollContainer, 'scrollLeft', { value: 335, configurable: true, writable: true });
+
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // Snap right
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    // Advance past cooldown, move left but only 50px from snap point (320 → 270)
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 70) as unknown as DragMoveEvent);
+    });
+
+    // Should NOT have snapped — still only 1 scroll
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    vi.restoreAllMocks();
+  });
+
+  it('should support a full right-then-left snap sequence in a single drag', () => {
+    const board = createBoard();
+    const task = createTask({ title: 'Full sequence test' });
+    board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
+
+    const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
+    const { mockScrollTo } = setupScrollContainerMocks(container);
+
+    // Start at column 0
+    act(() => {
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+    });
+
+    // 1. Snap RIGHT: drag to right edge (pointerX = 200+120 = 320 > 375-60 = 315)
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+
+    // 2. Advance time, move slightly left but stay within snap distance threshold
+    //    Snap anchor is at 320. Move to 260 (60px away, below 80px threshold).
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 60) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(1); // no snap, within threshold
+
+    // 3. Snap LEFT: continue dragging left (pointerX = 200-120 = 80)
+    //    That's 240px left of the snap anchor (320), well above 80px threshold
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 2000);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, -120) as unknown as DragMoveEvent);
+    });
+    expect(mockScrollTo).toHaveBeenCalledTimes(2); // one right + one left
+
+    vi.restoreAllMocks();
+  });
+});
+
+describe('KanbanBoard mobile height stretching', () => {
+  it('should apply min-h-full on inner flex container so columns stretch to fill viewport', () => {
+    const board = createBoard();
+    const { container } = render(<KanbanBoard board={board} tasks={[]} />);
+    const innerFlex = container.querySelector('[data-onboarding="board-columns"]')!;
+
+    expect(innerFlex.className).toContain('min-h-full');
   });
 });

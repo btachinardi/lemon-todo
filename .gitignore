@@ -78,5 +78,8 @@ logs/
 *.db-shm
 *.db-wal
 
+# Generated TypeScript types (derived from committed openapi.json)
+src/client/src/api/schema.d.ts
+
 # Build artifacts
 artifacts/

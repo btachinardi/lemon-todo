@@ -147,6 +147,8 @@
       "deleteButton": "Eliminar tarea",
       "saving": "Guardando...",
       "saved": "Guardado",
+      "synced": "Sincronizado",
+      "notSynced": "No sincronizado",
       "loading": "Cargando tarea...",
       "error": "Error"
     },
@@ -278,7 +280,9 @@
         "TaskDeleted": "Tarea Eliminada",
         "UserDeactivated": "Usuario Desactivado",
         "UserReactivated": "Usuario Reactivado",
-        "SensitiveNoteRevealed": "Nota Sensible Revelada"
+        "SensitiveNoteRevealed": "Nota Sensible Revelada",
+        "ProtectedDataAccessed": "Datos Protegidos Accedidos",
+        "OwnProfileRevealed": "Perfil Propio Revelado"
       }
     },
     "protectedDataRevealDialog": {
@@ -345,16 +349,20 @@
     "goHome": "Ir al inicio"
   },
   "assignmentBanner": {
+    "title": "Un Mensaje para Evaluadores",
     "greeting": "Hola, soy Bruno.",
-    "message": "Este proyecto fue construido desde cero como una prueba técnica para un puesto full-stack en salud. Es una demostración técnica — no un producto médico — y usa solo datos sintéticos.",
-    "thanks": "Gracias por revisar. Espero que la metodología y las decisiones de ingeniería hablen por sí mismas.",
-    "ctaMethodology": "Ver Metodología",
+    "message": "Esta es una prueba técnica de lemon.io para un puesto de Full Stack Developer en una startup de salud que usa resonancia magnética para detectar cánceres en etapa temprana en múltiples órganos.",
+    "process": "Cuando leí \"agrega cualquier funcionalidad que agregarías para un MVP de producción real\", mi mente fue directo a lo que producción realmente significa en salud regulada: cumplimiento regulatorio, confiabilidad offline para redes hospitalarias, deploy en Azure para corresponder a su stack, y analytics de producto para validar hipótesis. Cada funcionalidad en esta app tiene origen en ese razonamiento.",
+    "branding": "Hasta el branding es intencional — nombré el proyecto en honor a lemon.io y construí una identidad visual alrededor de eso para mostrar que puedo adaptar el diseño frontend a cualquier guía de marca.",
+    "personal": "Genuinamente disfruté construir esto. La idea de trabajar con tecnología que ayuda a detectar cáncer tempranamente — y potencialmente salva vidas — es el tipo de trabajo que quiero hacer. Espero que el código, la arquitectura y las decisiones detrás de ellos hablen por sí mismos.",
+    "ctaMethodology": "Ver Metodología Completa",
     "ctaPortfolio": "Portafolio",
-    "dismiss": "Entendido"
+    "dismiss": "Cerrar"
   },
   "pwa": {
     "installPrompt": "Instala Lemon.DO para una experiencia más rápida",
     "install": "Instalar",
+    "installApp": "Instalar app",
     "updateAvailable": "Una nueva versión está disponible",
     "update": "Actualizar"
   },
@@ -502,13 +510,47 @@
     "hero": {
       "titleLine1": "De Carpeta Vacía a",
       "titleHighlight": "Producción",
-      "titleLine2": "en 3 Días",
-      "subtitle": "Un build take-home enfocado en entrega práctica de producto, fronteras DDD, disciplina rigurosa de testing y decisiones de diseño orientadas a compliance para flujos de trabajo adyacentes a salud."
+      "titleLine2": "",
+      "subtitle": "Una prueba técnica de lemon.io para una startup de salud que detecta cánceres en etapa temprana vía resonancia magnética — interpretada bajo la óptica de lo que 'MVP de producción' significa en entornos regulados. 5 documentos de planificación, 5 checkpoints entregables, 3 rediseños arquitectónicos y 1.034 tests."
+    },
+    "rationale": {
+      "title": "Por Qué Estas Funcionalidades, Por Qué Este Alcance",
+      "highlight": "Por Qué",
+      "subtitle": "La prueba pidió una app de tareas con cualquier funcionalidad que agregaría para un MVP de producción real. La empresa objetivo opera en salud regulada. Ese contexto moldeó cada decisión.",
+      "promptLabel": "La Prueba",
+      "prompt": "Construye una aplicación de gestión de tareas usando .NET con SQLite en el backend, React en el frontend. Agrega cualquier funcionalidad que agregarías para un MVP de producción real.",
+      "interpretation": "Un MVP de producción en salud no es solo código funcionando. Significa cumplimiento regulatorio, confiabilidad offline para redes hospitalarias inestables, deploy en Azure para corresponder al stack de la empresa, observabilidad para respuesta a incidentes y analytics de producto para validar hipótesis. Cada funcionalidad fue elegida con esta perspectiva.",
+      "steps": [
+        {
+          "title": "La Prueba",
+          "description": "App de tareas con backend .NET/SQLite, frontend React, y cualquier funcionalidad para un MVP de producción real."
+        },
+        {
+          "title": "Contexto de Salud",
+          "description": "La empresa objetivo detecta cánceres en etapa temprana vía resonancia. Salud significa entornos regulados, protección de datos y requisitos de auditoría."
+        },
+        {
+          "title": "Cumplimiento",
+          "description": "Patrones HIPAA: encriptación AES-256 en reposo, redacción de datos protegidos, registro de auditoría inmutable, revelación con justificación."
+        },
+        {
+          "title": "Offline-First",
+          "description": "El WiFi hospitalario es inestable. Si el producto deja de funcionar sin conexión, se convierte en un problema. PWA con cola de mutaciones en IndexedDB."
+        },
+        {
+          "title": "Deploy en Azure",
+          "description": "La empresa usa Azure. Terraform IaC, Container Apps, SQL Server para producción, GitHub Actions CI/CD — demostrando fluidez en infraestructura."
+        },
+        {
+          "title": "Analytics de Producto",
+          "description": "Un MVP sin analytics no responde las preguntas que existe para responder. Rastreo de eventos privacy-first con identificadores hasheados, sin PII en eventos."
+        }
+      ]
     },
     "vision": {
       "title": "5 Documentos Antes de Una Línea de Código",
       "highlight": "Una Línea",
-      "subtitle": "Antes de escribir código, produje cinco artefactos de planificación: borrador del PRD, investigación de compatibilidad tecnológica, escenarios UX, borrador de dominio y plan de checkpoints. Esto redujo el retrabajo y hizo las decisiones de implementación rastreables.",
+      "subtitle": "La empresa objetivo opera en salud regulada. Antes de escribir código, produje cinco artefactos de planificación para asegurar que cumplimiento, confiabilidad offline y requisitos de deploy se abordaran desde el inicio — no como adiciones posteriores.",
       "items": [
         {
           "title": "Requisitos del Producto",
@@ -583,6 +625,62 @@
           "tests": "908",
           "tag": "v1.0.0",
           "summary": "Envió PWA con cola offline, tour de onboarding, Web Push, analytics, rediseño de UX mobile y esta landing page."
+        }
+      ]
+    },
+    "problemSolving": {
+      "title": "3 Rediseños, No 3 Parches",
+      "highlight": "Rediseños",
+      "subtitle": "Cuando surgieron problemas arquitectónicos, se corrigieron de raíz — no se esquivaron. Cada rediseño modificó docenas de archivos en todas las capas y dejó el sistema en un estado mejor.",
+      "items": [
+        {
+          "title": "Invariante Columna-Estado",
+          "problem": "Las tareas tenían dos fuentes de verdad independientes para el estado del ciclo de vida — un enum Status y una posición de Columna. Se desincronizaban después de múltiples movimientos, dejando tareas en estados indefinidos.",
+          "solution": "La Columna se convirtió en la única fuente de verdad. Cada Columna almacena un TargetStatus; cuando una tarea se mueve a una columna, su estado se establece atómicamente. Se eliminaron los métodos redundantes Complete/Uncomplete.",
+          "outcome": "Eliminó una clase completa de bugs de sincronización. El estado de cada tarea ahora es determinístico y derivado de su posición en el tablero."
+        },
+        {
+          "title": "Separación de Bounded Contexts",
+          "problem": "Task y Board estaban fuertemente acoplados en un único bounded context. Task almacenaba ColumnId y Position (preocupaciones espaciales del board), y cada cambio de estado requería cargar el agregado Board.",
+          "solution": "Separados en Task (upstream, dueño del ciclo de vida) y Board (downstream conformista, dueño del posicionamiento espacial vía value object TaskCard). Los handlers de aplicación coordinan operaciones cross-context.",
+          "outcome": "98 archivos modificados en todas las capas. Cada contexto ahora tiene fronteras de agregado claras y puede evolucionar independientemente."
+        },
+        {
+          "title": "Rediseño del Ordenamiento de Tarjetas",
+          "problem": "Las posiciones con enteros densos causaban drift de posición — arrastrar tarjetas creaba colisiones (dos tarjetas en posición 1). Delete y archive dejaban entradas de tarjetas huérfanas en el tablero.",
+          "solution": "Reemplazado por ranks decimales dispersos (inserción por punto medio). La API cambió de basada en índice a basada en vecinos (previousTaskId/nextTaskId) — contrato basado en intención que sobrevive a cambios de estrategia en el backend.",
+          "outcome": "Movimientos O(1) con cero colisiones de posición. El contrato de la API es agnóstico a la estrategia — cambiar de ranks decimales a LexoRank solo modificaría la computación en el backend."
+        }
+      ]
+    },
+    "testing": {
+      "title": "Testing como Restricción de Diseño",
+      "highlight": "Restricción de Diseño",
+      "subtitle": "No solo alta cobertura — estrategias diversas de testing que capturan clases diferentes de bugs. Tests basados en propiedades en ambos stacks, CI con base de datos dual, regresión visual y guards de contrato de API en tiempo de compilación.",
+      "items": [
+        {
+          "title": "Tests Basados en Propiedades",
+          "description": "FsCheck en .NET, fast-check en TypeScript. Value objects validados con inputs aleatorios — cualquier string dentro de los límites crea un título válido, cualquier string vacío falla. Testea los invariantes, no solo ejemplos."
+        },
+        {
+          "title": "CI con Base de Datos Dual",
+          "description": "Cada push ejecuta la suite completa de backend contra SQLite y SQL Server en paralelo. Captura diferencias SQL específicas de cada proveedor antes de llegar a producción."
+        },
+        {
+          "title": "Regresión Visual",
+          "description": "26 baselines de capturas de Playwright en temas claro/oscuro, viewports desktop/mobile y páginas clave. Comparación pixel a pixel detecta cambios de UI no intencionales."
+        },
+        {
+          "title": "Tests de Contraste WCAG",
+          "description": "Verificaciones automatizadas de ratio de contraste contra umbrales WCAG 2.1 AA. Cada par de colores del design system verificado programáticamente en ambos temas."
+        },
+        {
+          "title": "Aislamiento de Datos E2E",
+          "description": "Cada bloque describe E2E crea un usuario único con email basado en timestamp. Sin estado compartido, sin limpieza entre tests. Aislamiento real sin dependencia de orden de tests."
+        },
+        {
+          "title": "Guards de Enum vía OpenAPI",
+          "description": "Los enums TypeScript se derivan de la spec OpenAPI en tiempo de build. Cuando el backend agrega un valor de enum, el frontend falla al compilar hasta que se actualice el const — y tests de cobertura de traducción verifican todos los idiomas."
         }
       ]
     },
@@ -710,23 +808,23 @@
         },
         "mstest": {
           "name": "MSTest 4",
-          "description": "Tests unitarios e integración backend"
+          "description": "413 tests, gate CI dual-database"
         },
         "fscheck": {
           "name": "FsCheck",
-          "description": "Tests basados en propiedades para .NET"
+          "description": "100 casos aleatorios por invariante de dominio"
         },
         "vitest": {
           "name": "Vitest",
-          "description": "Runner de tests frontend rápido"
+          "description": "469 tests con gate de verificación TypeScript"
         },
         "fastcheck": {
           "name": "fast-check",
-          "description": "Tests basados en propiedades para JS"
+          "description": "Invariantes de filtros, scoring y renderizado"
         },
         "playwright": {
           "name": "Playwright",
-          "description": "Tests E2E cross-browser"
+          "description": "Snapshots visuales, contraste WCAG, 6 navegadores"
         },
         "azure": {
           "name": "Azure",
@@ -755,7 +853,7 @@
       "highlight": "Evidencia",
       "items": [
         {
-          "value": "908",
+          "value": "1.034",
           "label": "Tests",
           "detail": "Backend + Frontend + E2E"
         },
@@ -765,14 +863,24 @@
           "detail": "Cada uno entregable"
         },
         {
-          "value": "3",
-          "label": "Idiomas",
-          "detail": "EN, PT-BR, ES"
+          "value": "286",
+          "label": "Commits",
+          "detail": "Commits Convencionales"
         },
         {
           "value": "5",
           "label": "Contextos",
           "detail": "Contextos DDD delimitados"
+        },
+        {
+          "value": "3",
+          "label": "Rediseños",
+          "detail": "Correcciones arquitectónicas, no parches"
+        },
+        {
+          "value": "3",
+          "label": "Idiomas",
+          "detail": "EN, PT-BR, ES"
         },
         {
           "value": "9",
@@ -831,7 +939,7 @@
     "hero": {
       "titleLine1": "Esto Es Solo",
       "titleHighlight": "El Comienzo.",
-      "subtitle": "908 tests. Desplegado en producción. Cinco checkpoints completados. Esto es lo que viene — desde flujos impulsados por IA hasta cumplimiento empresarial."
+      "subtitle": "1,034 tests. Desplegado en producción. Cinco checkpoints completados. Esto es lo que viene — desde flujos impulsados por IA hasta cumplimiento empresarial."
     },
     "horizons": {
       "near": {
@@ -968,10 +1076,10 @@
         { "title": "Deploy", "detail": "Container App + Static Web App" }
       ],
       "details": [
-        { "title": "Testing Dual de BD", "description": "Cada push ejecuta la suite completa de tests backend contra SQLite y SQL Server en paralelo." },
+        { "title": "Testing Dual de BD", "description": "413 tests backend contra SQLite y SQL Server. Aislamiento por instancia de base de datos — cada clase de test obtiene su propia BD, eliminada al finalizar." },
+        { "title": "Gate de Calidad Frontend", "description": "Tipos API generados desde spec OpenAPI, verificación de tipos TypeScript, 469 tests con invariantes de propiedad, lint verificado — todo antes del build." },
         { "title": "Build Multi-Stage Docker", "description": "Etapa de build con SDK, etapa runtime con aspnet. Usuario no-root, health-checked, etiquetado por SHA del commit." },
-        { "title": "Deploy Sin Inactividad", "description": "Actualizaciones rolling de Container App con verificación de probe /alive cada 30 segundos." },
-        { "title": "Ejecución Paralela", "description": "4 jobs de CI ejecutándose concurrentemente — tiempo total del pipeline bajo 5 minutos." }
+        { "title": "Deploy Sin Inactividad", "description": "Actualizaciones rolling de Container App con verificación de probe /alive cada 30 segundos." }
       ]
     },
     "infra": {

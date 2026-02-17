@@ -4,9 +4,11 @@ import { toastApiError } from '@/lib/toast-helpers';
 import { useTaskQuery, useTasksQuery } from '../../hooks/use-tasks-query';
 import { useUpdateTask, useDeleteTask, useAddTag, useRemoveTag } from '../../hooks/use-task-mutations';
 import { useViewTaskNote } from '../../hooks/use-view-task-note';
+import { useSaveIndicator } from '../../hooks/use-save-indicator';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { TaskNoteRevealDialog } from './TaskNoteRevealDialog';
 import { useDevAccountPassword } from '@/domains/auth/hooks/use-dev-account-password';
+import { useOfflineQueueStore } from '@/stores/use-offline-queue-store';
 
 interface TaskDetailSheetProviderProps {
   taskId: string | null;
@@ -27,6 +29,11 @@ export function TaskDetailSheetProvider({ taskId, onClose }: TaskDetailSheetProv
   const removeTag = useRemoveTag();
   const viewNote = useViewTaskNote();
   const devPassword = useDevAccountPassword();
+  const pendingCount = useOfflineQueueStore((s) => s.pendingCount);
+  const saveStatus = useSaveIndicator({
+    isPending: updateTask.isPending,
+    pendingCount,
+  });
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
 
   const task = taskQuery.data;
@@ -180,7 +187,7 @@ export function TaskDetailSheetProvider({ taskId, onClose }: TaskDetailSheetProv
         onUpdateSensitiveNote={handleUpdateSensitiveNote}
         onClearSensitiveNote={handleClearSensitiveNote}
         onViewNote={handleViewNote}
-        saveStatus={updateTask.status}
+        saveStatus={saveStatus}
       />
       <TaskNoteRevealDialog
         open={noteDialogOpen}

@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using LemonDo.Api.Tests.Infrastructure;
-using LemonDo.Application.Administration.Commands;
 using LemonDo.Application.Administration.DTOs;
 using LemonDo.Domain.Common;
 
@@ -280,12 +280,14 @@ public sealed class AdminEndpointsTests
         });
         Assert.AreEqual(HttpStatusCode.OK, revealResponse.StatusCode);
 
-        var revealed = await revealResponse.Content.ReadFromJsonAsync<RevealedProtectedDataDto>(TestJsonOptions.Default);
-        Assert.IsNotNull(revealed);
+        // RevealedField is decrypted to plain strings by the server's RevealedFieldConverter,
+        // so we deserialize into a JsonDocument to read strings directly.
+        var json = await revealResponse.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.IsNotNull(json);
 
         // The revealed email should be unredacted
-        Assert.AreEqual(email, revealed.Email);
-        Assert.AreEqual(displayName, revealed.DisplayName);
+        Assert.AreEqual(email, json.RootElement.GetProperty("email").GetString());
+        Assert.AreEqual(displayName, json.RootElement.GetProperty("displayName").GetString());
     }
 
     [TestMethod]
@@ -380,10 +382,10 @@ public sealed class AdminEndpointsTests
         });
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
-        var revealed = await response.Content.ReadFromJsonAsync<RevealedProtectedDataDto>(TestJsonOptions.Default);
-        Assert.IsNotNull(revealed);
-        Assert.AreEqual(email, revealed.Email);
-        Assert.AreEqual(displayName, revealed.DisplayName);
+        var json = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.IsNotNull(json);
+        Assert.AreEqual(email, json.RootElement.GetProperty("email").GetString());
+        Assert.AreEqual(displayName, json.RootElement.GetProperty("displayName").GetString());
     }
 
     // --- Deactivated User Login Rejection ---

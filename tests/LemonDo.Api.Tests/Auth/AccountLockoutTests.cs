@@ -2,7 +2,6 @@ namespace LemonDo.Api.Tests.Auth;
 
 using System.Net;
 using System.Net.Http.Json;
-using LemonDo.Api.Contracts.Auth;
 using LemonDo.Api.Tests.Infrastructure;
 
 [TestClass]
@@ -23,7 +22,7 @@ public sealed class AccountLockoutTests
 
         // Register a dedicated user for lockout testing
         await _client.PostAsJsonAsync("/api/auth/register",
-            new RegisterRequest(LockoutEmail, LockoutPassword, "Lockout Tester"));
+            new { Email = LockoutEmail, Password = LockoutPassword, DisplayName = "Lockout Tester" });
     }
 
     [ClassCleanup]
@@ -40,12 +39,12 @@ public sealed class AccountLockoutTests
         for (var i = 0; i < 5; i++)
         {
             await _client.PostAsJsonAsync("/api/auth/login",
-                new LoginRequest(LockoutEmail, "WrongPassword!"));
+                new { Email = LockoutEmail, Password = "WrongPassword!" });
         }
 
         // 6th attempt should be locked out (429)
         var lockedResponse = await _client.PostAsJsonAsync("/api/auth/login",
-            new LoginRequest(LockoutEmail, "WrongPassword!"));
+            new { Email = LockoutEmail, Password = "WrongPassword!" });
 
         Assert.AreEqual(HttpStatusCode.TooManyRequests, lockedResponse.StatusCode);
     }
@@ -56,18 +55,18 @@ public sealed class AccountLockoutTests
         // Register a fresh user so lockout state is clean
         const string freshEmail = "lockout-fresh@lemondo.dev";
         await _client.PostAsJsonAsync("/api/auth/register",
-            new RegisterRequest(freshEmail, "FreshPass123!", "Fresh Lockout"));
+            new { Email = freshEmail, Password = "FreshPass123!", DisplayName = "Fresh Lockout" });
 
         // Lock the account
         for (var i = 0; i < 5; i++)
         {
             await _client.PostAsJsonAsync("/api/auth/login",
-                new LoginRequest(freshEmail, "WrongPassword!"));
+                new { Email = freshEmail, Password = "WrongPassword!" });
         }
 
         // Even correct password returns 429 while locked
         var response = await _client.PostAsJsonAsync("/api/auth/login",
-            new LoginRequest(freshEmail, "FreshPass123!"));
+            new { Email = freshEmail, Password = "FreshPass123!" });
 
         Assert.AreEqual(HttpStatusCode.TooManyRequests, response.StatusCode);
     }

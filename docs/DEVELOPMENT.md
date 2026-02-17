@@ -46,10 +46,14 @@ All common commands are available via the `./dev` script at the project root.
 ./dev test e2e:sql          # E2E (Playwright, SQL Server backend)
 ./dev test e2e:headed       # E2E with browser visible
 ./dev test e2e:ui           # Playwright UI mode
+./dev test e2e:update-snapshots  # Regenerate visual regression baselines
 
 # Lint & Verify
 ./dev lint                  # Frontend ESLint
-./dev verify                # Full gate: build + all tests + lint
+./dev verify                # Full gate: build + generate + all tests + lint
+
+# Code Generation
+./dev generate              # Regenerate OpenAPI spec + TypeScript types
 
 # Start services
 ./dev start                 # Full stack via Aspire
@@ -160,6 +164,32 @@ The project uses separate migration assemblies per provider (`LemonDo.Migrations
 ./dev migrate remove sqlite
 ./dev migrate remove sql
 ```
+
+## Visual Regression Testing
+
+E2E tests include visual regression snapshots that detect unintended UI changes. Snapshots are stored in `tests/e2e/specs/visual-regression.spec.ts-snapshots/` and committed to git.
+
+### When snapshots fail
+
+If `./dev test e2e` reports visual regression failures, the screenshots have drifted from their baselines. This happens when you intentionally change colors, layout, or typography.
+
+**Review the diff first** — Playwright saves actual/diff/expected images in `tests/e2e/test-results/`. Verify the visual changes are intentional.
+
+**Regenerate baselines:**
+
+```bash
+# Update ALL visual regression snapshots
+./dev test e2e:update-snapshots
+
+# Update only specific snapshots (pass extra Playwright args)
+./dev test e2e:update-snapshots --grep="Landing Page"
+```
+
+After updating, review the new snapshot files in git diff to confirm they look correct, then commit them alongside your UI changes.
+
+### WCAG contrast testing
+
+Color contrast tests use axe-core and run with `reducedMotion: 'reduce'` to disable Framer Motion / CSS animations. A CSS override forces `opacity: 1 !important` so that below-fold elements gated by `useInView` are evaluated at their final intended colors.
 
 ## API Documentation
 

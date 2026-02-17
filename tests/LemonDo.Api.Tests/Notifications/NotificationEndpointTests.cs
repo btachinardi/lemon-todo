@@ -221,7 +221,7 @@ public sealed class NotificationEndpointTests
     {
         var client = _factory.CreateClient();
         var registerResponse = await client.PostAsJsonAsync("/api/auth/register",
-            new RegisterRequest(email, "TestPass123!", "Test Notif User"));
+            new { Email = email, Password = "TestPass123!", DisplayName = "Test Notif User" });
         registerResponse.EnsureSuccessStatusCode();
 
         var auth = await registerResponse.Content.ReadFromJsonAsync<AuthResponse>();

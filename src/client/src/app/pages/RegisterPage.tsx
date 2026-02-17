@@ -19,7 +19,7 @@ export function RegisterPage() {
       <RegisterForm onSuccess={() => navigate('/board', { replace: true })} />
       <p className="text-center text-sm text-muted-foreground">
         {t('auth.register.hasAccount')}{' '}
-        <Link to="/login" className="font-medium text-lemon hover:underline">
+        <Link to="/login" className="font-medium text-highlight hover:underline">
           {t('auth.register.signIn')}
         </Link>
       </p>

@@ -44,7 +44,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <img src="/lemondo-icon.png" alt="" className="size-7 sm:size-8" />
             <span className="font-[var(--font-brand)] text-lg font-black tracking-tight sm:text-xl">
               <span className="text-foreground">{t('brand.lemon')}</span>
-              <span className="text-lemon">{t('brand.do')}</span>
+              <span className="text-primary">{t('brand.do')}</span>
             </span>
           </h1>
           <nav
@@ -58,7 +58,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 cn(
                   'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
                   isActive
-                    ? 'bg-primary text-primary-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
+                    ? 'bg-brand text-brand-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
                 )
               }
@@ -72,7 +72,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 cn(
                   'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-all duration-300 sm:px-3.5',
                   isActive
-                    ? 'bg-primary text-primary-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
+                    ? 'bg-brand text-brand-foreground shadow-[0_0_16px_rgba(220,255,2,0.3)]'
                     : 'text-muted-foreground hover:text-foreground',
                 )
               }
@@ -145,13 +145,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     useThemeStore.getState().setTheme(next);
                   }}
                 />
-                <UserMenu />
+                <UserMenu variant="inline" />
               </div>
             </SheetContent>
           </Sheet>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-7xl flex-1">{children}</main>
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col">{children}</main>
       {demoEnabled && (
         <div className="fixed bottom-14 left-3 z-50 sm:bottom-3">
           <Popover>
@@ -159,7 +159,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 border-dashed border-amber-500/30 bg-amber-500/5 text-amber-500 shadow-lg hover:bg-amber-500/10 hover:text-amber-400"
+                className="gap-1.5 border-dashed border-amber-500/30 bg-amber-500/5 text-amber-800 shadow-lg hover:bg-amber-500/10 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
               >
                 <FlaskConicalIcon className="size-3.5" />
                 <span className="text-xs">Dev</span>
@@ -173,7 +173,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       )}
       <footer className="pointer-events-none fixed bottom-2 right-3 flex items-center gap-3">
         <SyncIndicator />
-        <span className="text-[10px] text-muted-foreground/40 select-none">
+        <span className="text-[10px] text-muted-foreground select-none">
           v{__APP_VERSION__}
         </span>
       </footer>

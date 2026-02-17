@@ -9,9 +9,11 @@ vi.mock('sonner', () => ({
   Toaster: () => null,
 }));
 
-// Mock UserMenu to avoid auth mutation hooks
+// Mock UserMenu to avoid auth mutation hooks — captures variant prop
 vi.mock('@/domains/auth/components/UserMenu', () => ({
-  UserMenu: () => <div data-testid="user-menu" />,
+  UserMenu: (props: Record<string, unknown>) => (
+    <div data-testid="user-menu" data-variant={props.variant ?? undefined} />
+  ),
 }));
 
 // Mock LanguageSwitcher for isolation — captures props
@@ -120,5 +122,24 @@ describe('AdminLayout', () => {
     const dialog = screen.getByRole('dialog');
     const langSwitcher = within(dialog).getByTestId('language-switcher');
     expect(langSwitcher).toHaveAttribute('data-show-label', 'true');
+  });
+
+  it('should pass variant="inline" to UserMenu in mobile menu', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/admin/users']}>
+        <AdminLayout>
+          <p>Admin content</p>
+        </AdminLayout>
+      </MemoryRouter>,
+    );
+
+    const header = screen.getByRole('banner');
+    const menuButton = within(header).getByRole('button', { name: /menu/i });
+    await user.click(menuButton);
+
+    const dialog = screen.getByRole('dialog');
+    const userMenu = within(dialog).getByTestId('user-menu');
+    expect(userMenu).toHaveAttribute('data-variant', 'inline');
   });
 });

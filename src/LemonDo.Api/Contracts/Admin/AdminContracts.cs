@@ -1,5 +1,7 @@
 namespace LemonDo.Api.Contracts.Admin;
 
+using LemonDo.Domain.Common;
+
 /// <summary>Assigns a role to a user account.</summary>
 /// <remarks>
 /// Valid role names: "User", "Admin".
@@ -12,7 +14,7 @@ public sealed record AssignRoleRequest(string RoleName);
 /// Password is the admin's current password for re-authentication.
 /// Creates an audit trail entry.
 /// </remarks>
-public sealed record RevealProtectedDataRequest(string Reason, string? ReasonDetails, string? Comments, string Password);
+public sealed record RevealProtectedDataRequest(string Reason, string? ReasonDetails, string? Comments, ProtectedValue Password);
 
 /// <summary>Reveals a task's sensitive note via break-the-glass authentication.</summary>
 /// <remarks>
@@ -20,4 +22,4 @@ public sealed record RevealProtectedDataRequest(string Reason, string? ReasonDet
 /// Password is the admin's current password for re-authentication.
 /// Creates an audit trail entry.
 /// </remarks>
-public sealed record RevealTaskNoteRequest(string Reason, string? ReasonDetails, string? Comments, string Password);
+public sealed record RevealTaskNoteRequest(string Reason, string? ReasonDetails, string? Comments, ProtectedValue Password);

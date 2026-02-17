@@ -73,9 +73,13 @@
   --color-status-done: var(--status-done);
   --color-status-done-foreground: var(--status-done-foreground);
 
-  /* Lemon brand token */
-  --color-lemon: var(--lemon);
-  --color-lemon-foreground: var(--lemon-foreground);
+  /* Highlight brand token */
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+
+  /* Brand token — always lime, used for logo & CTA buttons */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
 
   /* Custom animations */
   --animate-fade-in-up: fade-in-up 0.4s ease-out both;
@@ -94,13 +98,12 @@
 :root {
   --radius: 0.5rem;
 
-  /* Surfaces — lemon.io: body=#000, cards=#1B1B1B (rgb 27,27,27)
-     The large contrast gap between bg and card is what makes cards "pop" */
+  /* Surfaces — pure black bg, lighter cards so they pop */
   --background: oklch(0.00 0 0);
   --foreground: oklch(0.97 0 0);
-  --card: oklch(0.17 0 0);
+  --card: oklch(0.22 0 0);
   --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.17 0 0);
+  --popover: oklch(0.22 0 0);
   --popover-foreground: oklch(0.95 0 0);
 
   /* Primary = Lemon Lime #DCFF02 (rgb 220,255,2) */
@@ -108,21 +111,21 @@
   --primary-foreground: oklch(0.05 0 0);
 
   /* Secondary & Muted — boosted for readability */
-  --secondary: oklch(0.13 0 0);
+  --secondary: oklch(0.18 0 0);
   --secondary-foreground: oklch(0.85 0 0);
-  --muted: oklch(0.13 0 0);
+  --muted: oklch(0.18 0 0);
   --muted-foreground: oklch(0.65 0 0);
 
   /* Accent = lime-tinted hover */
-  --accent: oklch(0.17 0.02 116);
+  --accent: oklch(0.22 0.02 116);
   --accent-foreground: oklch(0.94 0.24 116);
 
   /* Destructive */
   --destructive: oklch(0.65 0.22 25);
 
-  /* Borders & Inputs — subtler borders since bg contrast does the heavy lifting */
-  --border: oklch(0.26 0 0);
-  --input: oklch(0.17 0 0);
+  /* Borders & Inputs */
+  --border: oklch(0.30 0 0);
+  --input: oklch(0.22 0 0);
   --ring: oklch(0.94 0.24 116);
 
   /* Charts */
@@ -133,13 +136,13 @@
   --chart-5: oklch(0.65 0.25 16);
 
   /* Sidebar */
-  --sidebar: oklch(0.06 0 0);
+  --sidebar: oklch(0.10 0 0);
   --sidebar-foreground: oklch(0.94 0 0);
   --sidebar-primary: oklch(0.94 0.24 116);
   --sidebar-primary-foreground: oklch(0.05 0 0);
-  --sidebar-accent: oklch(0.17 0.02 116);
+  --sidebar-accent: oklch(0.22 0.02 116);
   --sidebar-accent-foreground: oklch(0.94 0 0);
-  --sidebar-border: oklch(0.22 0 0);
+  --sidebar-border: oklch(0.26 0 0);
   --sidebar-ring: oklch(0.94 0.24 116);
 
   /* Semantic — boosted for readability */
@@ -168,9 +171,13 @@
   --status-done: oklch(0.20 0.05 155);
   --status-done-foreground: oklch(0.78 0.12 155);
 
-  /* Lemon brand */
-  --lemon: oklch(0.94 0.24 116);
-  --lemon-foreground: oklch(0.05 0 0);
+  /* Highlight brand */
+  --highlight: oklch(0.94 0.24 116);
+  --highlight-foreground: oklch(0.05 0 0);
+
+  /* Brand — always lime #DCFF02 for logo & CTAs */
+  --brand: oklch(0.94 0.24 116);
+  --brand-foreground: oklch(0.05 0 0);
 }
 
 /* Dark class inherits root (dark-first design) */
@@ -194,11 +201,10 @@
   --popover: oklch(1.00 0 0);
   --popover-foreground: oklch(0 0 0);
 
-  /* Primary = VIBRANT lemon lime #DCFF02 — same as dark theme!
-     lemon.io uses full-saturation lime on white BGs for buttons/CTAs
-     with BLACK text on top (17:1 contrast ratio) */
-  --primary: oklch(0.94 0.24 116);
-  --primary-foreground: oklch(0.12 0 0);
+  /* Primary = Purple #832CE0 — matches highlight for readability on white.
+     Lime is unreadable on light backgrounds; purple gives ~6.5:1 contrast on white */
+  --primary: oklch(0.47 0.27 303);
+  --primary-foreground: oklch(0.98 0 0);
 
   /* Secondary — lemon.io: #f5f5f5 bg, #212121 text */
   --secondary: oklch(0.96 0 0);
@@ -207,8 +213,8 @@
   /* Muted text — lemon.io: #666666 */
   --muted-foreground: oklch(0.47 0 0);
 
-  /* Accent — subtle lime-tinted hover (lemon.io hover states) */
-  --accent: oklch(0.96 0.03 116);
+  /* Accent — subtle purple-tinted hover */
+  --accent: oklch(0.96 0.03 303);
   --accent-foreground: oklch(0.20 0 0);
 
   --destructive: oklch(0.55 0.22 25);
@@ -217,8 +223,8 @@
      than before to match their high-contrast aesthetic */
   --border: oklch(0.82 0 0);
   --input: oklch(0.92 0 0);
-  /* Ring = vibrant lime for visible focus states */
-  --ring: oklch(0.94 0.24 116);
+  /* Ring = purple for visible focus states */
+  --ring: oklch(0.47 0.27 303);
 
   /* Charts — lemon.io palette: lime, teal, amber, purple #832CE0, coral */
   --chart-1: oklch(0.55 0.20 116);
@@ -230,12 +236,12 @@
   /* Sidebar */
   --sidebar: oklch(0.97 0 0);
   --sidebar-foreground: oklch(0.10 0 0);
-  --sidebar-primary: oklch(0.94 0.24 116);
-  --sidebar-primary-foreground: oklch(0.12 0 0);
-  --sidebar-accent: oklch(0.96 0.03 116);
+  --sidebar-primary: oklch(0.47 0.27 303);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.96 0.03 303);
   --sidebar-accent-foreground: oklch(0.10 0 0);
   --sidebar-border: oklch(0.88 0 0);
-  --sidebar-ring: oklch(0.94 0.24 116);
+  --sidebar-ring: oklch(0.47 0.27 303);
 
   /* Semantic */
   --success: oklch(0.93 0.04 155);
@@ -263,12 +269,16 @@
   --status-done: oklch(0.93 0.04 155);
   --status-done-foreground: oklch(0.35 0.10 155);
 
-  /* Lemon brand — readable dark lime for text-on-white contexts
-     lemon.io uses purple #832CE0 for accent text on white;
-     we use a vivid dark lime that stays "lemon" branded.
-     WCAG AA on white: ~5.5:1 contrast ratio */
-  --lemon: oklch(0.52 0.22 120);
-  --lemon-foreground: oklch(0.98 0 0);
+  /* Highlight brand — lemon.io secondary purple #832CE0 for text-on-white contexts.
+     The lime brand works on dark backgrounds but lacks readability on white;
+     lemon.io itself uses this purple for accent text on light backgrounds.
+     WCAG AA on white: ~6.5:1 contrast ratio */
+  --highlight: oklch(0.47 0.27 303);
+  --highlight-foreground: oklch(0.98 0 0);
+
+  /* Brand — always lime #DCFF02 for logo & CTAs regardless of theme */
+  --brand: oklch(0.94 0.24 116);
+  --brand-foreground: oklch(0.12 0 0);
 }
 
 @layer base {
@@ -317,7 +327,7 @@
   100% { transform: scale(1); }
 }
 
-@keyframes lemon-pulse {
+@keyframes highlight-pulse {
   0%, 100% { box-shadow: 0 0 20px rgba(220,255,2,0.25); }
   50% { box-shadow: 0 0 32px rgba(220,255,2,0.45); }
 }

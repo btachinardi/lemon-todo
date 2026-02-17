@@ -27,8 +27,10 @@ const DROP_ANIMATION = { duration: 200, easing: 'ease-out' } as const;
 
 /** Pixels from the viewport edge that trigger column-snap auto-scroll during drag. */
 const EDGE_THRESHOLD_PX = 60;
-/** Minimum ms between column snaps — creates the "lock on column" feel. */
-const SNAP_COOLDOWN_MS = 600;
+/** Minimum ms between column snaps — allows the smooth scroll animation to settle. */
+const SNAP_COOLDOWN_MS = 400;
+/** Minimum horizontal distance (px) from the last snap point to trigger the next snap. */
+const SNAP_DISTANCE_PX = 80;
 /** Tailwind `sm` breakpoint — column snap only applies below this width. */
 const SM_BREAKPOINT = 640;
 
@@ -145,6 +147,8 @@ export function KanbanBoard({
   const initialPointerRef = useRef<{ x: number } | null>(null);
   const lastSnapTimeRef = useRef(0);
   const currentColumnIndexRef = useRef(0);
+  const snapAnchorXRef = useRef(0);
+  const hasLeftEdgeZoneRef = useRef(true);
 
   // Disable dnd-kit's built-in auto-scroll for the horizontal board container.
   // Vertical auto-scroll within column ScrollAreas is still allowed.
@@ -177,11 +181,15 @@ export function KanbanBoard({
     // Capture initial pointer position for column-snap auto-scroll.
     // Duck-type rather than instanceof — jsdom/test environments may lack TouchEvent.
     const activator = event.activatorEvent;
+    let pointerX = 0;
     if ('touches' in activator && (activator as TouchEvent).touches?.[0]) {
-      initialPointerRef.current = { x: (activator as TouchEvent).touches[0].clientX };
+      pointerX = (activator as TouchEvent).touches[0].clientX;
     } else if ('clientX' in activator) {
-      initialPointerRef.current = { x: (activator as MouseEvent).clientX };
+      pointerX = (activator as MouseEvent).clientX;
     }
+    initialPointerRef.current = { x: pointerX };
+    snapAnchorXRef.current = pointerX;
+    hasLeftEdgeZoneRef.current = true;
 
     // Record which column is currently visible
     if (scrollContainerRef.current) {
@@ -190,33 +198,50 @@ export function KanbanBoard({
   }, [columnItems]);
 
   // Column-snap auto-scroll: on mobile, when the pointer nears the viewport
-  // edge during drag, scroll one column at a time with a cooldown pause.
+  // edge during drag, scroll one column at a time. Two trigger mechanisms:
+  // 1. Edge zones (primary): pointer within EDGE_THRESHOLD of viewport edge,
+  //    but requires re-entry — pointer must leave the zone before it re-triggers.
+  // 2. Distance from anchor (secondary): pointer moved >= SNAP_DISTANCE from
+  //    the last snap position, enabling easy reverse-direction snapping.
   const handleDragMove = useCallback((event: DragMoveEvent) => {
     const container = scrollContainerRef.current;
     if (!container || !initialPointerRef.current || window.innerWidth >= SM_BREAKPOINT) return;
 
+    const pointerX = initialPointerRef.current.x + event.delta.x;
+    const inRightZone = pointerX > window.innerWidth - EDGE_THRESHOLD_PX;
+    const inLeftZone = pointerX < EDGE_THRESHOLD_PX;
+
+    // Track when the pointer leaves all edge zones (enables re-entry detection)
+    if (!inRightZone && !inLeftZone) {
+      hasLeftEdgeZoneRef.current = true;
+    }
+
     const now = Date.now();
     if (now - lastSnapTimeRef.current < SNAP_COOLDOWN_MS) return;
 
-    const pointerX = initialPointerRef.current.x + event.delta.x;
     const maxIndex = sortedColumns.length - 1;
+    const dx = pointerX - snapAnchorXRef.current;
+    let targetIndex: number | null = null;
 
-    if (pointerX < EDGE_THRESHOLD_PX) {
-      // Near left edge — scroll to previous column
-      const newIndex = Math.max(0, currentColumnIndexRef.current - 1);
-      if (newIndex !== currentColumnIndexRef.current) {
-        scrollToColumn(container, newIndex);
-        currentColumnIndexRef.current = newIndex;
-        lastSnapTimeRef.current = now;
-      }
-    } else if (pointerX > window.innerWidth - EDGE_THRESHOLD_PX) {
-      // Near right edge — scroll to next column
-      const newIndex = Math.min(maxIndex, currentColumnIndexRef.current + 1);
-      if (newIndex !== currentColumnIndexRef.current) {
-        scrollToColumn(container, newIndex);
-        currentColumnIndexRef.current = newIndex;
-        lastSnapTimeRef.current = now;
-      }
+    // Primary: edge zone detection (requires re-entry after each snap)
+    if (inRightZone && hasLeftEdgeZoneRef.current) {
+      targetIndex = Math.min(maxIndex, currentColumnIndexRef.current + 1);
+    } else if (inLeftZone && hasLeftEdgeZoneRef.current) {
+      targetIndex = Math.max(0, currentColumnIndexRef.current - 1);
+    }
+    // Secondary: distance-based detection (enables reverse-direction snapping)
+    else if (dx > SNAP_DISTANCE_PX) {
+      targetIndex = Math.min(maxIndex, currentColumnIndexRef.current + 1);
+    } else if (dx < -SNAP_DISTANCE_PX) {
+      targetIndex = Math.max(0, currentColumnIndexRef.current - 1);
+    }
+
+    if (targetIndex !== null && targetIndex !== currentColumnIndexRef.current) {
+      scrollToColumn(container, targetIndex);
+      currentColumnIndexRef.current = targetIndex;
+      lastSnapTimeRef.current = now;
+      snapAnchorXRef.current = pointerX;
+      hasLeftEdgeZoneRef.current = false;
     }
   }, [sortedColumns.length]);
 
@@ -255,6 +280,8 @@ export function KanbanBoard({
       setActiveId(null);
       initialPointerRef.current = null;
       lastSnapTimeRef.current = 0;
+      snapAnchorXRef.current = 0;
+      hasLeftEdgeZoneRef.current = true;
 
       const originCol = dragOriginColRef.current;
       dragOriginColRef.current = null;
@@ -308,6 +335,8 @@ export function KanbanBoard({
     setColumnItems(buildColumnItems(board));
     initialPointerRef.current = null;
     lastSnapTimeRef.current = 0;
+    snapAnchorXRef.current = 0;
+    hasLeftEdgeZoneRef.current = true;
   }, [board]);
 
   const activeTask = activeId ? tasksById.get(activeId) ?? null : null;
@@ -345,8 +374,8 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div ref={scrollContainerRef} className={cn('w-full overflow-x-auto', className)}>
-        <div className={cn('flex gap-4 p-4 sm:snap-none sm:p-6', !isDragging && 'snap-x snap-mandatory')} data-onboarding="board-columns">
+      <div ref={scrollContainerRef} className={cn('w-full overflow-x-auto sm:snap-none', !isDragging && 'snap-x snap-mandatory', className)}>
+        <div className="flex min-h-full gap-4 p-4 sm:p-6" data-onboarding="board-columns">
           {sortedColumns.map((column, index) => (
               <KanbanColumn
                 key={column.id}

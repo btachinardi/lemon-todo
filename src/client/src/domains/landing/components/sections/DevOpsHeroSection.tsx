@@ -31,7 +31,7 @@ export function DevOpsHeroSection() {
             className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"
           >
             {t('devops.hero.titleLine1')}{' '}
-            <span className="text-lemon glow-text">{t('devops.hero.titleHighlight')}</span>
+            <span className="text-highlight glow-text">{t('devops.hero.titleHighlight')}</span>
             <br />
             {t('devops.hero.titleLine2')}
           </motion.h1>
@@ -92,17 +92,17 @@ export function DevOpsHeroSection() {
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">backend-test</span>{' '}
-                <span className="text-foreground/60">406 passed (SQLite)</span>
+                <span className="text-foreground/60">413 passed (SQLite)</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">backend-test-sql</span>{' '}
-                <span className="text-foreground/60">406 passed (SQL Server)</span>
+                <span className="text-foreground/60">413 passed (SQL Server)</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">frontend-test</span>{' '}
-                <span className="text-foreground/60">406 passed + lint clean</span>
+                <span className="text-foreground/60">469 passed + lint clean</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}

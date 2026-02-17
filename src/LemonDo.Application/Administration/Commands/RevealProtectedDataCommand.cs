@@ -15,10 +15,10 @@ public sealed record RevealProtectedDataCommand(
     ProtectedDataRevealReason Reason,
     string? ReasonDetails,
     string? Comments,
-    string AdminPassword);
+    ProtectedValue AdminPassword);
 
-/// <summary>DTO returned when protected data is revealed.</summary>
-public sealed record RevealedProtectedDataDto(string Email, string DisplayName);
+/// <summary>DTO returned when protected data is revealed. RevealedField values are decrypted at JSON serialization.</summary>
+public sealed record RevealedProtectedDataDto(RevealedField Email, RevealedField DisplayName);
 
 /// <summary>Structured audit details for protected data reveal actions, serialized as JSON in the audit trail.</summary>
 public sealed record ProtectedDataRevealAuditDetails(
@@ -53,11 +53,11 @@ public sealed class RevealProtectedDataCommandHandler(
         var adminUserId = requestContext.UserId
             ?? throw new InvalidOperationException("No authenticated user in request context.");
         var passwordResult = await authService.VerifyPasswordAsync(
-            adminUserId, command.AdminPassword, ct);
+            adminUserId, command.AdminPassword.Value, ct);
         if (passwordResult.IsFailure)
             return Result<RevealedProtectedDataDto, DomainError>.Failure(passwordResult.Error);
 
-        // 3. Reveal protected data via the audited access service
+        // 3. Reveal protected data via the audited access service (returns RevealedFields)
         var result = await protectedDataAccessService.RevealForAdminAsync(command.UserId, ct);
         if (result.IsFailure)
             return Result<RevealedProtectedDataDto, DomainError>.Failure(result.Error);

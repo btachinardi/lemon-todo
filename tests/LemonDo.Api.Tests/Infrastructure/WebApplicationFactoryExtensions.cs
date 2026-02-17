@@ -40,8 +40,9 @@ public static class WebApplicationFactoryExtensions
     {
         var client = factory.CreateClient();
 
+        // Use anonymous object so the server's JSON converters handle string→EncryptedField
         var response = await client.PostAsJsonAsync("/api/auth/login",
-            new LoginRequest(email, password));
+            new { Email = email, Password = password });
         response.EnsureSuccessStatusCode();
 
         var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();

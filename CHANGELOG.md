@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-02-17
+
+Patch release with OpenAPI-based type generation, protected data refactoring, offline queue fixes, admin E2E coverage, theme polish, and CI/CD improvements.
+
+### Added
+
+- **OpenAPI-based TypeScript type generation** — backend contract changes now propagate to the frontend automatically
+  - Build-time OpenAPI spec generation via `Microsoft.Extensions.ApiDescription.Server`
+  - `openapi-typescript` generates TypeScript types from the committed `openapi.json`
+  - 7 frontend type files migrated to re-export from generated schema (enums, DTOs, request types)
+  - `satisfies` compile-time guards on Priority and TaskStatus const objects detect schema drift
+  - `.Produces<T>()` metadata on all minimal API endpoints for response type schemas
+  - Document transformer enriches Priority, TaskStatus, and NotificationType string properties with enum values
+- **Enum translation coverage guard test** — 9 tests (3 enums × 3 locales) ensuring every backend enum value has an i18n key
+- **`./dev generate` CLI command** — regenerates `openapi.json` + TypeScript types in one step
+- `offline-queue-drained` CustomEvent dispatched after drain completes, listened by QueryProvider
+- `initOfflineQueue()` now drains immediately when app starts online with pending mutations
+- 20 admin E2E tests across 5 spec files covering all admin/system admin features:
+  - `admin-users.spec.ts` (7): page rendering, search, role filter, role assignment, deactivation, reactivation
+  - `admin-audit.spec.ts` (4): page access, audit entries, action filter, resource type filter
+  - `admin-role-management.spec.ts` (3): role removal, audit log reflection, all-roles-assigned message
+  - `admin-route-guard.spec.ts` (5): unauthenticated redirect, regular user redirect, admin/sysadmin access
+  - `admin-pii-reveal.spec.ts` (1): refactored to use shared helpers
+- Shared admin E2E test helpers (`admin.helpers.ts`): login, register, role management, table waiters
+- 3 E2E tests: startup drain, UI auto-update after drain, multiple mutations drain in order
+- 7 unit tests for drain event dispatch and initOfflineQueue startup behavior
+- 3 QueryProvider unit tests for cache invalidation on drain-complete event
+- Brand button variant and GlowButton updated to use brand color tokens
+- Lucide icons on DevOps pipeline detail cards
+- Semi-transparent card surface for list view rows
+- Story page sections: rationale, problem-solving, and testing
+- CI/CD workflow triggers on `release/*` branches (tests only, no deploy)
+
+### Changed
+
+- `./dev verify` now includes API type generation (6 checks, up from 5)
+- CI/CD workflow generates TypeScript types before frontend type-check and build
+- Frontend type files derive enum types from OpenAPI schema instead of hand-written string unions
+- Light theme primary color switched to purple with new brand token
+- Protected data types refactored to domain-level `EncryptedField`, `ProtectedValue`, and `RevealedField`
+- Serilog destructuring policy updated for `IProtectedData` interface support
+
+### Fixed
+
+- Offline queue not draining on app startup when reopening online with pending IndexedDB mutations
+- UI not updating after offline queue drain (missing TanStack Query cache invalidation)
+- Intermittent 401 on silent token refresh caused by React StrictMode double-firing effects in `AuthHydrationProvider` — refresh token rotation is not idempotent, so two concurrent requests with the same token caused the second to fail after the first revoked it
+
 ## [1.0.1] - 2026-02-16
 
 Patch release with mobile responsiveness, accessibility, and bug fixes.
@@ -358,7 +406,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.1...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/btachinardi/lemon-todo/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/btachinardi/lemon-todo/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/btachinardi/lemon-todo/compare/v0.4.1...v1.0.0
 [0.4.1]: https://github.com/btachinardi/lemon-todo/compare/v0.4.0...v0.4.1

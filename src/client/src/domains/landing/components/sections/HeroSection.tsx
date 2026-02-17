@@ -32,7 +32,7 @@ export function HeroSection() {
           >
             {t('landing.hero.titleLine1')}{' '}
             {t('landing.hero.titleLine2')}{' '}
-            <span className="text-lemon glow-text">{t('landing.hero.titleHighlight')}</span>
+            <span className="text-highlight glow-text">{t('landing.hero.titleHighlight')}</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 24 }}

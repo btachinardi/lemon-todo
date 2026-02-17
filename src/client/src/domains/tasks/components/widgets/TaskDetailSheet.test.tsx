@@ -30,7 +30,7 @@ function renderSheet(overrides: Partial<React.ComponentProps<typeof TaskDetailSh
     onRemoveTag: vi.fn(),
     onDelete: vi.fn(),
     isDeleting: false,
-    saveStatus: 'idle',
+    saveStatus: 'synced',
     ...overrides,
   };
   return { ...render(<TaskDetailSheet {...defaultProps} />), props: defaultProps };
@@ -493,6 +493,22 @@ describe('TaskDetailSheet', () => {
 
       vi.useRealTimers();
     });
+
+    it('should not auto-save when server returns empty string description', () => {
+      vi.useFakeTimers();
+      const onUpdateDescription = vi.fn();
+      // Task created without description — backend returns "" (empty string)
+      const emptyDescTask = createTask({ description: '' });
+      renderSheet({ task: emptyDescTask, onUpdateDescription });
+
+      // Let Radix animations settle + well beyond debounce delay
+      act(() => vi.advanceTimersByTime(3000));
+
+      expect(onUpdateDescription).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
+
   });
 
   describe('accessibility: dialog title and description', () => {
@@ -534,21 +550,82 @@ describe('TaskDetailSheet', () => {
     });
   });
 
-  describe('save indicator', () => {
+  describe('sync indicator', () => {
     it('should show saving indicator when saveStatus is pending', () => {
       renderSheet({ saveStatus: 'pending' });
       expect(screen.getByText('Saving...')).toBeInTheDocument();
     });
 
-    it('should show saved indicator when saveStatus is success', () => {
-      renderSheet({ saveStatus: 'success' });
-      expect(screen.getByText('Saved')).toBeInTheDocument();
+    it('should show synced indicator when saveStatus is synced', () => {
+      renderSheet({ saveStatus: 'synced' });
+      expect(screen.getByText('Synced')).toBeInTheDocument();
     });
 
-    it('should not show save indicator when saveStatus is idle', () => {
-      renderSheet({ saveStatus: 'idle' });
-      expect(screen.queryByText('Saving...')).not.toBeInTheDocument();
-      expect(screen.queryByText('Saved')).not.toBeInTheDocument();
+    it('should show not synced indicator when saveStatus is not-synced', () => {
+      renderSheet({ saveStatus: 'not-synced' });
+      expect(screen.getByText('Not synced')).toBeInTheDocument();
+    });
+
+    it('should always show the sync indicator regardless of status', () => {
+      const { rerender } = render(
+        <TaskDetailSheet
+          taskId="task-1"
+          onClose={vi.fn()}
+          task={testTask}
+          isLoading={false}
+          isError={false}
+          onUpdateTitle={vi.fn()}
+          onUpdateDescription={vi.fn()}
+          onUpdatePriority={vi.fn()}
+          onUpdateDueDate={vi.fn()}
+          onAddTag={vi.fn()}
+          onRemoveTag={vi.fn()}
+          onDelete={vi.fn()}
+          isDeleting={false}
+          saveStatus="synced"
+        />,
+      );
+      expect(screen.getByRole('status')).toBeInTheDocument();
+
+      rerender(
+        <TaskDetailSheet
+          taskId="task-1"
+          onClose={vi.fn()}
+          task={testTask}
+          isLoading={false}
+          isError={false}
+          onUpdateTitle={vi.fn()}
+          onUpdateDescription={vi.fn()}
+          onUpdatePriority={vi.fn()}
+          onUpdateDueDate={vi.fn()}
+          onAddTag={vi.fn()}
+          onRemoveTag={vi.fn()}
+          onDelete={vi.fn()}
+          isDeleting={false}
+          saveStatus="not-synced"
+        />,
+      );
+      expect(screen.getByRole('status')).toBeInTheDocument();
+
+      rerender(
+        <TaskDetailSheet
+          taskId="task-1"
+          onClose={vi.fn()}
+          task={testTask}
+          isLoading={false}
+          isError={false}
+          onUpdateTitle={vi.fn()}
+          onUpdateDescription={vi.fn()}
+          onUpdatePriority={vi.fn()}
+          onUpdateDueDate={vi.fn()}
+          onAddTag={vi.fn()}
+          onRemoveTag={vi.fn()}
+          onDelete={vi.fn()}
+          isDeleting={false}
+          saveStatus="pending"
+        />,
+      );
+      expect(screen.getByRole('status')).toBeInTheDocument();
     });
   });
 });

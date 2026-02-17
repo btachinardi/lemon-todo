@@ -21,9 +21,9 @@ describe('useDevAccountPassword', () => {
     mockUseDemoAccountsEnabled.mockReturnValue({ data: true, isLoading: false });
   });
 
-  it('should return password when user is the dev.user demo account', () => {
+  it('should return User1234 when logged in as the dev.user demo account (redacted email)', () => {
     useAuthStore.setState({
-      user: { id: '1', email: 'dev.user@lemondo.dev', displayName: 'Dev User', roles: ['User'] },
+      user: { id: '1', email: 'd***@lemondo.dev', displayName: 'D***r', roles: ['User'] },
       isAuthenticated: true,
       accessToken: 'token',
     });
@@ -32,9 +32,9 @@ describe('useDevAccountPassword', () => {
     expect(result.current).toBe('User1234');
   });
 
-  it('should return password when user is the dev.admin demo account', () => {
+  it('should return Admin1234 when logged in as the dev.admin demo account (redacted email)', () => {
     useAuthStore.setState({
-      user: { id: '2', email: 'dev.admin@lemondo.dev', displayName: 'Dev Admin', roles: ['Admin'] },
+      user: { id: '2', email: 'd***@lemondo.dev', displayName: 'D***n', roles: ['User', 'Admin'] },
       isAuthenticated: true,
       accessToken: 'token',
     });
@@ -43,9 +43,9 @@ describe('useDevAccountPassword', () => {
     expect(result.current).toBe('Admin1234');
   });
 
-  it('should return password when user is the dev.sysadmin demo account', () => {
+  it('should return SysAdmin1234 when logged in as the dev.sysadmin demo account (redacted email)', () => {
     useAuthStore.setState({
-      user: { id: '3', email: 'dev.sysadmin@lemondo.dev', displayName: 'Dev SysAdmin', roles: ['SystemAdmin'] },
+      user: { id: '3', email: 'd***@lemondo.dev', displayName: 'D***n', roles: ['User', 'Admin', 'SystemAdmin'] },
       isAuthenticated: true,
       accessToken: 'token',
     });
@@ -54,9 +54,20 @@ describe('useDevAccountPassword', () => {
     expect(result.current).toBe('SysAdmin1234');
   });
 
-  it('should return null when user is not a demo account', () => {
+  it('should return null when user is not on the demo domain', () => {
     useAuthStore.setState({
-      user: { id: '4', email: 'real.user@example.com', displayName: 'Real User', roles: ['User'] },
+      user: { id: '4', email: 'r***@example.com', displayName: 'Real User', roles: ['User'] },
+      isAuthenticated: true,
+      accessToken: 'token',
+    });
+
+    const { result } = renderHook(() => useDevAccountPassword());
+    expect(result.current).toBeNull();
+  });
+
+  it('should return null when a non-demo admin has matching roles', () => {
+    useAuthStore.setState({
+      user: { id: '5', email: 'a***@company.com', displayName: 'Admin', roles: ['User', 'Admin'] },
       isAuthenticated: true,
       accessToken: 'token',
     });
@@ -74,7 +85,7 @@ describe('useDevAccountPassword', () => {
     mockUseDemoAccountsEnabled.mockReturnValue({ data: false, isLoading: false });
 
     useAuthStore.setState({
-      user: { id: '1', email: 'dev.user@lemondo.dev', displayName: 'Dev User', roles: ['User'] },
+      user: { id: '1', email: 'd***@lemondo.dev', displayName: 'D***r', roles: ['User'] },
       isAuthenticated: true,
       accessToken: 'token',
     });

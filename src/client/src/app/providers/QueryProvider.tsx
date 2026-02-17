@@ -1,5 +1,5 @@
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { captureError } from '@/lib/error-logger';
 
 /** Props for {@link QueryProvider}. */
@@ -49,6 +49,16 @@ export function QueryProvider({ children }: QueryProviderProps) {
         }),
       }),
   );
+
+  // Invalidate all query caches when the offline queue finishes draining.
+  // This ensures the UI reflects server state after queued mutations are replayed.
+  useEffect(() => {
+    const handler = () => {
+      queryClient.invalidateQueries();
+    };
+    window.addEventListener('offline-queue-drained', handler);
+    return () => window.removeEventListener('offline-queue-drained', handler);
+  }, [queryClient]);
 
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

@@ -14,7 +14,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           <img src="/lemondo-icon.png" alt="" className="size-24" />
           <h1 className="font-[var(--font-brand)] text-4xl font-black tracking-tight">
             <span className="text-foreground">Lemon.</span>
-            <span className="text-lemon">DO</span>
+            <span className="text-primary">DO</span>
           </h1>
         </div>
         {children}

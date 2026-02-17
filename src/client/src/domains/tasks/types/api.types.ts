@@ -1,4 +1,21 @@
+import type { components } from '../../../api/schema';
 import type { Priority } from './task.types';
+
+// --- Re-exported from generated OpenAPI schema ---
+
+/** Payload for `POST /api/tasks/:id/view-note`. */
+export type ViewTaskNoteRequest = components['schemas']['ViewTaskNoteRequest'];
+
+/** Payload for `POST /api/tasks/:id/move`. Relocates a card on the board. */
+export type MoveTaskRequest = components['schemas']['MoveTaskRequest'];
+
+/** Payload for `POST /api/tasks/:id/tags`. */
+export type AddTagRequest = components['schemas']['AddTagRequest'];
+
+/** Payload for `POST /api/tasks/bulk/complete`. */
+export type BulkCompleteRequest = components['schemas']['BulkCompleteRequest'];
+
+// --- Hand-written (schema has required fields where frontend sends optional) ---
 
 /**
  * Payload for `POST /api/tasks`. Creates a new task and places it on the default board.
@@ -34,44 +51,11 @@ export interface UpdateTaskRequest {
 }
 
 /**
- * Payload for `POST /api/tasks/:id/view-note`.
- * Re-authenticates the user before decrypting the sensitive note.
- */
-export interface ViewTaskNoteRequest {
-  password: string;
-}
-
-/**
  * Response from `POST /api/tasks/:id/view-note`.
  * Contains the decrypted plaintext note.
  */
 export interface ViewTaskNoteResponse {
   note: string;
-}
-
-/** Payload for `POST /api/tasks/:id/move`. Relocates a card on the board. */
-export interface MoveTaskRequest {
-  columnId: string;
-  /** ID of the card directly above the drop target, or `null` at the top. */
-  previousTaskId: string | null;
-  /** ID of the card directly below the drop target, or `null` at the bottom. */
-  nextTaskId: string | null;
-}
-
-/**
- * Payload for `POST /api/tasks/:id/tags`.
- * Appends a tag to the task. Silently succeeds if the tag already exists.
- */
-export interface AddTagRequest {
-  tag: string;
-}
-
-/**
- * Payload for `POST /api/tasks/bulk/complete`.
- * Marks multiple tasks as complete in a single request.
- */
-export interface BulkCompleteRequest {
-  taskIds: string[];
 }
 
 /** Query parameters for `GET /api/tasks`. All filters are optional. */

@@ -14,8 +14,8 @@ public static class NotificationEndpoints
     {
         var group = app.MapGroup("/api/notifications").WithTags("Notifications").RequireAuthorization();
 
-        group.MapGet("/", ListNotifications);
-        group.MapGet("/unread-count", GetUnreadCount);
+        group.MapGet("/", ListNotifications).Produces<NotificationListResponse>();
+        group.MapGet("/unread-count", GetUnreadCount).Produces<UnreadCountResponse>();
         group.MapPost("/{id}/read", MarkAsRead);
         group.MapPost("/read-all", MarkAllAsRead);
 

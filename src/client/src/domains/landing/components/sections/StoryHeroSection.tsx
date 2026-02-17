@@ -31,7 +31,7 @@ export function StoryHeroSection() {
             className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"
           >
             {t('story.hero.titleLine1')}{' '}
-            <span className="text-lemon glow-text">{t('story.hero.titleHighlight')}</span>{' '}
+            <span className="text-highlight glow-text">{t('story.hero.titleHighlight')}</span>{' '}
             {t('story.hero.titleLine2')}
           </motion.h1>
           <motion.p
@@ -84,7 +84,7 @@ export function StoryHeroSection() {
                 <span className="text-muted-foreground">git init lemon-todo</span>
               </p>
               <p className="text-muted-foreground/60">Initialized empty Git repository</p>
-              <p className="mt-3 text-muted-foreground/40">... 3 days later ...</p>
+              <p className="mt-3 text-muted-foreground/40">...</p>
               <p className="mt-3">
                 <span className="text-primary">$</span>{' '}
                 <span className="text-muted-foreground">./dev verify</span>
@@ -102,17 +102,17 @@ export function StoryHeroSection() {
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">Backend Tests</span>{' '}
-                <span className="text-primary font-bold">406 passed</span>
+                <span className="text-primary font-bold">413 passed</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">Frontend Tests</span>{' '}
-                <span className="text-primary font-bold">406 passed</span>
+                <span className="text-primary font-bold">469 passed</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">E2E Tests</span>{' '}
-                <span className="text-primary font-bold">96 passed</span>
+                <span className="text-primary font-bold">152 passed</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
