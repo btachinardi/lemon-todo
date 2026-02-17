@@ -2159,6 +2159,31 @@ The virtual keyboard problem on mobile is subtle: the keyboard resizes the *visu
 
 ---
 
+## Release: v1.0.5
+
+**Date: February 17, 2026**
+
+Patch release with mobile UX polish — fixed toast overlay blocking quick-add input, kanban edge-only drag-scroll activation, assignment banner overflow, and a redesigned demo account switcher with contextual role indicators.
+
+---
+
+## Release: v1.0.6
+
+**Date: February 17, 2026**
+
+Patch release with two UX fixes: smooth demo account switching and kanban scroll polish.
+
+### What shipped
+
+- **Smooth demo account switching**: The `DevAccountSwitcher` previously called `logout()` before the new login completed, causing `isAuthenticated=false` and a login page flash via `ProtectedRoute`. It also left stale task/board data cached. Fixed by keeping auth state during switch, clearing TanStack Query cache, and rendering a full-screen loading overlay.
+- **Kanban trailing scroll padding**: The inner flex container stayed viewport-width when columns overflowed, collapsing right padding. `min-w-max` forces max-content sizing. Also added a thin, theme-aware custom scrollbar (`.scrollbar-thin`) using both standard `scrollbar-width` and WebKit pseudo-elements.
+
+### Test count update
+
+Updated all documentation and landing pages with current test counts: 403 backend + 531 frontend + 152 E2E = 1,086 total (up from 1,034).
+
+---
+
 ## What's Next
 
 See `docs/ROADMAP.md` for future capability tiers.

@@ -27,6 +27,22 @@ describe('AppLoadingScreen', () => {
     expect(ripples.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('should center the ripple container on the shadow floor', () => {
+    const { container } = render(<AppLoadingScreen />);
+    const rippleContainer = container.querySelector('[data-testid="ripple"]')!.parentElement!;
+    // Ripple container must be vertically aligned with the shadow (bottom-1 = center of h-2 shadow)
+    expect(rippleContainer.className).toContain('bottom-1');
+    // Must NOT have translate-y that pushes ripple below the floor
+    expect(rippleContainer.className).not.toMatch(/\btranslate-y-/);
+  });
+
+  it('should horizontally center the ripple container on the icon', () => {
+    const { container } = render(<AppLoadingScreen />);
+    const rippleContainer = container.querySelector('[data-testid="ripple"]')!.parentElement!;
+    expect(rippleContainer.className).toContain('left-1/2');
+    expect(rippleContainer.className).toContain('-translate-x-1/2');
+  });
+
   it('should have aria-live polite for screen readers', () => {
     render(<AppLoadingScreen />);
     const status = screen.getByRole('status');

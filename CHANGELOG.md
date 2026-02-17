@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-02-17
+
+Patch release with smooth demo account switching, global scrollbar polish, and loading screen alignment.
+
+### Fixed
+
+- **Login page flash when switching demo accounts** — `DevAccountSwitcher` now keeps `isAuthenticated=true` during account switch (server-only logout), clears TanStack Query cache, and renders a full-screen loading overlay via portal during the transition
+- **Kanban board missing trailing scroll padding** — inner flex container now uses `min-w-max` for max-content sizing so right padding is included in the scrollable area
+- **Thick default scrollbars on overflow areas** — moved `scrollbar-width: thin` and `scrollbar-color` rules to the global `*` selector; added `::-webkit-scrollbar` fallback; slimmed Radix ScrollArea bars from 10px to 6px; removed redundant `.scrollbar-thin` utility class
+- **Loading screen ripple misaligned from bounce landing point** — replaced `translate-y-2` offset with `bottom-1` to center the ripple on the shadow floor element
+
 ## [1.0.5] - 2026-02-17
 
 Patch release with mobile UX polish — fixed toast overlay, kanban drag-scroll, banner overflow, and a redesigned demo account switcher.
@@ -456,7 +467,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.5...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.6...HEAD
+[1.0.6]: https://github.com/btachinardi/lemon-todo/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/btachinardi/lemon-todo/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/btachinardi/lemon-todo/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/btachinardi/lemon-todo/compare/v1.0.2...v1.0.3
