@@ -718,7 +718,7 @@ describe('KanbanBoard mobile column-snap auto-scroll', () => {
     vi.restoreAllMocks();
   });
 
-  it('should allow reverse-direction snap by moving pointer back from the snap position', () => {
+  it('should allow reverse-direction snap when pointer enters opposite edge zone', () => {
     const board = createBoard();
     const task = createTask({ title: 'Reverse snap test' });
     board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
@@ -729,20 +729,29 @@ describe('KanbanBoard mobile column-snap auto-scroll', () => {
     // Start scrolled at column 1 so there's room to go right then back left
     Object.defineProperty(scrollContainer, 'scrollLeft', { value: 335, configurable: true, writable: true });
 
+    const baseTime = Date.now();
+
     act(() => {
       dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
     });
 
-    // Snap right via edge zone
+    // Snap right via right edge zone
     act(() => {
       dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
     });
     expect(mockScrollTo).toHaveBeenCalledTimes(1);
 
-    // Advance past cooldown, then drag left by ≥80px from the snap position (320 → 230)
-    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    // Move toward center to reset re-entry flag (pointerX=250, outside all edge zones,
+    // dx=250-320=-70 stays within snap distance to avoid distance-based trigger)
+    vi.spyOn(Date, 'now').mockReturnValue(baseTime + 900);
     act(() => {
-      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 30) as unknown as DragMoveEvent);
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 50) as unknown as DragMoveEvent);
+    });
+
+    // Enter left edge zone (pointerX=50 < 60)
+    vi.spyOn(Date, 'now').mockReturnValue(baseTime + 1700);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, -150) as unknown as DragMoveEvent);
     });
 
     // Should have snapped left (2 total scrolls: one right, one left)
@@ -751,39 +760,37 @@ describe('KanbanBoard mobile column-snap auto-scroll', () => {
     vi.restoreAllMocks();
   });
 
-  it('should not trigger distance-based snap when movement is less than snap distance threshold', () => {
+  it('should not scroll when pointer moves horizontally but stays outside edge zones', () => {
     const board = createBoard();
-    const task = createTask({ title: 'Below-threshold test' });
+    const task = createTask({ title: 'Center movement test' });
     board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
 
     const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
-    const { scrollContainer, mockScrollTo } = setupScrollContainerMocks(container);
+    const { mockScrollTo } = setupScrollContainerMocks(container);
 
-    Object.defineProperty(scrollContainer, 'scrollLeft', { value: 335, configurable: true, writable: true });
-
+    // Start drag at center of screen
     act(() => {
-      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
+      dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 188, 0));
     });
 
-    // Snap right
+    // Move 100px right — pointerX=288, well outside right edge zone (>315) but significant movement
     act(() => {
-      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
-    });
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
-
-    // Advance past cooldown, move left but only 50px from snap point (320 → 270)
-    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
-    act(() => {
-      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 70) as unknown as DragMoveEvent);
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 188, 100) as unknown as DragMoveEvent);
     });
 
-    // Should NOT have snapped — still only 1 scroll
-    expect(mockScrollTo).toHaveBeenCalledTimes(1);
+    // Should NOT scroll — pointer is in the center of the screen, not in any edge zone
+    expect(mockScrollTo).not.toHaveBeenCalled();
 
-    vi.restoreAllMocks();
+    // Move 100px left from start — pointerX=88, outside left edge zone (<60) but significant movement
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 188, -100) as unknown as DragMoveEvent);
+    });
+
+    // Should still NOT scroll — pointer at 88 is outside the left edge zone
+    expect(mockScrollTo).not.toHaveBeenCalled();
   });
 
-  it('should support a full right-then-left snap sequence in a single drag', () => {
+  it('should support a full right-then-left snap sequence via edge zones in a single drag', () => {
     const board = createBoard();
     const task = createTask({ title: 'Full sequence test' });
     board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
@@ -791,37 +798,39 @@ describe('KanbanBoard mobile column-snap auto-scroll', () => {
     const { container } = render(<KanbanBoard board={board} tasks={[task]} />);
     const { mockScrollTo } = setupScrollContainerMocks(container);
 
+    const baseTime = Date.now();
+
     // Start at column 0
     act(() => {
       dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
     });
 
-    // 1. Snap RIGHT: drag to right edge (pointerX = 200+120 = 320 > 375-60 = 315)
+    // 1. Snap RIGHT: drag to right edge zone (pointerX = 200+120 = 320 > 375-60 = 315)
     act(() => {
       dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
     });
     expect(mockScrollTo).toHaveBeenCalledTimes(1);
 
-    // 2. Advance time, move slightly left but stay within snap distance threshold
-    //    Snap anchor is at 320. Move to 260 (60px away, below 80px threshold).
-    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+    // 2. Move to center to reset re-entry flag (pointerX=200, outside all edge zones)
+    //    With the bug: distance-based triggers here (dx=200-320=-120 > 80px threshold) → unwanted snap
+    //    After fix: only edge zones matter, no snap in center
+    vi.spyOn(Date, 'now').mockReturnValue(baseTime + 900);
     act(() => {
-      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 60) as unknown as DragMoveEvent);
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 0) as unknown as DragMoveEvent);
     });
-    expect(mockScrollTo).toHaveBeenCalledTimes(1); // no snap, within threshold
+    expect(mockScrollTo).toHaveBeenCalledTimes(1); // no snap, just resetting re-entry
 
-    // 3. Snap LEFT: continue dragging left (pointerX = 200-120 = 80)
-    //    That's 240px left of the snap anchor (320), well above 80px threshold
-    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 2000);
+    // 3. Snap LEFT: enter left edge zone (pointerX = 200-160 = 40 < 60)
+    vi.spyOn(Date, 'now').mockReturnValue(baseTime + 1700);
     act(() => {
-      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, -120) as unknown as DragMoveEvent);
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, -160) as unknown as DragMoveEvent);
     });
     expect(mockScrollTo).toHaveBeenCalledTimes(2); // one right + one left
 
     vi.restoreAllMocks();
   });
 
-  it('should block snaps within the 800ms cooldown window', () => {
+  it('should block snaps within the 800ms cooldown window even when entering opposite edge zone', () => {
     const board = createBoard();
     const task = createTask({ title: 'Extended cooldown test' });
     board.cards = [createTaskCard({ taskId: task.id, columnId: board.columns[0].id, rank: 1000 })];
@@ -832,22 +841,28 @@ describe('KanbanBoard mobile column-snap auto-scroll', () => {
     // Start at column 1 so there's room to snap right then back left
     Object.defineProperty(scrollContainer, 'scrollLeft', { value: 335, configurable: true, writable: true });
 
+    const baseTime = Date.now();
+
     act(() => {
       dndHandlers.onDragStart?.(makeTouchDndEvent(task.id, 200, 0));
     });
 
-    // Snap right via edge zone
+    // Snap right via right edge zone
     act(() => {
       dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 120) as unknown as DragMoveEvent);
     });
     expect(mockScrollTo).toHaveBeenCalledTimes(1);
 
-    // Advance 500ms — past old 400ms cooldown but within new 800ms cooldown
-    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 500);
-
-    // Try to snap left via distance (pointerX=80, dx=80-320=-240, well past threshold)
+    // Move through center to reset re-entry flag (zone tracking runs before cooldown check)
+    vi.spyOn(Date, 'now').mockReturnValue(baseTime + 300);
     act(() => {
-      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, -120) as unknown as DragMoveEvent);
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, 0) as unknown as DragMoveEvent);
+    });
+
+    // Enter left edge zone (pointerX=50 < 60) while still within 800ms cooldown
+    vi.spyOn(Date, 'now').mockReturnValue(baseTime + 500);
+    act(() => {
+      dndHandlers.onDragMove?.(makeTouchDndEvent(task.id, 200, -150) as unknown as DragMoveEvent);
     });
 
     // Should NOT have snapped — still within 800ms cooldown
