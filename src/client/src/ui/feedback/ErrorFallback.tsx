@@ -22,11 +22,11 @@ export function ErrorFallback({ error, onReset }: ErrorFallbackProps) {
         <CardTitle>{t('error.title')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           {t('error.description')}
         </p>
         {import.meta.env.DEV && (
-          <pre className="mt-4 overflow-auto rounded-lg bg-secondary p-3 font-mono text-xs text-muted-foreground">
+          <pre className="mt-4 overflow-auto rounded-lg bg-secondary p-3 font-mono text-sm text-muted-foreground">
             {error.message}
           </pre>
         )}

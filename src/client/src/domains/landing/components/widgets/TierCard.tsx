@@ -37,7 +37,7 @@ export function TierCard({ tierIndex, icon: TierIcon, featureIcons, index }: Tie
           <h3 className="text-lg font-bold leading-tight">
             {t(`roadmap.tiers.${tierIndex}.name`)}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             {t(`roadmap.tiers.${tierIndex}.tagline`)}
           </p>
         </div>
@@ -54,10 +54,10 @@ export function TierCard({ tierIndex, icon: TierIcon, featureIcons, index }: Tie
               <FeatureIcon className="size-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold">
+              <p className="text-base font-semibold">
                 {t(`roadmap.tiers.${tierIndex}.features.${fi}.title`)}
               </p>
-              <p className="text-xs leading-relaxed text-muted-foreground">
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 {t(`roadmap.tiers.${tierIndex}.features.${fi}.description`)}
               </p>
             </div>

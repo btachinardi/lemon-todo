@@ -52,7 +52,7 @@ export const DueDateLabel = memo(function DueDateLabel({ dueDate, isDone, classN
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 text-xs',
+        'inline-flex items-center gap-1 text-sm',
         isOverdue && !isToday ? 'text-destructive font-medium' : 'text-muted-foreground',
         className,
       )}

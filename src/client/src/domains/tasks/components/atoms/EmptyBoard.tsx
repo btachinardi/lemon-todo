@@ -12,7 +12,7 @@ export function EmptyBoard() {
       </div>
       <div className="text-center">
         <p className="text-lg font-semibold">{t('tasks.empty.boardTitle')}</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-base text-muted-foreground">
           {t('tasks.empty.boardSubtitle')}
         </p>
       </div>

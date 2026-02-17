@@ -23,7 +23,7 @@ export function OfflineBanner() {
   return (
     <div
       role="alert"
-      className={`fixed top-0 inset-x-0 z-50 px-4 py-2 text-center text-sm font-medium flex items-center justify-center gap-2 ${
+      className={`fixed top-0 inset-x-0 z-50 px-4 py-2 text-center text-base font-medium flex items-center justify-center gap-2 ${
         hasCachedData
           ? 'bg-amber-500/90 text-amber-950'
           : 'bg-destructive text-destructive-foreground'

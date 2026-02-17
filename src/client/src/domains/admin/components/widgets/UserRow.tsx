@@ -105,7 +105,7 @@ export function UserRow({
   return (
     <>
       <TableRow className={!user.isActive ? 'opacity-60' : ''}>
-        <TableCell className="font-mono text-xs">{user.id.slice(0, 8)}...</TableCell>
+        <TableCell className="font-mono text-sm">{user.id.slice(0, 8)}...</TableCell>
         <TableCell>
           <div>
             <span className={revealedData ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
@@ -146,7 +146,7 @@ export function UserRow({
               <Badge
                 key={role}
                 variant={roleBadgeVariant[role] ?? 'outline'}
-                className="text-xs"
+                className="text-sm"
               >
                 {role}
               </Badge>
@@ -154,7 +154,7 @@ export function UserRow({
           </div>
         </TableCell>
         <TableCell>
-          <Badge variant={user.isActive ? 'secondary' : 'destructive'} className="text-xs">
+          <Badge variant={user.isActive ? 'secondary' : 'destructive'} className="text-sm">
             {user.isActive ? t('admin.users.active') : t('admin.users.deactivated')}
           </Badge>
         </TableCell>

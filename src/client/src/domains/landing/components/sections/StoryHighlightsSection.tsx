@@ -73,12 +73,12 @@ export function StoryHighlightsSection() {
                   <Icon className="size-5" />
                 </div>
                 <h3 className="text-base font-bold leading-tight">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                <p className="mt-2 text-base leading-relaxed text-muted-foreground">
                   {item.description}
                 </p>
                 <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
-                  <p className="text-xs font-semibold text-primary">Why this matters</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  <p className="text-sm font-semibold text-primary">Why this matters</p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
                     {item.why}
                   </p>
                 </div>

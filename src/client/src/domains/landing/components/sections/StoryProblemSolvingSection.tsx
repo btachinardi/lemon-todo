@@ -63,16 +63,16 @@ export function StoryProblemSolvingSection() {
 
                 <div className="mt-4 space-y-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-destructive/80">Problem</p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.problem}</p>
+                    <p className="text-sm font-semibold uppercase tracking-wider text-destructive/80">Problem</p>
+                    <p className="mt-1 text-base leading-relaxed text-muted-foreground">{item.problem}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-primary">Solution</p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.solution}</p>
+                    <p className="text-sm font-semibold uppercase tracking-wider text-primary">Solution</p>
+                    <p className="mt-1 text-base leading-relaxed text-muted-foreground">{item.solution}</p>
                   </div>
                   <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
-                    <p className="text-xs font-semibold text-primary">Outcome</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{item.outcome}</p>
+                    <p className="text-sm font-semibold text-primary">Outcome</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{item.outcome}</p>
                   </div>
                 </div>
               </motion.div>

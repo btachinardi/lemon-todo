@@ -59,12 +59,12 @@ export function UserMenu({ variant = 'dropdown' }: UserMenuProps) {
       <>
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3 px-3 py-2">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-semibold text-highlight">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-base font-semibold text-highlight">
               {initials}
             </span>
             <div className="flex min-w-0 flex-col">
-              <p className="truncate text-sm font-medium">{user.displayName}</p>
-              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+              <p className="truncate text-base font-medium">{user.displayName}</p>
+              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
             </div>
           </div>
           <Button
@@ -123,10 +123,10 @@ export function UserMenu({ variant = 'dropdown' }: UserMenuProps) {
             size="sm"
             className="gap-2 text-muted-foreground hover:text-foreground"
           >
-            <span className="flex size-8 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-highlight sm:size-7">
+            <span className="flex size-8 items-center justify-center rounded-full bg-primary/20 text-sm font-semibold text-highlight sm:size-7">
               {initials}
             </span>
-            <span className="hidden text-sm sm:inline">{user.displayName}</span>
+            <span className="hidden text-base sm:inline">{user.displayName}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
@@ -138,15 +138,15 @@ export function UserMenu({ variant = 'dropdown' }: UserMenuProps) {
                   className="flex w-full cursor-pointer flex-col gap-1 rounded-sm p-0 text-left transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
                   data-testid="user-info-trigger"
                 >
-                  <p className="text-sm font-medium">{user.displayName}</p>
-                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                  <p className="text-base font-medium">{user.displayName}</p>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
                 </button>
               </PopoverTrigger>
               <PopoverContent side="left" className="w-72">
                 <div className="flex flex-col gap-3">
                   <div className="flex items-start gap-2">
                     <ShieldCheckIcon className="mt-0.5 size-5 shrink-0 text-emerald-500" />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base text-muted-foreground">
                       {t('auth.selfReveal.popoverHint')}
                     </p>
                   </div>

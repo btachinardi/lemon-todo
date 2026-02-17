@@ -60,7 +60,7 @@ export function AuditLogView() {
       {/* Filters */}
       <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">{t('admin.audit.from')}</label>
+          <label className="text-sm font-medium text-muted-foreground">{t('admin.audit.from')}</label>
           <Input
             type="date"
             className="sm:w-40"
@@ -69,7 +69,7 @@ export function AuditLogView() {
           />
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">{t('admin.audit.to')}</label>
+          <label className="text-sm font-medium text-muted-foreground">{t('admin.audit.to')}</label>
           <Input
             type="date"
             className="sm:w-40"
@@ -78,7 +78,7 @@ export function AuditLogView() {
           />
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">{t('admin.audit.action')}</label>
+          <label className="text-sm font-medium text-muted-foreground">{t('admin.audit.action')}</label>
           <Select
             value={filters.action ?? '__all__'}
             onValueChange={(v) => updateFilter({ action: v === '__all__' ? undefined : (v as AuditAction) })}
@@ -97,7 +97,7 @@ export function AuditLogView() {
           </Select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">{t('admin.audit.resource')}</label>
+          <label className="text-sm font-medium text-muted-foreground">{t('admin.audit.resource')}</label>
           <Select
             value={filters.resourceType ?? '__all__'}
             onValueChange={(v) => updateFilter({ resourceType: v === '__all__' ? undefined : v })}
@@ -164,7 +164,7 @@ export function AuditLogView() {
       {/* Pagination */}
       {data && data.totalCount > 0 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             {t('common.page', { page: data.page, totalPages: data.totalPages, totalCount: data.totalCount, unit: 'entries' })}
           </p>
           <div className="flex gap-2">

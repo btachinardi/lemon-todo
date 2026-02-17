@@ -36,7 +36,7 @@ export function LanguageSwitcher({ showLabel }: LanguageSwitcherProps = {}) {
         >
           <GlobeIcon className={showLabel ? 'size-4' : 'size-[18px] sm:size-4'} />
           {showLabel ? (
-            <span className="text-sm">{t('nav.language')}</span>
+            <span className="text-base">{t('nav.language')}</span>
           ) : (
             <span className="sr-only">
               {i18n.language === 'pt-BR' ? 'Idioma' : 'Language'}

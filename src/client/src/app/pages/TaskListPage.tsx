@@ -77,7 +77,7 @@ export function TaskListPage() {
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold">{t('tasks.errors.loadTasks')}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{t('common.error.connection')}</p>
+          <p className="mt-1 text-base text-muted-foreground">{t('common.error.connection')}</p>
         </div>
         <Button variant="outline" onClick={() => tasksQuery.refetch()}>
           {t('common.tryAgain')}

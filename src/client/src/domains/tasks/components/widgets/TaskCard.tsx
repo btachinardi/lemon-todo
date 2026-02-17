@@ -89,7 +89,7 @@ export const TaskCard = memo(function TaskCard({
             onToggle={() => onComplete?.(task.id)}
             isLoading={isToggling}
           />
-          <CardTitle className={cn('text-sm font-semibold leading-tight', isDone && 'line-through')}>
+          <CardTitle className={cn('text-base font-semibold leading-tight', isDone && 'line-through')}>
             {task.title}
           </CardTitle>
           {task.sensitiveNote && (

@@ -38,7 +38,7 @@ export function ThemeToggle({ theme, onToggle, showLabel }: ThemeToggleProps) {
       title={t('theme.toggle', { label: t(current.labelKey), next: t(next.labelKey) })}
     >
       <Icon className="size-4" />
-      {showLabel && <span className="text-sm">{t(current.labelKey)}</span>}
+      {showLabel && <span className="text-base">{t(current.labelKey)}</span>}
     </Button>
   );
 }

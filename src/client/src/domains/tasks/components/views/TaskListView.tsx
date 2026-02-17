@@ -57,7 +57,7 @@ export function TaskListView({
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold">{t('tasks.empty.listTitle')}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{t('tasks.empty.listSubtitle')}</p>
+          <p className="mt-1 text-base text-muted-foreground">{t('tasks.empty.listSubtitle')}</p>
         </div>
       </div>
     );
@@ -71,7 +71,7 @@ export function TaskListView({
           <div key={group.key}>
             {showGroupHeaders && (
               <div className="flex items-center gap-2 px-4 pt-5 pb-2">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                   {group.label}
                 </h3>
                 <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
@@ -95,7 +95,7 @@ export function TaskListView({
               <>
                 <div className="flex items-center gap-2 px-4 py-2">
                   <div className="h-px flex-1 border-t border-dashed border-border/50" />
-                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <CheckCircle2Icon className="size-3" />
                     {t('tasks.completed', { count: group.completedTasks.length })}
                   </span>
@@ -174,7 +174,7 @@ const TaskListItem = memo(function TaskListItem({ task, index, togglingTaskId, o
           isLoading={isToggling}
         />
         <div className="min-w-0 flex-1">
-          <p className={cn('truncate text-sm font-semibold', isDone && 'line-through opacity-50')}>
+          <p className={cn('truncate text-base font-semibold', isDone && 'line-through opacity-50')}>
             {task.title}
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-2">

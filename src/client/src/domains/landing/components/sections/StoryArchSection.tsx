@@ -43,7 +43,7 @@ export function StoryArchSection() {
         >
           {/* Backend layers */}
           <motion.div variants={{ hidden, visible: visible(0) }}>
-            <h3 className="mb-6 text-center text-xs font-bold uppercase tracking-widest text-primary">
+            <h3 className="mb-6 text-center text-sm font-bold uppercase tracking-widest text-primary">
               {t('story.arch.backendLabel')}
             </h3>
             <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
@@ -65,7 +65,7 @@ export function StoryArchSection() {
 
           {/* Frontend tiers */}
           <motion.div variants={{ hidden, visible: visible(1) }}>
-            <h3 className="mb-6 text-center text-xs font-bold uppercase tracking-widest text-primary">
+            <h3 className="mb-6 text-center text-sm font-bold uppercase tracking-widest text-primary">
               {t('story.arch.frontendLabel')}
             </h3>
             <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
@@ -96,7 +96,7 @@ export function StoryArchSection() {
             <motion.span
               key={i}
               variants={{ hidden, visible: visible(i + 2) }}
-              className="rounded-full border border-border/40 bg-card/40 px-4 py-2 text-xs font-medium text-muted-foreground backdrop-blur-sm"
+              className="rounded-full border border-border/40 bg-card/40 px-4 py-2 text-sm font-medium text-muted-foreground backdrop-blur-sm"
             >
               {text}
             </motion.span>

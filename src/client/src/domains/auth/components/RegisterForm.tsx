@@ -56,12 +56,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-base text-destructive">
           {error}
         </div>
       )}
       <div className="space-y-2">
-        <label htmlFor="register-name" className="text-sm font-medium text-foreground">
+        <label htmlFor="register-name" className="text-base font-medium text-foreground">
           {t('auth.fields.displayName')}
         </label>
         <Input
@@ -76,7 +76,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         />
       </div>
       <div className="space-y-2">
-        <label htmlFor="register-email" className="text-sm font-medium text-foreground">
+        <label htmlFor="register-email" className="text-base font-medium text-foreground">
           {t('auth.fields.email')}
         </label>
         <Input
@@ -90,7 +90,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         />
       </div>
       <div className="space-y-2">
-        <label htmlFor="register-password" className="text-sm font-medium text-foreground">
+        <label htmlFor="register-password" className="text-base font-medium text-foreground">
           {t('auth.fields.password')}
         </label>
         <div className="relative">

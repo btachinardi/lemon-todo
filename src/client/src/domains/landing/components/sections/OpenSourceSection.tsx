@@ -44,7 +44,7 @@ export function OpenSourceSection() {
             {badges.map((b, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 rounded-full border border-border/50 bg-card/40 px-4 py-2 text-sm font-medium backdrop-blur-sm"
+                className="flex items-center gap-2 rounded-full border border-border/50 bg-card/40 px-4 py-2 text-base font-medium backdrop-blur-sm"
               >
                 <b.icon className="size-4 text-primary" />
                 {b.label}

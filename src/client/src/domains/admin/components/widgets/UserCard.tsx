@@ -62,8 +62,8 @@ export function UserCard({
       <div className={`rounded-lg border p-4 space-y-2 ${!user.isActive ? 'opacity-60' : ''}`}>
         <div className="flex items-start justify-between">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{user.displayName}</p>
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            <p className="truncate text-base font-medium">{user.displayName}</p>
+            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
           </div>
           {isSystemAdmin && (
             <DropdownMenu>
@@ -118,12 +118,12 @@ export function UserCard({
             <Badge
               key={role}
               variant={roleBadgeVariant[role] ?? 'outline'}
-              className="text-xs"
+              className="text-sm"
             >
               {role}
             </Badge>
           ))}
-          <Badge variant={user.isActive ? 'secondary' : 'destructive'} className="text-xs">
+          <Badge variant={user.isActive ? 'secondary' : 'destructive'} className="text-sm">
             {user.isActive ? t('admin.users.active') : t('admin.users.deactivated')}
           </Badge>
         </div>

@@ -42,22 +42,22 @@ export function AuditLogRow({ entry }: AuditLogRowProps) {
 
   return (
     <TableRow>
-      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
         {formatTimestamp(entry.timestamp)}
       </TableCell>
       <TableCell>
-        <Badge variant={actionVariant[entry.action] ?? 'outline'} className="text-xs">
+        <Badge variant={actionVariant[entry.action] ?? 'outline'} className="text-sm">
           {t(`admin.audit.actions.${entry.action}`)}
         </Badge>
       </TableCell>
-      <TableCell className="text-xs">{entry.resourceType}</TableCell>
-      <TableCell className="font-mono text-xs">
+      <TableCell className="text-sm">{entry.resourceType}</TableCell>
+      <TableCell className="font-mono text-sm">
         {entry.resourceId ? `${entry.resourceId.slice(0, 8)}...` : '-'}
       </TableCell>
-      <TableCell className="font-mono text-xs">
+      <TableCell className="font-mono text-sm">
         {entry.actorId ? `${entry.actorId.slice(0, 8)}...` : t('admin.audit.system')}
       </TableCell>
-      <TableCell className="max-w-xs truncate text-xs text-muted-foreground">
+      <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
         {entry.details ?? '-'}
       </TableCell>
     </TableRow>

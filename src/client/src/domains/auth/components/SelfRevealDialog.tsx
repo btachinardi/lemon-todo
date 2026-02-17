@@ -105,19 +105,19 @@ export function SelfRevealDialog({
             <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950">
               <div className="space-y-2">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">{t('auth.selfReveal.emailLabel')}</p>
-                  <p className="text-sm font-medium">{revealedEmail}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('auth.selfReveal.emailLabel')}</p>
+                  <p className="text-base font-medium">{revealedEmail}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">{t('auth.selfReveal.nameLabel')}</p>
-                  <p className="text-sm font-medium">{revealedDisplayName}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('auth.selfReveal.nameLabel')}</p>
+                  <p className="text-base font-medium">{revealedDisplayName}</p>
                 </div>
               </div>
             </div>
 
             {/* Countdown */}
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>{t('auth.selfReveal.autoHide')}</span>
                 <span className="font-mono">{secondsLeft}s</span>
               </div>
@@ -154,12 +154,12 @@ export function SelfRevealDialog({
                 }}
               />
               {isPasswordError && (
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-destructive">
                   {t('auth.selfReveal.passwordError')}
                 </p>
               )}
               {isGenericError && (
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-destructive">
                   {t('auth.selfReveal.genericError')}
                 </p>
               )}

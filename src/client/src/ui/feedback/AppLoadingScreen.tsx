@@ -46,7 +46,7 @@ export function AppLoadingScreen({ message = 'Loading...' }: AppLoadingScreenPro
       </div>
 
       {/* Loading text */}
-      <p className="mt-10 animate-pulse font-brand text-sm tracking-wide text-muted-foreground">
+      <p className="mt-10 animate-pulse font-brand text-base tracking-wide text-muted-foreground">
         {message}
       </p>
     </div>

@@ -65,7 +65,7 @@ export function StoryTestingSection() {
                   <Icon className="size-5" />
                 </div>
                 <h3 className="text-base font-bold leading-tight">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                <p className="mt-2 text-base leading-relaxed text-muted-foreground">
                   {item.description}
                 </p>
               </motion.div>

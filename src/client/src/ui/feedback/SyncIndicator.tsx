@@ -20,7 +20,7 @@ export function SyncIndicator() {
   if (isSyncing) {
     return (
       <div
-        className="flex items-center gap-1.5 text-xs text-muted-foreground"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground"
         role="status"
         aria-live="polite"
       >
@@ -33,7 +33,7 @@ export function SyncIndicator() {
   if (lastSyncResult === 'success') {
     return (
       <div
-        className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400"
+        className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400"
         role="status"
         aria-live="polite"
       >
@@ -46,7 +46,7 @@ export function SyncIndicator() {
   if (!isOnline && pendingCount > 0) {
     return (
       <div
-        className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400"
+        className="flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400"
         role="status"
         aria-live="polite"
       >

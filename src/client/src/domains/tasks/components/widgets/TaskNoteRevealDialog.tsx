@@ -99,12 +99,12 @@ export function TaskNoteRevealDialog({
           <div className="space-y-3 py-2">
             {/* Revealed content */}
             <div className="rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-              <p className="whitespace-pre-wrap text-sm">{revealedNote}</p>
+              <p className="whitespace-pre-wrap text-base">{revealedNote}</p>
             </div>
 
             {/* Countdown */}
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>{t('tasks.noteRevealDialog.autoHide')}</span>
                 <span className="font-mono">{secondsLeft}s</span>
               </div>
@@ -141,12 +141,12 @@ export function TaskNoteRevealDialog({
                 }}
               />
               {isPasswordError && (
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-destructive">
                   {t('tasks.noteRevealDialog.passwordError')}
                 </p>
               )}
               {isGenericError && (
-                <p className="text-xs text-destructive">
+                <p className="text-sm text-destructive">
                   {t('tasks.noteRevealDialog.genericError')}
                 </p>
               )}
