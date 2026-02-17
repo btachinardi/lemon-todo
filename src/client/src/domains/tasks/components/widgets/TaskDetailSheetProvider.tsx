@@ -6,6 +6,7 @@ import { useUpdateTask, useDeleteTask, useAddTag, useRemoveTag } from '../../hoo
 import { useViewTaskNote } from '../../hooks/use-view-task-note';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { TaskNoteRevealDialog } from './TaskNoteRevealDialog';
+import { useDevAccountPassword } from '@/domains/auth/hooks/use-dev-account-password';
 
 interface TaskDetailSheetProviderProps {
   taskId: string | null;
@@ -25,6 +26,7 @@ export function TaskDetailSheetProvider({ taskId, onClose }: TaskDetailSheetProv
   const addTag = useAddTag();
   const removeTag = useRemoveTag();
   const viewNote = useViewTaskNote();
+  const devPassword = useDevAccountPassword();
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
 
   const task = taskQuery.data;
@@ -187,6 +189,7 @@ export function TaskDetailSheetProvider({ taskId, onClose }: TaskDetailSheetProv
         isPending={viewNote.isPending}
         error={viewNote.error}
         revealedNote={viewNote.data?.note ?? null}
+        devPassword={devPassword}
       />
     </>
   );

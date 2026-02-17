@@ -21,6 +21,12 @@ export function AuthHydrationProvider({ children }: AuthHydrationProviderProps) 
   useEffect(() => {
     const controller = new AbortController();
     const silentRefresh = async () => {
+      // Skip silent refresh when offline — keep existing in-memory auth state
+      if (!navigator.onLine) {
+        setReady(true);
+        return;
+      }
+
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
           method: 'POST',

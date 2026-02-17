@@ -124,12 +124,14 @@ export function TaskBoardPage() {
   const isEmptyFromFilters = isFiltering && filteredTasks.length === 0;
 
   return (
-    <div className="flex flex-col">
-      <div className="space-y-3 border-b border-border/50 px-3 py-3 sm:px-6 sm:py-4">
+    <div className="flex flex-col pb-16 sm:pb-0">
+      <div className="hidden space-y-3 border-b border-border/50 px-3 py-3 sm:block sm:px-6 sm:py-4">
         <QuickAddForm
           onSubmit={handleCreateTask}
           isLoading={createTask.isPending}
         />
+      </div>
+      <div className="border-b border-border/50 px-3 py-3 sm:px-6 sm:py-0 sm:pb-4">
         <FilterBar
           searchTerm={searchTerm}
           filterPriority={filterPriority}
@@ -157,6 +159,12 @@ export function TaskBoardPage() {
           className="flex-1"
         />
       )}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/50 bg-background/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden">
+        <QuickAddForm
+          onSubmit={handleCreateTask}
+          isLoading={createTask.isPending}
+        />
+      </div>
       <TaskDetailSheetProvider taskId={selectedTaskId} onClose={handleCloseDetail} />
     </div>
   );

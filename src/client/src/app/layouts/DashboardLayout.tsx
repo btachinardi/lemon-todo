@@ -12,6 +12,11 @@ import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
 import { useThemeStore, resolveTheme } from '@/stores/use-theme-store';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
+import { NotificationDropdown } from '@/domains/notifications/components/widgets/NotificationDropdown';
+import { useOnboardingStatus } from '@/domains/onboarding/hooks/use-onboarding';
+import { OnboardingTour } from '@/domains/onboarding/components/widgets/OnboardingTour';
+import { PWAInstallPrompt } from '@/ui/feedback/PWAInstallPrompt';
+import { SyncIndicator } from '@/ui/feedback/SyncIndicator';
 
 /** Props for {@link DashboardLayout}. */
 interface DashboardLayoutProps {
@@ -25,21 +30,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const resolvedTheme = resolveTheme(theme);
   const roles = useAuthStore((s) => s.user?.roles);
   const isAdmin = roles?.some((r) => r === 'Admin' || r === 'SystemAdmin') ?? false;
+  const { data: onboardingStatus } = useOnboardingStatus();
 
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-3 sm:h-16 sm:px-6">
-          <h1 className="font-mono text-base font-light tracking-normal sm:text-lg">
-            <span className="text-foreground">{t('brand.lemon')}</span>
-            <span className="text-lemon">{t('brand.do')}</span>
+          <h1 className="flex items-center gap-1.5">
+            <img src="/lemondo-icon.png" alt="" className="size-7 sm:size-8" />
+            <span className="font-[var(--font-brand)] text-lg font-black tracking-tight sm:text-xl">
+              <span className="text-foreground">{t('brand.lemon')}</span>
+              <span className="text-lemon">{t('brand.do')}</span>
+            </span>
           </h1>
           <nav
             className="flex items-center gap-1 rounded-lg border-2 border-border/40 bg-secondary/30 p-1"
             aria-label={t('nav.viewSwitcher')}
           >
             <NavLink
-              to="/"
+              to="/board"
               end
               className={({ isActive }) =>
                 cn(
@@ -68,16 +77,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <span className="hidden sm:inline">{t('nav.list')}</span>
             </NavLink>
           </nav>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             {isAdmin && (
               <NavLink
                 to="/admin/users"
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center justify-center gap-1 rounded-md p-2 text-xs text-muted-foreground hover:text-foreground sm:px-2 sm:py-1.5"
               >
-                <ShieldIcon className="size-3" />
+                <ShieldIcon className="size-4 sm:size-3" />
                 <span className="hidden sm:inline">{t('nav.admin')}</span>
               </NavLink>
             )}
+            <NotificationDropdown />
             <LanguageSwitcher />
             <ThemeToggle
               theme={theme}
@@ -112,11 +122,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </Popover>
         </div>
       )}
-      <footer className="pointer-events-none fixed bottom-2 right-3">
+      <footer className="pointer-events-none fixed bottom-2 right-3 flex items-center gap-3">
+        <SyncIndicator />
         <span className="text-[10px] text-muted-foreground/40 select-none">
           v{__APP_VERSION__}
         </span>
       </footer>
+      {onboardingStatus?.completed && <PWAInstallPrompt />}
+      <OnboardingTour />
       <Toaster theme={resolvedTheme} />
     </div>
   );

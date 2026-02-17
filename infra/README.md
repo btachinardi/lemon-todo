@@ -205,6 +205,7 @@ This binds custom domains, provisions managed TLS certificates, and updates CORS
 includes a polling loop that waits up to 5 minutes for managed certificate
 provisioning before binding.
 
+
 ### Verification
 
 ```bash
@@ -220,6 +221,13 @@ The refresh token cookie uses `SameSite=Strict` and `Path=/api/auth`. Since
 `lemondo.btas.dev` and `api.lemondo.btas.dev` share the same registrable
 domain (`btas.dev`), they are "same-site" — cookies are sent automatically.
 No cookie domain configuration changes are needed.
+
+## SPA Routing
+
+The frontend requires `src/client/public/staticwebapp.config.json` with a
+`navigationFallback` rewrite to `/index.html`. Without this, refreshing on
+client-side routes (e.g. `/login`, `/list`) returns 404 from Azure Static Web Apps.
+
 
 ## Security Notes
 

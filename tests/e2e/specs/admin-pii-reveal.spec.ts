@@ -92,30 +92,39 @@ test.describe('Admin Protected Data Reveal', () => {
     // Use the search input if available to narrow down
     const searchInput = page.getByPlaceholder(/search/i);
     if (await searchInput.isVisible()) {
+      // Set up the response listener BEFORE triggering the search
+      const searchResponsePromise = page.waitForResponse(
+        (resp) => resp.url().includes('/api/admin/users'),
+      );
       await searchInput.fill(testUserEmail);
-      // Wait for the table to update
-      await page.waitForResponse((resp) => resp.url().includes('/api/admin/users'));
+      // Wait for the table to update with filtered results
+      await searchResponsePromise;
+      await page.waitForTimeout(500);
     }
 
     // 6. Click the actions dropdown on the first user row
     const actionsButton = page.locator('table tbody tr').first().getByRole('button', { name: 'Actions' });
+    await actionsButton.waitFor({ state: 'visible', timeout: 10000 });
     await actionsButton.click();
 
-    // 7. Click "Reveal Protected Data"
-    await page.getByText('Reveal Protected Data').click();
+    // 7. Click "Reveal Protected Data" from the dropdown menu
+    const revealMenuItem = page.getByRole('menuitem', { name: /Reveal Protected Data/i });
+    await revealMenuItem.waitFor({ state: 'visible' });
+    await revealMenuItem.click();
 
     // 8. Dialog should appear
-    await expect(page.getByText('Reveal Protected Data')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
 
     // 9. Select reason
-    await page.getByText('Select a reason').click();
+    await dialog.getByText('Select a reason').click();
     await page.getByText('Support Ticket').click();
 
     // 10. Enter password
-    await page.getByLabel('Your Password').fill(SYSADMIN_PASSWORD);
+    await dialog.getByLabel('Your Password').fill(SYSADMIN_PASSWORD);
 
     // 11. Submit
-    await page.getByRole('button', { name: 'Reveal Protected Data' }).click();
+    await dialog.getByRole('button', { name: 'Reveal Protected Data' }).click();
 
     // 12. Verify revealed protected data is shown (the email and display name should now be unredacted)
     // The UI shows revealed values in amber color with a countdown timer

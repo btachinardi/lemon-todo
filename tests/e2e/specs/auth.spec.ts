@@ -2,8 +2,14 @@ import { test, expect } from '@playwright/test';
 import { API_BASE } from '../helpers/e2e.config';
 
 test.describe('Authentication', () => {
-  test('unauthenticated user is redirected to /login', async ({ page }) => {
+  test('unauthenticated user sees landing page at /', async ({ page }) => {
     await page.goto('/');
+    // Landing page renders for unauthenticated users
+    await expect(page.getByText('Your Rules.')).toBeVisible();
+  });
+
+  test('unauthenticated user accessing /board is redirected to /login', async ({ page }) => {
+    await page.goto('/board');
     await expect(page).toHaveURL(/\/login/);
     await expect(page.getByText('Welcome back')).toBeVisible();
   });
@@ -14,12 +20,16 @@ test.describe('Authentication', () => {
 
     await page.getByLabel('Display name').fill(`Test User ${unique}`);
     await page.getByLabel('Email').fill(`test-${unique}@lemondo.dev`);
-    await page.getByLabel('Password').fill('TestPass123!');
-    await page.getByRole('button', { name: 'Create account' }).click();
+    await page.getByLabel('Password', { exact: true }).fill('TestPass123!');
+    // Wait for password strength meter to render and button to stabilize
+    const createBtn = page.getByRole('button', { name: 'Create account' });
+    await createBtn.waitFor({ state: 'visible' });
+    await expect(createBtn).toBeEnabled();
+    await createBtn.click();
 
     // Should redirect to the board (empty board shows EmptyBoard, not columns)
     await expect(page.getByLabel('New task title')).toBeVisible({ timeout: 10000 });
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL('/board');
   });
 
   test('login with valid credentials', async ({ page }) => {

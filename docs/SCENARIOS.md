@@ -58,9 +58,9 @@ Task management tools exist on a spectrum:
 - **Too complex** (Jira, Monday.com): Overwhelming for individuals, expensive
 - **Not compliant** (Trello, Todoist): No HIPAA, no audit trail
 
-### Our Position
+### LemonDo's Position
 
-LemonDo sits at the intersection of **simplicity** and **compliance**. We are:
+LemonDo sits at the intersection of **simplicity** and **compliance**. LemonDo is:
 - As simple as Todoist for personal use
 - As visual as Trello with Kanban boards
 - As compliant as enterprise tools for regulated industries
@@ -72,7 +72,7 @@ LemonDo sits at the intersection of **simplicity** and **compliance**. We are:
 > **LemonDo is** a task management platform
 > **That** combines consumer-grade UX with enterprise-grade compliance
 > **Unlike** Trello, Todoist, or Jira
-> **Our product** provides HIPAA-compliant task management with a delightful, mobile-first experience
+> **The product** provides HIPAA-compliant task management with a delightful, mobile-first experience
 
 ---
 
@@ -416,7 +416,7 @@ Day 3: No activity detected
   [analytics: churn_email_sent, days_inactive: 3]
 
 Day 7: Still no activity
-  -> System sends email: "We miss you! Here's what's pending"
+  -> System sends email: "LemonDo misses you! Here's what's pending"
   -> Shows task count, next due date
   -> Highlights a new feature they haven't tried
   [analytics: churn_email_sent, days_inactive: 7]

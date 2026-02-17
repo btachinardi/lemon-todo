@@ -64,7 +64,7 @@ export function ListViewToolbar({
         )}
       >
         <SplitIcon className="size-3.5" />
-        {t('tasks.listToolbar.splitDone')}
+        <span className="hidden sm:inline">{t('tasks.listToolbar.splitDone')}</span>
       </Button>
     </div>
   );

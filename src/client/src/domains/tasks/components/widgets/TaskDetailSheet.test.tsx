@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TaskDetailSheet } from './TaskDetailSheet';
 import { createTask } from '@/test/factories';
@@ -351,6 +351,140 @@ describe('TaskDetailSheet', () => {
 
       expect(onUpdateDescription).not.toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  describe('debounced auto-save', () => {
+    it('should auto-save description after debounce delay when user stops typing', () => {
+      vi.useFakeTimers();
+      const onUpdateDescription = vi.fn();
+      renderSheet({ onUpdateDescription });
+
+      // Let Radix animations settle
+      act(() => vi.advanceTimersByTime(300));
+
+      const textarea = screen.getByDisplayValue('Milk, eggs, bread');
+      fireEvent.change(textarea, { target: { value: 'New grocery list' } });
+
+      // Debounce hasn't fired yet
+      expect(onUpdateDescription).not.toHaveBeenCalled();
+
+      // Advance past debounce delay (1s)
+      act(() => vi.advanceTimersByTime(1000));
+
+      expect(onUpdateDescription).toHaveBeenCalledWith('New grocery list');
+      expect(onUpdateDescription).toHaveBeenCalledTimes(1);
+
+      vi.useRealTimers();
+    });
+
+    it('should NOT auto-save description before debounce delay', () => {
+      vi.useFakeTimers();
+      const onUpdateDescription = vi.fn();
+      renderSheet({ onUpdateDescription });
+
+      act(() => vi.advanceTimersByTime(300));
+
+      const textarea = screen.getByDisplayValue('Milk, eggs, bread');
+      fireEvent.change(textarea, { target: { value: 'New grocery list' } });
+
+      // Only 500ms — should NOT have fired
+      act(() => vi.advanceTimersByTime(500));
+
+      expect(onUpdateDescription).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
+
+    it('should reset debounce timer on continued typing', () => {
+      vi.useFakeTimers();
+      const onUpdateDescription = vi.fn();
+      renderSheet({ onUpdateDescription });
+
+      act(() => vi.advanceTimersByTime(300));
+
+      const textarea = screen.getByDisplayValue('Milk, eggs, bread');
+      fireEvent.change(textarea, { target: { value: 'First' } });
+
+      // Advance 800ms (not enough for 1s debounce)
+      act(() => vi.advanceTimersByTime(800));
+      expect(onUpdateDescription).not.toHaveBeenCalled();
+
+      // Type more — resets the timer
+      fireEvent.change(textarea, { target: { value: 'First draft' } });
+
+      // Advance 800ms again — still not enough since timer was reset
+      act(() => vi.advanceTimersByTime(800));
+      expect(onUpdateDescription).not.toHaveBeenCalled();
+
+      // Advance the remaining 200ms
+      act(() => vi.advanceTimersByTime(200));
+      expect(onUpdateDescription).toHaveBeenCalledWith('First draft');
+      expect(onUpdateDescription).toHaveBeenCalledTimes(1);
+
+      vi.useRealTimers();
+    });
+
+    it('should flush pending description save on component unmount', () => {
+      vi.useFakeTimers();
+      const onUpdateDescription = vi.fn();
+      const { unmount } = renderSheet({ onUpdateDescription });
+
+      act(() => vi.advanceTimersByTime(300));
+
+      const textarea = screen.getByDisplayValue('Milk, eggs, bread');
+      fireEvent.change(textarea, { target: { value: 'Unmount save test' } });
+
+      // Debounce hasn't fired yet
+      expect(onUpdateDescription).not.toHaveBeenCalled();
+
+      // Unmount the component (simulates route change)
+      unmount();
+
+      // The pending save should have flushed on unmount
+      expect(onUpdateDescription).toHaveBeenCalledWith('Unmount save test');
+      expect(onUpdateDescription).toHaveBeenCalledTimes(1);
+
+      vi.useRealTimers();
+    });
+
+    it('should not double-save when debounce fires then blur follows', () => {
+      vi.useFakeTimers();
+      const onUpdateDescription = vi.fn();
+      renderSheet({ onUpdateDescription });
+
+      act(() => vi.advanceTimersByTime(300));
+
+      const textarea = screen.getByDisplayValue('Milk, eggs, bread');
+      fireEvent.change(textarea, { target: { value: 'Single save' } });
+
+      // Let debounce fire
+      act(() => vi.advanceTimersByTime(1000));
+      expect(onUpdateDescription).toHaveBeenCalledTimes(1);
+
+      // Now blur the textarea — should NOT trigger a second save
+      fireEvent.blur(textarea);
+      expect(onUpdateDescription).toHaveBeenCalledTimes(1);
+
+      vi.useRealTimers();
+    });
+
+    it('should not auto-save when description has not changed from server value', () => {
+      vi.useFakeTimers();
+      const onUpdateDescription = vi.fn();
+      renderSheet({ onUpdateDescription });
+
+      act(() => vi.advanceTimersByTime(300));
+
+      // Focus the textarea but don't change its value
+      const textarea = screen.getByDisplayValue('Milk, eggs, bread');
+      fireEvent.focus(textarea);
+
+      act(() => vi.advanceTimersByTime(2000));
+
+      expect(onUpdateDescription).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
     });
   });
 

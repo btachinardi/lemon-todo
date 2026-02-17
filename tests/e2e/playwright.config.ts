@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 const config = JSON.parse(
   fs.readFileSync(path.resolve(import.meta.dirname, 'e2e.config.json'), 'utf-8'),
@@ -9,6 +9,8 @@ const config = JSON.parse(
 const API_PORT = config.apiPort;
 const CLIENT_PORT = config.clientPort;
 
+const isCI = !!process.env.CI;
+
 export default defineConfig({
   testDir: './specs',
   fullyParallel: false,
@@ -16,6 +18,12 @@ export default defineConfig({
   retries: 0,
   reporter: 'html',
   timeout: 30_000,
+
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.01,
+    },
+  },
 
   use: {
     baseURL: `http://localhost:${CLIENT_PORT}`,
@@ -29,6 +37,32 @@ export default defineConfig({
       name: 'chromium',
       use: { browserName: 'chromium' },
     },
+    // Firefox and WebKit — local only (too slow for CI)
+    ...(!isCI
+      ? [
+          {
+            name: 'firefox',
+            use: { browserName: 'firefox' as const },
+          },
+          {
+            name: 'webkit',
+            use: { browserName: 'webkit' as const },
+          },
+          // Device emulation — local only
+          {
+            name: 'iphone-14',
+            use: { ...devices['iPhone 14'] },
+          },
+          {
+            name: 'ipad-mini',
+            use: { ...devices['iPad Mini'] },
+          },
+          {
+            name: 'pixel-7',
+            use: { ...devices['Pixel 7'] },
+          },
+        ]
+      : []),
   ],
 
   webServer: [

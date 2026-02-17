@@ -19,6 +19,7 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { useAuditLog } from '../../hooks/use-audit-queries';
 import { AuditLogRow } from '../widgets/AuditLogRow';
+import { AuditLogCard } from '../widgets/AuditLogCard';
 import type { AuditAction, AuditLogFilters } from '../../types/audit.types';
 
 const AUDIT_ACTIONS: AuditAction[] = [
@@ -55,12 +56,12 @@ export function AuditLogView() {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end">
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">{t('admin.audit.from')}</label>
           <Input
             type="date"
-            className="w-40"
+            className="sm:w-40"
             value={filters.dateFrom ?? ''}
             onChange={(e) => updateFilter({ dateFrom: e.target.value || undefined })}
           />
@@ -69,7 +70,7 @@ export function AuditLogView() {
           <label className="text-xs font-medium text-muted-foreground">{t('admin.audit.to')}</label>
           <Input
             type="date"
-            className="w-40"
+            className="sm:w-40"
             value={filters.dateTo ?? ''}
             onChange={(e) => updateFilter({ dateTo: e.target.value || undefined })}
           />
@@ -80,7 +81,7 @@ export function AuditLogView() {
             value={filters.action ?? '__all__'}
             onValueChange={(v) => updateFilter({ action: v === '__all__' ? undefined : (v as AuditAction) })}
           >
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="sm:w-44">
               <SelectValue placeholder={t('admin.audit.allActions')} />
             </SelectTrigger>
             <SelectContent>
@@ -99,7 +100,7 @@ export function AuditLogView() {
             value={filters.resourceType ?? '__all__'}
             onValueChange={(v) => updateFilter({ resourceType: v === '__all__' ? undefined : v })}
           >
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="sm:w-32">
               <SelectValue placeholder={t('admin.audit.allResources')} />
             </SelectTrigger>
             <SelectContent>
@@ -114,8 +115,8 @@ export function AuditLogView() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
+      {/* Table (desktop) */}
+      <div className="hidden rounded-md border sm:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -145,6 +146,17 @@ export function AuditLogView() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Cards (mobile) */}
+      <div className="space-y-3 sm:hidden">
+        {isLoading ? (
+          <p className="py-8 text-center text-muted-foreground">{t('common.loading')}</p>
+        ) : data && data.items.length > 0 ? (
+          data.items.map((entry) => <AuditLogCard key={entry.id} entry={entry} />)
+        ) : (
+          <p className="py-8 text-center text-muted-foreground">{t('admin.audit.noEntries')}</p>
+        )}
       </div>
 
       {/* Pagination */}

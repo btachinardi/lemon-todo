@@ -1,5 +1,6 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { loginViaApi } from '../helpers/auth.helpers';
+import { completeOnboarding } from '../helpers/onboarding.helpers';
 
 let context: BrowserContext;
 let page: Page;
@@ -9,6 +10,7 @@ test.describe.serial('Task Lifecycle', () => {
     context = await browser.newContext();
     page = await context.newPage();
     await loginViaApi(page);
+    await completeOnboarding();
   });
 
   test.afterAll(async () => {
@@ -16,7 +18,7 @@ test.describe.serial('Task Lifecycle', () => {
   });
 
   test('create task via form click -> appears on board, input clears', async () => {
-    await page.goto('/');
+    await page.goto('/board');
 
     const input = page.getByLabel('New task title');
     await input.fill('Buy groceries');
@@ -27,7 +29,7 @@ test.describe.serial('Task Lifecycle', () => {
   });
 
   test('create task via Enter key -> appears on board', async () => {
-    await page.goto('/');
+    await page.goto('/board');
 
     const input = page.getByLabel('New task title');
     await input.fill('Walk the dog');
@@ -37,12 +39,12 @@ test.describe.serial('Task Lifecycle', () => {
   });
 
   test('empty title -> Add button disabled', async () => {
-    await page.goto('/');
+    await page.goto('/board');
     await expect(page.getByRole('button', { name: /add/i })).toBeDisabled();
   });
 
   test('complete task -> button changes to Mark as incomplete', async () => {
-    await page.goto('/');
+    await page.goto('/board');
 
     // Create a task first
     const input = page.getByLabel('New task title');
@@ -57,7 +59,7 @@ test.describe.serial('Task Lifecycle', () => {
 
   test('uncomplete task -> button changes back to Mark as complete', async () => {
     // The "Complete me" task from prior test is still completed
-    await page.goto('/');
+    await page.goto('/board');
 
     // Uncomplete it
     await page.getByRole('button', { name: 'Mark as incomplete' }).first().click();

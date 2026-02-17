@@ -31,6 +31,7 @@ public static class AuthEndpoints
         group.MapPost("/refresh", Refresh).AllowAnonymous();
         group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetMe).RequireAuthorization();
+        group.MapPost("/reveal-profile", RevealProfile).RequireAuthorization();
 
         return group;
     }
@@ -116,6 +117,19 @@ public static class AuthEndpoints
 
         // Returns redacted values from domain User entity
         return Results.Ok(new UserResponse(user.Id.Value, user.RedactedEmail, user.RedactedDisplayName, roles));
+    }
+
+    private static async Task<IResult> RevealProfile(
+        RevealOwnProfileCommandHandler handler,
+        RevealProfileRequest request,
+        HttpContext httpContext,
+        CancellationToken ct)
+    {
+        var command = new RevealOwnProfileCommand(request.Password);
+        var result = await handler.HandleAsync(command, ct);
+        return result.ToHttpResult(
+            data => Results.Ok(new RevealedProfileResponse(data.Email, data.DisplayName)),
+            httpContext: httpContext);
     }
 
     private static IResult SetCookieAndReturnResponse(HttpContext httpContext, AuthResult auth, JwtSettings jwt)

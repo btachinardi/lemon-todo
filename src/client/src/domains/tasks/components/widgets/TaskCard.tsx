@@ -73,6 +73,7 @@ export const TaskCard = memo(function TaskCard({
       tabIndex={isDragging ? -1 : 0}
       role="button"
       aria-label={t('tasks.card.ariaLabel', { title: task.title })}
+      {...(isDone ? { 'data-onboarding': 'task-done' } : {})}
       onClick={() => !isDragging && onSelect?.(task.id)}
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && !isDragging) {

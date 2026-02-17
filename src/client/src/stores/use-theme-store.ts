@@ -21,9 +21,16 @@ export function resolveTheme(theme: Theme): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+/** Background hex colors matching CSS --background for each theme. */
+const themeBackground: Record<'light' | 'dark', string> = {
+  dark: '#000000',
+  light: '#f3f3f3',
+};
+
 /**
- * Applies the resolved theme class to the document root element.
- * Side effect: Mutates document.documentElement.classList (removes 'light'/'dark', adds resolved theme).
+ * Applies the resolved theme class to the document root element and updates
+ * the PWA theme-color meta tag to match the background.
+ * Side effect: Mutates document.documentElement.classList and meta[name="theme-color"].
  *
  * @param theme - The user's theme preference to apply.
  */
@@ -32,6 +39,9 @@ export function applyThemeClass(theme: Theme): void {
   const root = document.documentElement;
   root.classList.remove('light', 'dark');
   root.classList.add(resolved);
+
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', themeBackground[resolved]);
 }
 
 /** Zustand store for theme preference. Persisted to localStorage. */

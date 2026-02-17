@@ -19,7 +19,8 @@ interface DevAccount {
   accent: string;
 }
 
-const DEV_ACCOUNTS: DevAccount[] = [
+// eslint-disable-next-line react-refresh/only-export-components
+export const DEV_ACCOUNTS: DevAccount[] = [
   {
     email: 'dev.user@lemondo.dev',
     password: 'User1234',
@@ -77,7 +78,7 @@ export function DevAccountSwitcher() {
         password: account.password,
       });
       setAuth(response.accessToken, response.user);
-      navigate('/', { replace: true });
+      navigate('/board', { replace: true });
     } catch {
       // Login failed — stay on current page
     } finally {

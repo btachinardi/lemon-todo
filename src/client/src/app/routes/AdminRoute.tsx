@@ -21,7 +21,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
 
   const isAdmin = roles?.some((r) => r === 'Admin' || r === 'SystemAdmin') ?? false;
   if (!isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/board" replace />;
   }
 
   return <>{children}</>;

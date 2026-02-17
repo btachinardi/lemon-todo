@@ -3,6 +3,7 @@ import type {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
+  RevealedProfile,
   UserProfile,
 } from '../types/auth.types';
 
@@ -57,5 +58,15 @@ export const authApi = {
    */
   me(): Promise<UserProfile> {
     return apiClient.get<UserProfile>(`${BASE}/me`);
+  },
+
+  /**
+   * Reveals the current user's unredacted profile data after password re-authentication.
+   * @param password - The user's current password for re-authentication
+   * @returns The unredacted email and display name
+   * @throws {ApiRequestError} With 401 status if password is incorrect
+   */
+  revealProfile(password: string): Promise<RevealedProfile> {
+    return apiClient.post<RevealedProfile>(`${BASE}/reveal-profile`, { password });
   },
 };

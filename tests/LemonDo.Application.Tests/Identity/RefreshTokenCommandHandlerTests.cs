@@ -38,7 +38,7 @@ public sealed class RefreshTokenCommandHandlerTests
                 (TestUserId, new AuthTokens("new-access", "new-refresh", new List<string> { "User" }.AsReadOnly()))));
 
         _userRepository.GetByIdAsync(TestUserId, Arg.Any<CancellationToken>())
-            .Returns(User.Reconstitute(TestUserId, "t***@example.com", "T***r", false));
+            .Returns(User.Reconstitute(TestUserId, "t***@example.com", "T***r", false, null));
 
         var command = new RefreshTokenCommand("valid-refresh-token");
         var result = await _handler.HandleAsync(command);

@@ -23,3 +23,9 @@ public sealed record AuthResponse(string AccessToken, UserResponse User);
 /// Email and DisplayName are redacted forms of the original values for privacy.
 /// </remarks>
 public sealed record UserResponse(Guid Id, string Email, string DisplayName, IReadOnlyList<string> Roles);
+
+/// <summary>Request body for <c>POST /api/auth/reveal-profile</c>.</summary>
+public sealed record RevealProfileRequest(string Password);
+
+/// <summary>Response containing the user's unredacted profile data after password re-authentication.</summary>
+public sealed record RevealedProfileResponse(string Email, string DisplayName);

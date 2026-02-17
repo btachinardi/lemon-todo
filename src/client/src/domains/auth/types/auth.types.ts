@@ -24,3 +24,9 @@ export interface AuthResponse {
   accessToken: string;
   user: UserProfile;
 }
+
+/** Response from `POST /api/auth/reveal-profile` containing unredacted profile data. */
+export interface RevealedProfile {
+  email: string;
+  displayName: string;
+}

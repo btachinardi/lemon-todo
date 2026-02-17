@@ -9,9 +9,9 @@
 ## Assumptions
 
 - **Single developer, time-boxed**: The project is designed for incremental delivery with meaningful checkpoints, not waterfall completion.
-- **SQLite is sufficient for MVP**: Our data model is simple (tasks, boards, users). The repository pattern makes swapping to PostgreSQL a one-file change when scaling requires it.
-- **Evaluators have .NET 10 SDK + Node.js 23+**: We target the latest LTS runtime. Aspire handles service orchestration so `dotnet run` starts everything.
-- **Browser-first, not native**: We chose PWA over native apps. Service workers provide offline support without app store distribution.
+- **SQLite is sufficient for MVP**: The data model is simple (tasks, boards, users). The repository pattern makes swapping to PostgreSQL a one-file change when scaling requires it.
+- **Evaluators have .NET 10 SDK + Node.js 23+**: The project targets the latest LTS runtime. Aspire handles service orchestration so `dotnet run` starts everything.
+- **Browser-first, not native**: LemonDo uses PWA over native apps. Service workers provide offline support without app store distribution.
 
 ---
 
@@ -19,9 +19,9 @@
 
 ### Planning & Delivery
 
-| Trade-off | What we chose | What we gave up | Why |
+| Trade-off | Chosen approach | Alternative forgone | Why |
 |---|---|---|---|
-| **Delivery strategy** | 5 incremental checkpoints, each a runnable app | Build everything at once | If we stop at any checkpoint, we have something presentable; proves extensibility without over-building |
+| **Delivery strategy** | 5 incremental checkpoints, each a runnable app | Build everything at once | If delivery stops at any checkpoint, there is something presentable; proves extensibility without over-building |
 | **Auth timing** | Tasks first (CP1), auth second (CP2) | Auth-gated MVP from day one | Demonstrates architecture faster; adding user-scoping is a one-line repository change |
 | **HIPAA** | Technical controls ("HIPAA-Ready") | Full certification | Certification requires legal/BAA framework beyond code scope |
 | **Bounded contexts** | All 6 designed, 2-4 implemented per checkpoint | Implement all at once | Incremental delivery proves extensibility without over-building |
@@ -29,7 +29,7 @@
 
 ### Technology Choices
 
-| Trade-off | What we chose | What we gave up | Why |
+| Trade-off | Chosen approach | Alternative forgone | Why |
 |---|---|---|---|
 | **Database** | SQLite | PostgreSQL/SQL Server | Zero-config for evaluators; repository pattern means swap is trivial |
 | **Test framework** | MSTest 4 + MTP | xUnit v3 | xUnit v3 had a .NET 10 "catastrophic failure" bug (#3413), hardcoded net8.0 targets; MSTest is first-party with same-day .NET compatibility |
@@ -40,7 +40,7 @@
 
 ### Domain Design
 
-| Trade-off | What we chose | What we gave up | Why |
+| Trade-off | Chosen approach | Alternative forgone | Why |
 |---|---|---|---|
 | **Column-Status relationship** | Column determines status (one source of truth) | Independent status enum and column position | Two sources of truth always desync eventually; making column authoritative eliminated an entire class of bugs |
 | **ColumnRole enum** | Direct `TargetStatus: TaskStatus` on Column | Separate ColumnRole enum | ColumnRole was a 1:1 mapping to TaskStatus; direct usage is clearer than an indirection layer |
@@ -50,17 +50,17 @@
 
 ### Bounded Context Architecture
 
-| Trade-off | What we chose | What we gave up | Why |
+| Trade-off | Chosen approach | Alternative forgone | Why |
 |---|---|---|---|
 | **Context split** | Separate Task context (upstream) + Board context (downstream) | Single "Task Management" bounded context | Task carried board responsibilities (ColumnId, Position); splitting gives each context clear ownership and independent evolution |
 | **Spatial placement** | Board owns `TaskCard` (TaskId + ColumnId + Rank) | Task stores ColumnId and Position directly | Which column a task sits in is a board layout concern, not a task identity concern; separation follows DDD aggregate boundaries |
-| **Context relationship** | Conformist (Board imports TaskId/TaskStatus from Task) | Anti-corruption layer or shared kernel | We own both contexts in the same process; direct dependency is simpler and appropriate for a monolith |
+| **Context relationship** | Conformist (Board imports TaskId/TaskStatus from Task) | Anti-corruption layer or shared kernel | Both contexts live in the same process; direct dependency is simpler and appropriate for a monolith |
 | **Cross-context coordination** | Application-layer handlers orchestrate both aggregates | Domain-level coupling between contexts | Handlers coordinate CreateTask = Task.Create + board.PlaceTask, keeping domain layers independent |
 | **Entity naming** | `Task` (with `using TaskEntity = ...` alias for collisions) | `BoardTask` or `TaskItem` | Tasks exist independently of boards; the name should reflect that; alias handles System.Threading.Tasks.Task collision |
 
 ### Authentication & Security
 
-| Trade-off | What we chose | What we gave up | Why |
+| Trade-off | Chosen approach | Alternative forgone | Why |
 |---|---|---|---|
 | **Identity vs Domain User separation** | Two tables (AspNetUsers for credentials, Users for profile) | Single ApplicationUser with all data | ASP.NET Identity designed for auth only; overloading with profile data violates SRP; separation enables domain User to evolve independently and simplifies protected data handling |
 | **User entity shape** | Stores redacted strings (`RedactedEmail: string`) | Store Email/DisplayName VOs on entity | Storing `"j***@example.com"` in an `Email` VO creates semantic confusion; VOs used for validation during `Create()`, then `.Redacted` values extracted and stored |
@@ -87,9 +87,9 @@
 
 ### Card Ordering & API Design
 
-| Trade-off | What we chose | What we gave up | Why |
+| Trade-off | Chosen approach | Alternative forgone | Why |
 |---|---|---|---|
-| **Ordering strategy** | Sparse decimal ranks (1000, 2000, 3000; midpoint inserts) | Dense integers, LexoRank strings, linked list pointers, CRDT | Simplest strategy that eliminates the position-collision bug class; only updates one row per move; decimal avoids float precision drift; LexoRank adds unnecessary complexity at our scale |
+| **Ordering strategy** | Sparse decimal ranks (1000, 2000, 3000; midpoint inserts) | Dense integers, LexoRank strings, linked list pointers, CRDT | Simplest strategy that eliminates the position-collision bug class; only updates one row per move; decimal avoids float precision drift; LexoRank adds unnecessary complexity at this scale |
 | **Move API contract** | Neighbor card IDs (`previousTaskId`/`nextTaskId`) | Frontend sends array index or rank directly | Intent-based ("place between these two cards") survives backend strategy changes; frontend stays dumb, backend avoids read-to-sort, API contract is unambiguous |
 | **Orphan cleanup** | Delete removes card; Archive preserves card on board | Symmetric handling (both remove or both preserve) | Asymmetric by intent: deletion is destructive with no undelete, so card is removed; archive is reversible, so card stays for rank restoration on unarchive |
 | **Orphan filtering** | Board query handlers filter out archived/deleted task cards at read time | Eager cleanup on every archive/delete | Preserves archived card placement in the database while presenting clean data to the frontend; read-layer filtering is cheaper than write-layer coordination |
@@ -98,18 +98,18 @@
 
 ### Rich UX & Polish (CP3)
 
-| Trade-off | What we chose | What we gave up | Why |
+| Trade-off | Chosen approach | Alternative forgone | Why |
 |---|---|---|---|
 | **Drag-and-drop library** | @dnd-kit (modular, actively maintained) | react-beautiful-dnd | rbd is unmaintained (last release 2021); @dnd-kit is modular, supports touch/keyboard, has first-class React 19 support |
 | **Task detail panel** | Slide-over Sheet | Modal Dialog | Sheet keeps board/list visible in background, provides spatial context, supports mobile swipe-to-dismiss; modals feel heavier and block the view |
 | **Filtering strategy** | Client-side filtering + backend query params | Server-side only or client-side only | Client-side gives instant UX (no round-trip); backend params ready for future pagination/scale; dual approach is fast today and scalable tomorrow |
 | **Theme persistence** | Separate Zustand store with `persist` | Single store or CSS-only | Auth store deliberately avoids `persist` (security); theme is non-sensitive UI state that should survive refresh; separate store keeps concerns isolated |
 | **Error boundary scope** | Per-route `errorElement` | Single global error boundary | Route-level granularity contains failures to the affected route; global boundary unmounts entire app on any error |
-| **Date library** | date-fns 4 (tree-shakeable, functional) | dayjs, moment, Temporal API | Tree-shakeable (only import what we use), no global mutation; Temporal API not yet universally available |
+| **Date library** | date-fns 4 (tree-shakeable, functional) | dayjs, moment, Temporal API | Tree-shakeable (only import what is used), no global mutation; Temporal API not yet universally available |
 | **Calendar component** | react-day-picker 9 (Shadcn default) | Custom calendar or alternative library | Shadcn Calendar is built on react-day-picker; using the standard primitive avoids custom styling work |
 | **Loading states** | Dedicated skeleton components | Loading spinners or `isLoading` prop on components | Skeletons mirror loaded layout exactly, preventing layout shift; separate components keep loaded components clean |
 | **Empty states** | Dedicated empty state components with CTAs | Inline conditional text | Dedicated components provide better UX with illustrations and actionable CTAs; reusable across views |
-| **Bundle size** | Single chunk (691 KB JS) | Code-splitting with dynamic imports | All CP3 features are used on every page load; code-splitting deferred to CP4/CP5 when we add admin panel and other lazy-loaded routes |
+| **Bundle size** | Single chunk (691 KB JS) | Code-splitting with dynamic imports | All CP3 features are used on every page load; code-splitting deferred to CP4/CP5 when the admin panel is added and other lazy-loaded routes |
 
 ---
 
@@ -122,7 +122,7 @@
 - Aspire orchestration generates Kubernetes manifests - deployment scales via `aspire do`
 - Domain events decouple mutations from side effects - adding audit logging, notifications, or analytics is event subscription, not code modification
 
-### What we'd add for production scale
+### What production scale would require
 
 - **Database migration**: PostgreSQL with connection pooling (PgBouncer) behind the repository interface
 - **Caching layer**: Redis for session storage and query caching (Aspire has built-in Redis integration)
