@@ -214,9 +214,13 @@ cmd_test() {
       header "E2E Tests (Playwright — UI mode)"
       (cd "$E2E_DIR" && pnpm test:ui "$@")
       ;;
+    e2e:update-snapshots)
+      header "E2E Tests — Update Snapshots"
+      (cd "$E2E_DIR" && pnpm test:update-snapshots "$@")
+      ;;
     *)
       err "Unknown test target: $target"
-      echo "Usage: ./dev test [all|backend|backend:sql|backend:both|frontend|e2e|e2e:sql|e2e:headed|e2e:ui]"
+      echo "Usage: ./dev test [all|backend|backend:sql|backend:both|frontend|e2e|e2e:sql|e2e:headed|e2e:ui|e2e:update-snapshots]"
       exit 1
       ;;
   esac
@@ -584,6 +588,7 @@ cmd_help() {
       e2e:sql                 E2E tests (Playwright, SQL Server)
       e2e:headed              E2E tests with browser visible
       e2e:ui                  E2E Playwright UI mode
+      e2e:update-snapshots    Regenerate visual regression snapshots
 
     lint                      Frontend ESLint
 
@@ -622,6 +627,7 @@ cmd_help() {
     ./dev test backend:sql
     ./dev test e2e
     ./dev test e2e:headed
+    ./dev test e2e:update-snapshots
     ./dev start
     ./dev start api
     ./dev migrate add AddNewColumn
@@ -638,6 +644,14 @@ EOF
 # ── Main dispatch ─────────────────────────────────────────────────────
 command="${1:-help}"
 shift 2>/dev/null || true
+
+# Strip bare '--' separators so passthrough args reach subcommands cleanly.
+# e.g. ./dev test e2e -- --project=chromium → cmd_test receives: e2e --project=chromium
+args=()
+for arg in "$@"; do
+  [[ "$arg" == "--" ]] || args+=("$arg")
+done
+set -- "${args[@]+"${args[@]}"}"
 
 case "$command" in
   install)     cmd_install "$@" ;;
