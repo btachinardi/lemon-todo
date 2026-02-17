@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-02-17
+
+Patch release with mobile UX polish — fixed toast overlay, kanban drag-scroll, banner overflow, and a redesigned demo account switcher.
+
+### Changed
+
+- **Dev account switcher redesigned** — vague "Dev" button replaced with contextual selector showing the active account's role icon and label with accent colors; inactive state shows "Switch demo account" with flask icon; added `aria-current` and disabled state for active account; new `switchAccount` i18n key across all 3 locales
+
+### Fixed
+
+- **Toasts blocking mobile quick-add input** — raised mobile toast offset above the fixed-bottom QuickAddForm bar and added close buttons to all toasters for immediate dismissal
+- **Kanban column auto-scroll triggering on any horizontal drag movement** — removed distance-based column snap trigger; scrolling now only activates in 60px edge zones at viewport sides
+- **AssignmentBanner modal overflowing viewport on mobile** — removed over-constrained `w-full` on fixed modal panel; added viewport-relative `max-width` on floating bubble for narrow screens
+
 ## [1.0.4] - 2026-02-17
 
 Patch release improving mobile UX — keyboard-aware dialogs, scrollable modals, better drag-scroll behavior, a loading screen for auth hydration, bumped font size hierarchy, and tightened i18n copy.
@@ -442,7 +456,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.4...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.5...HEAD
+[1.0.5]: https://github.com/btachinardi/lemon-todo/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/btachinardi/lemon-todo/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/btachinardi/lemon-todo/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/btachinardi/lemon-todo/compare/v1.0.1...v1.0.2

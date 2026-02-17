@@ -29,8 +29,6 @@ const DROP_ANIMATION = { duration: 200, easing: 'ease-out' } as const;
 const EDGE_THRESHOLD_PX = 60;
 /** Minimum ms between column snaps — allows the smooth scroll animation to settle. */
 const SNAP_COOLDOWN_MS = 800;
-/** Minimum horizontal distance (px) from the last snap point to trigger the next snap. */
-const SNAP_DISTANCE_PX = 80;
 /** Tailwind `sm` breakpoint — column snap only applies below this width. */
 const SM_BREAKPOINT = 640;
 
@@ -147,7 +145,6 @@ export function KanbanBoard({
   const initialPointerRef = useRef<{ x: number } | null>(null);
   const lastSnapTimeRef = useRef(0);
   const currentColumnIndexRef = useRef(0);
-  const snapAnchorXRef = useRef(0);
   const hasLeftEdgeZoneRef = useRef(true);
 
   // Native pointer tracking — immune to dnd-kit's scroll-offset compensation.
@@ -200,7 +197,6 @@ export function KanbanBoard({
       pointerX = (activator as MouseEvent).clientX;
     }
     initialPointerRef.current = { x: pointerX };
-    snapAnchorXRef.current = pointerX;
     hasLeftEdgeZoneRef.current = true;
 
     // Start tracking raw pointer position via native events.
@@ -224,12 +220,9 @@ export function KanbanBoard({
     }
   }, [columnItems]);
 
-  // Column-snap auto-scroll: on mobile, when the pointer nears the viewport
-  // edge during drag, scroll one column at a time. Two trigger mechanisms:
-  // 1. Edge zones (primary): pointer within EDGE_THRESHOLD of viewport edge,
-  //    but requires re-entry — pointer must leave the zone before it re-triggers.
-  // 2. Distance from anchor (secondary): pointer moved >= SNAP_DISTANCE from
-  //    the last snap position, enabling easy reverse-direction snapping.
+  // Column-snap auto-scroll: on mobile, when the pointer enters the edge
+  // activation zones during drag, scroll one column at a time. The pointer
+  // must leave all edge zones before re-entering to trigger another snap.
   const handleDragMove = useCallback((event: DragMoveEvent) => {
     const container = scrollContainerRef.current;
     if (!container || !initialPointerRef.current || window.innerWidth >= SM_BREAKPOINT) return;
@@ -251,19 +244,11 @@ export function KanbanBoard({
     if (now - lastSnapTimeRef.current < SNAP_COOLDOWN_MS) return;
 
     const maxIndex = sortedColumns.length - 1;
-    const dx = pointerX - snapAnchorXRef.current;
     let targetIndex: number | null = null;
 
-    // Primary: edge zone detection (requires re-entry after each snap)
     if (inRightZone && hasLeftEdgeZoneRef.current) {
       targetIndex = Math.min(maxIndex, currentColumnIndexRef.current + 1);
     } else if (inLeftZone && hasLeftEdgeZoneRef.current) {
-      targetIndex = Math.max(0, currentColumnIndexRef.current - 1);
-    }
-    // Secondary: distance-based detection (enables reverse-direction snapping)
-    else if (dx > SNAP_DISTANCE_PX) {
-      targetIndex = Math.min(maxIndex, currentColumnIndexRef.current + 1);
-    } else if (dx < -SNAP_DISTANCE_PX) {
       targetIndex = Math.max(0, currentColumnIndexRef.current - 1);
     }
 
@@ -271,7 +256,6 @@ export function KanbanBoard({
       scrollToColumn(container, targetIndex);
       currentColumnIndexRef.current = targetIndex;
       lastSnapTimeRef.current = now;
-      snapAnchorXRef.current = pointerX;
       hasLeftEdgeZoneRef.current = false;
     }
   }, [sortedColumns.length]);
@@ -311,7 +295,7 @@ export function KanbanBoard({
       setActiveId(null);
       initialPointerRef.current = null;
       lastSnapTimeRef.current = 0;
-      snapAnchorXRef.current = 0;
+  
       hasLeftEdgeZoneRef.current = true;
       lastPointerClientXRef.current = null;
       pointerTrackingCleanupRef.current?.();
@@ -369,7 +353,7 @@ export function KanbanBoard({
     setColumnItems(buildColumnItems(board));
     initialPointerRef.current = null;
     lastSnapTimeRef.current = 0;
-    snapAnchorXRef.current = 0;
+
     hasLeftEdgeZoneRef.current = true;
     lastPointerClientXRef.current = null;
     pointerTrackingCleanupRef.current?.();

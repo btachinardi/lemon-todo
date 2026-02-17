@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { FlaskConicalIcon, ShieldIcon, CrownIcon, UserIcon } from 'lucide-react';
+import { CheckIcon, FlaskConicalIcon, ShieldIcon, CrownIcon, UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDemoAccountsEnabled } from '@/domains/config/hooks/use-config';
 import { authApi } from '../api/auth.api';
@@ -51,15 +51,25 @@ export const DEV_ACCOUNTS: DevAccount[] = [
   },
 ];
 
+/** Returns the matching dev account for the given email, or undefined if not a dev account. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function getActiveDevAccount(email: string | undefined): DevAccount | undefined {
+  if (!email) return undefined;
+  return DEV_ACCOUNTS.find((a) => a.email === email);
+}
+
 /** Quick login selector for seeded demo accounts (controlled by feature flag). */
 export function DevAccountSwitcher() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const userEmail = useAuthStore((s) => s.user?.email);
   const setAuth = useAuthStore((s) => s.setAuth);
   const logout = useAuthStore((s) => s.logout);
   const [switchingRole, setSwitchingRole] = useState<string | null>(null);
   const { data: demoEnabled } = useDemoAccountsEnabled();
+
+  const activeAccount = getActiveDevAccount(userEmail ?? undefined);
 
   if (!demoEnabled) return null;
 
@@ -106,17 +116,20 @@ export function DevAccountSwitcher() {
       <div className="grid gap-2 overflow-hidden">
         {DEV_ACCOUNTS.map((account) => {
           const Icon = account.icon;
-          const isActive = switchingRole === account.roleKey;
+          const isCurrent = activeAccount?.roleKey === account.roleKey;
+          const isBeingSwitched = switchingRole === account.roleKey;
           return (
             <button
               key={account.roleKey}
               type="button"
-              disabled={isSwitching}
+              disabled={isSwitching || isCurrent}
+              aria-current={isCurrent || undefined}
               onClick={() => handleSwitch(account)}
               className={cn(
                 'group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all',
                 'hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 'disabled:pointer-events-none disabled:opacity-50',
+                isCurrent && 'ring-2 ring-ring',
                 account.accent,
               )}
             >
@@ -130,12 +143,15 @@ export function DevAccountSwitcher() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-base font-medium text-foreground">
-                  {isActive ? t('auth.devSwitcher.switching') : t(account.labelKey)}
+                  {isBeingSwitched ? t('auth.devSwitcher.switching') : t(account.labelKey)}
                 </p>
                 <p className="truncate text-sm text-muted-foreground">
                   {t(account.descKey)}
                 </p>
               </div>
+              {isCurrent && (
+                <CheckIcon className="size-4 shrink-0 text-primary" />
+              )}
             </button>
           );
         })}

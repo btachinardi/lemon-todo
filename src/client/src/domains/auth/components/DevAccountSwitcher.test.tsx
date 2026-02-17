@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
-import { DevAccountSwitcher } from './DevAccountSwitcher';
+import { DevAccountSwitcher, getActiveDevAccount, DEV_ACCOUNTS } from './DevAccountSwitcher';
 import { useAuthStore } from '../stores/use-auth-store';
 
 // Mock authApi
@@ -180,5 +180,73 @@ describe('DevAccountSwitcher', () => {
     const { container } = render(<DevAccountSwitcher />, { wrapper: createWrapper() });
 
     expect(container.innerHTML).toBe('');
+  });
+
+  it('should mark the active dev account when user email matches', () => {
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'dev.admin@lemondo.dev', displayName: 'D** A***', roles: ['User', 'Admin'] },
+      isAuthenticated: true,
+    });
+
+    render(<DevAccountSwitcher />, { wrapper: createWrapper() });
+
+    // The active account button should have an "Active" indicator
+    const adminButton = screen.getByText('Admin').closest('button')!;
+    expect(adminButton).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('should not mark any account as active when user is not a dev account', () => {
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'regular@example.com', displayName: 'Regular', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(<DevAccountSwitcher />, { wrapper: createWrapper() });
+
+    const buttons = screen.getAllByRole('button');
+    buttons.forEach((button) => {
+      expect(button).not.toHaveAttribute('aria-current', 'true');
+    });
+  });
+
+  it('should disable the active account button to prevent re-login', () => {
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'dev.user@lemondo.dev', displayName: 'D** U***', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(<DevAccountSwitcher />, { wrapper: createWrapper() });
+
+    const userButton = screen.getByText('User').closest('button')!;
+    expect(userButton).toBeDisabled();
+  });
+});
+
+describe('getActiveDevAccount', () => {
+  it('should return the matching dev account for a dev email', () => {
+    const account = getActiveDevAccount('dev.admin@lemondo.dev');
+    expect(account).toBeDefined();
+    expect(account!.roleKey).toBe('admin');
+  });
+
+  it('should return undefined for a non-dev email', () => {
+    const account = getActiveDevAccount('regular@example.com');
+    expect(account).toBeUndefined();
+  });
+
+  it('should return undefined for null email', () => {
+    const account = getActiveDevAccount(undefined);
+    expect(account).toBeUndefined();
+  });
+
+  it('should match all three dev accounts', () => {
+    for (const devAccount of DEV_ACCOUNTS) {
+      const result = getActiveDevAccount(devAccount.email);
+      expect(result).toBeDefined();
+      expect(result!.roleKey).toBe(devAccount.roleKey);
+    }
   });
 });
