@@ -125,6 +125,48 @@ describe('AssignmentBanner', () => {
     });
   });
 
+  describe('modal scroll behavior', () => {
+    it('should use flex column layout on the modal panel to separate header, body, and CTAs', () => {
+      renderWithRouter(<AssignmentBanner />);
+      advancePastBubbleAndModal();
+
+      const modal = screen.getByRole('dialog');
+      const classes = modal.className;
+
+      expect(classes).toContain('flex');
+      expect(classes).toContain('flex-col');
+    });
+
+    it('should not have overflow-y-auto on the modal container itself', () => {
+      renderWithRouter(<AssignmentBanner />);
+      advancePastBubbleAndModal();
+
+      const modal = screen.getByRole('dialog');
+      expect(modal.className).not.toContain('overflow-y-auto');
+    });
+
+    it('should have overflow-y-auto on the body content area only', () => {
+      renderWithRouter(<AssignmentBanner />);
+      advancePastBubbleAndModal();
+
+      // The body contains the message paragraphs
+      const bodyText = screen.getByText('This is a take-home assignment.');
+      const bodyContainer = bodyText.parentElement!;
+
+      expect(bodyContainer.className).toContain('overflow-y-auto');
+    });
+
+    it('should have min-h-0 on the body to allow flex shrinking below content size', () => {
+      renderWithRouter(<AssignmentBanner />);
+      advancePastBubbleAndModal();
+
+      const bodyText = screen.getByText('This is a take-home assignment.');
+      const bodyContainer = bodyText.parentElement!;
+
+      expect(bodyContainer.className).toContain('min-h-0');
+    });
+  });
+
   describe('modal interactions', () => {
     it('should open the modal when the bubble is clicked', () => {
       // Mark as seen so auto-open doesn't fire
