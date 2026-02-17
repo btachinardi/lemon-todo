@@ -62,17 +62,7 @@ export function StoryVisionSection() {
           ))}
         </motion.div>
 
-        {/* Quote callout */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-          transition={{ duration: 0.6, delay: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="mx-auto mt-12 max-w-2xl border-l-4 border-primary/40 pl-6"
-        >
-          <p className="text-lg italic text-muted-foreground">
-            &ldquo;{t('story.vision.quote')}&rdquo;
-          </p>
-        </motion.div>
+
       </div>
     </section>
   );

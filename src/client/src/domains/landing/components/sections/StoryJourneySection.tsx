@@ -68,6 +68,8 @@ export function StoryJourneySection() {
                     description={t(`story.journey.checkpoints.${i}.description`)}
                     decision={t(`story.journey.checkpoints.${i}.decision`)}
                     tests={t(`story.journey.checkpoints.${i}.tests`)}
+                    tag={t(`story.journey.checkpoints.${i}.tag`)}
+                    summary={t(`story.journey.checkpoints.${i}.summary`)}
                     index={i}
                   />
                 </div>
@@ -76,17 +78,8 @@ export function StoryJourneySection() {
           </motion.div>
         </div>
 
-        {/* Insight callout */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-          transition={{ duration: 0.6, delay: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="mx-auto mt-12 max-w-2xl border-l-4 border-primary/40 pl-6"
-        >
-          <p className="text-lg italic text-muted-foreground">
-            &ldquo;{t('story.journey.insight')}&rdquo;
-          </p>
-        </motion.div>
+
+
       </div>
     </section>
   );
