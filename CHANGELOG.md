@@ -7,8 +7,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Checkpoint 5: Advanced & Delight — PWA, offline support, onboarding, analytics, notifications, multi-browser E2E, visual regression, and Spanish i18n.
+
+### Added
+
+- **PWA support** — service worker via vite-plugin-pwa, web manifest, install and update prompts
+  - Workbox runtime caching: NetworkFirst for `/api/*`, CacheFirst for fonts/images
+  - Auth, analytics, and push endpoints excluded from caching
+- **Offline read support** — cached task/board data viewable when offline
+  - TanStack Query `networkMode: 'offlineFirst'` with extended GC time
+  - OfflineBanner shows "Viewing cached data" when offline with cache, "You are offline" without
+  - AuthHydrationProvider skips silent refresh when `navigator.onLine` is false
+- **Offline mutation queue** — create/complete/move tasks offline, sync when reconnected
+  - IndexedDB-backed FIFO queue with `enqueue()`, `drain()`, `clear()`, `getPendingCount()`
+  - Automatic drain on `online` event with silent refresh before replay
+  - 409 conflict handling: toast notification + discard mutation + cache invalidation
+  - SyncIndicator component showing pending count, syncing state, and "All synced" confirmation
+- **Onboarding flow** — guided first task creation for new users
+  - Server-side `OnboardingCompletedAt` field on User entity with dual-provider migration
+  - 3-step tooltip tour: create task → complete it → explore board
+  - Auto-advance via MutationObserver watching `data-onboarding` DOM attributes
+  - Celebration animation (checkmark burst) on completion
+  - Skip button for immediate dismissal
+  - Existing users auto-skip (data migration sets timestamp)
+- **Notification system** — in-app notifications with Web Push support
+  - Notification bounded context: entity, repository, NotificationType enum (DueDateReminder, TaskOverdue, Welcome)
+  - DueDateReminderService (BackgroundService) checks tasks due within 24h every 6 hours
+  - Welcome notification auto-created on user registration via domain event handler
+  - NotificationBell with unread count badge (30s polling)
+  - NotificationDropdown with mark-read and mark-all-read
+  - Web Push via VAPID: subscription management, push event handler in service worker
+  - API endpoints: list, unread-count, mark-read, mark-all-read, push subscribe/unsubscribe, VAPID key
+- **Analytics event tracking** — privacy-first analytics with port/adapter pattern
+  - Backend: `IAnalyticsService` interface + `ConsoleAnalyticsService` (Serilog, SHA-256 hashed user IDs)
+  - Domain event handlers: task created/completed, user registered
+  - Frontend: batched tracking with 30s flush and `visibilitychange` flush
+  - Device context: viewport, locale, theme, app version
+  - `POST /api/analytics/events` endpoint
+- **Password strength meter** on registration form with animated progress bar and requirement checklist
+  - Evaluates against backend ASP.NET Identity rules: 8+ chars, uppercase, lowercase, digit
+  - Bonus criteria: special character, 12+ characters
+  - 5 strength levels (Too weak → Very strong) with color-coded feedback
+  - Animated checkmark SVG for each passed requirement
+  - Submit button disabled until all required criteria pass
+- **Show/hide password toggle** on registration form with eye icon
+- **Spanish (es) language support** — third locale alongside English and Portuguese (~180 keys)
+- **Landing page** with hero, features, security, and open-source sections with scroll animations
+- **"How I Built This" story page** at `/story` — interactive engineering narrative
+- **Description auto-save** — debounced (1s) save with flush on unmount and save indicator
+- **Dev account password auto-fill** — one-click login for seeded test accounts in development
+- **Self-reveal for user's own redacted profile** — users can see their own email/name without admin intervention
+- **Custom domains** — `api.lemondo.btas.dev` (API) and `lemondo.btas.dev` (frontend) via Terraform + managed certs
+- **Mobile responsiveness overhaul**
+  - Bottom-anchored task input bar with `env(safe-area-inset-bottom)` for notched devices
+  - Native touch scrolling for kanban columns (replaced Radix ScrollArea with `overflow-x-auto`)
+  - Responsive card layouts for admin tables on mobile (`UserCard`, `AuditLogCard`)
+  - Minimum 44px touch targets on all interactive header elements
+  - Toolbar overflow fixes (icon-only buttons on mobile)
+- **Lemon.DO branding refresh**
+  - Cartoon lemon mascot icon in Dashboard, Admin, and Auth layouts
+  - Nunito brand font (Black weight) matching logo typography
+  - Updated favicons (ICO, PNG 16/32, Apple Touch Icon, Android Chrome 192/512)
+  - Updated web manifest with brand name and theme colors
+- **Multi-browser E2E testing** — Chromium + Firefox + WebKit + device emulation (iPhone 14, iPad Mini, Pixel 7)
+- **Visual regression baselines** — Playwright `toHaveScreenshot()` for board, list, auth, and landing views in light + dark themes
+- **41 new E2E tests**: language (5), onboarding (7), notifications (9), offline (6), PWA (4), visual regression (10)
+- **808 tests** total (375 backend + 337 frontend + 96 E2E), up from 668
+
+### Changed
+
+- TanStack Query default `networkMode` set to `offlineFirst` for offline resilience
+- OfflineBanner now shows differentiated messages for cached vs no-cache offline states
+- All 3 i18n locales updated with ~20 new keys for onboarding, notifications, offline, and PWA
+
 ### Fixed
 
+- Task description changes lost when closing detail sheet quickly (debounced auto-save with flush on unmount)
+- ESLint errors across 7 CP5 files (react-hooks/refs, setState in effect body, unused variables, react-refresh)
+- React 19 `useRef<T>()` requiring explicit `undefined` initial value
 - **500 on registration** — AES-256-GCM encryption key was 33 bytes (not 32); regenerated proper 32-byte key
 - **SPA route 404 on refresh** — added `staticwebapp.config.json` with `navigationFallback` for Azure Static Web Apps
 

@@ -2,7 +2,7 @@
 
 > **Date**: 2026-02-13
 > **Status**: Active
-> **Purpose**: Document the latest versions, capabilities, and compatibility of all technologies in our stack.
+> **Purpose**: Document the latest versions, capabilities, and compatibility of all technologies in the LemonDo stack.
 
 ---
 
@@ -121,6 +121,14 @@
 - **Frontend Support**: OTLP HTTP endpoint for browser trace collection
 - **Source**: [Microsoft Learn - .NET Observability](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/observability-with-otel)
 
+### 1.9 WebPush (NuGet)
+
+- **Version**: 2.0.4
+- **Purpose**: VAPID-based Web Push notifications from .NET backend
+- **Features**: Send push messages to browser push subscriptions, VAPID authentication, payload encryption
+- **Used By**: `DueDateReminderService`, `WebPushService` in Infrastructure layer
+- **Added**: CP5 (Notification system)
+
 ---
 
 ## 2. Frontend Technologies
@@ -218,7 +226,7 @@
   - First-class Suspense support (`useSuspenseQuery`, `useSuspenseInfiniteQuery`)
   - Optimistic updates with rollback
   - Infinite scroll/pagination built-in
-  - Offline support with mutation queue (pairs with our PWA requirement)
+  - Offline support with mutation queue (pairs with the PWA requirement)
   - ~20% smaller than v4
   - Framework-agnostic devtools with cache editing and light mode
   - Prefetch multiple pages at once for infinite queries
@@ -226,7 +234,7 @@
   - Eliminates manual loading/error/data state management
   - Cache deduplication (multiple components using same query share one request)
   - Automatic retry, stale-while-revalidate, garbage collection
-  - Mutation queue supports offline-first (critical for our PWA scenario S06)
+  - Mutation queue supports offline-first (critical for PWA scenario S06)
   - Devtools for debugging cache state during development
 - **Requires**: React 18+ (uses `useSyncExternalStore`)
 - **Source**: [TanStack Query](https://tanstack.com/query/latest)
@@ -372,7 +380,7 @@ BrowserStack provides 3500+ real browsers and devices in the cloud. Playwright t
   - `windows-2025` → Windows Server 2025
   - `windows-2025-vs2026` → Windows Server 2025 + Visual Studio 2026 (beta)
   - `macos-26-large` → Intel-based macOS (preview)
-- **Action Versions** (used in our CI):
+- **Action Versions** (used in the project CI):
   - `actions/checkout@v6` (v6.0.2, Jan 2025)
   - `actions/setup-dotnet@v5` (v5.1.0, Jan 2025)
   - `actions/setup-node@v6` (v6.2.0, Jan 2025)
@@ -390,9 +398,9 @@ BrowserStack provides 3500+ real browsers and devices in the cloud. Playwright t
 
 - **Terraform Version**: 1.14.5 (latest stable, Feb 11, 2026)
   - Alpha: 1.15.0-alpha20260204
-  - Our constraint: `required_version = ">= 1.5"` (compatible)
+  - Project constraint: `required_version = ">= 1.5"` (compatible)
 - **Provider**: `hashicorp/azurerm` 4.x (latest: 4.60.0)
-  - Our constraint: `~> 4.0` (compatible)
+  - Project constraint: `~> 4.0` (compatible)
 - **Target**: Azure App Service (API) + Azure Static Web Apps (frontend)
 - **Resources**:
   - Azure App Service (API with staging slot)
@@ -419,7 +427,7 @@ BrowserStack provides 3500+ real browsers and devices in the cloud. Playwright t
   - Standard edition: up to 32 cores / 256 GB memory
 - **SQL Server 2022** (maintained, CU23 as of Jan 29, 2026):
   - Docker image: `mcr.microsoft.com/mssql/server:2022-latest`
-  - Mature and battle-tested, used in our CI pipeline
+  - Mature and battle-tested, used in the project CI pipeline
 - **CI Usage**: SQL Server 2022 container for integration tests alongside SQLite for unit tests
 - **Health Check**: `/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '<password>' -Q 'SELECT 1' -C -b`
 - **Source**: [SQL Server 2025 GA](https://techcommunity.microsoft.com/blog/sqlserver/sql-server-2025-is-now-generally-available/4470570), [SQL Server Docker Images](https://mcr.microsoft.com/product/mssql/server/about)
@@ -449,7 +457,7 @@ BrowserStack provides 3500+ real browsers and devices in the cloud. Playwright t
 
 ## 6. Version Lock Summary
 
-These are the versions we will target for LemonDo MVP:
+These are the versions targeted for the LemonDo MVP:
 
 ```
 # Backend
@@ -461,6 +469,7 @@ scalar: 2.x
 fscheck: 3.x
 mstest: 4.x (MTP runner)
 serilog: 4.x
+web-push: 2.x
 opentelemetry-dotnet: 1.x
 
 # Frontend

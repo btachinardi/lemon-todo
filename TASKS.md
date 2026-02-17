@@ -180,15 +180,22 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| CP5.1 | PWA configuration | PENDING | Service worker, manifest, install prompt |
-| CP5.2 | Offline read support | PENDING | Cached task data viewable offline |
-| CP5.3 | Onboarding flow | PENDING | Guided first task creation + celebration |
-| CP5.4 | Analytics event tracking | PENDING | Privacy-first, hashed IDs, funnel events |
-| CP5.5 | Notification system (in-app) | PENDING | Task reminders, due date alerts |
-| CP5.6 | E2E tests (Playwright) | PENDING | Chromium + Firefox + WebKit, device emulation (iPhone, iPad, Pixel) |
-| CP5.6b | Visual regression baselines | PENDING | Playwright `toHaveScreenshot()` for all key views |
-| CP5.7 | Spanish language support | PENDING | Third language option |
-| CP5.8 | Offline mutation queue | PENDING | Create/complete tasks offline, sync when online |
+| CP5.1 | PWA configuration | DONE | Service worker, manifest, install and update prompts |
+| CP5.2 | Offline read support | DONE | Workbox runtime caching, offlineFirst query mode, OfflineBanner variants |
+| CP5.3 | Onboarding flow | DONE | OnboardingCompletedAt entity, 3-step tooltip tour, celebration animation, skip button |
+| CP5.4 | Analytics event tracking | DONE | Backend analytics port/adapter + frontend batched tracking with device context |
+| CP5.5 | Notification system (in-app) | DONE | Notification entity, due date reminders, bell + dropdown, Web Push (VAPID) |
+| CP5.6 | E2E tests (Playwright) | DONE | Multi-browser (Chromium + Firefox + WebKit), device emulation, 41 new specs |
+| CP5.6b | Visual regression baselines | DONE | Playwright `toHaveScreenshot()` for board/list/auth/landing in light + dark |
+| CP5.7 | Spanish language support | DONE | Third language option (es.json) |
+| CP5.8 | Offline mutation queue | DONE | IndexedDB queue, FIFO drain, 409 conflict toast, SyncIndicator |
+| CP5.9 | Mobile responsiveness + branding | DONE | Lemon.DO visual identity, responsive layouts |
+| CP5.10 | Landing page | DONE | Hero, features, security, open-source sections with scroll animations |
+| CP5.11 | Password strength meter | DONE | Animated strength bar, requirement checklist, show/hide toggle, 24 tests |
+| CP5.12 | Description auto-save | DONE | Debounced save with flush on unmount, save indicator |
+| CP5.13 | Story page | DONE | "How I Built This" interactive story at /story |
+| CP5.14 | Auth UX enhancements | DONE | Dev password auto-fill, self-reveal for user's own redacted profile data |
+| CP5.15 | Custom domains | DONE | api.lemondo.btas.dev + lemondo.btas.dev via Terraform + managed certs |
 | | **Deliverable** | | Feature-complete platform showcasing full production ambition |
 
 ---
@@ -279,6 +286,25 @@
 | 2026-02-16 | Docker push + `az containerapp update` over ZIP deploy | Container Apps don't support ZIP deploy. CI/CD builds Docker image, pushes to ACR with commit SHA tag, then updates Container App image reference. |
 | 2026-02-16 | `./dev infra` CLI commands | Terraform operations need Azure CLI in PATH, `MSYS_NO_PATHCONV=1` for Git Bash, and stage selection. CLI wraps all this, making `./dev infra plan stage1-mvp` as simple as `./dev test`. |
 | 2026-02-16 | v0.4.0 release via gitflow | CP4 (Production Hardening) release. 668 tests (370 backend + 243 frontend + 55 E2E). Observability, security, admin, audit, i18n, encryption, Azure deployment. |
+| 2026-02-16 | Client-side password strength over backend-only validation | Instant feedback as user types, mirrors ASP.NET Identity rules exactly (8+ chars, uppercase, lowercase, digit). Backend remains the authority; frontend is advisory only. |
+| 2026-02-16 | No external password strength library | `evaluatePasswordStrength()` is a pure function (~30 lines) checking 6 regex patterns. Libraries like zxcvbn add 400KB+ for dictionary-based scoring we don't need. |
+| 2026-02-16 | Disable submit until requirements met | Prevents frustrating server-side 400 errors. Button enables as soon as all 4 required checks pass. Bonus checks (special char, 12+ length) improve the score but don't block submission. |
+| 2026-02-16 | Native overflow over Radix ScrollArea for kanban | Radix ScrollArea intercepts touch events, preventing native swipe between columns. Native `overflow-x-auto` + CSS `snap-x snap-mandatory` gives smooth one-column-at-a-time swiping. |
+| 2026-02-16 | Bottom-anchored task input on mobile | Matches native mobile app conventions (thumb-reachable zone). `env(safe-area-inset-bottom)` handles notched devices. Desktop keeps top placement. |
+| 2026-02-16 | Table-to-card layout for mobile admin views | Tables with 5+ columns are unusable on 375px viewports. `hidden sm:block` / `sm:hidden` pattern swaps between table (desktop) and cards (mobile) at the `sm` breakpoint. |
+| 2026-02-16 | Nunito for brand typography | Identified from logo letterforms (rounded terminals, thick strokes). Google Fonts CDN at weights 700/800/900. CSS `--font-brand` variable as single source of truth. |
+| 2026-02-16 | vite-plugin-pwa for service worker | Bundles Workbox, generates manifest, handles SW registration. Checked Vite 7 compatibility before install. |
+| 2026-02-16 | Workbox NetworkFirst for API, CacheFirst for assets | API data needs freshness; fonts/images are immutable. Auth/analytics/push endpoints excluded from caching. |
+| 2026-02-16 | Server-side onboarding state (OnboardingCompletedAt) | Survives device switches. Existing users get timestamp set in data migration to skip tour. |
+| 2026-02-16 | 3-step tooltip tour with auto-advance | MutationObserver watches for `data-onboarding` DOM attributes. Steps advance automatically when user creates/completes tasks. |
+| 2026-02-16 | Notification bounded context (not embedded in Tasks) | Notifications have their own lifecycle, persistence, and delivery. Keeps Task context focused on task lifecycle. |
+| 2026-02-16 | Web Push via VAPID (not FCM) | No Google dependency. Standard Push API works across all modern browsers. Graceful degradation to in-app only. |
+| 2026-02-16 | DueDateReminderService as BackgroundService | Checks tasks due within 24h every 6 hours. Short-lived DbContext scopes to avoid SQLite locking. |
+| 2026-02-16 | IndexedDB mutation queue over localStorage | localStorage has 5MB limit and is synchronous. IndexedDB supports structured data, cursors, and larger storage. |
+| 2026-02-16 | Last-write-wins for offline conflicts (409 → toast + discard) | Simple conflict resolution. 409 means server state diverged; toast informs user, mutation is discarded, cache invalidated. |
+| 2026-02-16 | Debounced description auto-save (1s) with flush on unmount | Prevents data loss on quick exits. useRef tracks draft, cleanup flushes pending save. |
+| 2026-02-16 | Multi-browser E2E locally, Chromium-only in CI | Firefox + WebKit add ~2x CI time for minimal additional coverage. Local multi-browser catches rendering differences. |
+| 2026-02-16 | Visual regression with toHaveScreenshot | Built-in Playwright, no external service. Light + dark theme baselines at 1280x720 with reducedMotion. |
 
 ---
 
@@ -322,7 +348,24 @@
   - Infrastructure: Terraform Azure (bootstrap + 3 stages, 10 modules incl. container-app), GitHub Actions CI/CD, Docker
   - Azure deployment: 15 resources live (Container Apps, ACR, SQL, Key Vault, SWA, App Insights, Log Analytics)
   - Developer CLI: `./dev` script with build, test, lint, start, migrate, docker, verify, infra commands
-- **Checkpoint 5**: NOT STARTED (Advanced & Delight)
+- **Checkpoint 5**: DONE (Advanced & Delight — 375 backend + 337 frontend + 96 E2E = 808 tests)
+  - PWA: Service worker via vite-plugin-pwa, install/update prompts, Workbox runtime caching
+  - Offline: Read support (NetworkFirst caching, offlineFirst query mode) + mutation queue (IndexedDB, FIFO drain, 409 conflict handling)
+  - Onboarding: 3-step tooltip tour with auto-advance, celebration animation, skip button, server-side state
+  - Notifications: Notification bounded context, due date reminder BackgroundService, bell + dropdown, Web Push (VAPID)
+  - Analytics: Backend port/adapter + frontend batched tracking with device context and SHA-256 user hashing
+  - i18n: Spanish (es) third language — all 3 locales at ~180 keys
+  - Password strength: Animated meter with requirement checklist, 5 strength levels, 24 tests
+  - Landing page: Hero, features, security, open-source sections with scroll animations
+  - Story page: "How I Built This" interactive engineering narrative at /story
+  - Auth UX: Dev account password auto-fill, self-reveal for user's own redacted profile
+  - Description auto-save: Debounced save with flush on unmount, save indicator
+  - Custom domains: api.lemondo.btas.dev + lemondo.btas.dev via Terraform + managed certs
+  - Mobile: Bottom-anchored input, native touch scrolling, admin card layouts, 44px touch targets
+  - Branding: Lemon.DO identity with Nunito font, mascot icon, favicons
+  - E2E: 41 new specs (language, onboarding, notifications, offline, PWA, visual regression)
+  - Multi-browser: Chromium + Firefox + WebKit + device emulation (iPhone 14, iPad Mini, Pixel 7)
+  - Visual regression: Light + dark theme baselines via Playwright toHaveScreenshot()
 
 ---
 
@@ -445,3 +488,26 @@
 | 9b2ae63 | docs(csharp): add XML documentation to domain, infrastructure, and service defaults | CP4 |
 | 65a702b | docs(csharp): add XML documentation to endpoints and domain types | CP4 |
 | 823672c | docs: add CP4 commit history to TASKS.md | CP4 |
+| 548c97e | feat(client): improve mobile responsiveness and apply Lemon.DO branding | CP5 |
+| 19c3d0c | feat(i18n): add Spanish (es) language support | CP5 |
+| 88ffe53 | feat(pwa): add service worker, manifest, install and update prompts | CP5 |
+| dd16176 | feat(auth): add password strength meter to registration form | CP5 |
+| e69dd3c | feat(analytics): add backend analytics port/adapter with domain event handlers | CP5 |
+| 2a962c9 | feat(analytics): add frontend event tracking with batching | CP5 |
+| 847ab45 | docs: update changelog, journal, and tasks for CP5 mobile and branding changes | CP5 |
+| 1758924 | feat(onboarding): add OnboardingCompletedAt to User entity with dual-provider migration | CP5 |
+| 4fd7733 | feat(client): add landing page with scroll animations and route restructure | CP5 |
+| c8ca5ff | feat(onboarding): add tooltip tour with celebration animation | CP5 |
+| 09202c0 | feat(notifications): add Notification entity, repository, endpoints, and due date reminders | CP5 |
+| 3d7654a | feat(notifications): add notification bell, dropdown, and push subscription frontend | CP5 |
+| 7c4e197 | feat(offline): add offline read support with Workbox caching and offlineFirst query mode | CP5 |
+| 83aef47 | fix(tasks): add debounced auto-save for task description with flush on unmount | CP5 |
+| 629798c | feat(auth): add dev-only password auto-fill for demo accounts in reveal dialogs | CP5 |
+| f20170a | feat(auth): add self-reveal for user's own redacted profile data | CP5 |
+| cb89dbe | feat(client): add "How I Built This" story page at /story | CP5 |
+| d721908 | feat(offline): add IndexedDB mutation queue with FIFO drain and conflict handling | CP5 |
+| 4a46301 | fix(lint): resolve all ESLint errors across CP5 files | CP5 |
+| a96fadf | test(e2e): add CP5 E2E specs, multi-browser config, and visual regression | CP5 |
+| 94b6463 | docs(roadmap): add frontend bundle optimization to Tier 9 | CP5 |
+| 0527416 | fix(client): move OfflineBanner inside QueryProvider to prevent crash | CP5 |
+| c217adc | chore: add Git LFS tracking for .ai files and commit logo | CP5 |

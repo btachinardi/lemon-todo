@@ -58,7 +58,7 @@ public sealed class UserTests
     {
         var id = UserId.New();
 
-        var user = User.Reconstitute(id, "r***@example.com", "R***d", false);
+        var user = User.Reconstitute(id, "r***@example.com", "R***d", false, null);
 
         Assert.AreEqual(id, user.Id);
         Assert.AreEqual("r***@example.com", user.RedactedEmail);
@@ -81,7 +81,7 @@ public sealed class UserTests
     [TestMethod]
     public void Should_FailDeactivation_When_AlreadyDeactivated()
     {
-        var user = User.Reconstitute(UserId.New(), "t***@example.com", "T***t", isDeactivated: true);
+        var user = User.Reconstitute(UserId.New(), "t***@example.com", "T***t", isDeactivated: true, onboardingCompletedAt: null);
 
         var result = user.Deactivate();
 
@@ -92,7 +92,7 @@ public sealed class UserTests
     [TestMethod]
     public void Should_Reactivate_When_Deactivated()
     {
-        var user = User.Reconstitute(UserId.New(), "t***@example.com", "T***t", isDeactivated: true);
+        var user = User.Reconstitute(UserId.New(), "t***@example.com", "T***t", isDeactivated: true, onboardingCompletedAt: null);
 
         var result = user.Reactivate();
 

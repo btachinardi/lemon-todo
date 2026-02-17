@@ -27,6 +27,15 @@ public interface IProtectedDataAccessService
     Task<Result<DecryptedProtectedData, DomainError>> RevealForAdminAsync(
         Guid userId,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Decrypts a user's own protected data after password re-authentication.
+    /// The caller (<see cref="LemonDo.Application.Identity.Commands.RevealOwnProfileCommandHandler"/>) is responsible
+    /// for recording the audit entry.
+    /// </summary>
+    Task<Result<DecryptedProtectedData, DomainError>> RevealForOwnerAsync(
+        Guid userId,
+        CancellationToken ct = default);
 }
 
 /// <summary>Decrypted protected data values returned by <see cref="IProtectedDataAccessService"/>.</summary>

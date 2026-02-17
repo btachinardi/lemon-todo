@@ -20,7 +20,7 @@ import {
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
 import { Label } from '@/ui/label';
-import { AlertTriangleIcon } from 'lucide-react';
+import { AlertTriangleIcon, FlaskConicalIcon } from 'lucide-react';
 import { PROTECTED_DATA_REVEAL_REASONS, type ProtectedDataRevealReason, type RevealProtectedDataRequest } from '../../types/admin.types';
 
 interface ProtectedDataRevealDialogProps {
@@ -29,6 +29,8 @@ interface ProtectedDataRevealDialogProps {
   onReveal: (request: RevealProtectedDataRequest) => void;
   isPending: boolean;
   error?: Error | null;
+  /** Dev-only: when provided, shows an auto-fill button that populates the password field with this value. */
+  devPassword?: string | null;
 }
 
 /** Break-the-glass dialog for revealing protected data. Collects justification reason, optional comments, and password. */
@@ -38,6 +40,7 @@ export function ProtectedDataRevealDialog({
   onReveal,
   isPending,
   error,
+  devPassword,
 }: ProtectedDataRevealDialogProps) {
   const { t } = useTranslation();
   const [reason, setReason] = useState<ProtectedDataRevealReason | ''>('');
@@ -158,6 +161,18 @@ export function ProtectedDataRevealDialog({
               <p className="text-xs text-destructive">
                 {t('admin.protectedDataRevealDialog.genericError')}
               </p>
+            )}
+            {devPassword && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-dashed border-purple-300 text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-950"
+                onClick={() => setPassword(devPassword)}
+              >
+                <FlaskConicalIcon className="size-3" />
+                {t('common.devAutoFill')}
+              </Button>
             )}
           </div>
 

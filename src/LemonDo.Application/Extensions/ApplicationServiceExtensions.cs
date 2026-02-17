@@ -4,6 +4,8 @@ using LemonDo.Application.Administration;
 using LemonDo.Application.Administration.Commands;
 using LemonDo.Application.Administration.EventHandlers;
 using LemonDo.Application.Administration.Queries;
+using LemonDo.Application.Analytics.EventHandlers;
+using LemonDo.Application.Notifications.EventHandlers;
 using LemonDo.Application.Boards.Commands;
 using LemonDo.Application.Boards.EventHandlers;
 using LemonDo.Application.Common;
@@ -48,6 +50,7 @@ public static class ApplicationServiceExtensions
         services.AddScoped<LoginUserCommandHandler>();
         services.AddScoped<RefreshTokenCommandHandler>();
         services.AddScoped<RevokeRefreshTokenCommandHandler>();
+        services.AddScoped<RevealOwnProfileCommandHandler>();
 
         // Task query handlers
         services.AddScoped<GetTaskByIdQueryHandler>();
@@ -75,6 +78,14 @@ public static class ApplicationServiceExtensions
         services.AddScoped<IDomainEventHandler<TaskCreatedEvent>, AuditOnTaskCreated>();
         services.AddScoped<IDomainEventHandler<TaskDeletedEvent>, AuditOnTaskDeleted>();
         services.AddScoped<IDomainEventHandler<TaskStatusChangedEvent>, AuditOnTaskStatusChanged>();
+
+        // Analytics event handlers
+        services.AddScoped<IDomainEventHandler<TaskCreatedEvent>, AnalyticsOnTaskCreated>();
+        services.AddScoped<IDomainEventHandler<TaskStatusChangedEvent>, AnalyticsOnTaskCompleted>();
+        services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, AnalyticsOnUserRegistered>();
+
+        // Notification event handlers
+        services.AddScoped<IDomainEventHandler<UserRegisteredEvent>, WelcomeNotificationOnUserRegistered>();
 
         return services;
     }

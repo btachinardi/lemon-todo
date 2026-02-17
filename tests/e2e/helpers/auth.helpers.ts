@@ -108,7 +108,7 @@ export async function loginViaApi(page: Page): Promise<void> {
   const refreshPromise = page.waitForResponse(
     (resp) => resp.url().includes('/api/auth/refresh'),
   );
-  await page.goto('/');
+  await page.goto('/board');
   const refreshResponse = await refreshPromise;
 
   if (!refreshResponse.ok()) {

@@ -205,6 +205,7 @@ This binds custom domains, provisions managed TLS certificates, and updates CORS
 includes a polling loop that waits up to 5 minutes for managed certificate
 provisioning before binding.
 
+
 ### Verification
 
 ```bash
@@ -226,6 +227,7 @@ No cookie domain configuration changes are needed.
 The frontend requires `src/client/public/staticwebapp.config.json` with a
 `navigationFallback` rewrite to `/index.html`. Without this, refreshing on
 client-side routes (e.g. `/login`, `/list`) returns 404 from Azure Static Web Apps.
+
 
 ## Security Notes
 

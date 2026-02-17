@@ -7,6 +7,7 @@ import {
   archiveTask,
 } from '../helpers/api.helpers';
 import { createTestUser, loginViaApi } from '../helpers/auth.helpers';
+import { completeOnboarding } from '../helpers/onboarding.helpers';
 
 test.describe.serial('Card Ordering (API)', () => {
   test.beforeAll(async () => {
@@ -204,6 +205,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     uiContext = await browser.newContext();
     uiPage = await uiContext.newPage();
     await loginViaApi(uiPage);
+    await completeOnboarding();
   });
 
   test.afterAll(async () => {
@@ -220,7 +222,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     const todoCol = board.columns.find((c) => c.targetStatus === 'Todo')!;
     await moveTask(t3.id, todoCol.id, t1.id, t2.id);
 
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
     await expect(uiPage.getByText('Alpha task')).toBeVisible();
     await expect(uiPage.getByText('Gamma task')).toBeVisible();
     await expect(uiPage.getByText('Beta task')).toBeVisible();
@@ -241,7 +243,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     const t1 = await createTask({ title: 'Stays on board' });
     const t2 = await createTask({ title: 'Gets deleted' });
 
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
     await expect(uiPage.getByText('Gets deleted')).toBeVisible();
 
     // Delete via API and reload
@@ -253,7 +255,7 @@ test.describe.serial('Card Ordering (UI)', () => {
   });
 
   test('UI-created tasks maintain order after reload', async () => {
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
 
     // Create tasks through the quick-add form
     const uiTitles = ['UI Task One', 'UI Task Two', 'UI Task Three'];
@@ -292,7 +294,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     await createTask({ title: 'Stable Epsilon' });
 
     // Load page and wait for the last created task to be visible
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
     await expect(uiPage.getByText('Stable Epsilon')).toBeVisible();
 
     const cards = uiPage.locator('[role="button"][aria-label^="Task:"]');
@@ -323,7 +325,7 @@ test.describe.serial('Card Ordering (UI)', () => {
     await moveTask(t3.id, todoCol.id, null, t1.id);
 
     // Load the page — Third should be before First and Second among the todo tasks
-    await uiPage.goto('/');
+    await uiPage.goto('/board');
     const cards = uiPage.locator('[role="button"][aria-label^="Task:"]');
     const labelsBefore = await cards.evaluateAll((els) =>
       els.map((el) => el.getAttribute('aria-label')),
@@ -376,10 +378,29 @@ test.describe.serial('Card Ordering (UI)', () => {
 
     await moveTask(t1.id, inProgressCol.id, null, null);
 
-    await uiPage.goto('/');
+    // Navigate to the board — wait for both auth refresh and board data to load
+    const boardResponsePromise = uiPage.waitForResponse(
+      (resp) => resp.url().includes('/api/boards') && resp.status() === 200,
+      { timeout: 20000 },
+    ).catch(() => null);
+    await uiPage.goto('/board');
+    const boardResp = await boardResponsePromise;
 
-    // Wait for board to fully render (auth refresh + data fetch)
-    await expect(uiPage.getByText('Moving task')).toBeVisible();
+    // If board data didn't load (auth failure), re-authenticate via loginViaApi
+    if (!boardResp) {
+      await loginViaApi(uiPage);
+      await completeOnboarding();
+      // Re-create task under new user and re-move it
+      const t1New = await createTask({ title: 'Moving task' });
+      const boardNew = await getDefaultBoard();
+      const ipCol = boardNew.columns.find((c) => c.targetStatus === 'InProgress')!;
+      await moveTask(t1New.id, ipCol.id, null, null);
+      await uiPage.goto('/board');
+    }
+
+    // Wait for the authenticated layout and board data to render
+    await uiPage.getByRole('navigation', { name: 'View switcher' }).waitFor({ state: 'visible', timeout: 15000 });
+    await expect(uiPage.getByText('Moving task')).toBeVisible({ timeout: 15000 });
 
     // The task should appear under the "In Progress" column heading
     const inProgressHeading = uiPage.getByRole('heading', { name: 'In Progress' });

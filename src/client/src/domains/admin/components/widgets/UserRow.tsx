@@ -21,6 +21,7 @@ import { TableCell, TableRow } from '@/ui/table';
 import { Progress } from '@/ui/progress';
 import type { AdminUser, RevealedProtectedData, RevealProtectedDataRequest } from '../../types/admin.types';
 import { useRevealProtectedData } from '../../hooks/use-admin-mutations';
+import { useDevAccountPassword } from '@/domains/auth/hooks/use-dev-account-password';
 import { ProtectedDataRevealDialog } from './ProtectedDataRevealDialog';
 
 const roleBadgeVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -58,6 +59,7 @@ export function UserRow({
   const [revealedData, setRevealedData] = useState<RevealedProtectedData | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState(0);
   const revealProtectedData = useRevealProtectedData();
+  const devPassword = useDevAccountPassword();
 
   // Countdown timer: tick every second while protected data is revealed
   useEffect(() => {
@@ -216,6 +218,7 @@ export function UserRow({
         onReveal={handleRevealConfirm}
         isPending={revealProtectedData.isPending}
         error={revealProtectedData.error}
+        devPassword={devPassword}
       />
     </>
   );

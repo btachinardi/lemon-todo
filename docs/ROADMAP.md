@@ -11,7 +11,7 @@ Beyond CP5, the roadmap is organized into capability tiers:
 ## Tier 1: AI & Agent Ecosystem
 
 - **AI Assistant** - Natural language chat interface for managing tasks ("create a high-priority task to review the Q1 report by Friday", "what's overdue this week?", "summarize my board status"). Built as a new bounded context with a clean adapter pattern - swap between Azure OpenAI, Anthropic, or local models without domain changes.
-- **MCP Server** - Expose LemonDo as a [Model Context Protocol](https://modelcontextprotocol.io) server. AI agents (Claude, Copilot, custom) can create/complete/move tasks, query board status, and manage projects through standardized tool definitions. Our use case layer maps naturally to MCP tools - each command/query becomes an MCP tool with typed parameters and responses. This is the critical bridge to a future where agents orchestrate work across systems.
+- **MCP Server** - Expose LemonDo as a [Model Context Protocol](https://modelcontextprotocol.io) server. AI agents (Claude, Copilot, custom) can create/complete/move tasks, query board status, and manage projects through standardized tool definitions. The use case layer maps naturally to MCP tools - each command/query becomes an MCP tool with typed parameters and responses. This is the critical bridge to a future where agents orchestrate work across systems.
 - **MCP Client** - LemonDo as an MCP client, connecting to external MCP servers for calendar, email, CRM, and code repository access. The AI assistant can pull context from a user's entire toolchain without custom integrations for each service.
 - **Smart Categorization** - Auto-suggest priority, tags, and columns based on task title content and historical patterns.
 - **Daily Digest** - AI-generated summary of what was accomplished, what's in progress, and what needs attention. Delivered via email or in-app notification.
@@ -23,7 +23,7 @@ Beyond CP5, the roadmap is organized into capability tiers:
 
 - **Calendar Sync** - Two-way sync with Google Calendar and Outlook. Tasks with due dates appear as calendar events; calendar events can spawn tasks. OAuth2 integration via adapter pattern.
 - **Messaging Notifications** - Slack, Microsoft Teams, WhatsApp, and SMS reminders for due dates, mentions, and status changes. Each channel is a Notification bounded context adapter - add new channels without changing domain logic.
-- **Push Notifications** - Web Push API (building on our PWA service worker) for real-time browser notifications even when the app isn't open.
+- **Push Notifications** - Web Push API (building on the existing PWA service worker) for real-time browser notifications even when the app isn't open.
 - **Email-to-Task** - Forward emails to a dedicated address to create tasks. Azure Functions + SendGrid inbound parse.
 - **Zapier/Make Webhooks** - Outbound webhooks on domain events, enabling no-code integrations with 5000+ external services.
 
@@ -31,12 +31,12 @@ Beyond CP5, the roadmap is organized into capability tiers:
 
 ## Tier 3: Collaboration & Real-Time
 
-- **Multi-Tenancy** - Organization-scoped data isolation using EF Core global query filters. Our Board aggregate root naturally supports this - add an `OrganizationId` field and the filter does the rest.
+- **Multi-Tenancy** - Organization-scoped data isolation using EF Core global query filters. The Board aggregate root naturally supports this - add an `OrganizationId` field and the filter does the rest.
 - **Teams & Projects** - Group boards under projects, assign team members, track per-team velocity.
 - **Real-Time Board Updates** - SignalR (or SSE for simpler clients) for live Kanban board sync across team members. See a task move the moment a colleague drags it.
 - **Idempotency & Conflict Resolution** - Idempotency keys on mutations, optimistic concurrency with ETag headers, last-write-wins with conflict notification for simultaneous edits.
 - **Message Queue / DLQ** - Azure Service Bus for reliable async event processing. Dead-letter queue for failed event handlers with retry policies and manual inspection.
-- **Activity Feed** - Per-task and per-board activity streams showing who did what and when. Built on top of our domain events + audit trail.
+- **Activity Feed** - Per-task and per-board activity streams showing who did what and when. Built on top of the domain events + audit trail.
 - **Comments & Mentions** - Threaded comments on tasks with @mentions that trigger notifications.
 
 ---
@@ -64,7 +64,7 @@ Beyond CP5, the roadmap is organized into capability tiers:
 
 ## Tier 6: Platform & Compliance
 
-- **Desktop App** - Tauri (Rust shell wrapping our React frontend) for native desktop experience with system tray, global shortcuts, and offline-first storage.
+- **Desktop App** - Tauri (Rust shell wrapping the React frontend) for native desktop experience with system tray, global shortcuts, and offline-first storage.
 - **Mobile Native** - React Native sharing domain types from `packages/shared-types` for iOS and Android.
 - **SSO** - SAML 2.0 and OIDC for enterprise single sign-on (Okta, Azure AD, Auth0).
 - **MFA Step-Up Authentication** - TOTP (RFC 6238) or WebAuthn/passkey as required second factor for break-the-glass protected data reveal, replacing current password re-entry. Also available as optional MFA for user login.
@@ -73,14 +73,14 @@ Beyond CP5, the roadmap is organized into capability tiers:
 - **Protected Data Reveal Notifications** - Email/Slack alerts to security team when protected data is revealed. Configurable per-organization notification channels.
 - **Full HIPAA Certification** - BAA templates, annual security risk assessment, workforce training program, breach notification procedures, subcontractor BAA verification.
 - **GDPR Compliance** - Right to erasure, data portability (full JSON export), consent management, Data Protection Officer workflow.
-- **SOC 2 Type II** - Our audit trail and encryption foundations make this achievable. Add formal policies, evidence collection, and annual audit.
+- **SOC 2 Type II** - The existing audit trail and encryption foundations make this achievable. Add formal policies, evidence collection, and annual audit.
 - **Data Residency** - Region-specific database deployments for organizations with data sovereignty requirements.
 
 ---
 
 ## Tier 7: Product & Growth
 
-This tier shifts focus from *what we build* to *how we grow*. Features here are about the business, not just the code.
+This tier shifts focus from *what gets built* to *how the product grows*. Features here are about the business, not just the code.
 
 ### Monetization & Conversion
 
@@ -100,8 +100,8 @@ This tier shifts focus from *what we build* to *how we grow*. Features here are 
 
 ### Retention & Customer Success
 
-- **Onboarding Optimization** - Track drop-off at every onboarding step. A/B test variations. Measure time-to-first-completed-task (our activation metric).
-- **Churn Prevention** - Identify at-risk users via usage signals (7+ days inactive, declining task creation, never completed a task). Automated re-engagement: email sequences, in-app prompts, "We miss you" notifications.
+- **Onboarding Optimization** - Track drop-off at every onboarding step. A/B test variations. Measure time-to-first-completed-task (the primary activation metric).
+- **Churn Prevention** - Identify at-risk users via usage signals (7+ days inactive, declining task creation, never completed a task). Automated re-engagement: email sequences, in-app prompts, "You've been missed" notifications.
 - **Automated Customer Success** - Health score per user/team based on WATC (Weekly Active Task Completers), feature adoption depth, and engagement trends. Surface at-risk accounts to customer success team before they churn.
 - **NPS / CSAT Surveys** - In-app micro-surveys at strategic moments (after completing 10th task, after first week, monthly). Track satisfaction trends, route detractors to support.
 - **Lifecycle Emails** - Welcome sequence, feature discovery drips ("Did you know you can..."), milestone celebrations ("You completed 100 tasks!"), dormancy re-engagement.
@@ -117,10 +117,10 @@ Features focused on *how it feels* to use LemonDo, not just what it does.
 - **Undo Everywhere** - Every destructive action gets a 5-second undo toast, not a confirmation dialog. Delete a task? Undo. Move a column? Undo. Archive a board? Undo. Faster and less disruptive than "Are you sure?" modals.
 - **Batch Operations** - Multi-select tasks (Shift+click, Cmd+click), bulk move between columns, bulk tag, bulk delete, bulk change priority. Essential for power users managing dozens of tasks.
 - **Progressive Disclosure** - New users see simplified UI (single board, basic task cards). Power features (filters, custom fields, keyboard shortcuts) reveal progressively as users demonstrate readiness. No overwhelming first-day experience.
-- **Micro-Interactions** - Confetti on task completion (our P0 celebration feature), smooth drag physics with haptic-like feedback, satisfying checkbox animation, subtle board column count badges, progress ring on boards showing completion percentage.
+- **Micro-Interactions** - Confetti on task completion (the P0 celebration feature), smooth drag physics with haptic-like feedback, satisfying checkbox animation, subtle board column count badges, progress ring on boards showing completion percentage.
 - **Smart Defaults** - Pre-fill priority based on keywords ("urgent" → Critical, "meeting" → adds due date), auto-suggest tags from recent usage, remember last-used column for quick-add.
 - **Contextual Empty States** - Not just "No tasks yet" but specific, actionable prompts: "Create your first task" with a single CTA, "No results for this filter" with a "Clear filters" link, "This column is empty - drag tasks here or create one" with inline quick-add.
-- **Session Analytics** - PostHog for heatmaps, session replays, and funnel analysis. Understand how users *actually* use the product, not how we *assume* they do. Feed insights back into UX improvements.
+- **Session Analytics** - PostHog for heatmaps, session replays, and funnel analysis. Understand how users *actually* use the product, not how the team *assumes* they do. Feed insights back into UX improvements.
 
 ---
 
@@ -130,7 +130,7 @@ The unglamorous work that separates a demo from a product people depend on.
 
 ### Networking, CDN & Edge
 
-- **SPA + API Split** - The frontend is purely static files (JS, CSS, images, `index.html`). The API is the only dynamic origin. This split lets us scale each independently and leverage CDN for the entire frontend with near-100% cache hit rates.
+- **SPA + API Split** - The frontend is purely static files (JS, CSS, images, `index.html`). The API is the only dynamic origin. This split allows scaling each independently and leverage CDN for the entire frontend with near-100% cache hit rates.
 - **CDN for Frontend** - Azure Front Door (or CloudFlare) as the global edge network. SPA assets served from 100+ edge locations worldwide. Users in Tokyo, Berlin, and São Paulo all get sub-50ms first-byte times. The API can be in a single region while the frontend is everywhere.
 - **Cache-Control Strategy** - `index.html`: `no-cache` (always revalidated, ~1KB, instant). JS/CSS bundles: `Cache-Control: public, max-age=31536000, immutable` (content-hashed filenames mean cache-bust on every deploy, 1-year cache otherwise). Images/fonts: same immutable strategy. API responses: `Cache-Control: private, max-age=0` (TanStack Query manages client-side caching, not HTTP cache).
 - **CDN Invalidation on Deploy** - CI/CD pipeline purges only `index.html` from CDN after frontend deploy. Hashed assets never need purging - new deploy means new hashes, old assets naturally expire. Zero stale content, zero cold-cache penalty for unchanged assets.
@@ -139,6 +139,7 @@ The unglamorous work that separates a demo from a product people depend on.
 - **API Gateway** - Azure API Management (or a lightweight reverse proxy) in front of the API for: request throttling per API key, request/response transformation, API versioning routing (`/api/v1/*` → container revision A, `/api/v2/*` → revision B), and analytics on API usage patterns.
 - **Private Networking** - API containers, database, and Redis communicate over Azure VNet (private IPs, no public internet exposure). Only the load balancer/CDN has public endpoints. Database is never directly accessible from outside the VNet.
 - **Geo-Distribution Strategy** - Phase 1: Single-region API + global CDN frontend (covers 80% of latency concerns since most interactions are SPA-local). Phase 2: Multi-region API with latency-based routing (Azure Traffic Manager) for global teams. Phase 3: Per-region database read replicas for data-heavy queries, writes always go to primary region.
+- **Frontend Bundle Optimization** - Code-split the SPA with React.lazy + dynamic `import()` for route-level and heavy-component chunks. Critical path (shell, auth, board list) loads in the initial bundle; everything else (task detail modals, settings, admin, story page, rich-text editors) loads on demand. Combined with Vite's automatic chunk hashing and the CDN immutable cache strategy, this minimizes Time to First Paint and Largest Contentful Paint for returning and first-time users alike.
 - **Client-Side Caching as a Tier** - TanStack Query's `staleTime` + `gcTime` means the browser itself is a cache tier. Board data cached for 30 seconds (stale-while-revalidate), user profile cached for 5 minutes, static reference data (priorities, statuses) cached for 1 hour. Combined with the service worker (PWA), many user interactions never hit the network at all.
 
 ### Scaling Strategy
@@ -153,13 +154,13 @@ The unglamorous work that separates a demo from a product people depend on.
 
 - **Service Level Indicators** - API response latency (p50, p95, p99), error rate (5xx / total), availability (successful health checks / total), task creation success rate, frontend Time to Interactive (TTI), Core Web Vitals (LCP, FID, CLS).
 - **Service Level Objectives** - API p95 latency < 200ms, availability 99.9% (8.7h downtime/year), error rate < 0.1%, task creation success > 99.95%. These are internal targets - aggressive enough to catch degradation early.
-- **Service Level Agreements** - External commitments per pricing tier: Free (no SLA), Pro (99.5%), Team (99.9%), Enterprise (99.95% with financial credits). SLAs are always looser than SLOs - the error budget between them is our breathing room.
-- **Error Budgets** - Monthly error budget = 1 - SLO. If we burn through the budget, freeze feature releases and focus on reliability. Dashboard showing real-time budget consumption. Alerts at 50%, 75%, 90% burn rate.
+- **Service Level Agreements** - External commitments per pricing tier: Free (no SLA), Pro (99.5%), Team (99.9%), Enterprise (99.95% with financial credits). SLAs are always looser than SLOs - the error budget between them provides breathing room.
+- **Error Budgets** - Monthly error budget = 1 - SLO. If the budget is exhausted, freeze feature releases and focus on reliability. Dashboard showing real-time budget consumption. Alerts at 50%, 75%, 90% burn rate.
 - **Monitoring Stack** - OpenTelemetry → Aspire Dashboard (dev) → Grafana + Prometheus (production). PagerDuty for on-call alerting. Uptime monitoring via external probe (Checkly or Pingdom). Synthetic monitoring for critical user journeys.
 
 ### Disaster Recovery & Backups
 
-- **RPO / RTO Targets** - Recovery Point Objective: 1 hour (max data loss). Recovery Time Objective: 4 hours (max downtime). These drive our backup frequency and recovery procedure design.
+- **RPO / RTO Targets** - Recovery Point Objective: 1 hour (max data loss). Recovery Time Objective: 4 hours (max downtime). These drive the backup frequency and recovery procedure design.
 - **Backup Strategy** - Automated PostgreSQL backups every hour to geo-redundant Azure Blob Storage. Daily full backup + hourly WAL archiving for point-in-time recovery. Backup encryption with customer-managed keys.
 - **Backup Verification** - Weekly automated restore-to-staging to prove backups actually work. An untested backup is not a backup.
 - **Geo-Redundancy** - Active-passive across two Azure regions. Primary serves traffic, secondary receives replicated data. Failover via Azure Traffic Manager with health probe. Manual failover trigger (not automatic - avoid split-brain).
@@ -178,7 +179,7 @@ The unglamorous work that separates a demo from a product people depend on.
 ### Feature Flags & Experimentation
 
 - **Feature Flag System** - LaunchDarkly (or open-source Unleash) for runtime feature control. Every new feature ships behind a flag. Flags enable: gradual rollouts (1% → 10% → 100%), kill switches (disable broken features without deploy), beta programs (enable for specific users/organizations).
-- **A/B Testing** - Experimentation framework for UX decisions. Split traffic between variants, measure impact on WATC (our north star metric). Examples: "Does confetti on task completion increase weekly completion rate?" "Does the quick-add bar perform better at the top or bottom of the board?"
+- **A/B Testing** - Experimentation framework for UX decisions. Split traffic between variants, measure impact on WATC (the north star metric). Examples: "Does confetti on task completion increase weekly completion rate?" "Does the quick-add bar perform better at the top or bottom of the board?"
 - **Flag Lifecycle** - Flags are not permanent. Every flag has an expiry date. After full rollout, the flag is removed in the next release cycle. Stale flags are tech debt.
 
 ### Environments & Promotion

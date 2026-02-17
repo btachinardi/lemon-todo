@@ -5,15 +5,17 @@ import { QueryProvider } from './app/providers/QueryProvider';
 import { ThemeProvider } from './app/providers/ThemeProvider';
 import { router } from './app/routes/router';
 import { OfflineBanner } from './ui/feedback/OfflineBanner';
+import { PWAUpdatePrompt } from './ui/feedback/PWAUpdatePrompt';
 
 /** Root component that wires up error handling, query caching, and client-side routing. */
 function App() {
   return (
     <ErrorBoundaryProvider>
       <ThemeProvider>
-        <OfflineBanner />
         <AuthHydrationProvider>
           <QueryProvider>
+            <OfflineBanner />
+            <PWAUpdatePrompt />
             <RouterProvider router={router} />
           </QueryProvider>
         </AuthHydrationProvider>

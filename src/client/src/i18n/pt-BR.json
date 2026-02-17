@@ -1,6 +1,6 @@
 {
   "brand": {
-    "lemon": "LEMON",
+    "lemon": "Lemon.",
     "do": "DO",
     "admin": "ADMIN"
   },
@@ -10,17 +10,18 @@
     "confirm": "Confirmar",
     "tryAgain": "Tentar Novamente",
     "previous": "Anterior",
-    "next": "Pr\u00f3ximo",
+    "next": "Próximo",
     "add": "Adicionar",
     "close": "Fechar",
     "clear": "Limpar",
     "back": "Voltar",
-    "actions": "A\u00e7\u00f5es",
+    "actions": "Ações",
     "error": {
       "generic": "Algo deu errado. Tente novamente.",
-      "connection": "Verifique sua conex\u00e3o e tente novamente."
+      "connection": "Verifique sua conexão e tente novamente."
     },
-    "page": "P\u00e1gina {{page}} de {{totalPages}} ({{totalCount}} {{unit}})"
+    "page": "Página {{page}} de {{totalPages}} ({{totalCount}} {{unit}})",
+    "devAutoFill": "Preencher senha automaticamente"
   },
   "auth": {
     "login": {
@@ -28,9 +29,9 @@
       "subtitle": "Entre na sua conta",
       "submit": "Entrar",
       "submitting": "Entrando...",
-      "noAccount": "N\u00e3o tem uma conta?",
+      "noAccount": "Não tem uma conta?",
       "createOne": "Crie uma",
-      "errorInvalid": "E-mail ou senha inv\u00e1lidos.",
+      "errorInvalid": "E-mail ou senha inválidos.",
       "errorLocked": "Conta temporariamente bloqueada. Tente novamente mais tarde."
     },
     "register": {
@@ -38,22 +39,57 @@
       "subtitle": "Comece a organizar suas tarefas",
       "submit": "Criar conta",
       "submitting": "Criando conta...",
-      "hasAccount": "J\u00e1 tem uma conta?",
+      "hasAccount": "Já tem uma conta?",
       "signIn": "Entrar",
-      "errorExists": "J\u00e1 existe uma conta com este e-mail."
+      "errorExists": "Já existe uma conta com este e-mail."
     },
     "fields": {
       "email": "E-mail",
       "emailPlaceholder": "voce@exemplo.com",
       "password": "Senha",
       "passwordPlaceholder": "Sua senha",
-      "passwordHint": "M\u00edn. 8 caracteres",
-      "displayName": "Nome de exibi\u00e7\u00e3o",
-      "displayNamePlaceholder": "Seu nome"
+      "passwordHint": "Mín. 8 caracteres",
+      "displayName": "Nome de exibição",
+      "displayNamePlaceholder": "Seu nome",
+      "showPassword": "Mostrar senha",
+      "hidePassword": "Ocultar senha"
+    },
+    "passwordStrength": {
+      "label": "Força da senha",
+      "tooWeak": "Muito fraca",
+      "weak": "Fraca",
+      "fair": "Razoável",
+      "strong": "Forte",
+      "veryStrong": "Muito forte",
+      "requirements": "Requisitos",
+      "minLength": "Pelo menos 8 caracteres",
+      "hasUppercase": "Uma letra maiúscula",
+      "hasLowercase": "Uma letra minúscula",
+      "hasDigit": "Um número",
+      "bonus": "Bônus",
+      "hasSpecial": "Caractere especial",
+      "longPassword": "12+ caracteres"
     },
     "userMenu": {
       "signOut": "Sair",
       "signingOut": "Saindo..."
+    },
+    "selfReveal": {
+      "popoverHint": "Seus dados estão tão seguros que nem sua própria conta consegue lê-los facilmente. Verifique sua identidade para espiar por trás da cortina.",
+      "revealButton": "Revelar meus dados",
+      "title": "Verificação de identidade",
+      "description": "Digite sua senha novamente para visualizar temporariamente seus dados de perfil sem redação.",
+      "revealedDescription": "Seus dados de perfil sem redação estão exibidos abaixo. Eles serão ocultados automaticamente para sua proteção.",
+      "password": "Senha",
+      "passwordPlaceholder": "Digite sua senha",
+      "passwordError": "Senha incorreta. Tente novamente.",
+      "genericError": "Algo deu errado. Tente novamente.",
+      "submit": "Revelar",
+      "submitting": "Verificando...",
+      "emailLabel": "Email",
+      "nameLabel": "Nome de exibição",
+      "autoHide": "Ocultando em",
+      "hide": "Ocultar agora"
     },
     "devSwitcher": {
       "title": "Login Rápido",
@@ -73,9 +109,9 @@
     "priority": {
       "none": "Nenhuma",
       "low": "Baixa",
-      "medium": "M\u00e9dia",
+      "medium": "Média",
       "high": "Alta",
-      "critical": "Cr\u00edtica"
+      "critical": "Crítica"
     },
     "status": {
       "todo": "A Fazer",
@@ -84,11 +120,11 @@
     },
     "dueDate": {
       "today": "Hoje",
-      "tomorrow": "Amanh\u00e3",
+      "tomorrow": "Amanhã",
       "overdue": "Atrasada: {{date}}"
     },
     "quickAdd": {
-      "label": "T\u00edtulo da nova tarefa",
+      "label": "Título da nova tarefa",
       "placeholder": "O que precisa ser feito?",
       "submit": "Adicionar Tarefa"
     },
@@ -96,9 +132,9 @@
       "ariaLabel": "Tarefa: {{title}}"
     },
     "detail": {
-      "loadError": "N\u00e3o foi poss\u00edvel carregar os detalhes da tarefa.",
-      "description": "Descri\u00e7\u00e3o",
-      "descriptionPlaceholder": "Adicione uma descri\u00e7\u00e3o...",
+      "loadError": "Não foi possível carregar os detalhes da tarefa.",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Adicione uma descrição...",
       "priority": "Prioridade",
       "noPriority": "Sem prioridade",
       "dueDate": "Data de Vencimento",
@@ -119,23 +155,23 @@
       "allStatuses": "Todos os status"
     },
     "listToolbar": {
-      "label": "Op\u00e7\u00f5es de visualiza\u00e7\u00e3o em lista",
+      "label": "Opções de visualização em lista",
       "groupBy": "Agrupar por",
       "noGrouping": "Sem agrupamento",
       "day": "Dia",
       "week": "Semana",
-      "month": "M\u00eas",
-      "splitDone": "Separar conclu\u00eddas"
+      "month": "Mês",
+      "splitDone": "Separar concluídas"
     },
     "checkbox": {
       "markIncomplete": "Marcar como incompleta",
       "markComplete": "Marcar como completa"
     },
     "empty": {
-      "boardTitle": "Seu quadro est\u00e1 vazio",
-      "boardSubtitle": "Adicione uma tarefa acima para come\u00e7ar.",
+      "boardTitle": "Seu quadro está vazio",
+      "boardSubtitle": "Adicione uma tarefa acima para começar.",
       "listTitle": "Nenhuma tarefa ainda",
-      "listSubtitle": "Adicione uma tarefa acima para come\u00e7ar.",
+      "listSubtitle": "Adicione uma tarefa acima para começar.",
       "searchTitle": "Nenhuma tarefa encontrada",
       "searchSubtitle": "Tente ajustar seus filtros ou termo de busca.",
       "clearFilters": "Limpar filtros"
@@ -143,26 +179,26 @@
     "column": {
       "noTasks": "Sem tarefas"
     },
-    "completed": "Conclu\u00eddas ({{count}})",
+    "completed": "Concluídas ({{count}})",
     "errors": {
-      "loadBoard": "N\u00e3o foi poss\u00edvel carregar seu quadro",
-      "loadTasks": "N\u00e3o foi poss\u00edvel carregar as tarefas",
-      "updateTask": "N\u00e3o foi poss\u00edvel atualizar a tarefa. Tente novamente.",
-      "moveTask": "N\u00e3o foi poss\u00edvel mover a tarefa. Tente novamente.",
-      "saveTask": "N\u00e3o foi poss\u00edvel salvar a tarefa. Tente novamente."
+      "loadBoard": "Não foi possível carregar seu quadro",
+      "loadTasks": "Não foi possível carregar as tarefas",
+      "updateTask": "Não foi possível atualizar a tarefa. Tente novamente.",
+      "moveTask": "Não foi possível mover a tarefa. Tente novamente.",
+      "saveTask": "Não foi possível salvar a tarefa. Tente novamente."
     },
     "sensitiveNote": {
-      "label": "Nota Sens\u00edvel",
-      "placeholder": "Digite informa\u00e7\u00f5es sens\u00edveis (criptografado em repouso)...",
-      "encryptionWarning": "Este conte\u00fado \u00e9 criptografado e s\u00f3 pode ser visualizado com sua senha.",
+      "label": "Nota Sensível",
+      "placeholder": "Digite informações sensíveis (criptografado em repouso)...",
+      "encryptionWarning": "Este conteúdo é criptografado e só pode ser visualizado com sua senha.",
       "viewNote": "Ver Nota",
       "hasNote": "Possui nota criptografada",
       "save": "Salvar Nota"
     },
     "noteRevealDialog": {
-      "title": "Ver Nota Sens\u00edvel",
-      "description": "Digite sua senha para descriptografar e ver esta nota. Esta a\u00e7\u00e3o \u00e9 registrada.",
-      "revealedDescription": "Esta nota ser\u00e1 ocultada automaticamente por seguran\u00e7a.",
+      "title": "Ver Nota Sensível",
+      "description": "Digite sua senha para descriptografar e ver esta nota. Esta ação é registrada.",
+      "revealedDescription": "Esta nota será ocultada automaticamente por segurança.",
       "password": "Senha",
       "passwordPlaceholder": "Digite a senha da sua conta",
       "passwordError": "Senha incorreta. Tente novamente.",
@@ -174,53 +210,53 @@
     }
   },
   "nav": {
-    "viewSwitcher": "Alternar visualiza\u00e7\u00e3o",
+    "viewSwitcher": "Alternar visualização",
     "board": "Quadro",
     "list": "Lista",
     "admin": "Admin",
-    "adminNav": "Navega\u00e7\u00e3o admin",
-    "users": "Usu\u00e1rios",
+    "adminNav": "Navegação admin",
+    "users": "Usuários",
     "auditLog": "Log de Auditoria"
   },
   "admin": {
     "users": {
-      "title": "Gerenciamento de Usu\u00e1rios",
-      "subtitle": "Gerencie contas de usu\u00e1rios e fun\u00e7\u00f5es.",
-      "searchPlaceholder": "Buscar usu\u00e1rios...",
-      "allRoles": "Todas as Fun\u00e7\u00f5es",
+      "title": "Gerenciamento de Usuários",
+      "subtitle": "Gerencie contas de usuários e funções.",
+      "searchPlaceholder": "Buscar usuários...",
+      "allRoles": "Todas as Funções",
       "columnId": "ID",
       "columnEmail": "E-mail",
-      "columnDisplayName": "Nome de Exibi\u00e7\u00e3o",
-      "columnRoles": "Fun\u00e7\u00f5es",
+      "columnDisplayName": "Nome de Exibição",
+      "columnRoles": "Funções",
       "columnStatus": "Status",
-      "noUsers": "Nenhum usu\u00e1rio encontrado.",
+      "noUsers": "Nenhum usuário encontrado.",
       "active": "Ativo",
       "deactivated": "Desativado",
       "revealProtectedData": "Revelar Dados Protegidos",
-      "assignRole": "Atribuir Fun\u00e7\u00e3o",
-      "removeRole": "Remover Fun\u00e7\u00e3o",
+      "assignRole": "Atribuir Função",
+      "removeRole": "Remover Função",
       "deactivate": "Desativar",
       "reactivate": "Reativar"
     },
     "roleDialog": {
-      "title": "Atribuir Fun\u00e7\u00e3o",
-      "description": "Atribuir uma fun\u00e7\u00e3o a {{user}}.",
-      "selectRole": "Selecione uma fun\u00e7\u00e3o",
-      "allRolesAssigned": "Usu\u00e1rio j\u00e1 possui todas as fun\u00e7\u00f5es dispon\u00edveis.",
+      "title": "Atribuir Função",
+      "description": "Atribuir uma função a {{user}}.",
+      "selectRole": "Selecione uma função",
+      "allRolesAssigned": "Usuário já possui todas as funções disponíveis.",
       "submitting": "Atribuindo...",
       "submit": "Atribuir"
     },
     "audit": {
       "title": "Log de Auditoria",
-      "subtitle": "Visualize a\u00e7\u00f5es relevantes de seguran\u00e7a e eventos do sistema.",
+      "subtitle": "Visualize ações relevantes de segurança e eventos do sistema.",
       "from": "De",
-      "to": "At\u00e9",
-      "action": "A\u00e7\u00e3o",
-      "allActions": "Todas as a\u00e7\u00f5es",
+      "to": "Até",
+      "action": "Ação",
+      "allActions": "Todas as ações",
       "resource": "Recurso",
       "allResources": "Todos",
       "columnTimestamp": "Data/Hora",
-      "columnAction": "A\u00e7\u00e3o",
+      "columnAction": "Ação",
       "columnResource": "Recurso",
       "columnResourceId": "ID do Recurso",
       "columnActor": "Ator",
@@ -244,28 +280,28 @@
     },
     "protectedDataRevealDialog": {
       "title": "Revelar Dados Protegidos",
-      "description": "Esta a\u00e7\u00e3o revela dados protegidos sens\u00edveis e \u00e9 registrada no log de auditoria. Insira uma justificativa e verifique sua identidade para prosseguir.",
+      "description": "Esta ação revela dados protegidos sensíveis e é registrada no log de auditoria. Insira uma justificativa e verifique sua identidade para prosseguir.",
       "reason": "Motivo",
       "reasonPlaceholder": "Selecione um motivo",
       "reasons": {
         "SupportTicket": "Ticket de Suporte",
-        "LegalRequest": "Solicita\u00e7\u00e3o Legal",
-        "AccountRecovery": "Recupera\u00e7\u00e3o de Conta",
-        "SecurityInvestigation": "Investiga\u00e7\u00e3o de Seguran\u00e7a",
-        "DataSubjectRequest": "Solicita\u00e7\u00e3o do Titular (LGPD/HIPAA)",
+        "LegalRequest": "Solicitação Legal",
+        "AccountRecovery": "Recuperação de Conta",
+        "SecurityInvestigation": "Investigação de Segurança",
+        "DataSubjectRequest": "Solicitação do Titular (LGPD/HIPAA)",
         "ComplianceAudit": "Auditoria de Conformidade",
         "Other": "Outro"
       },
       "reasonDetails": "Detalhes do Motivo",
-      "reasonDetailsPlaceholder": "Explique por que este acesso aos dados protegidos \u00e9 necess\u00e1rio...",
-      "reasonDetailsRequired": "Detalhes s\u00e3o obrigat\u00f3rios quando o motivo \u00e9 'Outro'.",
-      "comments": "Coment\u00e1rios Adicionais",
+      "reasonDetailsPlaceholder": "Explique por que este acesso aos dados protegidos é necessário...",
+      "reasonDetailsRequired": "Detalhes são obrigatórios quando o motivo é 'Outro'.",
+      "comments": "Comentários Adicionais",
       "commentsPlaceholder": "Qualquer contexto adicional (opcional)...",
       "password": "Sua Senha",
       "passwordPlaceholder": "Digite sua senha da conta",
-      "passwordError": "Senha inv\u00e1lida. Tente novamente.",
+      "passwordError": "Senha inválida. Tente novamente.",
       "genericError": "Algo deu errado. Tente novamente.",
-      "auditWarning": "Esta a\u00e7\u00e3o \u00e9 registrada permanentemente no log de auditoria.",
+      "auditWarning": "Esta ação é registrada permanentemente no log de auditoria.",
       "submit": "Revelar Dados Protegidos",
       "submitting": "Verificando..."
     },
@@ -274,30 +310,748 @@
       "secondsRemaining": "{{seconds}}s"
     },
     "toasts": {
-      "roleAssigned": "Fun\u00e7\u00e3o atribu\u00edda",
-      "roleRemoved": "Fun\u00e7\u00e3o removida",
-      "userDeactivated": "Usu\u00e1rio desativado",
-      "userReactivated": "Usu\u00e1rio reativado"
+      "roleAssigned": "Função atribuída",
+      "roleRemoved": "Função removida",
+      "userDeactivated": "Usuário desativado",
+      "userReactivated": "Usuário reativado"
     }
   },
   "error": {
     "title": "Algo deu errado",
-    "description": "Ocorreu um erro inesperado. Voc\u00ea pode tentar recarregar a p\u00e1gina ou clicar abaixo para tentar recuperar.",
+    "description": "Ocorreu um erro inesperado. Você pode tentar recarregar a página ou clicar abaixo para tentar recuperar.",
     "tryAgain": "Tentar novamente",
-    "reload": "Recarregar p\u00e1gina"
+    "reload": "Recarregar página"
+  },
+  "notifications": {
+    "bell": "Notificacoes ({{count}} nao lidas)",
+    "title": "Notificacoes",
+    "markAllRead": "Marcar todas como lidas",
+    "empty": "Nenhuma notificacao ainda"
   },
   "offline": {
-    "banner": "Voc\u00ea est\u00e1 offline. As altera\u00e7\u00f5es n\u00e3o ser\u00e3o salvas at\u00e9 que sua conex\u00e3o seja restaurada."
+    "banner": "Você está offline. As alterações não serão salvas até que sua conexão seja restaurada.",
+    "cachedData": "Voce esta offline. Visualizando dados em cache.",
+    "syncing": "Sincronizando...",
+    "allSynced": "Tudo sincronizado",
+    "pendingChanges": "{{count}} alteração pendente",
+    "pendingChanges_other": "{{count}} alterações pendentes"
   },
   "notFound": {
     "code": "404",
-    "title": "P\u00e1gina n\u00e3o encontrada",
-    "goHome": "Ir para in\u00edcio"
+    "title": "Página não encontrada",
+    "goHome": "Ir para início"
+  },
+  "assignmentBanner": {
+    "greeting": "Oi, eu sou o Bruno.",
+    "message": "Este projeto foi construído do zero como um teste técnico para uma vaga full-stack em saúde. É uma demonstração técnica — não um produto médico — e usa apenas dados sintéticos.",
+    "thanks": "Obrigado por revisar. Espero que a metodologia e as decisões de engenharia falem por si.",
+    "ctaMethodology": "Ver Metodologia",
+    "ctaPortfolio": "Portfólio",
+    "dismiss": "Entendi"
+  },
+  "pwa": {
+    "installPrompt": "Instale o Lemon.DO para uma experiência mais rápida",
+    "install": "Instalar",
+    "updateAvailable": "Uma nova versão está disponível",
+    "update": "Atualizar"
+  },
+  "landing": {
+    "nav": {
+      "home": "Início",
+      "login": "Entrar",
+      "getStarted": "Comece Agora"
+    },
+    "hero": {
+      "titleLine1": "Suas Tarefas.",
+      "titleLine2": "Seu Servidor.",
+      "titleHighlight": "Suas Regras.",
+      "subtitle": "O gerenciador de tarefas open-source com suporte offline, notificações push, notas criptografadas e trilha de auditoria completa. Hospede em sua infraestrutura, mantenha conformidade, trabalhe offline.",
+      "ctaPrimary": "Comece Grátis",
+      "ctaGithub": "Ver no GitHub"
+    },
+    "features": {
+      "title": "Tudo que você precisa para entregar",
+      "subtitle": "De PWA offline-first a notas criptografadas e notificações push — tudo em um único pacote auto-hospedado.",
+      "highlight": "entregar",
+      "items": [
+        {
+          "title": "Quadros Kanban",
+          "description": "Organização visual de tarefas com arrastar e soltar. Veja seu fluxo de trabalho de relance."
+        },
+        {
+          "title": "Funciona Offline",
+          "description": "PWA completo com leituras offline e fila de mutações. Alterações sincronizam automaticamente ao reconectar."
+        },
+        {
+          "title": "Notificações Push",
+          "description": "Sino de notificações no app e alertas Web Push para prazos. Nunca perca um deadline."
+        },
+        {
+          "title": "Prioridades Inteligentes",
+          "description": "Foque no que importa com níveis de prioridade de baixa a crítica."
+        },
+        {
+          "title": "Multi-Idioma",
+          "description": "Disponível em inglês, português e espanhol. Troque de idioma instantaneamente."
+        },
+        {
+          "title": "Onboarding Guiado",
+          "description": "Tour interativo com tooltips guia novos usuários na criação, conclusão e organização de tarefas."
+        },
+        {
+          "title": "Notas Criptografadas",
+          "description": "Notas sensíveis com criptografia AES-256 nas tarefas. Só você pode descriptografar com sua senha."
+        },
+        {
+          "title": "Otimizado para Mobile",
+          "description": "Layouts touch-friendly com alvos de toque de 44px, navegação inferior e cards responsivos."
+        },
+        {
+          "title": "Design Dark-First",
+          "description": "Interface bonita com temas escuro, claro e do sistema. Fácil para os olhos, dia e noite."
+        }
+      ]
+    },
+    "openSource": {
+      "title": "100% Open Source",
+      "subtitle": "Transparente, auditável e orientado pela comunidade. Sem caixas pretas.",
+      "highlight": "Open Source",
+      "badge1": "Open Source",
+      "badge2": "Licença MIT",
+      "badge3": "Auto-Hospedagem",
+      "pitch": "Implante em sua própria infraestrutura em minutos.",
+      "noVendorLock": "Sem vendor lock-in. Nenhum dado sai da sua rede. Controle total, sempre.",
+      "viewGithub": "Ver no GitHub"
+    },
+    "security": {
+      "title": "Arquitetura privacy-by-design",
+      "subtitle": "Padrões HIPAA-aware, design audit-first e infraestrutura orientada a compliance para workflows adjacentes à saúde.",
+      "highlight": "Privacy-by-design",
+      "items": [
+        {
+          "title": "Soberania de Dados",
+          "description": "Seus dados ficam nos seus servidores. Sem acesso de terceiros, sem dependência de nuvem."
+        },
+        {
+          "title": "Log de Auditoria",
+          "description": "Cada ação rastreada para conformidade. Pesquisável, filtrável, exportável."
+        },
+        {
+          "title": "Acesso por Funções",
+          "description": "Funções de admin, usuário e sistema com permissões granulares."
+        },
+        {
+          "title": "Padrões Orientados a Compliance",
+          "description": "Notas criptografadas, revelação de dados protegidos com justificativa e trilha de auditoria completa — blocos de construção para ambientes regulados."
+        }
+      ]
+    },
+    "howItWorks": {
+      "title": "Funcionando em minutos",
+      "subtitle": "Três passos para um deploy funcional.",
+      "steps": [
+        {
+          "title": "Clone e Implante",
+          "description": "Auto-hospede com Docker ou implante no Azure. Um comando para produção."
+        },
+        {
+          "title": "Crie Seu Espaço",
+          "description": "Adicione tarefas, quadros e membros da equipe. Organize do seu jeito."
+        },
+        {
+          "title": "Mantenha Conformidade",
+          "description": "Trilha de auditoria e notas criptografadas integradas para sua segurança."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Pronto para auto-hospedar?",
+      "subtitle": "Implante o LemonDo em sua infraestrutura hoje. Open source, para sempre gratuito.",
+      "ctaPrimary": "Comece Agora",
+      "ctaGithub": "Estrela no GitHub"
+    },
+    "footer": {
+      "tagline": "Gerenciamento de tarefas open-source para equipes que controlam seus dados.",
+      "features": "Funcionalidades",
+      "security": "Segurança",
+      "story": "Metodologia",
+      "disclaimer": "Esta aplicação é uma demonstração técnica construída para um processo seletivo. Não é um produto clínico e não se destina a dados reais de pacientes ou decisões médicas."
+    }
+  },
+  "onboarding": {
+    "step1Title": "Crie sua primeira tarefa",
+    "step1Body": "Digite um titulo no campo acima e pressione Enter ou clique em Adicionar Tarefa.",
+    "step2Title": "Complete sua tarefa",
+    "step2Body": "Clique na caixa de selecao da tarefa para marca-la como concluida.",
+    "step3Title": "Explore seu quadro!",
+    "step3Body": "Arraste tarefas entre colunas para organizar seu fluxo de trabalho. Tudo pronto!",
+    "skip": "Pular tour",
+    "finish": "Entendi!"
   },
   "theme": {
     "light": "Tema claro",
     "dark": "Tema escuro",
     "system": "Tema do sistema",
     "toggle": "Atual: {{label}}. Clique para {{next}}"
+  },
+  "story": {
+    "nav": "Metodologia",
+    "hero": {
+      "titleLine1": "De Pasta Vazia a",
+      "titleHighlight": "Produção",
+      "titleLine2": "em 3 Dias",
+      "subtitle": "Um build take-home focado em entrega prática de produto, fronteiras DDD, disciplina rigorosa de testes e decisões de design orientadas a compliance para workflows adjacentes à saúde."
+    },
+    "vision": {
+      "title": "5 Documentos Antes de Uma Linha de Código",
+      "highlight": "Uma Linha",
+      "subtitle": "Antes de escrever código, produzi cinco artefatos de planejamento: rascunho do PRD, pesquisa de compatibilidade tecnológica, cenários UX, rascunho de domínio e plano de checkpoints. Isso reduziu retrabalho e tornou as decisões de implementação rastreáveis.",
+      "items": [
+        {
+          "title": "Requisitos do Produto",
+          "description": "Definiu o quê e o porquê. Três personas, cinco checkpoints, critérios claros de sucesso."
+        },
+        {
+          "title": "Pesquisa Tecnológica",
+          "description": "Avaliou .NET 10, React 19, Vite 7 — versões travadas antes de escrever código."
+        },
+        {
+          "title": "Cenários de Usuário",
+          "description": "Storyboards de Sarah a freelancer, Marcus o líder de equipe e Diana a oficial de conformidade."
+        },
+        {
+          "title": "Modelo de Domínio",
+          "description": "Dois contextos delimitados projetados antecipadamente: Task (upstream) e Board (downstream conformista)."
+        },
+        {
+          "title": "Diretrizes de Desenvolvimento",
+          "description": "Convenções de nomenclatura, regras de camada, metodologia TDD — o contrato da equipe consigo mesma."
+        }
+      ]
+    },
+    "journey": {
+      "title": "5 Checkpoints, 5 Produtos Entregáveis",
+      "highlight": "5 Produtos Entregáveis",
+      "subtitle": "Cada checkpoint entregou uma aplicação completa e funcional. Cada tag é um snapshot executável — clone e veja exatamente o que foi entregue naquele estágio.",
+      "tagLinkLabel": "Ver tag",
+      "runnableNote": "Clone esta tag e execute ./dev start para ver este checkpoint ao vivo.",
+      "checkpoints": [
+        {
+          "title": "Tarefas Core",
+          "subtitle": "CP1 — A Fundação",
+          "description": "CRUD full-stack com DDD desde o primeiro dia. Modo single-user, quadro kanban, visão em lista, arrastar e soltar.",
+          "decision": "Coluna determina status — uma única fonte da verdade",
+          "tests": "242",
+          "tag": "v0.1.0",
+          "summary": "Estabeleceu camadas DDD, padrão Result, EF Core com SQLite, 18 endpoints de API e quadro kanban React."
+        },
+        {
+          "title": "Auth & Segurança",
+          "subtitle": "CP2 — Identidade",
+          "description": "JWT com cookies HttpOnly, isolamento de usuário, acesso por funções, headers de segurança.",
+          "decision": "Refresh via cookie, access token apenas em memória",
+          "tests": "388",
+          "tag": "v0.2.0",
+          "summary": "Adicionou auth baseada em cookie com rotação de refresh, isolamento de usuário, RBAC e middleware de headers de segurança."
+        },
+        {
+          "title": "UX Rica",
+          "subtitle": "CP3 — Polimento",
+          "description": "Modo escuro, filtros de prioridade, painel de detalhes, reordenação drag-and-drop, skeletons de carregamento, notificações toast.",
+          "decision": "Ranks decimais esparsos para movimentação O(1)",
+          "tests": "434",
+          "tag": "v0.3.0",
+          "summary": "Entregou modo escuro, reordenação com ranks esparsos, painel de detalhes de tarefa, filtros de prioridade e skeletons de carregamento."
+        },
+        {
+          "title": "Pronto para Produção",
+          "subtitle": "CP4 — Enterprise",
+          "description": "Trilha de auditoria, criptografia AES-256, painel admin, i18n em 3 idiomas, deploy Azure, CI/CD, observabilidade.",
+          "decision": "Criptografia AES-256-GCM para dados em repouso",
+          "tests": "668",
+          "tag": "v0.4.0",
+          "summary": "Adicionou trilha de auditoria imutável, criptografia AES-256-GCM, painel admin, i18n em 3 idiomas, Terraform IaC e CI/CD."
+        },
+        {
+          "title": "Encantamento",
+          "subtitle": "CP5 — Experiência",
+          "description": "PWA com fila de mutações offline, tour de onboarding, notificações Web Push, analytics, reformulação mobile, landing page.",
+          "decision": "Fila de mutações IndexedDB para sync offline",
+          "tests": "808",
+          "tag": "v0.5.0",
+          "summary": "Entregou PWA com fila offline, tour de onboarding, Web Push, analytics, reformulação mobile UX e esta landing page."
+        }
+      ]
+    },
+    "arch": {
+      "title": "Cinco Contextos Delimitados, Fronteiras Estritas",
+      "highlight": "Fronteiras Estritas",
+      "subtitle": "Arquitetura limpa com fronteiras de camada rigorosas. Cada direção de import é intencional.",
+      "backendLabel": "Camadas do Backend",
+      "frontendLabel": "Tiers do Frontend",
+      "backendLayers": [
+        "Domínio",
+        "Aplicação",
+        "Infraestrutura",
+        "API"
+      ],
+      "frontendTiers": [
+        "Roteamento",
+        "Páginas",
+        "Estado",
+        "Componentes"
+      ],
+      "decisions": [
+        "Coluna determina status — uma única fonte da verdade",
+        "Ranks decimais esparsos — movimentação O(1), sem drift de posição",
+        "Padrão Result, não exceções — para lógica de negócio",
+        "Refresh via cookie — access token apenas em memória",
+        "Criptografia AES-256-GCM — dados protegidos em repouso",
+        "Fila de mutações IndexedDB — sync offline-first"
+      ]
+    },
+    "domains": {
+      "title": "Cinco Contextos Delimitados, Um Sistema Coeso",
+      "highlight": "Sistema Coeso",
+      "subtitle": "Cada contexto possui seus invariantes. Eventos de domínio coordenam entre eles. Acoplamento mínimo, alta coesão.",
+      "contexts": {
+        "task": {
+          "name": "Task",
+          "role": "Domínio Core",
+          "description": "O coração do sistema — possui ciclo de vida da tarefa, prioridade, tags, datas de vencimento, notas sensíveis e arquivamento."
+        },
+        "board": {
+          "name": "Board",
+          "role": "Suporte",
+          "description": "Conformista ao Task — possui posicionamento espacial com colunas, posições de cards e ordenação drag-and-drop."
+        },
+        "identity": {
+          "name": "Identity",
+          "role": "Kernel Compartilhado",
+          "description": "Autenticação com JWT, refresh via cookie HttpOnly, hierarquia de papéis e dados pessoais criptografados com AES-256."
+        },
+        "admin": {
+          "name": "Administration",
+          "role": "Governança",
+          "description": "Trilha de auditoria imutável para cada ação de segurança, redação de dados protegidos e gestão de usuários."
+        },
+        "notification": {
+          "name": "Notification",
+          "role": "Experiência",
+          "description": "Alertas in-app, Web Push via VAPID, lembretes de vencimento e mensagens de boas-vindas para novos usuários."
+        }
+      }
+    },
+    "tech": {
+      "title": "Construído com Ferramentas de Produção",
+      "highlight": "Produção",
+      "subtitle": "Stack moderno, fixado em versões específicas, validado para uso em produção.",
+      "categories": {
+        "backend": "Backend",
+        "frontend": "Frontend",
+        "testing": "Testes",
+        "devops": "DevOps"
+      },
+      "items": {
+        "dotnet": {
+          "name": ".NET 10",
+          "description": "Runtime backend de alta performance"
+        },
+        "aspire": {
+          "name": "Aspire",
+          "description": "Orquestração cloud-native"
+        },
+        "efcore": {
+          "name": "EF Core",
+          "description": "ORM de banco com migrações"
+        },
+        "sqlite": {
+          "name": "SQLite + SQL Server",
+          "description": "Suporte dual de banco de dados"
+        },
+        "react": {
+          "name": "React 19",
+          "description": "Framework de UI baseado em componentes"
+        },
+        "vite": {
+          "name": "Vite 7",
+          "description": "Ferramenta de build ultrarrápida"
+        },
+        "tailwind": {
+          "name": "Tailwind 4",
+          "description": "Framework CSS utility-first"
+        },
+        "shadcn": {
+          "name": "Shadcn/ui",
+          "description": "Componentes bonitos e acessíveis"
+        },
+        "tanstack": {
+          "name": "TanStack Query",
+          "description": "Gerenciamento de estado do servidor"
+        },
+        "zustand": {
+          "name": "Zustand",
+          "description": "Estado do cliente leve"
+        },
+        "i18next": {
+          "name": "i18next",
+          "description": "Framework de internacionalização"
+        },
+        "motion": {
+          "name": "Motion",
+          "description": "Animações de scroll e layout"
+        },
+        "dndkit": {
+          "name": "dnd-kit",
+          "description": "Drag-and-drop acessível"
+        },
+        "mstest": {
+          "name": "MSTest 4",
+          "description": "Testes unitários e de integração backend"
+        },
+        "fscheck": {
+          "name": "FsCheck",
+          "description": "Testes baseados em propriedade para .NET"
+        },
+        "vitest": {
+          "name": "Vitest",
+          "description": "Runner de testes frontend rápido"
+        },
+        "fastcheck": {
+          "name": "fast-check",
+          "description": "Testes baseados em propriedade para JS"
+        },
+        "playwright": {
+          "name": "Playwright",
+          "description": "Testes E2E cross-browser"
+        },
+        "azure": {
+          "name": "Azure",
+          "description": "Hospedagem e serviços em nuvem"
+        },
+        "terraform": {
+          "name": "Terraform",
+          "description": "Infraestrutura como código"
+        },
+        "ghactions": {
+          "name": "GitHub Actions",
+          "description": "Pipelines de CI/CD"
+        },
+        "docker": {
+          "name": "Docker",
+          "description": "Runtime de contêineres"
+        },
+        "workbox": {
+          "name": "Workbox",
+          "description": "PWA e cache offline"
+        }
+      }
+    },
+    "numbers": {
+      "title": "Evidência de Qualidade",
+      "highlight": "Evidência",
+      "items": [
+        {
+          "value": "808",
+          "label": "Testes",
+          "detail": "Backend + Frontend + E2E"
+        },
+        {
+          "value": "5",
+          "label": "Checkpoints",
+          "detail": "Cada um entregável"
+        },
+        {
+          "value": "3",
+          "label": "Idiomas",
+          "detail": "EN, PT-BR, ES"
+        },
+        {
+          "value": "5",
+          "label": "Contextos",
+          "detail": "Contextos DDD delimitados"
+        },
+        {
+          "value": "9",
+          "label": "Módulos Terraform",
+          "detail": "Infraestrutura reutilizável"
+        },
+        {
+          "value": "100%",
+          "label": "CI/CD",
+          "detail": "Pipeline automatizado"
+        }
+      ],
+      "ctaPrimary": "Veja em Ação",
+      "ctaGithub": "Leia o Código"
+    },
+    "highlights": {
+      "title": "Destaques de Engenharia",
+      "highlight": "Destaques",
+      "subtitle": "Escolhas de implementação que melhoram confiabilidade e manutenibilidade em sistemas reais, especialmente onde rastreabilidade e comportamento previsível importam.",
+      "items": [
+        {
+          "title": "Transições de Status Determinísticas",
+          "description": "A coluna determina o status — o status de uma tarefa é sempre derivado de sua posição no board, eliminando bugs de sincronização entre estado da UI e do domínio.",
+          "why": "Em workflows de saúde, máquinas de estado previsíveis impedem tarefas de entrar em estados indefinidos."
+        },
+        {
+          "title": "Ranking Decimal Esparso",
+          "description": "Posições de cards usam ranks decimais esparsos (ex: 1.0, 2.0), então reordenar é O(1) — insira entre dois vizinhos sem recalcular todas as posições.",
+          "why": "Elimina drift de posição em ambientes concorrentes e escala para milhares de cards sem degradação de performance."
+        },
+        {
+          "title": "Trilha de Auditoria Imutável",
+          "description": "Toda ação relevante para segurança é registrada como entrada de auditoria append-only com ator, timestamp, recurso e contexto da requisição.",
+          "why": "Inegociável para compliance — fornece um log à prova de adulteração para inquéritos regulatórios e resposta a incidentes."
+        },
+        {
+          "title": "Criptografia AES-256-GCM por Campo",
+          "description": "Notas sensíveis são criptografadas no nível do campo usando AES-256-GCM antes do armazenamento. Descriptografia requer a senha do usuário e é registrada em auditoria.",
+          "why": "Protege dados em repouso mesmo se o banco de dados for comprometido. O acesso é sempre autenticado e rastreável."
+        },
+        {
+          "title": "Padrão Result ao Invés de Exceções",
+          "description": "Operações de negócio retornam Result<T> ao invés de lançar exceções. Erros são valores — tipados, composíveis e impossíveis de ignorar acidentalmente.",
+          "why": "Torna caminhos de falha explícitos no sistema de tipos, reduzindo erros de runtime surpresa em workflows críticos."
+        },
+        {
+          "title": "Fila de Mutações Offline",
+          "description": "Quando offline, mutações são enfileiradas no IndexedDB e reproduzidas em ordem quando a conectividade retorna. Leituras usam dados em cache do service worker.",
+          "why": "Trabalhadores de campo em ambientes de saúde frequentemente têm conectividade instável. Offline-first garante que nenhum trabalho é perdido."
+        }
+      ]
+    }
+  },
+  "roadmap": {
+    "nav": "Roteiro",
+    "hero": {
+      "titleLine1": "Isso É Apenas",
+      "titleHighlight": "O Começo.",
+      "subtitle": "808 testes. Deploy em produção. Cinco checkpoints entregues. Aqui está o que vem a seguir — de fluxos com IA até conformidade empresarial."
+    },
+    "horizons": {
+      "near": {
+        "label": "HORIZONTE PRÓXIMO",
+        "title": "Inteligência e Conectividade",
+        "subtitle": "IA que gerencia suas tarefas, e integrações que conectam todo o seu fluxo de trabalho."
+      },
+      "mid": {
+        "label": "HORIZONTE MÉDIO",
+        "title": "Equipes, Poder e Ferramentas para Desenvolvedores",
+        "subtitle": "Colaboração em tempo real, modelagem avançada de tarefas e ferramentas construídas para a forma como desenvolvedores realmente trabalham."
+      },
+      "far": {
+        "label": "HORIZONTE DISTANTE",
+        "title": "Plataforma, Crescimento e Confiabilidade",
+        "subtitle": "Apps nativos, conformidade empresarial, perfeição UX e a infraestrutura para sustentar tudo."
+      }
+    },
+    "tiers": [
+      {
+        "name": "Ecossistema de IA e Agentes",
+        "tagline": "Suas tarefas, gerenciadas por IA.",
+        "features": [
+          { "title": "Assistente de IA", "description": "Converse com seu quadro. Crie tarefas, faça perguntas, obtenha resumos — tudo em linguagem natural." },
+          { "title": "Servidor MCP", "description": "Agentes de IA gerenciam suas tarefas através do Model Context Protocol. Conecte ao Claude, Copilot ou ao seu próprio." },
+          { "title": "Cliente MCP", "description": "Extraia contexto de calendários, e-mail e repositórios de código. Sua IA vê toda a sua cadeia de ferramentas." },
+          { "title": "Categorização Inteligente", "description": "Auto-sugestão de prioridade, tags e colunas baseada no seu histórico e padrões de tarefas." }
+        ]
+      },
+      {
+        "name": "Integrações de Terceiros",
+        "tagline": "Conecte tudo. Automatize o resto.",
+        "features": [
+          { "title": "Sincronização de Calendário", "description": "Sincronização bidirecional com Google Calendar e Outlook. Tarefas viram eventos, eventos viram tarefas." },
+          { "title": "Notificações Inteligentes", "description": "Lembretes por Slack, Teams, WhatsApp e SMS para prazos, menções e mudanças de status." },
+          { "title": "Email para Tarefa", "description": "Encaminhe qualquer e-mail para criar uma tarefa instantaneamente. O assunto vira o título." },
+          { "title": "Zapier e Make", "description": "Webhooks em cada evento de domínio. Conecte-se a mais de 5.000 serviços sem código." }
+        ]
+      },
+      {
+        "name": "Colaboração e Tempo Real",
+        "tagline": "Veja uma tarefa se mover no momento em que um colega a arrasta.",
+        "features": [
+          { "title": "Quadros em Tempo Real", "description": "Sincronização ao vivo via SignalR. Assista os cartões se moverem enquanto sua equipe trabalha, em tempo real." },
+          { "title": "Equipes e Projetos", "description": "Agrupe quadros em projetos. Atribua membros. Rastreie a velocidade por equipe." },
+          { "title": "Comentários e Menções", "description": "Discussões em thread em qualquer tarefa. @mencione para incluir alguém instantaneamente." },
+          { "title": "Feed de Atividade", "description": "Histórico por tarefa e por quadro. Quem fez o quê, quando e por quê." }
+        ]
+      },
+      {
+        "name": "Modelagem Avançada de Tarefas",
+        "tagline": "Tarefas que entendem relacionamentos.",
+        "features": [
+          { "title": "Dependências de Tarefas", "description": "Relações bloqueado-por com grafos visuais de dependências e propagação automática de status." },
+          { "title": "Subtarefas e Checklists", "description": "Hierarquias aninhadas com rastreamento de progresso. Divida grandes objetivos em passos atômicos." },
+          { "title": "Tarefas Recorrentes", "description": "Geração baseada em cron. Configure e esqueça. Sua preparação do standup de segunda, automatizada." },
+          { "title": "Campos Personalizados", "description": "Estenda o esquema de tarefas por workspace. Dropdowns, datas, números — seu modelo de dados." }
+        ]
+      },
+      {
+        "name": "Relatórios e Experiência do Desenvolvedor",
+        "tagline": "APIs, CLIs e dashboards.",
+        "features": [
+          { "title": "Dashboards", "description": "Gráficos de burndown, rastreamento de velocidade, mapas de calor de carga de trabalho. Produtividade baseada em dados." },
+          { "title": "API Pública e SDK", "description": "API REST versionada com SDKs auto-gerados para TypeScript e C#." },
+          { "title": "Ferramenta CLI", "description": "lemondo tasks list --status=todo. Usuários avançados nunca saem do terminal." },
+          { "title": "Integração com GitHub", "description": "Vincule commits a tarefas. Transição automática de status ao fazer merge. Feche o ciclo." }
+        ]
+      },
+      {
+        "name": "Plataforma e Conformidade",
+        "tagline": "Apps nativos. Conformidade empresarial.",
+        "features": [
+          { "title": "App Desktop", "description": "Desktop nativo com Tauri. Bandeja do sistema, atalhos globais, offline-first." },
+          { "title": "Móvel Nativo", "description": "React Native para iOS e Android. Tipos compartilhados, performance nativa." },
+          { "title": "SSO Empresarial", "description": "SAML 2.0 e OIDC. Okta, Azure AD, Auth0. Um login para tudo." },
+          { "title": "Caminho para Compliance Total", "description": "Prontidão para certificação HIPAA, conformidade GDPR, preparação SOC 2 Tipo II. Projetado para indústrias reguladas." }
+        ]
+      },
+      {
+        "name": "Produto e Crescimento",
+        "tagline": "Monetização e ferramentas de crescimento.",
+        "features": [
+          { "title": "Modelo Freemium", "description": "Grátis para indivíduos. Pro para usuários avançados. Team para colaboração. Enterprise para conformidade." },
+          { "title": "Galeria de Templates", "description": "Sprint Planning, GTD, Calendário de Conteúdo — comece com estruturas comprovadas, não quadros vazios." },
+          { "title": "Analytics de Conversão", "description": "MRR, ARPU, taxa de churn, LTV. Um dashboard em tempo real para a saúde do negócio." },
+          { "title": "Otimização do Ciclo de Vida", "description": "Funis de onboarding, prevenção de churn, sequências de re-engagement. Crescimento baseado em dados." }
+        ]
+      },
+      {
+        "name": "Excelência UX",
+        "tagline": "Os detalhes que economizam seu tempo.",
+        "features": [
+          { "title": "Paleta de Comandos", "description": "Cmd+K para tudo. Tarefas, quadros, ações, configurações. Velocidade total, zero mouse." },
+          { "title": "Desfazer em Todo Lugar", "description": "Toast de desfazer de 5 segundos em cada ação destrutiva. Mais rápido que diálogos de confirmação." },
+          { "title": "Operações em Lote", "description": "Multi-seleção, mover em lote, taguear em lote, deletar em lote. Gerencie dezenas de tarefas em segundos." },
+          { "title": "Padrões Inteligentes", "description": "Digite 'urgente' e a prioridade se define automaticamente como Crítica. O app aprende seus padrões." }
+        ]
+      },
+      {
+        "name": "Confiabilidade e Operações",
+        "tagline": "O chato que mantém tudo rodando.",
+        "features": [
+          { "title": "CDN Global", "description": "Frontend de mais de 100 localizações edge. Tempos de primeiro byte sub-50ms, mundial." },
+          { "title": "Deploys Blue/Green", "description": "Deploys sem tempo de inatividade com progressão canary e rollback instantâneo." },
+          { "title": "Feature Flags", "description": "Faça deploy atrás de flags. Rollouts graduais, kill switches e testes A/B integrados." },
+          { "title": "SLA 99.9%", "description": "Orçamentos de erro, rotação de plantão, post-mortems sem culpa. Confiabilidade de nível empresarial." }
+        ]
+      }
+    ],
+    "cta": {
+      "title": "Quer Moldar o que Vem a Seguir?",
+      "subtitle": "LemonDo é open source. Dê estrela no repo, faça fork, contribua. Tudo aqui está aberto para discussão.",
+      "ctaPrimary": "Comece Grátis",
+      "ctaGithub": "Estrela no GitHub"
+    }
+  },
+  "devops": {
+    "nav": "DevOps",
+    "hero": {
+      "titleLine1": "Infraestrutura como",
+      "titleHighlight": "Código.",
+      "titleLine2": "Deploy no Piloto Automático.",
+      "subtitle": "Três estágios Terraform. CI/CD automatizado. Nativo Azure. De $18/mês até escala empresarial — cada recurso provisionado, testado e observável."
+    },
+    "pipeline": {
+      "title": "Push para Produção em Minutos",
+      "highlight": "Minutos",
+      "subtitle": "Cada push para main dispara um pipeline de 4 estágios. Testes em paralelo, build Docker e deploy sem downtime no Azure.",
+      "steps": [
+        { "title": "Push", "detail": "Código mergeado na main" },
+        { "title": "Test", "detail": "SQLite + SQL Server + Frontend" },
+        { "title": "Build", "detail": "Imagem Docker multi-stage" },
+        { "title": "Deploy", "detail": "Container App + Static Web App" }
+      ],
+      "details": [
+        { "title": "Teste Dual de BD", "description": "Cada push executa a suíte completa de testes backend contra SQLite e SQL Server em paralelo." },
+        { "title": "Build Multi-Stage Docker", "description": "Estágio de build com SDK, estágio runtime com aspnet. Usuário não-root, health-checked, tagueado por SHA do commit." },
+        { "title": "Deploy Sem Downtime", "description": "Atualizações rolling do Container App com verificação de probe /alive a cada 30 segundos." },
+        { "title": "Execução Paralela", "description": "4 jobs de CI rodando concorrentemente — tempo total do pipeline abaixo de 5 minutos." }
+      ]
+    },
+    "infra": {
+      "title": "Três Estágios, Uma Base de Código",
+      "highlight": "Três Estágios",
+      "subtitle": "Os mesmos módulos Terraform, variáveis diferentes. Escale de prova de conceito a enterprise mudando um arquivo.",
+      "costNote": "Valores são estimativas de cenário para infraestrutura Azure bruta, não preços comerciais.",
+      "stages": [
+        {
+          "name": "Estágio 1: MVP",
+          "cost": "~$18/mês",
+          "tagline": "Faça deploy rápido. Valide ideias.",
+          "badge": "ATUAL",
+          "resources": ["Container App (0.25 CPU, 0.5 GB)", "Azure SQL Basic (5 DTU, 2 GB)", "Container Registry (Basic)", "Key Vault (RBAC + Identidade Gerenciada)", "Static Web App (Standard)", "App Insights (Tier gratuito)", "Domínios customizados + TLS gerenciado"]
+        },
+        {
+          "name": "Estágio 2: Resiliência",
+          "cost": "~$180/mês",
+          "tagline": "Pronto para produção. Durma tranquilo.",
+          "badge": "PRÓXIMO",
+          "resources": ["VNet + Endpoints Privados", "Front Door + WAF (Prevenção)", "SQL S1 (20 DTU, geo-backup, PITR 14 dias)", "Container App (0.5 CPU, 5 réplicas)", "Retenção de monitoramento 90 dias", "Proteção DDoS", "Proteção contra purge do Key Vault"]
+        },
+        {
+          "name": "Estágio 3: Escala",
+          "cost": "~$1.7K/mês",
+          "tagline": "Enterprise. Global. Redundante.",
+          "badge": "FUTURO",
+          "resources": ["Redis Premium P1 (2.5 GB)", "CDN + Armazenamento Blob zone-redundant", "SQL P1 (zone-redundant, réplica de leitura, PITR 35 dias)", "Container App (1.0 CPU, auto-scale 0-10)", "Front Door Premium + WAF", "Endpoints privados em todo lugar", "Regras de auto-scale CPU + HTTP"]
+        }
+      ]
+    },
+    "modules": {
+      "title": "9 Módulos Terraform, Totalmente Componíveis",
+      "highlight": "9 Módulos Terraform",
+      "subtitle": "Blocos de infraestrutura reutilizáveis. Cada estágio escolhe os módulos que precisa.",
+      "items": [
+        { "name": "container-app", "description": "Registry + Ambiente + App" },
+        { "name": "sql-database", "description": "Servidor + Banco de dados + Firewall" },
+        { "name": "key-vault", "description": "Segredos + RBAC + Identidade Gerenciada" },
+        { "name": "monitoring", "description": "App Insights + Log Analytics" },
+        { "name": "static-web-app", "description": "Hospedagem SPA + Domínio customizado" },
+        { "name": "networking", "description": "VNet + Subnets + DNS Privado" },
+        { "name": "frontdoor", "description": "CDN + WAF + Health Probes" },
+        { "name": "redis", "description": "Cache Premium + Endpoint Privado" },
+        { "name": "cdn", "description": "Armazenamento zone-redundant + Perfil CDN" }
+      ]
+    },
+    "live": {
+      "title": "Rodando Agora Mesmo no Azure",
+      "highlight": "Agora Mesmo",
+      "subtitle": "Infraestrutura do Estágio 1 alimentando o MVP ao vivo em lemondo.btas.dev.",
+      "components": [
+        { "name": "Container App", "detail": "0.25 CPU, 0.5 GB RAM, auto-scale 0-3 réplicas" },
+        { "name": "Static Web App", "detail": "React SPA com entrega CDN edge global" },
+        { "name": "Azure SQL", "detail": "Basic 5 DTU, 2 GB max, TLS 1.2 obrigatório" },
+        { "name": "Key Vault", "detail": "Segredo JWT + chave de criptografia via identidade gerenciada" },
+        { "name": "App Insights", "detail": "Rastreamento de requisições, tracking de dependências, 30 dias de retenção" },
+        { "name": "Container Registry", "detail": "Imagens Docker tagueadas por SHA do commit + latest" },
+        { "name": "Domínios Customizados", "detail": "Certificados TLS gerenciados, auto-renovados" },
+        { "name": "Log Analytics", "detail": "Logs de contêineres, consultas KQL estruturadas" }
+      ],
+      "domains": {
+        "label": "Domínios ao Vivo",
+        "api": "api.lemondo.btas.dev",
+        "frontend": "lemondo.btas.dev"
+      }
+    },
+    "observability": {
+      "title": "Observável por Padrão",
+      "highlight": "Observável",
+      "subtitle": "Cada requisição rastreada. Cada erro capturado. Cada métrica no dashboard.",
+      "items": [
+        { "title": "Application Insights", "description": "Rastreamento de requisições ponta a ponta, tracking de dependências, análise de falhas e métricas de performance ao vivo." },
+        { "title": "Logging Estruturado", "description": "ILogger com IDs de correlação fluindo por cada camada. Consultável com KQL no Log Analytics." },
+        { "title": "Endpoints de Saúde", "description": "/health para prontidão, /alive para vivacidade. As probes do Container App verificam a cada 30 segundos." },
+        { "title": "OpenAPI + Scalar", "description": "Documentação interativa de API auto-gerada em /scalar/v1. Cada endpoint documentado e testável." }
+      ]
+    },
+    "cta": {
+      "title": "Veja o Código da Infraestrutura",
+      "subtitle": "Cada módulo Terraform, cada GitHub Action, cada Dockerfile — open source e pronto para fazer fork.",
+      "ctaPrimary": "Comece Grátis",
+      "ctaGithub": "Ver Infraestrutura"
+    }
   }
 }

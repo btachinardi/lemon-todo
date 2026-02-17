@@ -64,13 +64,13 @@ export function FilterBar({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="relative flex-1 min-w-[200px]">
+      <div className="relative min-w-0 flex-1 basis-full sm:basis-auto sm:min-w-[200px]">
         <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           placeholder={t('tasks.filter.searchPlaceholder')}
-          className="h-9 pl-9 text-sm"
+          className="h-9 pl-9"
           aria-label="Search tasks"
         />
         {localSearch && (
@@ -91,7 +91,7 @@ export function FilterBar({
         value={filterPriority ?? '__all__'}
         onValueChange={(v) => onFilterPriorityChange(v === '__all__' ? undefined : v)}
       >
-        <SelectTrigger className="h-9 w-[130px] text-sm" aria-label="Filter by priority">
+        <SelectTrigger className="h-9 w-auto min-w-[110px] sm:w-[130px] text-sm" aria-label="Filter by priority">
           <SelectValue placeholder="Priority" />
         </SelectTrigger>
         <SelectContent>
@@ -110,7 +110,7 @@ export function FilterBar({
         value={filterStatus ?? '__all__'}
         onValueChange={(v) => onFilterStatusChange(v === '__all__' ? undefined : v)}
       >
-        <SelectTrigger className="h-9 w-[130px] text-sm" aria-label="Filter by status">
+        <SelectTrigger className="h-9 w-auto min-w-[110px] sm:w-[130px] text-sm" aria-label="Filter by status">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>

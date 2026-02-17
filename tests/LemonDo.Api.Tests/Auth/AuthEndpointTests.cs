@@ -257,6 +257,43 @@ public sealed class AuthEndpointTests
         Assert.AreEqual(HttpStatusCode.Unauthorized, refreshResponse.StatusCode);
     }
 
+    [TestMethod]
+    public async Task Should_RevealProfile_When_ValidPassword()
+    {
+        using var authedClient = await _factory.CreateAuthenticatedClientAsync();
+        var request = new RevealProfileRequest(CustomWebApplicationFactory.TestUserPassword);
+
+        var response = await authedClient.PostAsJsonAsync("/api/auth/reveal-profile", request);
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        var revealed = await response.Content.ReadFromJsonAsync<RevealedProfileResponse>();
+        Assert.IsNotNull(revealed);
+        // Should return UNREDACTED data
+        Assert.AreEqual(CustomWebApplicationFactory.TestUserEmail, revealed.Email);
+        Assert.AreEqual("Test User", revealed.DisplayName);
+    }
+
+    [TestMethod]
+    public async Task Should_ReturnUnauthorized_When_WrongPasswordOnRevealProfile()
+    {
+        using var authedClient = await _factory.CreateAuthenticatedClientAsync();
+        var request = new RevealProfileRequest("WrongPassword123!");
+
+        var response = await authedClient.PostAsJsonAsync("/api/auth/reveal-profile", request);
+
+        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task Should_ReturnUnauthorized_When_AnonymousRevealProfile()
+    {
+        var request = new RevealProfileRequest("AnyPassword123!");
+
+        var response = await _anonymousClient.PostAsJsonAsync("/api/auth/reveal-profile", request);
+
+        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     /// <summary>Asserts that the response contains a Set-Cookie header for refresh_token with correct flags.</summary>
     private static void AssertRefreshTokenCookie(HttpResponseMessage response)
     {

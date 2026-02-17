@@ -48,6 +48,14 @@ public sealed class ProtectedDataAccessService(
         return await DecryptProtectedDataAsync(userId, ct);
     }
 
+    /// <inheritdoc />
+    public async Task<Result<DecryptedProtectedData, DomainError>> RevealForOwnerAsync(
+        Guid userId, CancellationToken ct)
+    {
+        // Audit is recorded by the calling RevealOwnProfileCommandHandler
+        return await DecryptProtectedDataAsync(userId, ct);
+    }
+
     private async Task<Result<DecryptedProtectedData, DomainError>> DecryptProtectedDataAsync(
         Guid userId, CancellationToken ct)
     {

@@ -33,7 +33,7 @@ export const SortableTaskCard = memo(function SortableTaskCard({ task, onComplet
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="animate-fade-in" {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} className="animate-fade-in" data-onboarding="task-card" {...attributes} {...listeners}>
       <TaskCard
         task={task}
         onComplete={onComplete}

@@ -1,6 +1,7 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { createTask, completeTask } from '../helpers/api.helpers';
 import { loginViaApi } from '../helpers/auth.helpers';
+import { completeOnboarding } from '../helpers/onboarding.helpers';
 
 let context: BrowserContext;
 let page: Page;
@@ -10,6 +11,7 @@ test.describe.serial('Task List', () => {
     context = await browser.newContext();
     page = await context.newPage();
     await loginViaApi(page);
+    await completeOnboarding();
   });
 
   test.afterAll(async () => {

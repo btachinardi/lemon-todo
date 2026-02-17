@@ -30,7 +30,7 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
     <Button
       variant="ghost"
       size="icon"
-      className="size-8"
+      className="size-9 sm:size-8"
       onClick={onToggle}
       aria-label={t(current.labelKey)}
       title={t('theme.toggle', { label: t(current.labelKey), next: t(next.labelKey) })}

@@ -1,6 +1,7 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { createTask } from '../helpers/api.helpers';
 import { loginViaApi } from '../helpers/auth.helpers';
+import { completeOnboarding } from '../helpers/onboarding.helpers';
 
 let context: BrowserContext;
 let page: Page;
@@ -10,6 +11,7 @@ test.describe.serial('Task Board', () => {
     context = await browser.newContext();
     page = await context.newPage();
     await loginViaApi(page);
+    await completeOnboarding();
   });
 
   test.afterAll(async () => {
@@ -17,13 +19,13 @@ test.describe.serial('Task Board', () => {
   });
 
   test('empty board shows empty state', async () => {
-    await page.goto('/');
+    await page.goto('/board');
     await expect(page.getByText('Your board is empty')).toBeVisible();
     await expect(page.getByText('Add a task above to get started.')).toBeVisible();
   });
 
   test('quick-add form visible with input and button', async () => {
-    await page.goto('/');
+    await page.goto('/board');
     await expect(page.getByLabel('New task title')).toBeVisible();
     await expect(page.getByRole('button', { name: /add/i })).toBeVisible();
   });
@@ -31,14 +33,14 @@ test.describe.serial('Task Board', () => {
   test('task card appears in To Do column after API seeding', async () => {
     await createTask({ title: 'Seeded task' });
 
-    await page.goto('/');
+    await page.goto('/board');
     await expect(page.getByText('Seeded task')).toBeVisible();
   });
 
   test('task card shows priority badge and tags', async () => {
     await createTask({ title: 'Priority task', priority: 'High', tags: ['urgent', 'frontend'] });
 
-    await page.goto('/');
+    await page.goto('/board');
     await expect(page.getByText('Priority task')).toBeVisible();
     await expect(page.getByText('High', { exact: true })).toBeVisible();
     await expect(page.getByText('urgent')).toBeVisible();
@@ -48,7 +50,7 @@ test.describe.serial('Task Board', () => {
   test('multiple tasks render in correct order', async () => {
     await createTask({ title: 'Another task' });
 
-    await page.goto('/');
+    await page.goto('/board');
     const cards = page.locator('[data-slot="card-title"]');
     // Seeded task + Priority task + Another task = accumulated from prior tests
     await expect(cards.first()).toBeVisible();
