@@ -140,20 +140,167 @@ ensure_sql_server() {
 cmd_install() {
   header "Installing all dependencies"
 
-  echo -e "${BOLD}[1/3] .NET packages (dotnet restore)${NC}"
+  echo -e "${BOLD}[1/5] .NET packages (dotnet restore)${NC}"
   dotnet restore "$SLN"
   success "  Done"
 
-  echo -e "\n${BOLD}[2/3] Frontend packages (pnpm install)${NC}"
+  echo -e "\n${BOLD}[2/5] Frontend packages (pnpm install)${NC}"
   (cd "$CLIENT_DIR" && pnpm install)
   success "  Done"
 
-  echo -e "\n${BOLD}[3/3] E2E packages (pnpm install)${NC}"
+  echo -e "\n${BOLD}[3/5] E2E packages (pnpm install)${NC}"
   (cd "$E2E_DIR" && pnpm install)
   success "  Done"
 
+  echo -e "\n${BOLD}[4/5] Development configuration files${NC}"
+  setup_dev_config
+  success "  Done"
+
+  echo -e "\n${BOLD}[5/5] Generate TypeScript API types${NC}"
+  (cd "$CLIENT_DIR" && pnpm generate:api)
+  success "  Done"
+
   echo ""
-  success "All dependencies installed!"
+  success "All dependencies installed and configured!"
+}
+
+# Generate gitignored development config files (safe dev defaults, no real secrets)
+setup_dev_config() {
+  local api_dir="$ROOT_DIR/src/LemonDo.Api"
+  local apphost_dir="$ROOT_DIR/src/LemonDo.AppHost"
+
+  # ── API appsettings.Development.json ──
+  local api_dev_settings="$api_dir/appsettings.Development.json"
+  if [ ! -f "$api_dev_settings" ]; then
+    cat > "$api_dev_settings" << 'APIJSON'
+{
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Debug",
+      "Override": {
+        "Microsoft.AspNetCore": "Information",
+        "Microsoft.AspNetCore.Routing": "Warning",
+        "Microsoft.EntityFrameworkCore": "Warning",
+        "System.Net.Http.HttpClient": "Warning"
+      }
+    }
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=lemondo.db"
+  },
+  "Features": {
+    "EnableDemoAccounts": true
+  },
+  "Encryption": {
+    "FieldEncryptionKey": "ZGV2LW9ubHktZmllbGQtZW5jcnlwdGlvbi1rZXktMzI="
+  },
+  "Jwt": {
+    "Issuer": "LemonDo",
+    "Audience": "LemonDo",
+    "SecretKey": "dev-secret-key-at-least-32-characters-long!!",
+    "AccessTokenExpirationMinutes": 15,
+    "RefreshTokenExpirationDays": 7
+  }
+}
+APIJSON
+    echo "  Created $api_dev_settings"
+  else
+    echo "  Skipped $api_dev_settings (already exists)"
+  fi
+
+  # ── API launchSettings.json ──
+  local api_launch="$api_dir/Properties/launchSettings.json"
+  if [ ! -f "$api_launch" ]; then
+    mkdir -p "$api_dir/Properties"
+    cat > "$api_launch" << 'APILAUNCH'
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5155",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:7291;http://localhost:5155",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+APILAUNCH
+    echo "  Created $api_launch"
+  else
+    echo "  Skipped $api_launch (already exists)"
+  fi
+
+  # ── AppHost appsettings.Development.json ──
+  local apphost_dev_settings="$apphost_dir/appsettings.Development.json"
+  if [ ! -f "$apphost_dev_settings" ]; then
+    cat > "$apphost_dev_settings" << 'APPHOSTJSON'
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+APPHOSTJSON
+    echo "  Created $apphost_dev_settings"
+  else
+    echo "  Skipped $apphost_dev_settings (already exists)"
+  fi
+
+  # ── AppHost launchSettings.json ──
+  local apphost_launch="$apphost_dir/Properties/launchSettings.json"
+  if [ ! -f "$apphost_launch" ]; then
+    mkdir -p "$apphost_dir/Properties"
+    cat > "$apphost_launch" << 'APPHOSTLAUNCH'
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:17022;http://localhost:15082",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21134",
+        "ASPIRE_DASHBOARD_MCP_ENDPOINT_URL": "https://localhost:23117",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22258"
+      }
+    },
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:15082",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "http://localhost:19137",
+        "ASPIRE_DASHBOARD_MCP_ENDPOINT_URL": "http://localhost:18189",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "http://localhost:20279"
+      }
+    }
+  }
+}
+APPHOSTLAUNCH
+    echo "  Created $apphost_launch"
+  else
+    echo "  Skipped $apphost_launch (already exists)"
+  fi
 }
 
 cmd_build() {
@@ -573,7 +720,7 @@ cmd_help() {
 
   Commands:
 
-    install                   Install all dependencies (.NET, frontend, E2E)
+    install                   Install deps + generate dev config + API types
     build                     Clean + build all projects (0 warnings gate)
     generate                  Regenerate OpenAPI spec + TypeScript types
     verify                    Full verification gate (build + tests + lint)
