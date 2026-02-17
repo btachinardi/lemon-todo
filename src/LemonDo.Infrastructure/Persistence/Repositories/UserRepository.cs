@@ -4,17 +4,15 @@ using LemonDo.Domain.Common;
 using LemonDo.Domain.Identity.Entities;
 using LemonDo.Domain.Identity.Repositories;
 using LemonDo.Domain.Identity.ValueObjects;
-using LemonDo.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Repository for persisting and querying domain <see cref="User"/> aggregates.
-/// Handles protected data encryption transparently: during <see cref="AddAsync"/>, plaintext VOs
-/// are encrypted into shadow properties; during reads, only redacted values are loaded.
+/// Handles protected data storage transparently: during <see cref="AddAsync"/>, pre-encrypted
+/// <see cref="EncryptedField"/> values are stored directly into shadow properties; during reads,
+/// only redacted values are loaded.
 /// </summary>
-public sealed class UserRepository(
-    LemonDoDbContext dbContext,
-    IFieldEncryptionService encryptionService) : IUserRepository
+public sealed class UserRepository(LemonDoDbContext dbContext) : IUserRepository
 {
     /// <inheritdoc />
     public async Task<User?> GetByIdAsync(UserId id, CancellationToken ct = default)
@@ -25,15 +23,16 @@ public sealed class UserRepository(
     }
 
     /// <inheritdoc />
-    public async Task AddAsync(User user, Email email, DisplayName displayName, CancellationToken ct = default)
+    public async Task AddAsync(User user, EncryptedField email, EncryptedField displayName, CancellationToken ct = default)
     {
         dbContext.Users.Add(user);
 
-        // Set shadow properties with encrypted protected data
+        // Set shadow properties with pre-encrypted protected data from EncryptedField
         var entry = dbContext.Entry(user);
-        entry.Property("EmailHash").CurrentValue = ProtectedDataHasher.HashEmail(email.Value);
-        entry.Property("EncryptedEmail").CurrentValue = encryptionService.Encrypt(email.Value);
-        entry.Property("EncryptedDisplayName").CurrentValue = encryptionService.Encrypt(displayName.Value);
+        entry.Property("EmailHash").CurrentValue = email.Hash
+            ?? throw new InvalidOperationException("EncryptedField for email must have a hash.");
+        entry.Property("EncryptedEmail").CurrentValue = email.Encrypted;
+        entry.Property("EncryptedDisplayName").CurrentValue = displayName.Encrypted;
 
         await Task.CompletedTask;
     }
