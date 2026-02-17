@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Checkpoint 5: Advanced & Delight — PWA, offline support, onboarding, analytics, notifications, multi-browser E2E, visual regression, and Spanish i18n.
+## [1.0.0] - 2026-02-16
+
+First stable release. Checkpoint 5: Advanced & Delight — PWA, offline support, onboarding, analytics, notifications, multi-browser E2E, visual regression, and Spanish i18n.
 
 ### Added
 
@@ -337,7 +339,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v0.4.1...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/btachinardi/lemon-todo/compare/v0.4.1...v1.0.0
 [0.4.1]: https://github.com/btachinardi/lemon-todo/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/btachinardi/lemon-todo/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/btachinardi/lemon-todo/compare/v0.2.0...v0.3.0

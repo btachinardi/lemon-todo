@@ -17,15 +17,14 @@ vi.mock('react-i18next', () => ({
 }));
 
 // Mock motion/react – render standard HTML, bypass animations
-vi.mock('motion/react', () => {
-  const React = require('react');
+vi.mock('motion/react', async () => {
+  const React = await vi.importActual<typeof import('react')>('react');
   return {
     motion: {
       div: React.forwardRef(
-        (
-          { initial, animate, transition, variants, ...rest }: Record<string, unknown>,
-          ref: unknown,
-        ) => React.createElement('div', { ...rest, ref }),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ({ initial, animate, transition, variants, ...rest }: Record<string, unknown>, ref: unknown) =>
+          React.createElement('div', { ...rest, ref }),
       ),
     },
     useInView: () => true,
