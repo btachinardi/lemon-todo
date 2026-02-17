@@ -22,11 +22,12 @@ cd lemon-todo
 
 `./dev install` handles everything a fresh clone needs:
 
-1. .NET package restore (`dotnet restore`)
-2. Frontend packages (`pnpm install` in `src/client/`)
-3. E2E packages (`pnpm install` in `tests/e2e/`)
-4. Dev config files — creates `appsettings.Development.json` and `launchSettings.json` with safe dev defaults (skips if they already exist)
-5. TypeScript API types — generates `src/client/src/api/schema.d.ts` from the committed OpenAPI spec
+1. HTTPS dev certificate (`dotnet dev-certs https`) — required for Aspire; no-ops if already present
+2. .NET package restore (`dotnet restore`)
+3. Frontend packages (`pnpm install` in `src/client/`)
+4. E2E packages (`pnpm install` in `tests/e2e/`)
+5. Dev config files — creates `appsettings.Development.json` and `launchSettings.json` with safe dev defaults (skips if they already exist)
+6. TypeScript API types — generates `src/client/src/api/schema.d.ts` from the committed OpenAPI spec
 
 The Aspire Dashboard URL (with login token) will appear in the console output. From there you can see all service URLs, logs, traces, and metrics.
 

@@ -140,23 +140,27 @@ ensure_sql_server() {
 cmd_install() {
   header "Installing all dependencies"
 
-  echo -e "${BOLD}[1/5] .NET packages (dotnet restore)${NC}"
+  echo -e "${BOLD}[1/6] HTTPS development certificate${NC}"
+  dotnet dev-certs https 2>/dev/null || true
+  success "  Done"
+
+  echo -e "\n${BOLD}[2/6] .NET packages (dotnet restore)${NC}"
   dotnet restore "$SLN"
   success "  Done"
 
-  echo -e "\n${BOLD}[2/5] Frontend packages (pnpm install)${NC}"
+  echo -e "\n${BOLD}[3/6] Frontend packages (pnpm install)${NC}"
   (cd "$CLIENT_DIR" && pnpm install)
   success "  Done"
 
-  echo -e "\n${BOLD}[3/5] E2E packages (pnpm install)${NC}"
+  echo -e "\n${BOLD}[4/6] E2E packages (pnpm install)${NC}"
   (cd "$E2E_DIR" && pnpm install)
   success "  Done"
 
-  echo -e "\n${BOLD}[4/5] Development configuration files${NC}"
+  echo -e "\n${BOLD}[5/6] Development configuration files${NC}"
   setup_dev_config
   success "  Done"
 
-  echo -e "\n${BOLD}[5/5] Generate TypeScript API types${NC}"
+  echo -e "\n${BOLD}[6/6] Generate TypeScript API types${NC}"
   (cd "$CLIENT_DIR" && pnpm generate:api)
   success "  Done"
 
