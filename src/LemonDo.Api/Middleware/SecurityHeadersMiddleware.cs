@@ -12,6 +12,8 @@ namespace LemonDo.Api.Middleware;
 /// </remarks>
 public sealed class SecurityHeadersMiddleware(RequestDelegate next)
 {
+    private static readonly string[] DocsPathPrefixes = ["/scalar", "/openapi"];
+
     /// <summary>Adds security headers and invokes the next middleware.</summary>
     public async Task InvokeAsync(HttpContext context)
     {
@@ -22,11 +24,28 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next)
             headers["X-Frame-Options"] = "DENY";
             headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
             headers["X-XSS-Protection"] = "0";
-            headers["Content-Security-Policy"] =
-                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:";
+
+            // Skip restrictive CSP for API documentation pages — Scalar loads JS/CSS from CDN
+            var path = context.Request.Path.Value ?? string.Empty;
+            if (!IsDocsPath(path))
+            {
+                headers["Content-Security-Policy"] =
+                    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:";
+            }
+
             return Task.CompletedTask;
         });
 
         await next(context);
+    }
+
+    private static bool IsDocsPath(string path)
+    {
+        foreach (var prefix in DocsPathPrefixes)
+        {
+            if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
     }
 }
