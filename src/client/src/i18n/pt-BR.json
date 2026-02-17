@@ -95,6 +95,7 @@
       "title": "Login Rápido",
       "subtitle": "Contas de desenvolvimento",
       "switching": "Alternando...",
+      "switchingOverlay": "Alternando conta...",
       "switchAccount": "Trocar conta demo",
       "roles": {
         "user": "Usuário",

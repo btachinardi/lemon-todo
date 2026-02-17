@@ -95,6 +95,7 @@
       "title": "Quick Login",
       "subtitle": "Development accounts",
       "switching": "Switching...",
+      "switchingOverlay": "Switching accounts...",
       "switchAccount": "Switch demo account",
       "roles": {
         "user": "User",

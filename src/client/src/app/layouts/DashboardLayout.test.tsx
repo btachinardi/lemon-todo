@@ -225,8 +225,8 @@ describe('DashboardLayout', () => {
     const trigger = screen.getByText(/switch demo account/i);
     const devContainer = trigger.closest('div.fixed');
     expect(devContainer).not.toBeNull();
-    expect(devContainer!.className).toMatch(/bottom-1[4-6]/);
-    expect(devContainer!.className).toMatch(/sm:bottom-3/);
+    expect(devContainer!.className).toMatch(/bottom-1[6-8]/);
+    expect(devContainer!.className).toMatch(/sm:bottom-[5-6]/);
   });
 
   it('should hide dev account switcher trigger when demo accounts are disabled', () => {
