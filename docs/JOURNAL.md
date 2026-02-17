@@ -2180,7 +2180,7 @@ Patch release with two UX fixes: smooth demo account switching and kanban scroll
 
 ### Test count update
 
-Updated all documentation and landing pages with current test counts: 403 backend + 529 frontend + 152 E2E = 1,084 total (up from 1,034).
+Updated all documentation and landing pages with current test counts: 403 backend + 531 frontend + 152 E2E = 1,086 total (up from 1,034).
 
 ---
 

@@ -102,7 +102,7 @@ export function DevOpsHeroSection() {
               <p>
                 <span className="text-success-foreground">✓</span>{' '}
                 <span className="text-muted-foreground">frontend-test</span>{' '}
-                <span className="text-foreground/60">529 passed + lint clean</span>
+                <span className="text-foreground/60">531 passed + lint clean</span>
               </p>
               <p>
                 <span className="text-success-foreground">✓</span>{' '}

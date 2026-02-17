@@ -404,7 +404,7 @@
 - **Release v1.0.3**: Patch — dev container, `./dev install` for zero-config onboarding, generated dev config files
 - **Release v1.0.4**: Patch — mobile UX polish (keyboard-aware dialogs/sheets, scrollable modals, drag-scroll fix, auth loading screen, font size hierarchy, i18n copy tightening)
 - **Release v1.0.5**: Patch — mobile UX polish (toast overlay, kanban drag-scroll edge zones, banner overflow, demo account switcher redesign)
-- **Release v1.0.6**: Patch — smooth demo account switching (cache reset + transition overlay), kanban trailing scroll padding + custom scrollbar, test count docs update (1,084 total)
+- **Release v1.0.6**: Patch — smooth demo account switching (cache reset + transition overlay), kanban trailing scroll padding + custom scrollbar, test count docs update (1,086 total)
 
 ---
 
