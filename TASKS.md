@@ -307,6 +307,9 @@
 | 2026-02-16 | Visual regression with toHaveScreenshot | Built-in Playwright, no external service. Light + dark theme baselines at 1280x720 with reducedMotion. |
 | 2026-02-16 | Release v1.0.0 (skip v0.5.0) | All 5 checkpoints complete. CP5 was planned as v0.5.0 but the app is feature-complete with 908 tests, cloud deployment, PWA, i18n, and admin tooling — warrants 1.0.0 stable designation. |
 | 2026-02-16 | v1.0.1 patch release | 12 bug fixes: mobile responsiveness (touch drag, nav menus, column-snap scroll), accessibility (DialogTitle, sr-only keys, visible button labels), due date timezone fix, CSP for Scalar docs, feature flag for demo accounts. |
+| 2026-02-17 | Startup drain for offline queue | `initOfflineQueue()` only listened for `online` event transitions. App reopening online with queued IndexedDB mutations would never drain. Fixed: await `refreshCount()` then drain if `navigator.onLine && pendingCount > 0`. |
+| 2026-02-17 | Cache invalidation after drain via CustomEvent | `drain()` replayed mutations via raw `fetch()` but never invalidated TanStack Query caches — UI showed stale data until manual reload. Fixed: drain dispatches `offline-queue-drained` event, QueryProvider listens and calls `queryClient.invalidateQueries()`. |
+| 2026-02-17 | QueryProvider tests | QueryProvider had zero tests. Added 3 tests for drain-complete cache invalidation, unrelated event immunity, and cleanup on unmount. |
 
 ---
 
@@ -370,6 +373,7 @@
   - Visual regression: Light + dark theme baselines via Playwright toHaveScreenshot()
 - **Release v1.0.0**: First stable release — all 5 checkpoints shipped
 - **Release v1.0.1**: Patch — 12 bug fixes (mobile responsiveness, accessibility, timezone, CSP, config)
+- **Post-release fix**: Offline queue startup drain + cache invalidation (462 frontend tests, +13 new)
 
 ---
 
@@ -515,3 +519,4 @@
 | 94b6463 | docs(roadmap): add frontend bundle optimization to Tier 9 | CP5 |
 | 0527416 | fix(client): move OfflineBanner inside QueryProvider to prevent crash | CP5 |
 | c217adc | chore: add Git LFS tracking for .ai files and commit logo | CP5 |
+| 098c65c | fix(client): drain offline queue on startup and invalidate caches after drain | Post-release |

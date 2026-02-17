@@ -1891,6 +1891,44 @@ Post-release polish catches real user-facing issues. Mobile and accessibility te
 
 ---
 
+## Post-Release: Offline Queue Startup Drain & Cache Invalidation (Feb 17)
+
+### What Was Done
+
+Discovered and fixed two bugs in the offline sync implementation, plus added comprehensive E2E tests for offline scenarios.
+
+**Bug 1: No startup drain** — `initOfflineQueue()` only registered an `online` event listener. If the user closed the app while offline with queued IndexedDB mutations and reopened online, the queued changes would sit in IndexedDB forever. The `online` event only fires on transition (offline → online), not on initial page load. Fix: after `refreshCount()`, check `navigator.onLine && pendingCount > 0` and call `drain()`.
+
+**Bug 2: No cache invalidation after drain** — `drain()` replayed mutations to the server via raw `fetch()` but never notified TanStack Query to refetch. The UI showed stale pre-drain data until the user manually refreshed. The store's docstring even claimed "After drain, TanStack Query caches are invalidated" but the code didn't implement it. Fix: `drain()` dispatches a `offline-queue-drained` CustomEvent after replay, and QueryProvider listens for it and calls `queryClient.invalidateQueries()`.
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `stores/use-offline-queue-store.ts` | Startup drain in `initOfflineQueue()`, `offline-queue-drained` event in `drain()` |
+| `app/providers/QueryProvider.tsx` | `useEffect` listening for drain event → invalidate all caches |
+| `app/providers/QueryProvider.test.tsx` | New: 3 tests for invalidation behavior |
+| `stores/use-offline-queue-store.test.ts` | +7 tests for drain event dispatch and startup drain |
+| `tests/e2e/specs/offline-sync.spec.ts` | +3 E2E suites: UI auto-update, multi-mutation drain, startup drain |
+
+### Architecture Decision
+
+Used a `CustomEvent` on `window` to bridge the Zustand store (non-React) and TanStack Query (React-bound). Alternatives considered:
+- **Extract QueryClient to a module-level singleton** — would work but creates a global dependency and changes the existing provider pattern
+- **React component subscribing to Zustand `lastSyncResult`** — creates coupling between unrelated stores
+- **CustomEvent** — zero coupling, simple pub/sub pattern, the store doesn't need to know who listens
+
+### Test Counts
+
+- Frontend: 58 files, 462 tests (up from 57 files, 406 tests — +13 new tests)
+- New E2E: 3 suites testing startup drain, UI auto-update after drain, multiple mutations drain in order
+
+### Lesson Learned
+
+Docstrings can lie. The store's JSDoc described cache invalidation after drain, but the implementation never did it. The existing E2E test masked this by calling `page.reload()` after drain — which technically "worked" but papered over the missing behavior. Writing tests that assert the *intended* behavior (UI updates without reload) exposed the gap immediately.
+
+---
+
 ## What's Next
 
 See `docs/ROADMAP.md` for future capability tiers.

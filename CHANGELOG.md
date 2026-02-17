@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Offline queue not draining on app startup when reopening online with pending IndexedDB mutations
+- UI not updating after offline queue drain (missing TanStack Query cache invalidation)
+- Intermittent 401 on silent token refresh caused by React StrictMode double-firing effects in `AuthHydrationProvider` — refresh token rotation is not idempotent, so two concurrent requests with the same token caused the second to fail after the first revoked it
+
+### Added
+
+- `offline-queue-drained` CustomEvent dispatched after drain completes, listened by QueryProvider
+- `initOfflineQueue()` now drains immediately when app starts online with pending mutations
+- 20 admin E2E tests across 5 spec files covering all admin/system admin features:
+  - `admin-users.spec.ts` (7): page rendering, search, role filter, role assignment, deactivation, reactivation
+  - `admin-audit.spec.ts` (4): page access, audit entries, action filter, resource type filter
+  - `admin-role-management.spec.ts` (3): role removal, audit log reflection, all-roles-assigned message
+  - `admin-route-guard.spec.ts` (5): unauthenticated redirect, regular user redirect, admin/sysadmin access
+  - `admin-pii-reveal.spec.ts` (1): refactored to use shared helpers
+- Shared admin E2E test helpers (`admin.helpers.ts`): login, register, role management, table waiters
+- 3 E2E tests: startup drain, UI auto-update after drain, multiple mutations drain in order
+- 7 unit tests for drain event dispatch and initOfflineQueue startup behavior
+- 3 QueryProvider unit tests for cache invalidation on drain-complete event
+
 ## [1.0.1] - 2026-02-16
 
 Patch release with mobile responsiveness, accessibility, and bug fixes.
