@@ -1,18 +1,10 @@
+import type { components } from '../../../api/schema';
+
 /** User data returned by admin endpoints. Protected data is redacted by default. */
-export interface AdminUser {
-  id: string;
-  email: string;
-  displayName: string;
-  roles: string[];
-  isActive: boolean;
-  createdAt: string;
-}
+export type AdminUser = components['schemas']['AdminUserDto'];
 
 /** Unredacted protected data returned by the reveal endpoint. */
-export interface RevealedProtectedData {
-  email: string;
-  displayName: string;
-}
+export type RevealedProtectedData = components['schemas']['RevealedProtectedDataDto'];
 
 /** Justification reasons for protected data reveal break-the-glass action. */
 export const PROTECTED_DATA_REVEAL_REASONS = [
