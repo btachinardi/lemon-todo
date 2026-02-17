@@ -95,7 +95,7 @@ export function AssignmentBanner() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.96 }}
               transition={{ duration: 0.35, ease }}
-              className="fixed inset-x-4 bottom-4 top-auto z-50 mx-auto max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border-2 border-primary/30 bg-card/98 p-6 shadow-2xl shadow-primary/10 backdrop-blur-xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2"
+              className="fixed inset-4 z-50 m-auto max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border-2 border-primary/30 bg-card/98 p-6 shadow-2xl shadow-primary/10 backdrop-blur-xl"
               role="dialog"
               aria-modal="true"
               aria-label={t('assignmentBanner.title')}
