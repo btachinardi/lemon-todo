@@ -4,9 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { AdminLayout } from './AdminLayout';
 
-// Mock sonner to avoid layout complexity
+// Mock sonner — capture props for Toaster configuration assertions
 vi.mock('sonner', () => ({
-  Toaster: () => null,
+  Toaster: (props: Record<string, unknown>) => (
+    <div data-testid="sonner-toaster" {...Object.fromEntries(
+      Object.entries(props).map(([k, v]) => [`data-${k.toLowerCase()}`, typeof v === 'object' ? JSON.stringify(v) : String(v)])
+    )} />
+  ),
 }));
 
 // Mock UserMenu to avoid auth mutation hooks — captures variant prop
@@ -58,6 +62,19 @@ describe('AdminLayout', () => {
     );
 
     expect(screen.getByTestId('user-menu')).toBeInTheDocument();
+  });
+
+  it('should configure toaster with a close button for manual dismissal', () => {
+    render(
+      <MemoryRouter initialEntries={['/admin/users']}>
+        <AdminLayout>
+          <p>Admin content</p>
+        </AdminLayout>
+      </MemoryRouter>,
+    );
+
+    const toaster = screen.getByTestId('sonner-toaster');
+    expect(toaster).toHaveAttribute('data-closebutton', 'true');
   });
 
   it('should render children content', () => {

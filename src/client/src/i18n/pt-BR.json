@@ -95,6 +95,7 @@
       "title": "Login Rápido",
       "subtitle": "Contas de desenvolvimento",
       "switching": "Alternando...",
+      "switchAccount": "Trocar conta demo",
       "roles": {
         "user": "Usuário",
         "userDesc": "Gerenciamento padrão de tarefas",

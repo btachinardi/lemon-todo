@@ -123,6 +123,30 @@ describe('AssignmentBanner', () => {
       expect(classes).not.toContain('sm:-translate-y-1/2');
       expect(classes).not.toContain('sm:inset-auto');
     });
+
+    it('should not have explicit w-full that over-constrains inset-based width', () => {
+      renderWithRouter(<AssignmentBanner />);
+      advancePastBubbleAndModal();
+
+      const modal = screen.getByRole('dialog');
+      // w-full + inset-4 on a fixed element causes right overflow:
+      // left: 1rem + width: 100vw = 16px overflow to the right
+      expect(modal.className).not.toContain('w-full');
+    });
+  });
+
+  describe('bubble overflow prevention', () => {
+    it('should have a viewport-relative max-width on the floating bubble', () => {
+      // Mark as seen so auto-open doesn't fire (keeps bubble visible)
+      localStorage.setItem('lemondo-evaluator-seen', '1');
+      renderWithRouter(<AssignmentBanner />);
+
+      act(() => { vi.advanceTimersByTime(600); });
+
+      const bubble = screen.getByLabelText('A Message to Evaluators');
+      // Bubble must have a max-width using viewport units to prevent overflow on narrow screens
+      expect(bubble.className).toMatch(/max-w-\[calc\(100vw/);
+    });
   });
 
   describe('modal scroll behavior', () => {

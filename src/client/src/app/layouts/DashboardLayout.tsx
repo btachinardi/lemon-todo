@@ -8,7 +8,7 @@ import { Button } from '@/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/ui/sheet';
 import { UserMenu } from '@/domains/auth/components/UserMenu';
-import { DevAccountSwitcher } from '@/domains/auth/components/DevAccountSwitcher';
+import { DevAccountSwitcher, getActiveDevAccount } from '@/domains/auth/components/DevAccountSwitcher';
 import { useDemoAccountsEnabled } from '@/domains/config/hooks/use-config';
 import { ThemeToggle } from '@/domains/tasks/components/atoms/ThemeToggle';
 import { LanguageSwitcher } from '@/domains/tasks/components/atoms/LanguageSwitcher';
@@ -31,10 +31,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const theme = useThemeStore((s) => s.theme);
   const resolvedTheme = resolveTheme(theme);
   const roles = useAuthStore((s) => s.user?.roles);
+  const userEmail = useAuthStore((s) => s.user?.email);
   const isAdmin = roles?.some((r) => r === 'Admin' || r === 'SystemAdmin') ?? false;
   const { data: onboardingStatus } = useOnboardingStatus();
   const { data: demoEnabled } = useDemoAccountsEnabled();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const activeDevAccount = demoEnabled ? getActiveDevAccount(userEmail ?? undefined) : undefined;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -156,14 +158,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="fixed bottom-14 left-3 z-50 sm:bottom-3">
           <Popover>
             <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 border-dashed border-amber-500/30 bg-amber-500/5 text-amber-800 shadow-lg hover:bg-amber-500/10 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
-              >
-                <FlaskConicalIcon className="size-3.5" />
-                <span className="text-sm">Dev</span>
-              </Button>
+              {activeDevAccount ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    'gap-2 shadow-lg backdrop-blur-sm',
+                    activeDevAccount.accent,
+                  )}
+                >
+                  <activeDevAccount.icon className="size-3.5" />
+                  <span className="text-sm font-medium">{t(activeDevAccount.labelKey)}</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-muted-foreground shadow-lg backdrop-blur-sm hover:text-foreground"
+                >
+                  <FlaskConicalIcon className="size-3.5" />
+                  <span className="text-sm">{t('auth.devSwitcher.switchAccount')}</span>
+                </Button>
+              )}
             </PopoverTrigger>
             <PopoverContent side="top" align="start" className="w-72 p-3">
               <DevAccountSwitcher />
@@ -179,7 +195,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </footer>
       {onboardingStatus?.completed && <PWAInstallPrompt />}
       <OnboardingTour />
-      <Toaster theme={resolvedTheme} />
+      <Toaster theme={resolvedTheme} closeButton mobileOffset={{ bottom: '4.5rem' }} />
     </div>
   );
 }
