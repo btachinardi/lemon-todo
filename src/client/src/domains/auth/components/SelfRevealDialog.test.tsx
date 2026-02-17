@@ -13,6 +13,7 @@ describe('SelfRevealDialog', () => {
     error: null as Error | null | undefined,
     revealedEmail: null as string | null | undefined,
     revealedDisplayName: null as string | null | undefined,
+    devPassword: undefined as string | null | undefined,
   };
 
   function renderDialog(overrides: Partial<typeof defaultProps> = {}) {
