@@ -56,7 +56,7 @@ export function AssignmentBanner() {
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.4, ease }}
             onClick={openModal}
-            className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full border-2 border-primary/30 bg-card/95 py-2 pl-2.5 pr-4 shadow-2xl shadow-primary/10 backdrop-blur-xl transition-all hover:border-primary/50 hover:shadow-primary/20"
+            className="fixed bottom-6 right-6 z-50 flex max-w-[calc(100vw-3rem)] items-center gap-2.5 rounded-full border-2 border-primary/30 bg-card/95 py-2 pl-2.5 pr-4 shadow-2xl shadow-primary/10 backdrop-blur-xl transition-all hover:border-primary/50 hover:shadow-primary/20"
             aria-label={t('assignmentBanner.title')}
           >
             <div className="relative">
@@ -95,7 +95,7 @@ export function AssignmentBanner() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.96 }}
               transition={{ duration: 0.35, ease }}
-              className="fixed inset-4 z-50 m-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border-2 border-primary/30 bg-card/98 p-6 shadow-2xl shadow-primary/10 backdrop-blur-xl"
+              className="fixed inset-4 z-50 m-auto flex max-h-[calc(100dvh-2rem)] max-w-lg flex-col overflow-hidden rounded-2xl border-2 border-primary/30 bg-card/98 p-6 shadow-2xl shadow-primary/10 backdrop-blur-xl"
               role="dialog"
               aria-modal="true"
               aria-label={t('assignmentBanner.title')}
