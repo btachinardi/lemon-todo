@@ -5,9 +5,10 @@ import { MemoryRouter } from 'react-router';
 import { DashboardLayout } from './DashboardLayout';
 import { useAuthStore } from '@/domains/auth/stores/use-auth-store';
 
-const { onboardingState, mockDemoEnabled } = vi.hoisted(() => ({
+const { onboardingState, mockDemoEnabled, mockGetActiveDevAccount } = vi.hoisted(() => ({
   onboardingState: { completed: false, completedAt: null as string | null },
   mockDemoEnabled: { data: true, isLoading: false },
+  mockGetActiveDevAccount: vi.fn<(...args: unknown[]) => unknown>(),
 }));
 
 // Mock sonner — capture props for Toaster configuration assertions
@@ -29,6 +30,8 @@ vi.mock('@/domains/auth/components/UserMenu', () => ({
 // Mock DevAccountSwitcher to avoid auth API dependencies
 vi.mock('@/domains/auth/components/DevAccountSwitcher', () => ({
   DevAccountSwitcher: () => <div data-testid="dev-account-switcher" />,
+  getActiveDevAccount: (...args: unknown[]) => mockGetActiveDevAccount(...args),
+  DEV_ACCOUNTS: [],
 }));
 
 // Mock the config hook
@@ -73,9 +76,10 @@ describe('DashboardLayout', () => {
       user: null,
       isAuthenticated: false,
     });
-    // Default: demo accounts enabled
+    // Default: demo accounts enabled, no active dev account
     mockDemoEnabled.data = true;
     mockDemoEnabled.isLoading = false;
+    mockGetActiveDevAccount.mockReturnValue(undefined);
   });
 
   it('should hide admin link when user has no admin role', () => {
@@ -132,7 +136,8 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('Admin')).toBeInTheDocument();
   });
 
-  it('should render dev account switcher trigger when demo accounts are enabled', () => {
+  it('should show "Switch demo account" trigger when no dev account is active', () => {
+    mockGetActiveDevAccount.mockReturnValue(undefined);
     useAuthStore.setState({
       accessToken: 'token',
       user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
@@ -147,10 +152,41 @@ describe('DashboardLayout', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Dev')).toBeInTheDocument();
+    expect(screen.getByText(/switch demo account/i)).toBeInTheDocument();
+    expect(screen.queryByText('Dev')).not.toBeInTheDocument();
   });
 
-  it('should position dev button above mobile quick-add bar', () => {
+  it('should show active dev account role in trigger when logged in as dev account', () => {
+    mockGetActiveDevAccount.mockReturnValue({
+      email: 'dev.admin@lemondo.dev',
+      roleKey: 'admin',
+      labelKey: 'auth.devSwitcher.roles.admin',
+      descKey: 'auth.devSwitcher.roles.adminDesc',
+      icon: () => null,
+      accent: 'text-amber-800',
+    });
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'dev.admin@lemondo.dev', displayName: 'Admin', roles: ['User', 'Admin'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    // Should show the role label, not "Dev" or "Switch demo account"
+    const trigger = screen.getByRole('button', { name: /admin/i });
+    expect(trigger).toBeInTheDocument();
+    expect(screen.queryByText('Dev')).not.toBeInTheDocument();
+  });
+
+  it('should use ghost variant for dev trigger button', () => {
+    mockGetActiveDevAccount.mockReturnValue(undefined);
     useAuthStore.setState({
       accessToken: 'token',
       user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
@@ -165,8 +201,29 @@ describe('DashboardLayout', () => {
       </MemoryRouter>,
     );
 
-    const devButton = screen.getByText('Dev');
-    const devContainer = devButton.closest('div.fixed');
+    const trigger = screen.getByText(/switch demo account/i).closest('button')!;
+    // Ghost buttons should NOT have dashed border styling
+    expect(trigger.className).not.toMatch(/border-dashed/);
+  });
+
+  it('should position dev trigger above mobile quick-add bar', () => {
+    mockGetActiveDevAccount.mockReturnValue(undefined);
+    useAuthStore.setState({
+      accessToken: 'token',
+      user: { id: '1', email: 'user@test.com', displayName: 'User', roles: ['User'] },
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardLayout>
+          <p>Page content</p>
+        </DashboardLayout>
+      </MemoryRouter>,
+    );
+
+    const trigger = screen.getByText(/switch demo account/i);
+    const devContainer = trigger.closest('div.fixed');
     expect(devContainer).not.toBeNull();
     expect(devContainer!.className).toMatch(/bottom-1[4-6]/);
     expect(devContainer!.className).toMatch(/sm:bottom-3/);
@@ -174,6 +231,7 @@ describe('DashboardLayout', () => {
 
   it('should hide dev account switcher trigger when demo accounts are disabled', () => {
     mockDemoEnabled.data = false;
+    mockGetActiveDevAccount.mockReturnValue(undefined);
 
     useAuthStore.setState({
       accessToken: 'token',
@@ -189,7 +247,7 @@ describe('DashboardLayout', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.queryByText('Dev')).not.toBeInTheDocument();
+    expect(screen.queryByText(/switch demo account/i)).not.toBeInTheDocument();
     expect(screen.queryByTestId('dev-account-switcher')).not.toBeInTheDocument();
   });
 
