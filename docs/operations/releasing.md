@@ -1,5 +1,11 @@
 # Release Process
 
+> **Source**: Extracted from docs/RELEASING.md
+> **Status**: Active
+> **Last Updated**: 2026-02-18
+
+---
+
 > How to cut a release for LemonDo using gitflow and semantic versioning.
 
 ---
@@ -70,12 +76,12 @@ Update the comparison links at the bottom of the file.
 ### 4. Update documentation
 
 - `TASKS.md`: Add Decision Log entry, update Progress Summary
-- `docs/JOURNAL.md`: Add release section with version strategy notes
+- `docs/journal/v1.md`: Add release section with version strategy notes
 
 ### 5. Commit release preparation
 
 ```bash
-git add CHANGELOG.md src/Directory.Build.props src/client/package.json TASKS.md docs/JOURNAL.md
+git add CHANGELOG.md src/Directory.Build.props src/client/package.json TASKS.md docs/journal/v1.md
 git commit -m "chore(release): prepare vX.Y.Z"
 ```
 

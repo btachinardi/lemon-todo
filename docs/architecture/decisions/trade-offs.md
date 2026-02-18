@@ -1,8 +1,8 @@
-# LemonDo - Trade-offs and Assumptions
+# Trade-offs and Assumptions
 
-> **Date**: 2026-02-15
+> **Source**: Extracted from docs/TRADEOFFS.md (full content)
 > **Status**: Active
-> **Purpose**: Key assumptions, trade-offs, and scalability considerations behind LemonDo's architecture and technology choices.
+> **Last Updated**: 2026-02-18
 
 ---
 

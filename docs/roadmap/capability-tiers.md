@@ -1,8 +1,10 @@
-# LemonDo - Future Roadmap
+# Capability Tiers
 
-> **Date**: 2026-02-14
+> **Source**: Extracted from docs/ROADMAP.md
 > **Status**: Active
-> **Purpose**: Capability tiers planned beyond Checkpoint 5.
+> **Last Updated**: 2026-02-18
+
+---
 
 Beyond CP5, the roadmap is organized into capability tiers:
 

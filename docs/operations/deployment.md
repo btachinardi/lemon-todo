@@ -1,5 +1,11 @@
 # Deployment Guide
 
+> **Source**: Extracted from docs/DEPLOYMENT.md
+> **Status**: Active
+> **Last Updated**: 2026-02-18
+
+---
+
 > CI/CD pipeline, Azure infrastructure, Docker, observability, and production URLs.
 
 ---
@@ -101,7 +107,7 @@ Custom domains are managed via Terraform with Azure Container App managed certif
 - `api.lemondo.btas.dev` — API (Container App, managed TLS)
 - `lemondo.btas.dev` — Frontend (Static Web App, managed TLS)
 
-DNS is managed in Google Cloud DNS (`btas.dev` zone). See [infra/README.md](../infra/README.md) for the full 3-phase domain setup process.
+DNS is managed in Google Cloud DNS (`btas.dev` zone). See [infra/README.md](../../infra/README.md) for the full 3-phase domain setup process.
 
 ## Docker
 
@@ -153,4 +159,4 @@ Locally, Aspire Dashboard provides the same observability (logs, traces, metrics
 
 ## Release Process
 
-See [RELEASING.md](./RELEASING.md) for the full gitflow release process (version bump, changelog, tag, merge).
+See [releasing.md](./releasing.md) for the full gitflow release process (version bump, changelog, tag, merge).

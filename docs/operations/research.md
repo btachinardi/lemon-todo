@@ -1,7 +1,12 @@
-# LemonDo - Technology Research
+# Technology Research
+
+> **Source**: Extracted from docs/RESEARCH.md
+> **Status**: Active
+> **Last Updated**: 2026-02-18
+
+---
 
 > **Date**: 2026-02-13
-> **Status**: Active
 > **Purpose**: Document the latest versions, capabilities, and compatibility of all technologies in the LemonDo stack.
 
 ---
@@ -402,7 +407,7 @@ BrowserStack provides 3500+ real browsers and devices in the cloud. Playwright t
 - **Provider**: `hashicorp/azurerm` 4.x (latest: 4.60.0)
   - Project constraint: `~> 4.0` (compatible)
 - **Target**: Azure Container Apps (API) + Azure Static Web Apps (frontend)
-  - Originally planned for App Service; migrated to Container Apps due to VM quota limitations (see JOURNAL.md)
+  - Originally planned for App Service; migrated to Container Apps due to VM quota limitations (see [journal/v1.md](../journal/v1.md))
 - **Resources**:
   - Azure Container Apps (API with auto-scaling 0-N replicas)
   - Azure Container Registry (Docker images tagged by commit SHA)
