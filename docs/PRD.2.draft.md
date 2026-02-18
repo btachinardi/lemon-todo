@@ -1,7 +1,7 @@
-# LemonDo v2 - Product Requirements Document (Draft)
+# LemonDo v2 - Product Requirements Document
 
 > **Date**: 2026-02-18
-> **Status**: Draft
+> **Status**: Active (promoted from Draft — Phase 2 design complete)
 > **Author**: Bruno (product owner)
 > **Previous Version**: [Product Requirements](./product/INDEX.md) (v1 — Task Management Platform)
 > **Branch**: `feature/v2-planning`
@@ -45,23 +45,30 @@ v2 introduces four new modules alongside the existing Task Management core:
 
 ### Module Relationship Map
 
+Cross-module integrations are mediated by dedicated bridge bounded contexts rather than direct coupling between core domains. See section 8 for details.
+
 ```
-+-------------------+
-|     Projects      |<-------- aggregates tasks, links to people
-|  (repos, deploy)  |
-+-------------------+
-     ^         |
-     |         v
-+--------+  +---------+     +----------+
-| Tasks  |  | Agents  |<--->| Comms    |
-| (v1)   |  | (Claude)|     | (unified)|
-+--------+  +---------+     +----------+
-     ^         |                  |
-     |         v                  v
-     |    +----------+     +----------+
-     +--->|  People  |<----|  People  |
-          | & Co's   |     | & Co's   |
-          +----------+     +----------+
++----------+    +-------------------------+    +----------+
+| Projects |<-->|  ProjectAgentBridge     |<-->|  Agents  |
++----------+    +-------------------------+    +----------+
+     |                                              |
+     |           +-------------------------+        |
+     +---------->|  ProjectTaskBridge      |        |
+     |           +-------------------------+        |
+     |                      |                       |
+     |           +-------------------------+        |
+     |           |  AgentTaskBridge        |<-------+
+     |           +-------------------------+
+     |                      |
+     |                      v
+     |                 +----------+     +----------+
+     +---------------->|  Tasks   |     |  Comms   |
+                        +----------+     +----------+
+                              |                |
+                              v                v
+                         +----------+    +----------+
+                         |  People  |<-->|  People  |
+                         +----------+    +----------+
 ```
 
 ---
@@ -204,104 +211,161 @@ A lightweight CRM for tracking relationships with people and companies Bruno int
 
 ### 7.1 Overview
 
-The most ambitious module. Enables Bruno to interact with Claude Code agent sessions directly from the LemonDo UI, automate task-to-agent workflows, and orchestrate parallel development across worktrees.
+The most ambitious module. Enables Bruno to interact with Claude Code agent sessions directly from the LemonDo UI, automate task-to-agent workflows, and orchestrate parallel development across worktrees. Architecture: .NET 10 backend + Node.js sidecar per session, with Redis Streams as the bidirectional event bus.
 
 ### 7.2 Core Concepts
 
-- **Agent Session** = a Claude Code CLI session (or Claude Agent SDK session)
-- **Work Queue** = ordered list of tasks assigned to agent processing
-- **Execution Mode** = parallel (multiple worktrees) or sequential (one after another)
-- **Budget** = token/cost limit per session or per queue
-- **Agent API** = REST endpoints agents can call to interact with LemonDo (create tasks, update projects, log learnings)
+- **Agent Session** = a Claude Code CLI session managed via Node.js sidecar process (one sidecar per session)
+- **Agent Template** = reusable session configuration (objective, skills, model selection, budget defaults)
+- **Agent Skill** = composable package of instructions, tools, and memory pills that agents load at session start
+- **Memory Pill** = agent-recorded learning (Mistake, Tip, Guideline, Pattern, Convention) that improves skills over time via consolidation
+- **Session Chain** = logical continuity across handoffs when context is exhausted or voluntarily handed off
+- **Activity Stream** = typed real-time feed of session activity (messages, tool calls, subagent spawns, system events)
+- **Auto-Continue** = automatic session continuation with configurable validation criteria (tests passing, coverage threshold) when deliverables don't meet the bar
+- **Session Plan** = structured plan document created via EnterPlanMode/ExitPlanMode special tool calls; reviewable and approvable by Bruno before implementation begins
+- **Session Task List** = progress tracker populated by TodoWrite tool calls; rendered as a visible progress sidebar in the session UI
+- **Work Queue** = ordered list of tasks assigned to agent processing (owned by ProjectAgentBridge); supports parallel and sequential execution modes
+- **Budget** = per-session and per-queue token/cost limits enforced as hard caps before overspend
 
 ### 7.3 Functional Requirements
 
-| ID | Requirement | Priority | Notes |
-|----|-------------|----------|-------|
-| AG-001 | Start a new Claude Code agent session from UI | P0 | With project context |
-| AG-002 | View active agent sessions and their status | P0 | Running, idle, completed, failed |
-| AG-003 | View agent session output/logs in real-time | P0 | Streaming terminal output |
-| AG-004 | Assign a task to an agent session | P0 | Task becomes the agent's objective |
-| AG-005 | Auto-create worktree for agent session | P1 | Isolate agent work |
-| AG-006 | Select multiple tasks and batch-assign to agent queue | P1 | "Start working on these 7 features" |
-| AG-007 | Parallel execution mode: multiple agents on separate worktrees | P1 | For speed |
-| AG-008 | Sequential execution mode: one agent finishes, next starts | P1 | For dependent work |
-| AG-009 | Work queue with priority ordering | P1 | Higher priority tasks processed first |
-| AG-010 | Budget management: set token/cost limits per session | P1 | Prevent runaway costs |
-| AG-011 | Budget management: set limits per queue | P2 | Total budget for a batch |
-| AG-012 | Agent API: expose REST endpoints for agents to create/manage tasks | P1 | Agents can create follow-up tasks |
-| AG-013 | Agent API: expose endpoints for agents to update project state | P2 | Agents can log decisions, update docs |
-| AG-014 | Agent API: expose endpoints for agents to add people/comms learnings | P2 | Auto-capture relationship data |
-| AG-015 | Agent-driven email-to-task automation | P2 | Agent reads emails, creates categorized tasks |
-| AG-016 | Agent session templates (predefined objectives, context, constraints) | P2 | Reusable agent configurations |
-| AG-017 | Claude Agent SDK integration for custom agent behaviors | P2 | Beyond CLI sessions |
-| AG-018 | Session history and audit trail | P1 | What did the agent do, when, cost |
-| AG-019 | Approve/reject agent-proposed changes before merge | P1 | Human-in-the-loop |
-| AG-020 | Agent notification on completion/failure | P0 | Desktop notification + in-app |
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| AG-001 | Start a new Claude Code agent session from UI | P0 |
+| AG-002 | View active agent sessions and their status | P0 |
+| AG-003 | View agent session output/logs in real-time | P0 |
+| AG-004 | Assign a task to an agent session | P0 |
+| AG-005 | Auto-create worktree for agent session | P1 |
+| AG-006 | Select multiple tasks and batch-assign to agent queue | P1 |
+| AG-007 | Parallel execution mode: multiple agents on separate worktrees | P1 |
+| AG-008 | Sequential execution mode: one agent finishes, next starts | P1 |
+| AG-009 | Work queue with priority ordering | P1 |
+| AG-010 | Budget management: set token/cost limits per session | P1 |
+| AG-011 | Budget management: set limits per queue | P2 |
+| AG-012 | Agent API: expose REST endpoints for agents to create/manage tasks | P1 |
+| AG-013 | Agent API: expose endpoints for agents to update project state | P2 |
+| AG-014 | Agent API: expose endpoints for agents to add people/comms learnings | P2 |
+| AG-015 | Agent-driven email-to-task automation | P2 |
+| AG-016 | Agent session templates (predefined objectives, context, constraints) | P2 |
+| AG-017 | Claude Agent SDK integration for custom agent behaviors | P2 |
+| AG-018 | Session history and audit trail | P1 |
+| AG-019 | Approve/reject agent-proposed changes before merge | P1 |
+| AG-020 | Agent notification on completion/failure | P0 |
+| AG-021 | Real-time structured activity stream (skimmable tool calls, messages, subagent events) | P0 |
+| AG-022 | Expandable tool call detail with per-tool-type UI customization | P1 |
+| AG-023 | Subagent compact view (status, elapsed, context window, last action, expandable) | P1 |
+| AG-024 | Context window usage indicator for informed decision-making | P1 |
+| AG-025 | Send immediate steering message to running agent (interrupt + inject) | P1 |
+| AG-026 | Send queued follow-up message for after current turn | P1 |
+| AG-027 | Create and manage agent skills (name, instructions, tools, subagent definitions) | P1 |
+| AG-028 | Enable/disable skills per agent session | P1 |
+| AG-029 | Skills compose into effective session config (instructions + tools + subagents merged) | P1 |
+| AG-030 | Default skills on templates (auto-enabled for all sessions using that template) | P2 |
+| AG-031 | Subagent definitions within skills (scoped, not global) | P2 |
+| AG-032 | Agents record memory pills during skill usage (content, category) | P1 |
+| AG-033 | View memory pills per skill (filterable by category, status) | P1 |
+| AG-034 | Consolidate memory pills via dedicated agent session | P2 |
+| AG-035 | Skill versioning (incremented on consolidation) | P2 |
+| AG-036 | Agent API endpoint for recording memory pills | P2 |
+| AG-037 | Auto-continue mode with deliverable validation | P2 |
+| AG-038 | Configurable validation criteria (tests passing, coverage threshold, custom) | P2 |
+| AG-039 | Agent-initiated voluntary handoff (not just context exhaustion) | P2 |
+| AG-040 | Session chain view showing handoff documents between sessions | P2 |
+| AG-041 | AskUserQuestion tool call renders as structured interactive prompt in session UI | P1 |
+| AG-042 | Session transitions to WaitingForInput on AskUserQuestion; resumes on user answer | P1 |
+| AG-043 | TodoWrite creates a visible progress tracker sidebar in session UI | P1 |
+| AG-044 | EnterPlanMode creates a reviewable plan document visible in session UI | P2 |
+| AG-045 | ExitPlanMode optionally requires user approval before agent proceeds to implementation | P2 |
+| AG-046 | Select AI model per agent session at start time (override template default) | P1 |
+| AG-047 | Model selection shows cost/capability tradeoff info to inform choice | P1 |
+| AG-048 | Hot-load skills into Idle or Interrupted sessions without restart | P2 |
+| AG-049 | Session reload indicator in UI during skill hot-loading | P2 |
+| AG-050 | Sidecar reinitializes with merged config after skill hot-load | P2 |
+
+Full scenario coverage is documented in `docs/scenarios/agent-workflows.md` — Functional Requirements Coverage Matrix.
 
 ### 7.4 Key Scenarios
 
-**S-AG-01: Batch Feature Development**
-> Bruno selects 7 tasks from the backlog for the next version. He clicks "Create worktrees and start working." LemonDo creates 7 worktrees, starts 7 Claude Code sessions (within budget limits), each assigned to one task. Bruno monitors progress in a dashboard, reviews completed work, and approves merges.
+Ten detailed scenarios are documented in `docs/scenarios/agent-workflows.md`. Summaries:
 
-**S-AG-02: Email-to-Task Automation**
-> An agent is configured to process Bruno's inbox every morning. It reads customer feedback emails, creates bug fix tasks (tagged "customer-feedback") in the appropriate project, and creates improvement tasks for feature requests. Bruno reviews the generated tasks over coffee.
-
-**S-AG-03: Sequential Quality Pipeline**
-> Bruno assigns 5 tasks to a sequential queue for a project that can't have parallel worktrees. Agent #1 completes task 1, commits, and signals done. Agent #2 starts on task 2 with the updated codebase. Each agent runs the verification gate before signaling completion.
-
-**S-AG-04: Agent Creates Follow-Up Work**
-> While working on a feature, an agent discovers a related bug. It calls the LemonDo API to create a new bug fix task, tagged with the project and linked to the current feature task. Bruno sees the new task in his board without interrupting the agent's work.
+| ID | Name | Summary |
+|----|------|---------|
+| S-AG-01 | Batch Feature Development | Bruno selects 7 backlog tasks, starts parallel agent sessions with worktrees, monitors progress, and approves merges from a dashboard — shipping multiple features without manual intervention |
+| S-AG-02 | Email-to-Task Automation | A scheduled agent processes Bruno's inbox overnight, creates categorized tasks from customer emails, and surfaces skipped items for manual review — reducing morning triage from 1 hour to minutes |
+| S-AG-03 | Sequential Quality Pipeline | Five dependency-ordered tasks run one agent at a time with a verification gate between each handoff; agent #3 fails and is retried with an instruction; all 5 merge cleanly |
+| S-AG-04 | Agent Creates Follow-Up Work | An agent discovers a latent bug mid-session, calls the Agent API to create a P1 bug task with full context, and continues its original work without interrupting Bruno |
+| S-AG-05 | Real-Time Session Monitoring | Bruno watches the activity stream live, steers the agent away from a deprecated file using an immediate message, and queues follow-up instructions for after the current turn |
+| S-AG-06 | Skills and Custom Tools | Bruno creates composable skills with instructions, tools, and subagent definitions; sessions are pre-loaded with the right capabilities without manual instruction pasting |
+| S-AG-07 | Memory Pills and Skill Consolidation | Agents accumulate 7 memory pills across sessions; a consolidation run folds them into skill v2 instructions, incrementing the version and marking pills consolidated |
+| S-AG-08 | Auto-Continue and Voluntary Handoff | A session auto-continues when coverage is below threshold (72% → 83% on retry); a separate session voluntarily hands off at 55% context to start fresh for the second half of a refactor |
+| S-AG-09 | Interactive Feedback | Bruno approves a plan before implementation starts, answers one AskUserQuestion mid-session, and watches a TodoWrite progress tracker tick through all 5 tasks |
+| S-AG-10 | Model Selection and Skill Hot-Loading | Bruno uses Haiku for a trivial formatting task ($0.12), Opus for architecture work; adds a forgotten skill to the running Opus session via hot-load without losing context |
 
 ---
 
 ## 8. Cross-Module Integration Points
 
-These are the key integration points that make v2 more than the sum of its parts:
+Cross-module integrations are handled by dedicated **bridge bounded contexts** rather than direct coupling between core domains. This keeps Projects, Tasks, Agents, Comms, and People pure — each context knows only its own domain. See `docs/domain/contexts/bridges/INDEX.md` for the full bridge context design.
+
+| Bridge | Connects | Responsibility |
+|--------|----------|----------------|
+| **ProjectAgentBridge** | Projects + Agents | Owns `AgentProjectCorrelation` (session ↔ project ↔ worktree linkage) and the `WorkQueue` aggregate. Orchestrates "start agent in project worktree" and "agent completed → merge worktree" workflows |
+| **AgentTaskBridge** | Agents + Tasks | Owns `AgentTaskCorrelation` (session ↔ task linkage). On session approval, marks the corresponding task complete. When an agent creates a follow-up task, links it back to the originating session |
+| **ProjectTaskBridge** | Projects + Tasks | Associates tasks with projects via `ProjectTaskLink`. Provides cross-context queries ("all tasks for project X"). On worktree merge, triggers task completion for linked tasks |
+
+Additional weaker cross-module references (not requiring a bridge):
 
 | Integration | Description |
 |-------------|-------------|
-| Task <-> Project | Tasks belong to projects; boards can be filtered by project |
-| Task <-> Comms | Messages/threads can be linked to tasks as context |
-| Task <-> People | Tasks can have associated people (assignees, reporters) |
-| Task <-> Agent | Tasks can be assigned to agent sessions for automated work |
-| Project <-> People | People can be linked to projects as collaborators/stakeholders |
-| Project <-> Agent | Agent sessions operate within project worktrees |
-| Comms <-> People | Messages auto-linked to people by email/handle; conversation history |
-| Comms <-> Agent | Agents can process communications and create tasks |
-| People <-> Agent | Agents can capture learnings about people from communications |
+| Task <-> Comms | Messages/threads linked to tasks as context (weak reference by TaskId) |
+| Task <-> People | Tasks reference people by PersonId (assignees, reporters) |
+| Project <-> People | People linked to projects by PersonId (collaborators, stakeholders) |
+| Comms <-> People | Messages auto-linked to people by email/handle match |
+| Comms <-> Agent | Agents process communications and create tasks via Agent API |
+| People <-> Agent | Agents capture learnings about people via Agent API (AG-014) |
 
 ---
 
-## 9. Non-Functional Requirements (v2 Additions)
+## 9. Non-Functional Requirements
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-V2-001 | Single-user mode (Bruno only) | No multi-tenancy needed |
-| NFR-V2-002 | Local-first: all project data stored locally | Git repos stay on disk |
-| NFR-V2-003 | API for agent integration | RESTful, authenticated |
-| NFR-V2-004 | Real-time agent session output streaming | WebSocket or SSE |
-| NFR-V2-005 | Communication channel adapters must be pluggable | Adapter pattern |
-| NFR-V2-006 | Budget tracking accurate to sub-dollar granularity | For agent cost control |
-| NFR-V2-007 | Graceful degradation when external services are unavailable | Offline-capable for local features |
-| NFR-V2-008 | All v1 features and tests continue to pass | Non-breaking evolution |
+v2 adds 88 requirements across 12 categories to the existing v1 NFRs. Full details are in `docs/product/nfr.md`.
+
+Representative highlights:
+
+| ID | Category | Requirement | Target |
+|----|----------|-------------|--------|
+| NFR-V2-01.2 | Agent Performance | Activity stream event latency (SDK event → UI render) | < 500ms |
+| NFR-V2-03.4 | Budget Accuracy | Budget hard-cap enforcement timing | Cap enforced BEFORE session exceeds it |
+| NFR-V2-04.8 | Skills System | Composed system prompt must fit model context window | Error surfaced before session start if exceeded |
+| NFR-V2-06.1 | Security | Agent API key entropy | 256-bit cryptographically random |
+| NFR-V2-09.1 | Reliability | Sidecar crash detection | Within 5s; session marked Failed; pool slot released |
+| NFR-V2-10.1 | Scalability | Maximum concurrent agent sessions | 20 (configurable) |
+| NFR-V2-11.1 | Local-First | Projects module availability offline | Fully functional without internet |
+| NFR-V2-12.7 | v1 Non-Regression | Database migrations | Additive only — no v1 table drops or column removals |
+
+See `docs/product/nfr.md` for the complete list covering: Agent Session Performance, Real-Time Streaming, Budget & Metrics Accuracy, Skills System, Communication Adapters, Security, Bridge Context Performance, Data & Storage, Reliability & Recovery, Scalability Constraints, Local-First Behaviour, and v1 Non-Regression.
 
 ---
 
-## 10. Technology Considerations
+## 10. Technology Decisions
 
-| Concern | Approach | Notes |
+Technology research is documented in `docs/operations/research/INDEX.md`. Decisions made during Phase 2:
+
+| Concern | Decision | Notes |
 |---------|----------|-------|
-| Git operations | `simple-git` (Node.js) or direct CLI calls | Worktree management |
-| Process management | Node.js `child_process` or PM2-like runner | Dev server start/stop |
-| Gmail integration | Google APIs (OAuth2 + Gmail API) | Read/send emails |
-| WhatsApp | WhatsApp Business API or Baileys bridge | Research needed |
-| Discord | Discord.js or REST API | Bot token |
-| Slack | Slack Bolt SDK or REST API | App token |
-| Claude Code | CLI subprocess or Claude Agent SDK | Agent sessions |
-| ngrok | ngrok npm package or API | Tunnel management |
-| Real-time streaming | WebSocket (Socket.io or native) or SSE | Agent output |
-| Local DB expansion | SQLite (existing) extended with new tables | Same provider strategy |
+| Git operations | `simple-git` (Node.js) via sidecar | Worktree management; sidecar already required for Claude Agent SDK |
+| Process management | Node.js `child_process` in sidecar | Dev server start/stop; natural fit with sidecar architecture |
+| Agent sessions | .NET 10 API + Node.js sidecar per session | Claude Agent SDK is TypeScript-only; sidecar bridges to .NET backend |
+| Inter-process communication | Redis Streams (XADD/XREAD) | Bidirectional event bus between Node.js sidecar and .NET API; Aspire auto-provisions locally |
+| Real-time streaming (API → Frontend) | SSE / SignalR | SignalR hub for activity stream; SSE for simpler feeds |
+| Gmail integration | Google APIs (OAuth2 + Gmail API) | Free; Pub/Sub push notifications available |
+| WhatsApp | Baileys (unofficial bridge) — Technology Spike Required | Official Cloud API not suitable for personal inbox; Baileys carries ToS risk |
+| Discord | Discord.Net SDK (Bot Gateway WebSocket) | Free; confirmed compatible |
+| Slack | SlackNet SDK (Socket Mode, internal app) | Free; internal app exemption retains full rate limits |
+| ngrok | `@ngrok/ngrok` npm package via sidecar | $8/month Hobbyist plan; removes interstitial pages |
+| LinkedIn | Deferred to v3 | No reliable API; scraping is ToS-violating and fragile |
+| Agent model | Anthropic Claude API (Sonnet 4.6 default) | ~$15-$40/month depending on session volume |
+| Local DB | SQLite (dev) / SQL Server (prod) — additive migrations | Same provider strategy as v1; new tables only |
 
 ---
 
@@ -314,6 +378,7 @@ These are the key integration points that make v2 more than the sum of its parts
 - Billing/invoicing
 - Video calling integration
 - Social media posting/management
+- LinkedIn integration (deferred to v3)
 
 ---
 
@@ -331,11 +396,15 @@ These are the key integration points that make v2 more than the sum of its parts
 
 ---
 
-## 13. Open Questions
+## 13. Resolved Questions
 
-1. **WhatsApp integration**: WhatsApp Business API requires a business account. Is Baileys (unofficial bridge) acceptable for personal use?
-2. **LinkedIn**: No official messaging API. Scraping is fragile and ToS-violating. Defer or find alternative?
-3. **Agent budget granularity**: Should budget be per-session, per-task, per-project, or per-day?
-4. **Agent approval workflow**: Should agents auto-commit to feature branches, or require explicit approval for each commit?
-5. **Technology pivot**: v1 is .NET + React. Should v2 modules use the same stack, or consider NestJS (per global CLAUDE.md tech stack) for new backend modules?
-6. **Data model evolution**: How do we evolve the existing DB schema without breaking v1 features?
+All open questions from the initial draft have been resolved during Phase 2 design:
+
+| Question | Decision |
+|----------|----------|
+| **WhatsApp integration** | Use Baileys (unofficial bridge) for personal use. A dedicated technology spike is required to validate stability and ToS risk before implementation. See `docs/operations/research/whatsapp-api.md`. |
+| **LinkedIn** | Deferred to v3. No reliable API or scraping approach exists. v2 focuses on Gmail, Slack, Discord, WhatsApp, and GitHub. |
+| **Agent budget granularity** | Per-session budgets with pool-level caps. Budget = `maxCostUsd` + `maxTotalTokens`. WorkQueue adds a `QueueBudget` aggregate in ProjectAgentBridge. Hard caps are enforced before overspend, never after (NFR-V2-03.4). |
+| **Agent approval workflow** | Human-in-the-loop via `HasPendingReview` flag. Agents work on feature branches; changes require explicit approval before merge (AG-019). The AgentTaskBridge drives task completion on approval. |
+| **Technology stack** | .NET 10 backend (unchanged from v1) + Node.js sidecar per session (required for Claude Agent SDK). Redis Streams as the event bus. React 19 frontend unchanged. ADR-006 and ADR-007 document the architecture decisions. |
+| **Data evolution** | Additive migration strategy. New tables for v2 modules; existing v1 tables untouched. EF Core migrations handle schema changes. NFR-V2-12.7 enforces this as a non-regression requirement. |
