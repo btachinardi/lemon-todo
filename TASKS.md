@@ -564,3 +564,63 @@
 | 3c714a0 | fix(ui): fix mobile kanban drag-scroll direction lock and increase snap cooldown | v1.0.4 |
 | 48833bb | feat(ui): bump font size hierarchy for improved readability | v1.0.4 |
 | 9d432a0 | fix(i18n): tighten methodology page copy across all 3 locales | v1.0.4 |
+
+---
+
+# v2: Personal Development Command Center
+
+> v2 evolves LemonDo from a task management app into Bruno's personal development command center.
+> Detailed checkpoint plans, task breakdowns, and technology spikes are in [`docs/roadmap/v2-checkpoints.md`](./docs/roadmap/v2-checkpoints.md).
+
+## v2 Planning Phases
+
+| Phase | Focus | Status |
+|-------|-------|--------|
+| Phase 0 | Workspace setup (worktree, docs) | DONE |
+| Phase 1 | Documentation decomposition (59 files) | DONE |
+| Phase 2 | v2 requirements expansion (13 tasks + major domain expansions) | DONE |
+| Phase 3 | Implementation planning (checkpoints, tasks, spikes, gates) | DONE |
+
+## v2 Technology Spikes
+
+| ID | Spike | Blocks | Status |
+|----|-------|--------|--------|
+| SK-01 | simple-git worktree operations | CP6 | TODO |
+| SK-02 | ngrok REST API + tunnel lifecycle | CP6 | TODO |
+| SK-03 | Redis Streams bidirectional (.NET + Node.js) | CP8 | TODO |
+| SK-04 | Claude Agent SDK sidecar lifecycle | CP8 | TODO |
+| SK-05 | SignalR Hub → SSE bridge for streaming | CP8 | TODO |
+| SK-06 | Gmail OAuth2 + Push Notifications | CP10 | TODO |
+| SK-07 | Baileys (WhatsApp) stability assessment | CP10 | TODO |
+| SK-08 | Discord.Net Gateway WebSocket | CP10 | TODO |
+
+## v2 Implementation Checkpoints
+
+| Checkpoint | Name | Module(s) | Tasks | Tests | Status |
+|------------|------|-----------|-------|-------|--------|
+| CP6 | Foundation & Projects | Projects | 34 | +180 | TODO |
+| CP7 | People & Relationships | People, ProjectTaskBridge | 27 | +130 | TODO |
+| CP8 | Agent Core | Agents | 33 | +200 | TODO |
+| CP9 | Agent Intelligence | Agents (skills/chains), ProjectAgentBridge, AgentTaskBridge | 43 | +180 | TODO |
+| CP10 | Communications | Comms | 31 | +160 | TODO |
+| CP11 | Integration & Polish | All modules | 18 | +60 | TODO |
+| **Total** | | | **~155** | **+910** | |
+
+> **Critical Path**: CP6 → CP8 → CP9 → CP11
+> **Parallel Track**: CP7 → CP10 (can run alongside the critical path)
+> **Estimated Effort**: ~53 solo weeks (compresses significantly with parallel agent sessions)
+
+## v2 Decision Log
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2026-02-18 | Event-sourced Node.js sidecars with Redis Streams (ADR-006) | Claude Agent SDK is TypeScript-only; .NET API needs bidirectional communication with sidecar |
+| 2026-02-18 | Bridge bounded contexts for cross-domain integration | ProjectAgentBridge, AgentTaskBridge, ProjectTaskBridge keep core domains pure |
+| 2026-02-18 | Skills system with memory pills | Composable agent configurations that improve over time through consolidation |
+| 2026-02-18 | WorkQueue moved from Agents to ProjectAgentBridge | Batch execution is a project orchestration concern, not an agent runtime concern |
+| 2026-02-18 | AgentSession simplified: WorkingDirectory + Objective only | Bridge contexts own the project/task correlation, keeping Agents context clean |
+| 2026-02-18 | LinkedIn deferred to v3 | No reliable API; scraping is ToS-violating and fragile |
+| 2026-02-18 | Baileys for WhatsApp (spike required) | Official Cloud API not suitable for personal inbox; Baileys carries ToS risk |
+| 2026-02-18 | Per-session model selection | Users choose between Haiku (cheap/fast) and Opus (expensive/capable) per session |
+| 2026-02-18 | Auto-continue with validation criteria | Sessions continue autonomously until tests pass or max continuations reached |
+| 2026-02-18 | Two-phase lifecycle commands | Request → Confirm pattern for all destructive session actions (interrupt, pause, cancel) |
