@@ -9,7 +9,7 @@
 | Document | Description | Status |
 |----------|-------------|--------|
 | [vision.md](./vision.md) | Vision statement, value proposition, success criteria, out of scope, risks | Active |
-| [personas.md](./personas.md) | All user personas: Sarah, Marcus, Diana (v1) and Bruno (v2) | Active |
+| [personas/](./personas/INDEX.md) | All user personas: Sarah, Marcus, Diana (v1) and Bruno (v2) | Active |
 | [nfr.md](./nfr.md) | Non-functional requirements: performance, PWA, security, i18n, UX polish | Active |
 | [analytics.md](./analytics.md) | North star metric, analytics events, measurement architecture | Active |
 | [modules/](./modules/) | Functional requirements organized by product module | — |
