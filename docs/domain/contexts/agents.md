@@ -10,9 +10,9 @@
 
 1. **AgentSession owns its own lifecycle** — An `AgentSession` manages its own status transitions (Queued → Running → Idle / ContextExhausted / Completed / Failed). The normal resting state after a turn completes is `Idle` — not `Completed`. An Idle session accepts follow-up messages and transitions back to Running when the next turn begins. `Completed` is an explicit terminal closure, reached either when Bruno explicitly closes the session or when a `SessionChain` is fully done. `ContextExhausted` is a separate terminal-for-input state: the session's context window is full and it cannot accept new messages — it must hand off to a new session via `SessionChain`. Status enforcement, budget tracking, metrics capture, and output recording are all self-contained within the session aggregate.
 
-2. **WorkQueue owns execution strategy, not session mechanics** — A `WorkQueue` is responsible for the ordering and sequencing of work items and for deciding when the next item may start. It does not know how sessions run; it only observes session completion events and triggers the next `WorkItem` accordingly. Parallel vs. sequential execution is a queue property, not a session property.
+2. **WorkQueue and WorkItem have been moved to the ProjectAgentBridge context** — Orchestrating a batch of work items requires knowledge of both `ProjectId` (to create worktrees) and `TaskId` (to correlate with the Tasks context). Because the Agents context is conformist only to Identity (see principle 3), it cannot safely own an aggregate that actively creates worktrees and correlates with project state. `WorkQueue` and `WorkItem` are now defined in `docs/domain/contexts/bridges/project-agent-bridge.md`.
 
-3. **This context is conformist to Identity, Task, and Projects** — `AgentSession` and `WorkItem` reference `UserId`, `TaskId`, and `ProjectId` as opaque identifiers. This context never loads or interprets user profiles, task metadata, or project details — it only stores the IDs for cross-context linkage and defers reads to the originating contexts.
+3. **This context is conformist only to Identity** — `AgentSession` references `UserId` as an opaque identifier. This context never loads or interprets user profiles, project details, task metadata, or worktree paths. It only knows the `WorkingDirectory` (an absolute path string) where the agent runs and the plain-text `Objective` it was given. Cross-context correlation with Projects, Tasks, and WorkQueue is handled entirely by bridge contexts (`ProjectAgentBridge`, `AgentTaskBridge`).
 
 4. **The Agent API is a published language boundary** — The `/api/agent/` sub-namespace exposes a stable published language that running agent processes use to interact with LemonDo. It is authenticated with per-session API keys (`AgentApiKey`), not user JWTs. This keeps agent-initiated operations clearly separated from human-initiated operations.
 
@@ -25,6 +25,8 @@
 8. **SessionChain tracks long-running work across context window boundaries** — When a session's context window exhausts, the agent creates a handoff document and a new session continues the work. A `SessionChain` aggregate owns this continuity: it links sessions in order, stores handoff documents, and tracks the original objective across multiple sessions. The chain is the durable unit of "a piece of work" when that work spans multiple context windows.
 
 9. **SessionMetrics distinguishes aggregatable from snapshot data** — Token costs and per-model token counts are aggregatable (they sum across turns and subagent contributions roll up into the parent). Context window snapshots are NOT aggregatable — each `usage_update` event from the SDK replaces the previous snapshot rather than accumulating. Subagents have their own independent context windows which are never merged into the parent session's context window, though their costs and tokens do aggregate upward.
+
+10. **AgentSkill is a composable package of instructions, tools, and subagent definitions** — Skills are the primary mechanism for Bruno to give agents persistent, reusable knowledge. A session's effective system prompt, tool set, and subagent roster are composed by merging the base template with all enabled skills. The `AgentSkill` aggregate also owns `MemoryPill` entities — learnings that agents record during sessions and that Bruno can consolidate back into the skill's instructions over time, incrementing the skill's version.
 
 ---
 
@@ -63,8 +65,8 @@ StartAgentSessionCommand
 IAgentRuntime.StartSessionAsync()
         │
         ├─ spawns Node.js process (one per session)
-        ├─ passes: sessionId, apiKey, modelId, systemPrompt, allowedTools, worktreeRef,
-        │          objective, customTools (McpToolDefinition list)
+        ├─ passes: sessionId, apiKey, modelId, composedSystemPrompt, allowedTools,
+        │          workingDirectory, objective, customTools (McpToolDefinition list)
         └─ Node.js process begins streaming SDK events → Redis Stream key: agent:session:{sessionId}
 
 Redis Stream events (raw SDK types, NOT domain types):
@@ -79,6 +81,8 @@ Redis Stream events (raw SDK types, NOT domain types):
                             emitted immediately after context_exhausted; the sidecar writes it before
                             the session_end event so the chain can attach it before the new session starts
   session_end             — final status (success, error)
+  voluntary_handoff       — emitted when agent calls POST /api/agent/handoff; carries handoff document
+  reload_config_ack       — emitted by sidecar after successfully reinitializing with new config
 
 ACL (IAgentRuntimeEventConsumer — .NET background service):
   reads Redis Stream → translates each raw event → dispatches domain command or raises domain event
@@ -91,6 +95,7 @@ Command stream (agent:session:{sessionId}:commands):
     pause             — call query.interrupt() and suspend execution
     resume            — resume suspended execution
     stop              — terminate the session cleanly
+    reload_config     — reinitialize sidecar with new composed config (updated system prompt, tools, subagents)
 ```
 
 ### Session Pool Lifecycle
@@ -131,6 +136,10 @@ The Claude Agent SDK has structural conventions that must not leak into the doma
 | Interrupt/pause/resume/cancel acknowledgements arrive as sidecar events | ACL dispatches the appropriate confirmation command (`ConfirmSessionInterruptedCommand`, etc.) to transition the session out of its intermediate state |
 | `usage_update` carries both per-turn cost/tokens AND the current context window snapshot | ACL maps this to `UpdateSessionMetricsCommand` which aggregates cost/tokens and REPLACES (not adds) the context window snapshot |
 | Context window exhaustion is a sidecar-detected condition, not a native SDK event | The sidecar monitors context usage; when the window is full it emits `context_exhausted` + `handoff_document` events before the final `session_end`; ACL translates these to the handoff workflow commands |
+| `AskUserQuestion` tool_use block must pause the session and surface a question card in the UI | ACL detects tool_use where ToolName == "AskUserQuestion" and dispatches `RecordUserQuestionAskedCommand` which transitions the session to `WaitingForInput` |
+| `TodoWrite` tool_use replaces the session's internal task list snapshot | ACL detects tool_use where ToolName == "TodoWrite" and dispatches `UpdateSessionTaskListCommand` which replaces the `SessionTaskList` value object on the session |
+| `EnterPlanMode` tool_use triggers plan document creation | ACL dispatches `RecordPlanCreatedCommand` which populates `AgentSession.SessionPlan` |
+| `ExitPlanMode` tool_use may require user approval before agent proceeds | ACL dispatches `RecordPlanPendingApprovalCommand`; if `PlanApprovalRequired` is true, session transitions to `WaitingForApproval` |
 
 ### Raw Event → Domain Command Mapping
 
@@ -138,18 +147,25 @@ The Claude Agent SDK has structural conventions that must not leak into the doma
 |---------------|-----------|
 | `assistant_message` (text) | `RecordAgentMessageCommand { Source: Agent, Content }` |
 | `assistant_message` (tool_use) | `RecordToolCallCommand { ToolName, Input }` |
+| `tool_use` where ToolName == "AskUserQuestion" | `RecordUserQuestionAskedCommand { SessionId, QuestionContent, Options }` (also transitions to WaitingForInput) |
+| `tool_use` where ToolName == "TodoWrite" | `UpdateSessionTaskListCommand { SessionId, Tasks }` (replaces task list snapshot) |
+| `tool_use` where ToolName == "EnterPlanMode" | `RecordPlanCreatedCommand { SessionId }` |
+| `tool_use` where ToolName == "ExitPlanMode" | `RecordPlanPendingApprovalCommand { SessionId, PlanContent }` (transitions to WaitingForApproval if approval required) |
 | `tool_result` | `RecordToolCallResultCommand { ToolCallId, Result, IsError }` |
 | `subagent_message` | `RecordAgentMessageCommand { Source: SubAgent, SubAgentId, Content }` |
 | `usage_update` | `UpdateSessionMetricsCommand { SessionId, SubAgentId?, ModelId, CostUsd, TokenUsage, ContextWindow }` |
 | `context_nearing_limit` | `RecordContextNearingLimitCommand { SessionId, UsagePercent }` |
 | `context_exhausted` | `RecordContextExhaustedCommand { SessionId }` |
 | `handoff_document` | `RecordHandoffDocumentCommand { SessionId, ChainId, Summary, RemainingWork, KeyDecisions? }` |
+| `voluntary_handoff` | `RecordVoluntaryHandoffCommand { SessionId, Reason, Summary, RemainingWork }` |
+| `reload_config_ack` | `ConfirmSessionReloadedCommand { SessionId }` |
 | `session_end` (clean) | `RecordSessionOutputCommand { ... }` |
 | `session_end` (error) | `RecordSessionFailureCommand { FailureReason, Message }` |
 | `interrupt_ack` | `ConfirmSessionInterruptedCommand { SessionId }` |
 | `pause_ack` | `ConfirmSessionPausedCommand { SessionId }` |
 | `resume_ack` | `ConfirmSessionResumedCommand { SessionId }` |
 | `stop_ack` | `ConfirmSessionCancelledCommand { SessionId }` |
+| Any SDK event | `RecordActivityItemCommand { SessionId, Type, Summary, Detail, ... }` (always emitted for every event, populates the activity stream) |
 
 ### Command Stream → Node.js Sidecar Mapping
 
@@ -161,6 +177,7 @@ The Claude Agent SDK has structural conventions that must not leak into the doma
 | `pause` | Calls `query.interrupt()` and suspends execution; writes `pause_ack` to event stream |
 | `resume` | Resumes suspended execution; writes `resume_ack` to event stream |
 | `stop` | Calls `abortController.abort()` — terminates the session cleanly; writes `stop_ack` to event stream |
+| `reload_config` | Reinitializes sidecar with new composed config (updated system prompt, tools, subagent definitions); writes `reload_config_ack` when complete |
 
 ---
 
@@ -172,17 +189,18 @@ The Claude Agent SDK has structural conventions that must not leak into the doma
 AgentSession
 ├── Id: AgentSessionId (value object)
 ├── OwnerId: UserId (from Identity context)
-├── ProjectId: ProjectId (from Projects context)
-├── TaskId: TaskId? (from Task context — the assigned objective; null for templateless runs)
-├── WorkQueueId: WorkQueueId? (set when session is part of a queue; null for standalone sessions)
-├── WorkItemId: WorkItemId? (the specific work item this session is fulfilling; null for standalone)
 ├── TemplateId: AgentTemplateId? (the template used to configure this session; null if ad-hoc)
 ├── ChainId: SessionChainId? (set when this session is part of a SessionChain; null for standalone sessions)
-├── Name: SessionName (value object — auto-generated from task title or manually set)
+├── Name: SessionName (value object — auto-generated from objective or manually set)
+├── WorkingDirectory: WorkingDirectory (value object — absolute path where the agent runs)
+├── Objective: string (plain-text description of what to do; 1-2000 chars)
+├── ModelId: string (the model used for this session, e.g., "claude-opus-4-6"; resolved at start)
+├── EnabledSkillIds: IReadOnlyList<AgentSkillId> (skills active for this session; resolved at start)
 ├── Status: AgentSessionStatus (Queued, Running,
 │                                Interrupting, Interrupted,
 │                                Pausing, Paused, Resuming,
 │                                Cancelling, Cancelled,
+│                                WaitingForInput, WaitingForApproval,
 │                                Idle, ContextExhausted, Completed, Failed)
 ├── HasPendingReview: bool (true when session has produced output awaiting Bruno's approval;
 │                           set to true by RecordOutput(); cleared by ApproveOutput() or RejectOutput();
@@ -190,7 +208,9 @@ AgentSession
 ├── ExecutionMode: ExecutionMode (Standalone, ParallelBatch, SequentialQueue)
 ├── Budget: SessionBudget (value object — per-session token/cost cap and current spend)
 ├── Metrics: SessionMetrics (value object — rich metrics: per-model tokens, context window, subagent breakdowns)
-├── WorktreeRef: WorktreeRef? (branch name and path of the auto-created worktree; null if no worktree)
+├── AutoContinueConfig: AutoContinueConfig? (null = disabled; controls auto-continue validation loop)
+├── SessionTaskList: SessionTaskList? (populated when agent calls TodoWrite — visible progress tracker)
+├── SessionPlan: SessionPlan? (populated when agent enters plan mode — reviewable document)
 ├── ApiKeyHash: string (SHA-256 of the per-session agent API key — never stored in plaintext)
 ├── Output: SessionOutput? (set when the session completes; null while running)
 ├── FailureReason: FailureReason? (enum + optional message; set on transition to Failed)
@@ -201,9 +221,8 @@ AgentSession
 ├── UpdatedAt: DateTimeOffset
 │
 ├── Methods:
-│   ├── Start(worktreeRef?, apiKey) -> AgentSessionStartedEvent
-│   │       (transitions Queued -> Running; sets StartedAt; hashes and stores apiKey;
-│   │        raises event so Projects context can create worktree if worktreeRef is provided)
+│   ├── Start(apiKey) -> AgentSessionStartedEvent
+│   │       (transitions Queued -> Running; sets StartedAt; hashes and stores apiKey)
 │   ├── RecordOutput(outputLines: int, filesChanged: int, testsAdded: int,
 │   │               allTestsPassing: bool, commitSha: string?)
 │   │       -> AgentSessionOutputReadyEvent
@@ -249,9 +268,48 @@ AgentSession
 │   │        ContextExhausted is a terminal-for-input state — no more messages accepted;
 │   │        the session's sidecar has already written a handoff_document event before this)
 │   │
+│   ├── RecordUserQuestionAsked(questionContent: string, options?: IReadOnlyList<string>)
+│   │       -> SessionWaitingForInputEvent
+│   │       (transitions Running -> WaitingForInput; called by ACL on AskUserQuestion tool_use;
+│   │        the question content and options are stored for UI rendering)
+│   ├── RecordUserQuestionAnswered(answer: string) -> SessionInputReceivedEvent
+│   │       (transitions WaitingForInput -> Running; called when user submits answer via AnswerUserQuestionCommand)
+│   │
+│   ├── RecordPlanCreated(planContent: string) -> SessionPlanCreatedEvent
+│   │       (populates SessionPlan with Status = Draft; called by ACL on EnterPlanMode tool_use)
+│   ├── RecordPlanPendingApproval(planContent: string, requiresApproval: bool)
+│   │       -> SessionPlanPendingApprovalEvent
+│   │       (updates SessionPlan.Status = PendingApproval; if requiresApproval transitions Running -> WaitingForApproval;
+│   │        if not requiresApproval, session remains Running and plan is auto-approved)
+│   ├── RecordPlanApproved() -> SessionPlanApprovedEvent
+│   │       (transitions WaitingForApproval -> Running; updates SessionPlan.Status = Approved)
+│   ├── RecordPlanRejected(feedback: string) -> SessionPlanRejectedEvent
+│   │       (transitions WaitingForApproval -> Running; updates SessionPlan.Status = Rejected;
+│   │        feedback is injected as next message so agent can revise the plan)
+│   │
+│   ├── UpdateSessionTaskList(tasks: IReadOnlyList<SessionTask>) -> SessionTaskListUpdatedEvent
+│   │       (replaces the current SessionTaskList snapshot — never accumulated;
+│   │        called by ACL on each TodoWrite tool_use)
+│   │
+│   ├── EnableSkill(skillId: AgentSkillId) -> SessionSkillEnabledEvent
+│   │       (adds to EnabledSkillIds; only valid when Status == Idle or Interrupted)
+│   ├── DisableSkill(skillId: AgentSkillId) -> SessionSkillDisabledEvent
+│   │       (removes from EnabledSkillIds; only valid when Status == Idle or Interrupted)
+│   ├── RequestReload() -> SessionReloadRequestedEvent
+│   │       (application layer writes `reload_config` command to Redis with new composed config;
+│   │        called after EnableSkill/DisableSkill to hot-load new config into sidecar)
+│   ├── ConfirmReloaded() -> SessionReloadedEvent
+│   │       (called by ACL on reload_config_ack; confirms sidecar is running with new config)
+│   │
+│   ├── RecordVoluntaryHandoff(reason: string, summary: string, remainingWork: string)
+│   │       -> SessionVoluntaryHandoffEvent
+│   │       (agent-initiated handoff — agent decides its context is polluted even with capacity remaining;
+│   │        transitions Running -> ContextExhausted; triggers handoff workflow same as forced exhaustion;
+│   │        reason, summary, and remainingWork are stored in the handoff document)
+│   │
 │   ├── ApproveOutput() -> AgentSessionApprovedEvent
 │   │       (transitions Idle (with HasPendingReview = true) -> Completed; sets CompletedAt;
-│   │        clears HasPendingReview; triggers Projects context to merge worktree via event)
+│   │        clears HasPendingReview)
 │   ├── RejectOutput(reason: string?) -> AgentSessionRejectedEvent
 │   │       (transitions Idle (with HasPendingReview = true) -> Failed; sets FailureReason)
 │   ├── Close() -> AgentSessionClosedEvent
@@ -290,11 +348,17 @@ AgentSession
     │   Idle -> Running (when next message is processed / next turn begins)
     │   Idle -> Completed (via ApproveOutput when HasPendingReview = true, or via Close when false)
     │   Idle -> Failed (via RejectOutput when HasPendingReview = true)
-    │   Running -> ContextExhausted (via RecordContextExhausted — terminal for input)
+    │   Running -> ContextExhausted (via RecordContextExhausted or RecordVoluntaryHandoff — terminal for input)
+    │   Running -> WaitingForInput (via RecordUserQuestionAsked — AskUserQuestion tool_use detected)
+    │   WaitingForInput -> Running (via RecordUserQuestionAnswered — user answers the question)
+    │   Running -> WaitingForApproval (via RecordPlanPendingApproval when approval required)
+    │   WaitingForApproval -> Running (via RecordPlanApproved or RecordPlanRejected)
     │   Interrupted -> Running (when a follow-up message is processed)
     │   Failed -> Queued (via Retry, only when RetryCount < MaxRetries)
     ├── Intermediate states (Interrupting, Pausing, Resuming, Cancelling) prevent duplicate lifecycle
     │   requests — e.g., RequestPause() raises a domain error if Status is already Pausing or Paused
+    ├── WaitingForInput and WaitingForApproval block new messages — any Enqueue attempt while in these
+    │   states must be held until the session returns to Running
     ├── A session may not transition to Running if its Budget.HardCapUsd is already exhausted
     ├── ApproveOutput() and RejectOutput() are only valid when Status == Idle AND HasPendingReview == true
     ├── Close() is only valid when Status == Idle AND HasPendingReview == false
@@ -302,13 +366,14 @@ AgentSession
     ├── Completed, Cancelled, and ContextExhausted are terminal — no messages accepted after these states
     ├── RetryCount must not exceed MaxRetries (default: 3); Retry() raises a domain error if exceeded
     ├── ApiKeyHash is set once on Start() and is immutable thereafter
-    ├── WorktreeRef is immutable once set on Start()
+    ├── EnabledSkillIds is only mutable when Status == Idle or Interrupted (skill hot-loading)
     ├── CompletedAt is set exactly once, on the first transition to a terminal status
     │   (Completed, Failed, or Cancelled)
     ├── Budget.CurrentSpend must never exceed Budget.HardCapUsd
     ├── Metrics.TotalCostUsd and Budget.EstimatedCostUsd must be kept in sync — both are updated
     │   by UpdateMetrics(); they represent the same value from different domain concerns
-    └── Metrics.ContextWindow is a snapshot — it is replaced on each UpdateMetrics() call, not summed
+    ├── Metrics.ContextWindow is a snapshot — it is replaced on each UpdateMetrics() call, not summed
+    └── Objective must be 1-2000 characters
 ```
 
 ### SessionChain (Aggregate Root)
@@ -371,72 +436,78 @@ SessionChain
     └── CompletedAt is set exactly once on the first transition to Completed or Cancelled
 ```
 
-### WorkQueue (Aggregate Root)
+### AgentSkill (Aggregate Root)
+
+Skills are composable packages of instructions, tools, and subagent definitions that augment agent sessions. Each session's effective configuration is composed by merging the base template with all enabled skills. Skills accumulate `MemoryPill` entities — learnings recorded by agents during sessions — which Bruno can consolidate back into the skill's instructions (incrementing the version).
 
 ```
-WorkQueue
-├── Id: WorkQueueId (value object)
+AgentSkill
+├── Id: AgentSkillId (value object)
 ├── OwnerId: UserId
-├── ProjectId: ProjectId (from Projects context)
-├── Name: QueueName (value object)
-├── ExecutionMode: ExecutionMode (Parallel, Sequential)
-├── Status: WorkQueueStatus (Pending, Running, Paused, Completed, Failed, Cancelled)
-├── Items: IReadOnlyList<WorkItem> (ordered by Position, then Priority)
-├── Budget: QueueBudget (value object — total token/cost cap across all items; optional)
-├── RequiresVerificationGate: bool (if true, each session must pass its gate before next item starts)
-├── MaxParallelSessions: int (for Parallel mode; default: 3)
+├── Name: SkillName (value object — 1-100 chars, trimmed)
+├── Description: string (1-500 chars)
+├── Instructions: string (knowledge/guidelines injected into agent system prompt; may be empty initially)
+├── Version: int (incremented on consolidation; starts at 1)
+├── ToolDefinitions: IReadOnlyList<McpToolDefinition> (tools this skill provides)
+├── SubAgentDefinitions: IReadOnlyList<SkillSubAgentDefinition>
+│   ├── Name: string (subagent identifier, e.g., "test-runner"; unique within skill)
+│   ├── Description: string
+│   ├── ModelId: string
+│   ├── Instructions: string (subagent-specific system prompt addition)
+│   └── ToolDefinitions: IReadOnlyList<McpToolDefinition> (tools for this subagent)
+├── MemoryPills: IReadOnlyList<MemoryPill>
+├── IsActive: bool
 ├── CreatedAt: DateTimeOffset
 ├── UpdatedAt: DateTimeOffset
 │
 ├── Methods:
-│   ├── Create(ownerId, projectId, name, mode, items, budget?, requiresVerificationGate?, maxParallel?)
-│   │       -> WorkQueueCreatedEvent
-│   ├── Start() -> WorkQueueStartedEvent
-│   │       (transitions Pending -> Running; emits for first item(s) to be dispatched to sessions)
-│   ├── AdvanceQueue(completedItemId: WorkItemId) -> WorkQueueAdvancedEvent?
-│   │       (called when a WorkItem's session is approved; marks item Complete;
-│   │        for Sequential mode: transitions next Queued item to Ready;
-│   │        for Parallel mode: marks completed slot as freed; returns event only if queue advances)
-│   ├── RecordItemFailure(itemId: WorkItemId) -> WorkQueueItemFailedEvent
-│   │       (marks item as Failed; for Sequential mode, pauses the entire queue)
-│   ├── Pause() -> WorkQueuePausedEvent
-│   ├── Resume() -> WorkQueueResumedEvent
-│   ├── Cancel() -> WorkQueueCancelledEvent
-│   ├── ReorderItems(orderedItemIds: IReadOnlyList<WorkItemId>) -> WorkQueueReorderedEvent
-│   │       (only valid when Status == Pending; resets Position values)
-│   └── UpdateQueueBudget(newBudget: QueueBudget) -> WorkQueueBudgetUpdatedEvent
+│   ├── Create(ownerId, name, description, instructions?) -> AgentSkillCreatedEvent
+│   ├── UpdateInstructions(instructions: string, incrementVersion: bool)
+│   │       -> AgentSkillInstructionsUpdatedEvent
+│   │       (if incrementVersion is true, increments Version — used during consolidation approval)
+│   ├── AddToolDefinition(tool: McpToolDefinition) -> AgentSkillUpdatedEvent
+│   ├── RemoveToolDefinition(toolName: string) -> AgentSkillUpdatedEvent
+│   ├── AddSubAgentDefinition(def: SkillSubAgentDefinition) -> AgentSkillUpdatedEvent
+│   ├── RemoveSubAgentDefinition(name: string) -> AgentSkillUpdatedEvent
+│   ├── RecordMemoryPill(sessionId: AgentSessionId, content: string, category: MemoryPillCategory)
+│   │       -> MemoryPillRecordedEvent
+│   │       (creates a new MemoryPill with Status = Active; called via Agent API by running agents)
+│   ├── ConsolidateMemoryPills(pillIds: IReadOnlyList<MemoryPillId>, updatedInstructions: string)
+│   │       -> SkillConsolidatedEvent
+│   │       (marks the specified pills as Consolidated; calls UpdateInstructions with incrementVersion=true;
+│   │        only Active pills may be consolidated)
+│   ├── DismissMemoryPill(pillId: MemoryPillId) -> MemoryPillDismissedEvent
+│   │       (marks a specific pill as Dismissed; only valid for Active pills)
+│   ├── Deactivate() -> AgentSkillDeactivatedEvent
+│   └── Activate() -> AgentSkillActivatedEvent
 │
 └── Invariants:
-    ├── Must have at least one WorkItem
-    ├── In Sequential mode, only one item may be in Running status at a time
-    ├── In Parallel mode, the number of Running items must not exceed MaxParallelSessions
-    ├── ReorderItems() is only valid when Status == Pending
-    ├── A Cancelled or Completed queue cannot be restarted
-    ├── When QueueBudget is set, the sum of all session costs must not exceed QueueBudget.HardCapUsd;
-    │   the queue auto-pauses when this threshold is reached
-    └── Item positions must be unique and contiguous (1, 2, 3, ..., N)
+    ├── Name must be unique per owner (enforced at application layer)
+    ├── ToolDefinition names must be unique within the skill
+    ├── SubAgentDefinition names must be unique within the skill
+    ├── Only Active memory pills can be consolidated or dismissed
+    ├── Version is monotonically increasing; ConsolidateMemoryPills increments by 1 each call
+    └── Deactivated skills cannot be enabled on new sessions
 ```
 
-### WorkItem (Entity, owned by WorkQueue)
+### MemoryPill (Entity, owned by AgentSkill)
 
 ```
-WorkItem
-├── Id: WorkItemId (value object)
-├── QueueId: WorkQueueId (parent queue)
-├── TaskId: TaskId (from Task context — the objective)
-├── Position: int (order in the queue; 1-based)
-├── Priority: WorkItemPriority (Low, Normal, High, Critical)
-├── Status: WorkItemStatus (Queued, Ready, Running, VerificationPassed, Completed, Failed, Skipped)
-├── AssignedSessionId: AgentSessionId? (set when a session is started for this item)
-├── VerificationPassed: bool (set to true when session's verification gate passes)
-├── CompletedAt: DateTimeOffset?
-│
+MemoryPill
+├── Id: MemoryPillId (value object)
+├── SkillId: AgentSkillId (parent skill)
+├── SessionId: AgentSessionId (which session recorded this pill)
+├── Content: string (1-2000 chars — the learning, tip, mistake, or convention)
+├── Category: MemoryPillCategory (Mistake, Tip, Guideline, Pattern, Convention)
+├── Status: MemoryPillStatus (Active, Consolidated, Dismissed)
+├── CreatedAt: DateTimeOffset
+└── ConsolidatedAt: DateTimeOffset? (set when Status transitions to Consolidated)
+
 └── Invariants:
-    ├── TaskId is immutable after creation
-    ├── Position must be >= 1
-    ├── AssignedSessionId is set once on transition to Running and is then immutable
-    ├── VerificationPassed can only be set to true when Status == Running or VerificationPassed
-    └── Completed and Skipped are terminal states — no further transitions allowed
+    ├── Content must be 1-2000 characters
+    ├── Only Active pills can transition to Consolidated or Dismissed
+    ├── Consolidated and Dismissed are terminal states
+    └── ConsolidatedAt is set exactly once on transition to Consolidated
 ```
 
 ### AgentTemplate (Aggregate Root)
@@ -447,11 +518,14 @@ AgentTemplate
 ├── OwnerId: UserId
 ├── Name: TemplateName (value object)
 ├── Description: string?
-├── ModelId: string (e.g., "claude-opus-4-5", "claude-sonnet-4-5")
-├── SystemPrompt: string? (base instructions injected into every session)
+├── ModelId: string (e.g., "claude-opus-4-6", "claude-sonnet-4-6" — default model for sessions)
+├── SystemPrompt: string? (base instructions injected into every session before skill instructions)
 ├── AllowedTools: IReadOnlyList<string> (tool names the agent is permitted to use)
 ├── CustomToolDefinitions: IReadOnlyList<McpToolDefinition>
 │       (MCP server tool configurations that extend agent capabilities; empty for standard templates)
+├── DefaultSkillIds: IReadOnlyList<AgentSkillId> (skills auto-enabled for sessions using this template)
+├── DefaultAutoContinueConfig: AutoContinueConfig? (default auto-continue for sessions using this template)
+├── PlanApprovalRequired: bool (whether ExitPlanMode requires user approval before agent proceeds)
 ├── ClassificationRules: IReadOnlyList<ClassificationRule> (for automation templates — e.g., email triage)
 ├── Schedule: AgentSchedule? (null for on-demand templates; set for scheduled automations)
 ├── DefaultBudget: SessionBudget (default per-session budget when using this template)
@@ -461,8 +535,10 @@ AgentTemplate
 │
 ├── Methods:
 │   ├── Create(ownerId, name, modelId, systemPrompt?, allowedTools, defaultBudget,
-│   │          customToolDefinitions?)
+│   │          customToolDefinitions?, defaultSkillIds?, planApprovalRequired?)
 │   │       -> AgentTemplateCreatedEvent
+│   ├── AddDefaultSkill(skillId: AgentSkillId) -> AgentTemplateUpdatedEvent
+│   ├── RemoveDefaultSkill(skillId: AgentSkillId) -> AgentTemplateUpdatedEvent
 │   ├── AddClassificationRule(rule: ClassificationRule) -> AgentTemplateUpdatedEvent
 │   ├── RemoveClassificationRule(ruleId: ClassificationRuleId) -> AgentTemplateUpdatedEvent
 │   ├── AddCustomToolDefinition(tool: McpToolDefinition) -> AgentTemplateUpdatedEvent
@@ -606,8 +682,8 @@ SessionMessageQueue
 
 ```
 AgentSessionId          -> Guid wrapper
-WorkQueueId             -> Guid wrapper
-WorkItemId              -> Guid wrapper
+AgentSkillId            -> Guid wrapper
+MemoryPillId            -> Guid wrapper
 AgentTemplateId         -> Guid wrapper
 ClassificationRuleId    -> Guid wrapper
 MessageId               -> Guid wrapper
@@ -615,19 +691,26 @@ ToolCallId              -> Guid wrapper
 SubAgentId              -> Guid wrapper
 SessionChainId          -> Guid wrapper
 HandoffDocumentId       -> Guid wrapper
+ActivityItemId          -> Guid wrapper
 
 SessionName             -> Non-empty string, 1-200 chars, trimmed
-QueueName               -> Non-empty string, 1-200 chars, trimmed
+SkillName               -> Non-empty string, 1-100 chars, trimmed
 TemplateName            -> Non-empty string, 1-100 chars, trimmed
+
+WorkingDirectory        -> Non-empty absolute path string; validated to be non-empty on construction;
+                           the path where the agent's Node.js sidecar process runs
 
 AgentSessionStatus      -> Enum: Queued, Running,
                                  Interrupting, Interrupted,
                                  Pausing, Paused,
                                  Resuming,
                                  Cancelling, Cancelled,
+                                 WaitingForInput, WaitingForApproval,
                                  Idle, ContextExhausted,
                                  Completed, Failed
                            Idle: normal resting state after a turn completes; accepts follow-ups.
+                           WaitingForInput: agent called AskUserQuestion; session blocked on user response.
+                           WaitingForApproval: agent exited plan mode; plan requires user approval.
                            ContextExhausted: context window full; no new messages accepted; triggers
                              handoff to a new session in the chain.
                            Completed: explicit terminal closure (Bruno approved output or closed session).
@@ -642,10 +725,7 @@ SessionChainStatus      -> Enum: Active, Completed, Cancelled
                            Completed: all work is done; no new sessions will be added.
                            Cancelled: chain was cancelled; all non-terminal sessions were cancelled.
 
-WorkQueueStatus         -> Enum: Pending, Running, Paused, Completed, Failed, Cancelled
-WorkItemStatus          -> Enum: Queued, Ready, Running, VerificationPassed, Completed, Failed, Skipped
-WorkItemPriority        -> Enum: Low, Normal, High, Critical
-ExecutionMode           -> Enum: Standalone, Parallel, Sequential
+ExecutionMode           -> Enum: Standalone, ParallelBatch, SequentialQueue
 FailureReason           -> Enum: BudgetExhausted, VerificationFailed, AgentError, ManualCancellation,
                                  Timeout, InfrastructureError
 AgentMessageSource      -> Enum: User, System, Agent, SubAgent, Webhook
@@ -653,6 +733,20 @@ AgentMessageSource      -> Enum: User, System, Agent, SubAgent, Webhook
 ToolCallStatus          -> Enum: Pending, Success, Error
                            (Pending while the tool is executing; Success or Error on completion;
                             result is attached to the ToolCall, never as a separate message)
+
+MemoryPillCategory      -> Enum: Mistake, Tip, Guideline, Pattern, Convention
+MemoryPillStatus        -> Enum: Active, Consolidated, Dismissed
+                           Active: pill is live and may be consolidated or dismissed.
+                           Consolidated: pill has been folded into the skill's instructions; terminal.
+                           Dismissed: pill was discarded by Bruno; terminal.
+
+PlanStatus              -> Enum: Draft, PendingApproval, Approved, Rejected
+SessionTaskStatus       -> Enum: Pending, InProgress, Completed
+
+ActivityItemType        -> Enum: Message, ToolCallStart, ToolCallEnd, SubAgentSpawn,
+                                 SubAgentComplete, PlanModeEnter, PlanModeExit, UserQuestion,
+                                 UserAnswer, TodoUpdate, StatusChange, MetricsUpdate,
+                                 SkillEnabled, HandoffInitiated
 
 MessagePriority         -> Enum: Immediate | Queued
                            Immediate messages are injected into the active SDK agentic loop ASAP
@@ -671,10 +765,6 @@ SessionBudget           -> { HardCapUsd: decimal, WarnAtPercent: int (default 80
                            HardCapUsd must be > 0; WarnAtPercent must be 1-99;
                            EstimatedCostUsd must be kept in sync with SessionMetrics.TotalCostUsd
 
-QueueBudget             -> { HardCapUsd: decimal, WarnAtPercent: int (default 80),
-                              TotalSpentUsd: decimal }
-                           HardCapUsd must be > 0
-
 SessionOutput           -> { OutputLineCount: int, FilesChanged: int, TestsAdded: int,
                               AllTestsPassing: bool, CommitSha: string? }
                            CommitSha must be a valid 40-char git SHA if set; all counts >= 0
@@ -685,19 +775,53 @@ SessionLogChunk         -> { SequenceNumber: int, Content: string, RecordedAt: D
 ToolResult              -> { Content: string, IsError: bool }
                            Content must be non-empty; belongs to ToolCall, never a standalone message
 
-WorktreeRef             -> { BranchName: string, LocalPath: string }
-                           BranchName must match git branch naming rules (non-empty, no spaces)
-                           LocalPath must be non-empty
-                           NOTE: Projects context now exposes WorktreeId (Guid wrapper);
-                           this value object should be migrated to store WorktreeId alongside or
-                           instead of BranchName+LocalPath in a future revision — see Design Notes
+ActivityItem            -> { Id: ActivityItemId, SessionId: AgentSessionId, SubAgentId: SubAgentId?,
+                              Type: ActivityItemType,
+                              Summary: string (one-line skimmable description, 1-200 chars),
+                              Detail: string? (full content — tool input/output, message text, etc.),
+                              ToolName: string? (for ToolCallStart/End — enables per-tool UI rendering),
+                              Timestamp: DateTimeOffset }
+                           The ACL translates every raw SDK event into an ActivityItem in addition to
+                           any domain command it dispatches. The UI renders the activity stream as a
+                           scrollable timeline of Summary lines, each expandable to show Detail.
+
+AutoContinueConfig      -> { ValidationCriteria: IReadOnlyList<ValidationCriterion>,
+                              MaxContinuations: int (default: 5 — prevents infinite loops),
+                              CurrentContinuationCount: int (tracked per session),
+                              IsEnabled: bool }
+                           ValidationCriterion: { Type: ValidationType, Threshold: decimal?,
+                                                   CustomCommand: string? }
+                           ValidationType: Enum: TestsPassing, CoverageThreshold, CustomCommand, LintPassing
+                           When a turn completes and IsEnabled = true:
+                             1. System runs all validation criteria
+                             2. If any criterion fails: auto-enqueue a system message "Validation failed:
+                                {reason}. Continue working." and increment CurrentContinuationCount
+                             3. If CurrentContinuationCount >= MaxContinuations: stop, notify user
+                             4. If all criteria pass: session transitions to Idle normally
+                           MaxContinuations must be >= 1; CurrentContinuationCount must be >= 0
+
+SessionTaskList         -> { Tasks: IReadOnlyList<SessionTask>, LastUpdatedAt: DateTimeOffset }
+                           SessionTask: { Id: string, Subject: string, Status: SessionTaskStatus,
+                                          ActiveForm: string? (present participle for InProgress),
+                                          UpdatedAt: DateTimeOffset }
+                           Replaced on each TodoWrite call — not aggregated across calls;
+                           represents the agent's current internal task breakdown
+
+SessionPlan             -> { Content: string (the plan document text, 1-10000 chars),
+                              Status: PlanStatus,
+                              RequiresApproval: bool,
+                              CreatedAt: DateTimeOffset,
+                              ApprovedAt: DateTimeOffset?,
+                              Version: int (incremented on each revision; starts at 1) }
+                           Content is replaced (not appended) when the agent revises the plan;
+                           Version increments on each RecordPlanPendingApproval() call after the first
 
 AgentSchedule           -> { CronExpression: string, TimeZone: string, IsEnabled: bool }
                            CronExpression must be a valid 5-field cron expression
                            TimeZone must be a valid IANA time zone identifier
 
 ClassificationRule      -> { Id: ClassificationRuleId, MatchField: string, MatchPattern: string,
-                              ClassifyAs: string, MinPriority: WorkItemPriority? }
+                              ClassifyAs: string, MinPriority: string? }
                            MatchField and MatchPattern must be non-empty
 
 SessionPoolConfig       -> { MaxConcurrentSessions: int }
@@ -712,6 +836,10 @@ McpToolDefinition       -> { Name: string, Description: string, InputSchema: str
                            ServerUri must be a valid absolute URI pointing to an MCP server endpoint
                            (transport type — http, sse, or stdio — is inferred or configured at
                             infrastructure layer; the domain only stores the URI)
+
+SkillSubAgentDefinition -> { Name: string, Description: string, ModelId: string,
+                              Instructions: string, ToolDefinitions: IReadOnlyList<McpToolDefinition> }
+                           Name must be non-empty, 1-100 chars; unique within skill
 
 TokenUsage              -> { InputTokens: int, OutputTokens: int, CacheReadTokens: int,
                               CacheWriteTokens: int, TotalTokens: int (computed) }
@@ -760,8 +888,10 @@ SessionMetrics          -> { TotalCostUsd: decimal,
 ## 8.6 Domain Events
 
 ```
-AgentSessionStartedEvent            { SessionId, OwnerId, ProjectId, TaskId?, WorkQueueId?,
-                                       WorktreeRef?, ExecutionMode }
+AgentSessionStartedEvent            { SessionId, OwnerId, WorkingDirectory, Objective,
+                                       ModelId, EnabledSkillIds, ExecutionMode }
+                                    (WorkingDirectory and Objective replace the former ProjectId/TaskId fields;
+                                     cross-context linkage is handled by bridge contexts)
 
 AgentSessionTurnCompletedEvent      { SessionId, OwnerId, TurnCount, LastTurnAt }
                                     (raised when a turn ends without final output — session transitions
@@ -796,17 +926,16 @@ SessionCancelledEvent               { SessionId, OwnerId }
                                      ACL dispatches ConfirmSessionCancelledCommand after sidecar stop_ack;
                                      also raised directly for Queued sessions that never started a sidecar)
 
-AgentSessionOutputReadyEvent        { SessionId, OwnerId, ProjectId, TaskId?,
-                                       FilesChanged, TestsAdded, AllTestsPassing }
+AgentSessionOutputReadyEvent        { SessionId, OwnerId, FilesChanged, TestsAdded, AllTestsPassing }
                                     (session transitions Running -> Idle; HasPendingReview = true)
-AgentSessionApprovedEvent           { SessionId, OwnerId, ProjectId, TaskId?,
-                                       WorkQueueId?, WorkItemId?, CommitSha? }
-                                    (session transitions Idle -> Completed)
+AgentSessionApprovedEvent           { SessionId, OwnerId, CommitSha? }
+                                    (session transitions Idle -> Completed;
+                                     bridge contexts subscribe to coordinate worktree merge and task completion)
 AgentSessionClosedEvent             { SessionId, OwnerId }
                                     (session transitions Idle -> Completed without pending review;
                                      Bruno explicitly closed the session)
-AgentSessionRejectedEvent           { SessionId, OwnerId, WorkQueueId?, WorkItemId? }
-AgentSessionFailedEvent             { SessionId, OwnerId, FailureReason, WorkQueueId?, WorkItemId? }
+AgentSessionRejectedEvent           { SessionId, OwnerId }
+AgentSessionFailedEvent             { SessionId, OwnerId, FailureReason }
 AgentSessionRetriedEvent            { SessionId, OwnerId, RetryCount, AdditionalInstruction? }
 SessionBudgetWarningEvent           { SessionId, OwnerId, SpentUsd, CapUsd, PercentUsed }
 SessionBudgetExhaustedEvent         { SessionId, OwnerId, SpentUsd, CapUsd }
@@ -819,6 +948,40 @@ ContextExhaustedEvent               { SessionId, OwnerId, ChainId? }
                                     (raised when session transitions Running -> ContextExhausted;
                                      ChainId is set if this session is already part of a chain;
                                      triggers the handoff workflow in the application layer)
+
+SessionWaitingForInputEvent         { SessionId, OwnerId, QuestionContent: string, Options?: IReadOnlyList<string> }
+                                    (raised when RecordUserQuestionAsked() transitions Running -> WaitingForInput;
+                                     UI renders the question card; session dashboard shows pulsing amber badge)
+SessionInputReceivedEvent           { SessionId, OwnerId, Answer: string }
+                                    (raised when RecordUserQuestionAnswered() transitions WaitingForInput -> Running)
+
+SessionPlanCreatedEvent             { SessionId, OwnerId }
+                                    (raised when RecordPlanCreated() populates SessionPlan with Status = Draft)
+SessionPlanPendingApprovalEvent     { SessionId, OwnerId, RequiresApproval: bool }
+                                    (raised when RecordPlanPendingApproval() is called; if RequiresApproval
+                                     is true, session transitions to WaitingForApproval)
+SessionPlanApprovedEvent            { SessionId, OwnerId }
+                                    (raised when RecordPlanApproved() transitions WaitingForApproval -> Running)
+SessionPlanRejectedEvent            { SessionId, OwnerId, Feedback: string }
+                                    (raised when RecordPlanRejected() transitions WaitingForApproval -> Running;
+                                     Feedback is injected as next message so agent can revise)
+
+SessionTaskListUpdatedEvent         { SessionId, OwnerId, TaskCount: int, CompletedCount: int }
+                                    (raised when UpdateSessionTaskList() replaces the snapshot;
+                                     UI refreshes the progress tracker sidebar)
+
+SessionSkillEnabledEvent            { SessionId, OwnerId, SkillId: AgentSkillId }
+                                    (raised when EnableSkill() adds a skill to an Idle/Interrupted session)
+SessionSkillDisabledEvent           { SessionId, OwnerId, SkillId: AgentSkillId }
+SessionReloadRequestedEvent         { SessionId, OwnerId }
+                                    (raised when RequestReload() is called; application layer writes
+                                     `reload_config` to Redis command stream with new composed config)
+SessionReloadedEvent                { SessionId, OwnerId }
+                                    (raised when ConfirmReloaded() is called; ACL dispatches on reload_config_ack)
+
+SessionVoluntaryHandoffEvent        { SessionId, OwnerId, Reason: string, ChainId? }
+                                    (raised when RecordVoluntaryHandoff() transitions Running -> ContextExhausted;
+                                     same handoff workflow triggered as forced exhaustion)
 
 SessionChainCreatedEvent            { ChainId, OwnerId, OriginalObjective, FirstSessionId }
 SessionHandoffInitiatedEvent        { ChainId, FromSessionId, HandoffDocumentId }
@@ -850,17 +1013,17 @@ SubAgentSessionStartedEvent         { ParentSessionId, SubAgentId, ModelId }
 SubAgentSessionCompletedEvent       { ParentSessionId, SubAgentId }
 SubAgentSessionFailedEvent          { ParentSessionId, SubAgentId, FailureReason }
 
-WorkQueueCreatedEvent               { QueueId, OwnerId, ProjectId, ExecutionMode, ItemCount }
-WorkQueueStartedEvent               { QueueId, OwnerId, ProjectId }
-WorkQueueAdvancedEvent              { QueueId, CompletedItemId, NextItemId? }
-WorkQueueItemFailedEvent            { QueueId, ItemId, SessionId }
-WorkQueuePausedEvent                { QueueId, OwnerId }
-WorkQueueResumedEvent               { QueueId, OwnerId }
-WorkQueueCancelledEvent             { QueueId, OwnerId }
-WorkQueueReorderedEvent             { QueueId, OwnerId }
-WorkQueueBudgetUpdatedEvent         { QueueId, OwnerId, NewHardCapUsd }
-WorkQueueCompletedEvent             { QueueId, OwnerId, ProjectId, TotalItemCount,
-                                       CompletedCount, FailedCount, TotalCostUsd }
+AgentSkillCreatedEvent              { SkillId, OwnerId, Name }
+AgentSkillUpdatedEvent              { SkillId, OwnerId }
+AgentSkillInstructionsUpdatedEvent  { SkillId, OwnerId, NewVersion: int }
+AgentSkillDeactivatedEvent          { SkillId, OwnerId }
+AgentSkillActivatedEvent            { SkillId, OwnerId }
+MemoryPillRecordedEvent             { SkillId, PillId, SessionId, Category: MemoryPillCategory }
+                                    (raised when an agent calls POST /api/agent/skills/{id}/memory-pills)
+SkillConsolidatedEvent              { SkillId, OwnerId, NewVersion: int, ConsolidatedPillCount: int }
+                                    (raised when ConsolidateMemoryPills() completes; marks pills as Consolidated
+                                     and updates skill instructions with incremented version)
+MemoryPillDismissedEvent            { SkillId, PillId, OwnerId }
 
 AgentTemplateCreatedEvent           { TemplateId, OwnerId, Name }
 AgentTemplateUpdatedEvent           { TemplateId, OwnerId }
@@ -868,9 +1031,10 @@ AgentTemplateDeactivatedEvent       { TemplateId, OwnerId }
 AgentTemplateActivatedEvent         { TemplateId, OwnerId }
 
 AgentApiTaskCreatedEvent            { SessionId, OwnerId, CreatedTaskId, LinkedTaskId?,
-                                       ProjectId, Source: "AgentApi" }
+                                       Source: "AgentApi" }
                                     (raised when an agent calls the Agent API to create a follow-up task;
-                                     CreatedTaskId references the new Task in the Task context)
+                                     CreatedTaskId references the new Task in the Task context;
+                                     NOTE: ProjectId is NOT carried here — bridge context handles correlation)
 
 MessageEnqueuedEvent                { SessionId, MessageId, Priority: MessagePriority,
                                        Source: MessageSource }
@@ -900,16 +1064,27 @@ SessionPoolExhaustedEvent           { AttemptedSessionId, CurrentCount: int, Max
 
 ```
 Commands:
-├── StartAgentSessionCommand         { ProjectId, TaskId?, TemplateId?, Name?,
-│                                       BudgetCapUsd: decimal, AutoCreateWorktree: bool,
+├── StartAgentSessionCommand         { WorkingDirectory: string,
+│                                       Objective: string,
+│                                       TemplateId?: AgentTemplateId,
+│                                       SkillIds?: IReadOnlyList<AgentSkillId>,
+│                                       ModelId?: string,
+│                                       Name?: SessionName,
+│                                       BudgetCapUsd: decimal,
+│                                       AutoContinueConfig?: AutoContinueConfig,
 │                                       ChainId?: SessionChainId }
-│       -> Creates an AgentSession (Status = Queued), generates API key, if AutoCreateWorktree
-│          publishes AgentSessionStartedEvent which the Projects context handles to create a worktree.
+│       -> Creates an AgentSession (Status = Queued), generates API key.
+│          Effective config is COMPOSED:
+│            SystemPrompt = Template.SystemPrompt + Skill[0].Instructions + Skill[1].Instructions + ...
+│            Tools = Template.AllowedTools ∪ Skill[0].Tools ∪ Skill[1].Tools ∪ ...
+│            SubAgents = Skill[0].SubAgentDefs ∪ Skill[1].SubAgentDefs ∪ ...
+│            ModelId = Command.ModelId ?? Template.ModelId
 │          Before spawning the process, calls SessionPool.CanAllocate(); if false, raises
 │          SessionPoolExhaustedEvent and returns a domain error without changing session status.
-│          When ChainId is provided, the new session is attached to the existing chain
-│          (used internally by the handoff workflow via AttachSession()).
+│          When ChainId is provided, the new session is attached to the existing chain.
 │          Returns the plaintext API key (shown once) and session ID.
+│          NOTE: ProjectId and TaskId are NOT parameters here — cross-context linkage is
+│          managed by bridge contexts (ProjectAgentBridge, AgentTaskBridge).
 │
 ├── InterruptAgentSessionCommand     { SessionId }
 │       -> Calls session.RequestInterrupt(); publishes SessionInterruptRequestedEvent.
@@ -957,8 +1132,8 @@ Commands:
 ├── ApproveSessionOutputCommand      { SessionId }
 │       -> Calls session.ApproveOutput(); publishes AgentSessionApprovedEvent.
 │          Only valid when session Status == Idle AND HasPendingReview == true.
-│          Application layer coordinates: calls Task context to complete the assigned task,
-│          and publishes event for Projects context to merge the worktree.
+│          Bridge contexts (ProjectAgentBridge, AgentTaskBridge) subscribe to AgentSessionApprovedEvent
+│          to coordinate worktree merge and task completion respectively.
 │
 ├── RejectSessionOutputCommand       { SessionId, Reason?: string }
 │       -> Calls session.RejectOutput(reason); publishes AgentSessionRejectedEvent.
@@ -995,6 +1170,12 @@ Commands:
 │          passing the handoff content as the new session's objective context.
 │          The new session creation triggers chain.AttachSession() via SessionAddedToChainEvent.
 │
+├── RecordVoluntaryHandoffCommand    { SessionId, Reason: string, Summary: string, RemainingWork: string }
+│       (Internal — dispatched by ACL on voluntary_handoff from sidecar)
+│       -> Calls session.RecordVoluntaryHandoff(reason, summary, remainingWork);
+│          publishes SessionVoluntaryHandoffEvent.
+│          Session transitions Running -> ContextExhausted; same handoff workflow triggered.
+│
 ├── CreateSessionChainCommand        { OwnerId, OriginalObjective, FirstSessionId }
 │       (Internal — dispatched by application layer when a session exhausts context for the first time
 │        and has no ChainId; creates the chain retroactively)
@@ -1010,37 +1191,59 @@ Commands:
 │          Application layer dispatches CancelAgentSessionCommand for all non-terminal sessions
 │          in the chain.
 │
-├── StartWorkQueueCommand            { ProjectId, TaskIds: IReadOnlyList<TaskId>,
-│                                       ExecutionMode, BudgetPerSessionUsd: decimal,
-│                                       TotalBudgetCapUsd?: decimal,
-│                                       RequiresVerificationGate: bool,
-│                                       MaxParallelSessions?: int,
-│                                       TemplateId? }
-│       -> Creates a WorkQueue with WorkItems for each task, then calls queue.Start().
-│          For Parallel mode: creates up to MaxParallelSessions agent sessions immediately.
-│          For Sequential mode: creates only the first agent session and holds others Queued.
-│          Cross-context: Projects context creates worktrees in response to session start events.
+├── AnswerUserQuestionCommand        { SessionId, Answer: string }
+│       -> Calls session.RecordUserQuestionAnswered(answer); publishes SessionInputReceivedEvent.
+│          Session transitions WaitingForInput -> Running.
+│          Application layer injects the answer as a message into the session via the command stream.
 │
-├── PauseWorkQueueCommand            { QueueId }
-│       -> Calls queue.Pause(); running sessions are paused via PauseAgentSessionCommand
+├── ApprovePlanCommand               { SessionId }
+│       -> Calls session.RecordPlanApproved(); publishes SessionPlanApprovedEvent.
+│          Session transitions WaitingForApproval -> Running.
+│          Only valid when Status == WaitingForApproval.
 │
-├── ResumeWorkQueueCommand           { QueueId }
-│       -> Calls queue.Resume(); re-dispatches ready items to sessions
+├── RejectPlanCommand                { SessionId, Feedback: string }
+│       -> Calls session.RecordPlanRejected(feedback); publishes SessionPlanRejectedEvent.
+│          Session transitions WaitingForApproval -> Running.
+│          Feedback is injected as next message so agent can revise the plan.
+│          Only valid when Status == WaitingForApproval.
 │
-├── CancelWorkQueueCommand           { QueueId }
-│       -> Calls queue.Cancel(); cancels all non-terminal sessions in the queue
+├── EnableSkillOnSessionCommand      { SessionId, SkillId: AgentSkillId }
+│       -> Calls session.EnableSkill(skillId); publishes SessionSkillEnabledEvent.
+│          Only valid when Status == Idle or Interrupted.
+│          Caller should follow with ReloadSessionConfigCommand to hot-load the new skill.
 │
-├── ReorderWorkQueueCommand          { QueueId, OrderedItemIds: IReadOnlyList<WorkItemId> }
-│       -> Calls queue.ReorderItems(); only valid when queue is still Pending
+├── DisableSkillOnSessionCommand     { SessionId, SkillId: AgentSkillId }
+│       -> Calls session.DisableSkill(skillId); publishes SessionSkillDisabledEvent.
+│          Only valid when Status == Idle or Interrupted.
+│
+├── ReloadSessionConfigCommand       { SessionId }
+│       -> Recomposes the effective session config (system prompt + tools + subagents) from
+│          the session's current Template and EnabledSkillIds.
+│          Calls session.RequestReload(); publishes SessionReloadRequestedEvent.
+│          Application layer writes `reload_config` command to Redis with the new AgentSessionConfig.
+│          Sidecar reinitializes and writes reload_config_ack.
+│
+├── ConfirmSessionReloadedCommand    { SessionId }
+│       (Internal — dispatched by ACL on reload_config_ack from sidecar)
+│       -> Calls session.ConfirmReloaded(); publishes SessionReloadedEvent.
 │
 ├── CreateAgentTemplateCommand       { Name, ModelId, SystemPrompt?, AllowedTools,
 │                                       ClassificationRules?, Schedule?, DefaultBudgetCapUsd,
-│                                       CustomToolDefinitions?: IReadOnlyList<McpToolDefinition> }
+│                                       CustomToolDefinitions?: IReadOnlyList<McpToolDefinition>,
+│                                       DefaultSkillIds?: IReadOnlyList<AgentSkillId>,
+│                                       PlanApprovalRequired?: bool }
 │       -> Creates AgentTemplate; publishes AgentTemplateCreatedEvent
 │
 ├── UpdateAgentTemplateCommand       { TemplateId, Name?, SystemPrompt?,
-│                                       AllowedTools?, DefaultBudgetCapUsd? }
+│                                       AllowedTools?, DefaultBudgetCapUsd?,
+│                                       PlanApprovalRequired? }
 │       -> Updates template fields; publishes AgentTemplateUpdatedEvent
+│
+├── AddTemplateDefaultSkillCommand   { TemplateId, SkillId: AgentSkillId }
+│       -> Calls template.AddDefaultSkill(); publishes AgentTemplateUpdatedEvent
+│
+├── RemoveTemplateDefaultSkillCommand { TemplateId, SkillId: AgentSkillId }
+│       -> Calls template.RemoveDefaultSkill(); publishes AgentTemplateUpdatedEvent
 │
 ├── AddTemplateClassificationRuleCommand  { TemplateId, MatchField, MatchPattern,
 │                                            ClassifyAs, MinPriority? }
@@ -1088,12 +1291,38 @@ Commands:
 │        ToolCall entity and transitions its Status to Success or Error.
 │        Raises ToolCallCompletedEvent. Never creates a standalone AgentMessage.)
 │
+├── RecordActivityItemCommand        { SessionId, SubAgentId?, Type: ActivityItemType,
+│                                       Summary: string, Detail?: string, ToolName?: string }
+│       (Always dispatched by ACL for every raw SDK event, in addition to any other command.
+│        Creates an ActivityItem appended to the session's activity stream.
+│        Infrastructure layer appends via IActivityStreamRepository.AppendAsync().)
+│
 ├── RecordSessionOutputCommand       { SessionId, OutputLineCount: int, FilesChanged: int,
 │                                       TestsAdded: int, AllTestsPassing: bool, CommitSha?: string }
 │       (Called by the agent runtime when it signals completion.
 │        Calls session.RecordOutput(); publishes AgentSessionOutputReadyEvent.
-│        Session transitions Running -> Idle; HasPendingReview = true.
-│        For queue items with RequiresVerificationGate: marks WorkItem.VerificationPassed = true.)
+│        Session transitions Running -> Idle; HasPendingReview = true.)
+│
+├── UpdateSessionTaskListCommand     { SessionId, Tasks: IReadOnlyList<SessionTask> }
+│       (Internal — dispatched by ACL on TodoWrite tool_use.
+│        Calls session.UpdateSessionTaskList(); publishes SessionTaskListUpdatedEvent.
+│        Replaces the entire SessionTaskList snapshot — not incremental.)
+│
+├── RecordUserQuestionAskedCommand   { SessionId, QuestionContent: string,
+│                                       Options?: IReadOnlyList<string> }
+│       (Internal — dispatched by ACL on AskUserQuestion tool_use.
+│        Calls session.RecordUserQuestionAsked(); publishes SessionWaitingForInputEvent.
+│        Session transitions Running -> WaitingForInput.)
+│
+├── RecordPlanCreatedCommand         { SessionId, PlanContent: string }
+│       (Internal — dispatched by ACL on EnterPlanMode tool_use.
+│        Calls session.RecordPlanCreated(); publishes SessionPlanCreatedEvent.)
+│
+├── RecordPlanPendingApprovalCommand { SessionId, PlanContent: string }
+│       (Internal — dispatched by ACL on ExitPlanMode tool_use.
+│        Calls session.RecordPlanPendingApproval(planContent, template.PlanApprovalRequired).
+│        If PlanApprovalRequired: session transitions Running -> WaitingForApproval.
+│        Publishes SessionPlanPendingApprovalEvent.)
 │
 ├── EnqueueSessionMessageCommand     { SessionId, Content: string,
 │                                       Priority: MessagePriority, Source: MessageSource }
@@ -1111,18 +1340,65 @@ Commands:
 │          publishes MessageCancelledEvent.
 │          Returns a domain error if the message is already Delivered.
 │
-└── PromoteMessageToImmediateCommand { SessionId, MessageId: Guid }
-        -> Loads the SessionMessageQueue; calls queue.Promote(messageId);
-           publishes MessagePromotedToImmediateEvent.
-           Application layer calls IAgentRuntime.SendSteeringMessageAsync() if session is Running.
+├── PromoteMessageToImmediateCommand { SessionId, MessageId: Guid }
+│       -> Loads the SessionMessageQueue; calls queue.Promote(messageId);
+│          publishes MessagePromotedToImmediateEvent.
+│          Application layer calls IAgentRuntime.SendSteeringMessageAsync() if session is Running.
+│
+├── CreateAgentSkillCommand          { OwnerId, Name: string, Description: string,
+│                                       Instructions?: string,
+│                                       ToolDefinitions?: IReadOnlyList<McpToolDefinition>,
+│                                       SubAgentDefinitions?: IReadOnlyList<SkillSubAgentDefinition> }
+│       -> Creates AgentSkill; publishes AgentSkillCreatedEvent.
+│
+├── UpdateAgentSkillCommand          { SkillId, Name?: string, Description?: string }
+│       -> Updates skill metadata fields; publishes AgentSkillUpdatedEvent.
+│
+├── UpdateAgentSkillInstructionsCommand { SkillId, Instructions: string }
+│       -> Calls skill.UpdateInstructions(instructions, incrementVersion: false);
+│          publishes AgentSkillInstructionsUpdatedEvent.
+│          (Manual instruction edit — does NOT increment version; that is reserved for consolidation)
+│
+├── RecordMemoryPillCommand          { SkillId, SessionId, Content: string,
+│                                       Category: MemoryPillCategory }
+│       (Agent API command — authenticated with per-session AgentApiKey)
+│       -> Calls skill.RecordMemoryPill(); publishes MemoryPillRecordedEvent.
+│
+├── DismissMemoryPillCommand         { SkillId, PillId }
+│       -> Calls skill.DismissMemoryPill(pillId); publishes MemoryPillDismissedEvent.
+│          Only valid for Active pills.
+│
+├── StartSkillConsolidationCommand   { SkillId }
+│       -> Creates a special agent session with the "Skill Improvement" meta-objective.
+│          The session receives: all Active memory pills for the skill, the current skill instructions.
+│          On session completion, the consolidation session calls ConsolidateSkillCommand.
+│          Returns the new session ID for tracking in the UI.
+│
+├── ConsolidateSkillCommand          { SkillId, PillIds: IReadOnlyList<MemoryPillId>,
+│                                       UpdatedInstructions: string }
+│       (Internal — dispatched by the consolidation session's completion handler)
+│       -> Calls skill.ConsolidateMemoryPills(pillIds, updatedInstructions);
+│          publishes SkillConsolidatedEvent.
+│          Marks specified pills as Consolidated; increments skill Version; updates Instructions.
+│
+├── DeactivateAgentSkillCommand      { SkillId }
+│       -> Calls skill.Deactivate(); publishes AgentSkillDeactivatedEvent.
+│
+├── ActivateAgentSkillCommand        { SkillId }
+│       -> Calls skill.Activate(); publishes AgentSkillActivatedEvent.
 
 Agent API Commands (authenticated with per-session AgentApiKey, not user JWT):
 ├── AgentCreateTaskCommand           { SessionId, Title, Description?, Priority,
-│                                       Tags?: IReadOnlyList<string>,
-│                                       LinkedTaskId?, ProjectId }
+│                                       Tags?: IReadOnlyList<string>, LinkedTaskId? }
 │       -> Validates session is Running; creates a Task via Task context (cross-context coordination);
 │          raises AgentApiTaskCreatedEvent with the new TaskId linked back to the session.
+│          NOTE: ProjectId is NOT a parameter — the AgentTaskBridge resolves project from session correlation.
 │          Returns the created TaskId.
+│
+├── AgentRecordMemoryPillCommand     { SkillId, SessionId, Content: string,
+│                                       Category: MemoryPillCategory }
+│       -> Dispatches RecordMemoryPillCommand via the skill repository.
+│          Returns the new PillId.
 │
 └── AgentLogDecisionCommand          { SessionId, Content: string }
         -> Records a SessionLogChunk tagged as "decision" for audit trail.
@@ -1130,12 +1406,12 @@ Agent API Commands (authenticated with per-session AgentApiKey, not user JWT):
 
 Queries:
 ├── GetAgentSessionQuery             { SessionId } -> AgentSessionDto
-│       (includes Budget, Metrics, Output if set, WorktreeRef, ChainId if part of a chain)
+│       (includes Budget, Metrics, Output if set, ChainId if part of a chain,
+│        EnabledSkillIds, WorkingDirectory, SessionPlan if set, SessionTaskList if set)
 │
-├── ListAgentSessionsQuery           { ProjectId?, Status?, Page, PageSize }
-│                                         -> PagedResult<AgentSessionSummaryDto>
-│       (summary includes: name, status, hasPendingReview, taskId, totalCostUsd,
-│        contextWindowUsagePercent, turnCount, elapsed time)
+├── ListAgentSessionsQuery           { Status?, Page, PageSize } -> PagedResult<AgentSessionSummaryDto>
+│       (summary includes: name, status, hasPendingReview, totalCostUsd,
+│        contextWindowUsagePercent, turnCount, elapsed time, enabledSkillCount)
 │
 ├── GetSessionOutputStreamQuery      { SessionId } -> IAsyncEnumerable<SessionLogChunk>
 │       (returns all buffered log chunks in sequence order; used to replay logs for review)
@@ -1152,6 +1428,20 @@ Queries:
 │        SubAgentMetrics per subagent with their own context windows, TurnCount, LastTurnAt;
 │        used by the metrics detail panel in the UI)
 │
+├── GetSessionActivityStreamQuery    { SessionId, SubAgentId?, Since?: DateTimeOffset, Limit?: int }
+│                                         -> IReadOnlyList<ActivityItemDto>
+│       (returns activity items for the session; SubAgentId scopes to a specific subagent;
+│        Since filters to items after a given timestamp for incremental loading;
+│        items ordered by Timestamp ascending)
+│
+├── GetSessionTaskListQuery          { SessionId } -> SessionTaskListDto?
+│       (returns the current TodoWrite snapshot for the session; null if agent has not called TodoWrite;
+│        used to render the progress tracker sidebar in the session detail view)
+│
+├── GetSessionPlanQuery              { SessionId } -> SessionPlanDto?
+│       (returns the current plan document for the session; null if agent has not entered plan mode;
+│        used to render the plan panel in the session detail view)
+│
 ├── GetSessionChainQuery             { ChainId } -> SessionChainDto
 │       (returns full chain: all ChainedSessions in order, all HandoffDocuments,
 │        CurrentSessionId, Status, OriginalObjective, TotalCostUsd aggregated across sessions)
@@ -1160,20 +1450,14 @@ Queries:
 │                                         -> PagedResult<SessionChainSummaryDto>
 │       (summary includes: chainId, originalObjective, status, sessionCount, totalCostUsd, createdAt)
 │
-├── GetWorkQueueQuery                { QueueId } -> WorkQueueDto
-│       (includes Items with their statuses and assigned session IDs)
-│
-├── ListWorkQueuesQuery              { ProjectId?, Status?, Page, PageSize }
-│                                         -> PagedResult<WorkQueueSummaryDto>
-│
 ├── GetAgentTemplateQuery            { TemplateId } -> AgentTemplateDto
 │
 ├── ListAgentTemplatesQuery          { IsActive?: bool, Page, PageSize }
 │                                         -> PagedResult<AgentTemplateSummaryDto>
 │
-├── GetSessionHistoryQuery           { ProjectId?, DateFrom?, DateTo?, Page, PageSize }
+├── GetSessionHistoryQuery           { DateFrom?, DateTo?, Page, PageSize }
 │                                         -> PagedResult<AgentSessionHistoryDto>
-│       (includes: session name, task title (from Task context), status, cost, duration, outcome)
+│       (includes: session name, status, cost, duration, outcome)
 │
 ├── GetSessionMessageQueueQuery      { SessionId }
 │                                         -> IReadOnlyList<SessionMessageDto>
@@ -1181,10 +1465,23 @@ Queries:
 │        includes messageId, content preview, priority, status, createdAt for each message;
 │        used by the UI to render the message queue panel on the session detail page)
 │
-└── GetSessionPoolUtilizationQuery   { }
-                                          -> SessionPoolUtilizationDto
-        (returns: ActiveCount, MaxCount, AvailableSlots, Percentage;
-         used by the UI to show the pool utilization indicator in the session list header)
+├── GetSessionPoolUtilizationQuery   { }
+│                                         -> SessionPoolUtilizationDto
+│       (returns: ActiveCount, MaxCount, AvailableSlots, Percentage;
+│        used by the UI to show the pool utilization indicator in the session list header)
+│
+├── ListAgentSkillsQuery             { OwnerId, IsActive?: bool, Page, PageSize }
+│                                         -> PagedResult<AgentSkillSummaryDto>
+│       (summary includes: name, version, isActive, toolCount, subAgentCount, activePillCount)
+│
+├── GetAgentSkillQuery               { SkillId } -> AgentSkillDto
+│       (includes full skill details: instructions, tool definitions, subagent definitions,
+│        version, memory pills with their statuses)
+│
+└── GetSkillMemoryPillsQuery         { SkillId, Status?: MemoryPillStatus, Page, PageSize }
+                                          -> PagedResult<MemoryPillDto>
+        (returns memory pills for the skill; filterable by status;
+         ordered by CreatedAt descending; used to render the Memory Pills tab in skill detail)
 ```
 
 ---
@@ -1203,10 +1500,11 @@ public interface IAgentSessionRepository
     /// <summary>
     /// Lists sessions for the owning user, with optional filters.
     /// Results are ordered by CreatedAt descending.
+    /// NOTE: ProjectId filter removed — session list is no longer scoped to a project;
+    /// cross-context filtering is handled by bridge context queries.
     /// </summary>
     Task<PagedResult<AgentSession>> ListAsync(
         UserId ownerId,
-        ProjectId? projectId,
         AgentSessionStatus? status,
         int page, int pageSize,
         CancellationToken ct);
@@ -1263,11 +1561,11 @@ public interface IAgentSessionRepository
         CancellationToken ct);
 
     /// <summary>
-    /// Returns sessions in the given history window, for all projects owned by the user.
+    /// Returns sessions in the given history window for all sessions owned by the user.
+    /// NOTE: projectId parameter removed — history is no longer scoped to a project at this layer.
     /// </summary>
     Task<PagedResult<AgentSession>> GetHistoryAsync(
         UserId ownerId,
-        ProjectId? projectId,
         DateTimeOffset? from,
         DateTimeOffset? to,
         int page, int pageSize,
@@ -1316,31 +1614,6 @@ public interface ISessionChainRepository
 }
 
 /// <summary>
-/// Repository for WorkQueue aggregate. Includes WorkItems as part of the aggregate.
-/// </summary>
-public interface IWorkQueueRepository
-{
-    /// <summary>Loads a queue with all its work items. Returns null if not found.</summary>
-    Task<WorkQueue?> GetByIdAsync(WorkQueueId id, CancellationToken ct);
-
-    /// <summary>Lists queues for the owning user with optional project and status filters.</summary>
-    Task<PagedResult<WorkQueue>> ListAsync(
-        UserId ownerId,
-        ProjectId? projectId,
-        WorkQueueStatus? status,
-        int page, int pageSize,
-        CancellationToken ct);
-
-    /// <summary>Persists a new work queue and all its initial work items.</summary>
-    Task AddAsync(WorkQueue queue, CancellationToken ct);
-
-    /// <summary>
-    /// Updates an existing work queue and its items (status changes, reordering, item completion).
-    /// </summary>
-    Task UpdateAsync(WorkQueue queue, CancellationToken ct);
-}
-
-/// <summary>
 /// Repository for AgentTemplate aggregate.
 /// </summary>
 public interface IAgentTemplateRepository
@@ -1358,7 +1631,7 @@ public interface IAgentTemplateRepository
     /// <summary>Persists a new template.</summary>
     Task AddAsync(AgentTemplate template, CancellationToken ct);
 
-    /// <summary>Updates an existing template (rules, schedule, deactivation, MCP tools).</summary>
+    /// <summary>Updates an existing template (rules, schedule, deactivation, MCP tools, default skills).</summary>
     Task UpdateAsync(AgentTemplate template, CancellationToken ct);
 }
 
@@ -1387,6 +1660,59 @@ public interface ISessionMessageQueueRepository
     /// </summary>
     Task<IReadOnlyList<SessionMessage>> GetPendingAsync(AgentSessionId sessionId, CancellationToken ct);
 }
+
+/// <summary>
+/// Repository for AgentSkill aggregate. Includes MemoryPills as part of the aggregate.
+/// </summary>
+public interface IAgentSkillRepository
+{
+    /// <summary>Loads a skill by ID, including all memory pills. Returns null if not found.</summary>
+    Task<AgentSkill?> GetByIdAsync(AgentSkillId id, CancellationToken ct);
+
+    /// <summary>
+    /// Lists skills for the owning user with optional active filter.
+    /// Results are ordered by Name ascending.
+    /// </summary>
+    Task<PagedResult<AgentSkill>> ListAsync(
+        UserId ownerId,
+        bool? isActive,
+        int page, int pageSize,
+        CancellationToken ct);
+
+    /// <summary>Persists a new skill.</summary>
+    Task AddAsync(AgentSkill skill, CancellationToken ct);
+
+    /// <summary>
+    /// Updates an existing skill (instructions, tools, subagents, memory pills, version).
+    /// </summary>
+    Task UpdateAsync(AgentSkill skill, CancellationToken ct);
+}
+
+/// <summary>
+/// Repository for the structured activity stream. Append-only — items are never modified after write.
+/// The activity stream is the primary source for the live session detail view.
+/// </summary>
+public interface IActivityStreamRepository
+{
+    /// <summary>
+    /// Appends a new activity item to the session's stream.
+    /// Items are stored in insertion order with their Timestamp.
+    /// </summary>
+    Task AppendAsync(ActivityItem item, CancellationToken ct);
+
+    /// <summary>
+    /// Returns activity items for the session, optionally scoped to a specific subagent
+    /// and/or filtered to items after a given timestamp.
+    /// Items are returned in Timestamp ascending order.
+    /// Limit defaults to 200 if not specified.
+    /// </summary>
+    Task<IReadOnlyList<ActivityItem>> GetStreamAsync(
+        AgentSessionId sessionId,
+        SubAgentId? subAgentId,
+        DateTimeOffset? since,
+        int limit,
+        CancellationToken ct);
+}
 ```
 
 ---
@@ -1412,6 +1738,17 @@ GET    /api/agents/sessions/{id}/messages            Get classified messages for
 GET    /api/agents/sessions/{id}/tool-calls          Get tool calls with results for a session [Auth]
 GET    /api/agents/sessions/{id}/metrics             Get detailed metrics (per-model tokens, context window,
                                                       subagent breakdowns) [Auth]
+GET    /api/agents/sessions/{id}/activity            Get activity stream (paginated, filterable by subagent
+                                                      and since timestamp) [Auth]
+GET    /api/agents/sessions/{id}/task-list           Get current TodoWrite progress tracker snapshot [Auth]
+GET    /api/agents/sessions/{id}/plan                Get current plan document [Auth]
+POST   /api/agents/sessions/{id}/plan/approve        Approve plan (WaitingForApproval -> Running) [Auth]
+POST   /api/agents/sessions/{id}/plan/reject         Reject plan with feedback (WaitingForApproval -> Running) [Auth]
+POST   /api/agents/sessions/{id}/answer              Answer an AskUserQuestion (WaitingForInput -> Running) [Auth]
+POST   /api/agents/sessions/{id}/skills/{skillId}/enable
+                                                     Hot-load skill into Idle/Interrupted session [Auth]
+DELETE /api/agents/sessions/{id}/skills/{skillId}    Disable skill on Idle/Interrupted session [Auth]
+POST   /api/agents/sessions/{id}/reload              Trigger sidecar config reload after skill change [Auth]
 GET    /api/agents/sessions/history                  Session history with date range filters [Auth]
 
 POST   /api/agents/sessions/{id}/messages/queue      Enqueue a steering or follow-up message [Auth]
@@ -1422,15 +1759,6 @@ PATCH  /api/agents/sessions/{id}/messages/queue/{messageId}/promote
                                                      Promote a queued message to immediate [Auth]
 
 GET    /api/agents/pool                              Get session pool utilization [Auth]
-
-POST   /api/agents/queues                            Create and start a work queue [Auth]
-GET    /api/agents/queues                            List queues [Auth]
-GET    /api/agents/queues/{id}                       Get queue detail with items [Auth]
-POST   /api/agents/queues/{id}/pause                 Pause a queue [Auth]
-POST   /api/agents/queues/{id}/resume                Resume a paused queue [Auth]
-POST   /api/agents/queues/{id}/cancel                Cancel a queue [Auth]
-PUT    /api/agents/queues/{id}/order                 Reorder queue items (Pending queues only) [Auth]
-POST   /api/agents/queues/{id}/approve-all           Approve all Idle+HasPendingReview sessions in queue [Auth]
 
 GET    /api/agents/chains                            List session chains [Auth]
 GET    /api/agents/chains/{id}                       Get chain detail with sessions and handoff documents [Auth]
@@ -1445,17 +1773,30 @@ POST   /api/agents/templates/{id}/rules              Add a classification rule [
 DELETE /api/agents/templates/{id}/rules/{ruleId}     Remove a classification rule [Auth]
 POST   /api/agents/templates/{id}/tools              Add an MCP custom tool definition [Auth]
 DELETE /api/agents/templates/{id}/tools/{toolName}   Remove an MCP custom tool definition [Auth]
+POST   /api/agents/templates/{id}/skills/{skillId}   Add a skill to template defaults [Auth]
+DELETE /api/agents/templates/{id}/skills/{skillId}   Remove a skill from template defaults [Auth]
 POST   /api/agents/templates/{id}/deactivate         Deactivate a template [Auth]
 POST   /api/agents/templates/{id}/activate           Activate a template [Auth]
+
+GET    /api/agents/skills                            List skills [Auth]
+POST   /api/agents/skills                            Create a skill [Auth]
+GET    /api/agents/skills/{id}                       Get skill detail (includes memory pills) [Auth]
+PUT    /api/agents/skills/{id}                       Update skill metadata or instructions [Auth]
+POST   /api/agents/skills/{id}/deactivate            Deactivate a skill [Auth]
+POST   /api/agents/skills/{id}/activate              Activate a skill [Auth]
+GET    /api/agents/skills/{id}/memory-pills          List memory pills (filterable by status) [Auth]
+DELETE /api/agents/skills/{id}/memory-pills/{pillId} Dismiss a memory pill [Auth]
+POST   /api/agents/skills/{id}/consolidate           Start a skill consolidation session [Auth]
 ```
 
 ### Agent API Endpoints (Per-session AgentApiKey required, not user JWT)
 
 ```
 POST   /api/agent/tasks                              Create a follow-up task (AG-012)
-POST   /api/agent/sessions/{id}/budget               Report token spend (incremental updates)
 POST   /api/agent/sessions/{id}/output               Signal session completion with output summary
 POST   /api/agent/sessions/{id}/log                  Append a decision log entry (AG-013)
+POST   /api/agent/sessions/{id}/handoff              Record a voluntary handoff document (AG-039)
+POST   /api/agent/skills/{skillId}/memory-pills      Record a memory pill for a skill (AG-036)
 ```
 
 ### Real-Time Streaming
@@ -1468,29 +1809,27 @@ WS     /ws/agents/sessions/{id}/stream               WebSocket / SignalR hub for
 
 ## 8.10 Application Layer Coordination
 
-The Agent Sessions context coordinates with Task, Projects, and Notification contexts at the application layer. Contexts never call each other directly — coordination is handled by command handlers responding to domain events.
+The Agent Sessions context coordinates with Notification context and bridge contexts at the application layer. Contexts never call each other directly — coordination is handled by command handlers responding to domain events. Cross-context workflows involving Projects or Tasks are mediated by the `ProjectAgentBridge` and `AgentTaskBridge` bridge contexts.
 
-| Trigger | Agent Sessions | Task Context | Projects Context | Notification Context |
-|---------|---------------|--------------|-----------------|---------------------|
-| **Start session** | `AgentSession.Start()` -> `AgentSessionStartedEvent` | — | Creates worktree if `WorktreeRef` is set | — |
-| **Session output approved** | `AgentSession.ApproveOutput()` -> `AgentSessionApprovedEvent` | `task.Complete()` (if TaskId is set) | Merges worktree branch; cleans up worktree | Sends completion notification |
-| **Session closed (no review)** | `AgentSession.Close()` -> `AgentSessionClosedEvent` | — | — | — |
-| **Session failed** | `AgentSession.RecordFailure()` -> `AgentSessionFailedEvent` | — | — | Sends failure notification via `NotificationContext` |
-| **Budget exhausted** | `session.RequestPause()` -> `SessionBudgetExhaustedEvent` | — | — | Sends budget alert notification |
-| **Context nearing limit** | `session.RecordContextNearingLimit()` -> `ContextNearingLimitEvent` | — | — | — (UI notified via SSE) |
-| **Context exhausted** | `session.RecordContextExhausted()` -> `ContextExhaustedEvent` | — | — | Sends context exhausted notification |
-| **Handoff document received** | `chain.InitiateHandoff()` -> `SessionHandoffInitiatedEvent` | — | — | — |
-| **New session attached to chain** | `chain.AttachSession()` -> `SessionAddedToChainEvent` | — | Creates new worktree if session requires one | — |
-| **Chain completed** | `chain.Complete()` -> `SessionChainCompletedEvent` | — | — | Sends chain completion notification |
-| **Queue item approved (Sequential)** | `queue.AdvanceQueue()` -> `WorkQueueAdvancedEvent` | — | Creates next worktree if required | — |
-| **Queue completed** | `WorkQueueCompletedEvent` | — | — | Sends queue completion notification |
-| **Agent creates task via API** | `AgentApiTaskCreatedEvent` raised | `CreateTaskCommand` dispatched with agent-supplied fields | — | — |
-| **Immediate message enqueued** | `MessageEnqueuedEvent` (Immediate) | — | — | — |
-| **Pool slot freed** | `SessionReleasedEvent` | — | — | — |
-| **Interrupt requested** | `SessionInterruptRequestedEvent` | — | — | — |
-| **Pause requested** | `SessionPauseRequestedEvent` | — | — | — |
-| **Resume requested** | `SessionResumeRequestedEvent` | — | — | — |
-| **Cancel requested** | `SessionCancelRequestedEvent` | — | — | — |
+| Trigger | Agent Sessions | Notification Context | Bridge Context |
+|---------|---------------|---------------------|----------------|
+| **Start session** | `AgentSession.Start()` -> `AgentSessionStartedEvent` | — | ProjectAgentBridge subscribes to resolve WorkingDirectory and correlate with worktree |
+| **Session output approved** | `AgentSession.ApproveOutput()` -> `AgentSessionApprovedEvent` | Sends completion notification | ProjectAgentBridge: merges worktree; AgentTaskBridge: completes linked task |
+| **Session closed (no review)** | `AgentSession.Close()` -> `AgentSessionClosedEvent` | — | — |
+| **Session failed** | `AgentSession.RecordFailure()` -> `AgentSessionFailedEvent` | Sends failure notification | — |
+| **Budget exhausted** | `session.RequestPause()` -> `SessionBudgetExhaustedEvent` | Sends budget alert notification | — |
+| **Context nearing limit** | `session.RecordContextNearingLimit()` -> `ContextNearingLimitEvent` | — (UI notified via SSE) | — |
+| **Context exhausted** | `session.RecordContextExhausted()` -> `ContextExhaustedEvent` | Sends context exhausted notification | — |
+| **Voluntary handoff** | `session.RecordVoluntaryHandoff()` -> `SessionVoluntaryHandoffEvent` | — | Same handoff flow as forced exhaustion |
+| **Handoff document received** | `chain.InitiateHandoff()` -> `SessionHandoffInitiatedEvent` | — | — |
+| **New session attached to chain** | `chain.AttachSession()` -> `SessionAddedToChainEvent` | — | ProjectAgentBridge creates correlation for continuation session |
+| **Chain completed** | `chain.Complete()` -> `SessionChainCompletedEvent` | Sends chain completion notification | — |
+| **User answers question** | `session.RecordUserQuestionAnswered()` -> `SessionInputReceivedEvent` | — | — |
+| **Plan approved** | `session.RecordPlanApproved()` -> `SessionPlanApprovedEvent` | — | — |
+| **Skill hot-loaded** | `session.EnableSkill()` -> `SessionSkillEnabledEvent` | — | — |
+| **Agent creates task via API** | `AgentApiTaskCreatedEvent` raised | — | AgentTaskBridge subscribes to link task to session |
+| **Immediate message enqueued** | `MessageEnqueuedEvent` (Immediate) | — | — |
+| **Pool slot freed** | `SessionReleasedEvent` | — | — |
 
 **Lifecycle command flow** (two-phase pattern):
 
@@ -1519,6 +1858,8 @@ When a session's context window is full, the sidecar emits events in sequence an
 7. New session starts → `AgentSessionStartedEvent` raised → `chain.AttachSession(newSessionId)` called → `SessionAddedToChainEvent` raised
 8. New session proceeds normally; old session remains in `ContextExhausted` as a permanent record
 
+**Voluntary handoff flow** mirrors forced exhaustion from step 3 onward, but is triggered by `SessionVoluntaryHandoffEvent` instead of `ContextExhaustedEvent`.
+
 **Steering message delivery flow** (application layer, not domain):
 
 When `EnqueueSessionMessageCommand` is dispatched with `Priority = Immediate` and the session's current status is `Running`:
@@ -1531,14 +1872,28 @@ When `EnqueueSessionMessageCommand` is dispatched with `Priority = Immediate` an
 
 If the session is `Idle`, `Interrupted`, `Paused`, or `Queued` when an Immediate message is enqueued, the message remains `Pending` until the session transitions to `Running`, at which point the application layer delivers all pending Immediate messages before the next turn begins.
 
+**Auto-continue flow** (application layer):
+
+When a session transitions Running → Idle and `AutoContinueConfig.IsEnabled == true`:
+
+1. Application layer evaluates all `ValidationCriteria` (runs test commands, checks coverage, etc.)
+2. If all criteria pass: session remains Idle normally; no auto-continuation
+3. If any criterion fails AND `CurrentContinuationCount < MaxContinuations`:
+   - Application layer calls `EnqueueSessionMessageCommand` with Source = System and content = "Validation failed: {reason}. Continue working."
+   - `AutoContinueConfig.CurrentContinuationCount` incremented on the aggregate
+   - Session returns to Running on next turn
+4. If any criterion fails AND `CurrentContinuationCount >= MaxContinuations`:
+   - Auto-continue stops; application layer raises a notification informing Bruno
+   - Session remains Idle with `HasPendingReview = false` for manual review
+
 ---
 
 ## 8.11 Anti-Corruption Layer (IAgentRuntime)
 
 The Agent Sessions context does not call Claude Code or the Claude Agent SDK directly. It delegates to two ACL ports:
 
-- **`IAgentRuntime`** — controls the lifecycle of Node.js sidecar processes (start, stop, pause, resume, steering). Implemented in the infrastructure layer using `child_process` spawn or equivalent. Returns an `AgentProcessHandle` that identifies the running process.
-- **`IAgentRuntimeEventConsumer`** — a background service that reads raw SDK events from Redis Streams, translates them via the ACL mappings defined in section 8.3, and dispatches domain commands to the application layer. This includes translating sidecar acknowledgement events (`interrupt_ack`, `pause_ack`, `resume_ack`, `stop_ack`) into the corresponding CONFIRM commands that complete lifecycle state transitions, and translating `context_nearing_limit`, `context_exhausted`, and `handoff_document` events into the handoff workflow commands.
+- **`IAgentRuntime`** — controls the lifecycle of Node.js sidecar processes (start, stop, pause, resume, steering, config reload). Implemented in the infrastructure layer using `child_process` spawn or equivalent. Returns an `AgentProcessHandle` that identifies the running process.
+- **`IAgentRuntimeEventConsumer`** — a background service that reads raw SDK events from Redis Streams, translates them via the ACL mappings defined in section 8.3, and dispatches domain commands to the application layer. This includes translating sidecar acknowledgement events (`interrupt_ack`, `pause_ack`, `resume_ack`, `stop_ack`, `reload_config_ack`) into the corresponding CONFIRM commands that complete lifecycle state transitions, and translating `context_nearing_limit`, `context_exhausted`, `handoff_document`, and `voluntary_handoff` events into the handoff workflow commands.
 
 This separation keeps the domain clean of SDK-specific types. The Node.js sidecar pattern (see section 8.2) means `.NET` never imports the TypeScript Agent SDK directly — all SDK interaction happens in the Node.js process and is mediated through Redis Streams.
 
@@ -1599,26 +1954,41 @@ public interface IAgentRuntime
         string content,
         MessagePriority priority,
         CancellationToken ct);
+
+    /// <summary>
+    /// Sends a reload_config command to the Redis command stream.
+    /// The Node.js sidecar reinitializes with the new composed config
+    /// (updated system prompt, tools, subagent definitions).
+    /// The sidecar writes reload_config_ack on completion; the ACL dispatches
+    /// ConfirmSessionReloadedCommand which calls session.ConfirmReloaded().
+    /// </summary>
+    Task<Result<DomainError>> ReloadConfigAsync(
+        AgentProcessHandle handle,
+        AgentSessionConfig newConfig,
+        CancellationToken ct);
 }
 
 /// <summary>
-/// Configuration passed to IAgentRuntime.StartSessionAsync.
-/// Carries everything the Node.js sidecar needs to launch a Claude Agent SDK session.
+/// Configuration passed to IAgentRuntime.StartSessionAsync and ReloadConfigAsync.
+/// Carries everything the Node.js sidecar needs to launch or reinitialize a Claude Agent SDK session.
+/// The composed system prompt, tools, and subagent definitions are pre-composed by the application
+/// layer from the session's Template + EnabledSkills before being passed here.
 /// </summary>
 public sealed record AgentSessionConfig(
     AgentSessionId SessionId,
     string ApiKey,
     string ModelId,
-    string? SystemPrompt,
+    string ComposedSystemPrompt,      // Template.SystemPrompt + all enabled Skill.Instructions
     IReadOnlyList<string> AllowedTools,
-    WorktreeRef? WorktreeRef,
+    string WorkingDirectory,          // Absolute path — replaces WorktreeRef
     string Objective,
-    IReadOnlyList<McpToolDefinition> CustomTools  // Empty list if no custom MCP tools for this session
+    IReadOnlyList<McpToolDefinition> CustomTools,       // Merged from Template + all enabled Skills
+    IReadOnlyList<SkillSubAgentDefinition> SubAgents    // Merged from all enabled Skills
 );
 
 /// <summary>
 /// Opaque handle returned by IAgentRuntime.StartSessionAsync.
-/// Identifies the running Node.js process for pause/resume/stop/steering operations.
+/// Identifies the running Node.js process for pause/resume/stop/steering/reload operations.
 /// </summary>
 public sealed record AgentProcessHandle(string RuntimeJobId);
 ```
@@ -1688,21 +2058,27 @@ public sealed record SessionPoolUtilization(
 
 | Item | Type | Detail |
 |------|------|--------|
+| WorkQueue migration | Architecture decision | `WorkQueue` and `WorkItem` aggregates have been moved to the `ProjectAgentBridge` context — see `docs/domain/contexts/bridges/project-agent-bridge.md`. They required knowledge of both `ProjectId` (for worktree creation) and `TaskId` (for task correlation), which cannot exist in a context that is conformist only to Identity. |
 | AG-014 | Partial coverage | AG-014 (agents add people/comms learnings via API) has no scenario coverage and the People and Comms contexts are not yet designed. The `AgentLogDecisionCommand` provides a general log-entry mechanism for now. A dedicated `POST /api/agent/learnings` endpoint should be added once the Comms and People bounded contexts are designed. |
 | AG-017 | Architecture decision | AG-017 (Claude Agent SDK integration) is absorbed by the Event-Sourced Sidecar Pattern (section 8.2) and the `IAgentRuntime` / `IAgentRuntimeEventConsumer` ACL ports (section 8.11). The domain is SDK-agnostic by design. SDK-specific wiring (Redis Stream consumption, Node.js process management, raw event parsing) belongs entirely in the infrastructure layer. |
-| WorktreeRef | Migration pending | The `WorktreeRef` value object currently stores BranchName + LocalPath strings. The Projects context (`docs/domain/contexts/projects.md`) now exposes `WorktreeId` (Guid wrapper). In a future revision, `AgentSession.WorktreeRef` should be updated to carry `WorktreeId` from the Projects context so the association is a typed cross-context reference rather than a structural copy of path data. |
-| Real-time streaming | Infrastructure note | `RecordLogChunk` appends to a persistent buffer and does not raise a domain event. Live streaming to the UI is handled by SignalR at the infrastructure layer — the hub pushes chunks as they arrive from the Redis Stream. The repository's `AppendLogChunkAsync` provides durable storage for log replay. |
+| Skill composition semantics | Design note | The effective session config is composed at session start and again on each config reload. The composition order is: `Template.SystemPrompt` first, then `Skill[0].Instructions`, `Skill[1].Instructions`, ... in the order skills appear in `EnabledSkillIds`. Tools and subagent definitions are merged as sets (union, no duplicates by Name). The composed config is immutable for the duration of each sidecar process launch — reloading creates a new composition. If two skills define conflicting tool names, the skill appearing earlier in `EnabledSkillIds` wins (last-wins would encourage ordering tricks; first-wins encourages intentional ordering). |
+| Auto-continue loop prevention | Design note | `AutoContinueConfig.MaxContinuations` is the hard stop. The default of 5 means a session can auto-continue at most 5 times before Bruno must intervene. `CurrentContinuationCount` is tracked as a mutable value on `AutoContinueConfig` within the session aggregate. It is reset to 0 when the session is retried via `Retry()`. The application layer is responsible for evaluating validation criteria (running test commands, checking coverage via stdout parsing) — this logic belongs in the application layer, not the domain. |
+| Voluntary handoff trigger | Design note | Voluntary handoff is agent-initiated via `POST /api/agent/sessions/{id}/handoff`. The agent calls this when it judges its context is polluted or saturated, even if capacity remains. The ACL translates the resulting `voluntary_handoff` Redis event into `RecordVoluntaryHandoffCommand` which calls `session.RecordVoluntaryHandoff()`. This transitions the session to `ContextExhausted` and triggers the same handoff chain workflow as forced context exhaustion. The voluntary nature is recorded in the `SessionVoluntaryHandoffEvent` for audit trail differentiation. |
+| WaitingForInput timeout | Open question | When a session transitions to `WaitingForInput`, the sidecar is blocked waiting for Bruno's answer. If Bruno does not respond, the session could remain blocked indefinitely. A configurable timeout (e.g., 24 hours) should be implemented at the application layer — if no `AnswerUserQuestionCommand` is received within the timeout, the application layer should either auto-resume with a default response (if configured) or automatically fail the session. The timeout duration should be a template or session-level configuration. |
+| Activity stream storage strategy | Open question | The `IActivityStreamRepository` is append-only and potentially high-volume (every SDK event creates an ActivityItem). For a busy session with many tool calls, the stream could grow to thousands of items. The implementation should use time-series optimised storage (e.g., a separate append-only table with a timestamp + sequence index). The `since` parameter in `GetStreamAsync` enables cursor-based incremental loading for the UI — the frontend should load the stream in pages rather than fetching all items at once. Long-term, items older than a configurable retention window (e.g., 90 days) should be archived or pruned. |
+| Real-time streaming | Infrastructure note | `RecordLogChunk` appends to a persistent buffer and does not raise a domain event. Live streaming to the UI is handled by SignalR at the infrastructure layer — the hub pushes chunks as they arrive from the Redis Stream. The repository's `AppendLogChunkAsync` provides durable storage for log replay. Activity items are additionally pushed via the same SignalR hub for the structured activity stream display. |
 | Scheduled automation | Deferred | The `AgentSchedule` value object on `AgentTemplate` defines when a scheduled template runs, but the scheduler infrastructure (e.g., a Quartz.NET job or Hangfire trigger) is an infrastructure concern. The domain event `AgentSessionStartedEvent` is the sole trigger — the scheduler dispatches a `StartAgentSessionCommand` on the configured cron schedule. |
 | SubAgentSession persistence | Infrastructure note | `SubAgentSession` is a child entity of `AgentSession`. Its messages and tool calls are stored alongside the parent session in the repository. The `IAgentSessionRepository` methods accept an optional `SubAgentId` parameter to scope reads to a specific subagent, keeping the repository interface clean without requiring a separate repository for subagents. |
-| Steering message V2 SDK | Open question | The V2 SDK (`unstable_v2_*`) has a clean `session.send(content)` method for injecting messages into a running session. The V1 SDK requires using `query.interrupt()` + re-invocation or the `UserPromptSubmit` hook. The `IAgentRuntime.SendSteeringMessageAsync()` interface is SDK-version-agnostic; the infrastructure implementation chooses the mechanism. When V2 stabilises, the infrastructure layer should migrate to `session.send()` exclusively. Until then, V1 hook injection is the fallback. |
+| Steering message V2 SDK | Open question | The V2 SDK (`unstable_v2_*`) has a clean `session.send(content)` method for injecting messages into a running session. The V1 SDK requires using `query.interrupt()` + re-invocation or the `UserPromptSubmit` hook. The `IAgentRuntime.SendSteeringMessageAsync()` interface is SDK-version-agnostic; the infrastructure implementation chooses the mechanism. When V2 stabilises, the infrastructure layer should migrate to `session.send()` exclusively. |
 | Process handle persistence | Open question | `AgentProcessHandle` is an in-memory opaque identifier for a running Node.js process. On .NET backend restart, the handles are lost. The infrastructure layer must store `RuntimeJobId` in the database alongside the `AgentSession` record so that steering commands and stop signals can be re-associated with the correct sidecar process after a restart. This is an infrastructure concern but should be noted in the implementation spec. |
 | SessionPool config storage | Open question | `SessionPoolConfig.MaxConcurrentSessions` is described as user-level configuration. The domain design assumes it is readable by the `ISessionPool` service, but the storage location (user preferences table, environment config, or a dedicated settings record) is unresolved. This should be addressed in the implementation checkpoint. |
-| MCP tool schema validation | Open question | `McpToolDefinition.InputSchema` is stored as a JSON string. The application layer should validate it against JSON Schema meta-schema on input (in the command handler), but the domain only enforces non-emptiness and valid JSON. The infrastructure layer passes the schema verbatim to the Node.js sidecar, which forwards it to the MCP server. Stricter validation (e.g., ensuring the schema references only supported input types) may be needed once MCP tool usage patterns are established. |
+| MCP tool schema validation | Open question | `McpToolDefinition.InputSchema` is stored as a JSON string. The application layer should validate it against JSON Schema meta-schema on input (in the command handler), but the domain only enforces non-emptiness and valid JSON. The infrastructure layer passes the schema verbatim to the Node.js sidecar, which forwards it to the MCP server. |
 | Message queue delivery on session resume | Open question | When a Paused session resumes, the application layer must drain all Pending Immediate messages from the `SessionMessageQueue` before the session resumes normal execution. The ordering guarantee (all Immediate messages before any Queued messages) is enforced by `GetNextPending()`, but the application layer coordination for the resume flow needs a dedicated use case in the implementation spec. |
 | Intermediate state persistence on restart | Open question | If the .NET backend restarts while a session is in an intermediate state (Interrupting, Pausing, Resuming, Cancelling), the sidecar acknowledgement that would complete the transition may arrive after the backend comes back up. The `IAgentRuntimeEventConsumer` background service must handle replaying acknowledgement events from the Redis Stream offset where it left off. The session's intermediate state in the database serves as the signal to re-subscribe to the acknowledgement stream on restart. |
-| Idle vs AwaitingReview status migration | Design decision | The previous `AwaitingReview` enum value is replaced by `Idle` with a `HasPendingReview: bool` flag. This was chosen because an Idle session with pending review and an Idle session without both accept follow-up messages — the distinction is presentational, not behavioral. The UI renders them differently ("Awaiting Review" vs "Idle") based on the flag. The old `AwaitingReview` → `Completed` transition is now `Idle (HasPendingReview=true)` → ApproveOutput → `Completed`, with a new `Close()` path for `Idle (HasPendingReview=false)` → `Completed`. |
-| ContextExhausted detection threshold | Open question | The sidecar emits `context_nearing_limit` at a configurable threshold (suggested 85%) and `context_exhausted` when the window is full. The warn threshold should be configurable per session or template — a template designed for long-running tasks may want to warn earlier (e.g., 70%) to give more time to write the handoff document. The default threshold (85%) is hardcoded in the initial implementation; per-template configuration should be added in a follow-up. |
-| Handoff system prompt requirement | Architecture note | The sidecar's system prompt MUST include an instruction to write a structured handoff document as the last action when the context window is nearly full. This is what produces the `handoff_document` event that the ACL translates to `RecordHandoffDocumentCommand`. Without this instruction in the system prompt, context exhaustion will produce only `context_exhausted` + `session_end` with no handoff content. The handoff instruction format should be standardised and included in all AgentTemplate system prompts either automatically by the infrastructure layer or by convention in the template. |
-| SessionMetrics and SessionBudget cost sync | Design decision | `SessionMetrics.TotalCostUsd` and `SessionBudget.EstimatedCostUsd` represent the same value from different domain concerns. Both are updated atomically by `session.UpdateMetrics()`. The budget concern drives enforcement (hard cap, warnings); the metrics concern drives reporting and UI display. A future refactoring may merge them, but keeping them separate avoids burdening the SessionBudget value object with reporting semantics that belong in SessionMetrics. |
+| Idle vs AwaitingReview status migration | Design decision | The previous `AwaitingReview` enum value is replaced by `Idle` with a `HasPendingReview: bool` flag. This was chosen because an Idle session with pending review and an Idle session without both accept follow-up messages — the distinction is presentational, not behavioral. The UI renders them differently ("Awaiting Review" vs "Idle") based on the flag. |
+| ContextExhausted detection threshold | Open question | The sidecar emits `context_nearing_limit` at a configurable threshold (suggested 85%) and `context_exhausted` when the window is full. The warn threshold should be configurable per session or template — a template designed for long-running tasks may want to warn earlier (e.g., 70%) to give more time to write the handoff document. The default threshold (85%) is hardcoded in the initial implementation. |
+| Handoff system prompt requirement | Architecture note | The sidecar's system prompt MUST include an instruction to write a structured handoff document as the last action when the context window is nearly full. This is what produces the `handoff_document` event that the ACL translates to `RecordHandoffDocumentCommand`. Without this instruction in the system prompt, context exhaustion will produce only `context_exhausted` + `session_end` with no handoff content. The handoff instruction format should be standardised and included in all AgentTemplate system prompts. |
+| SessionMetrics and SessionBudget cost sync | Design decision | `SessionMetrics.TotalCostUsd` and `SessionBudget.EstimatedCostUsd` represent the same value from different domain concerns. Both are updated atomically by `session.UpdateMetrics()`. The budget concern drives enforcement (hard cap, warnings); the metrics concern drives reporting and UI display. |
 | ContextWindow snapshot semantics | Design note | The Claude SDK's `usage_update` event reports the current context as a cumulative snapshot of all tokens in the current message (input + output + cache_read + cache_write), not an incremental delta. Each update REPLACES the previous snapshot entirely. Implementors must not add successive ContextWindowSnapshot values — only the latest snapshot represents the current context size. This is distinct from TotalCostUsd and TokenUsageByModel which ARE incremental and MUST be summed. |
 | SessionChain creation timing | Design decision | A `SessionChain` is created lazily — only when the first context exhaustion occurs. Standalone sessions that complete normally within a single context window never have a `SessionChain`. When exhaustion occurs, the application layer creates the chain retroactively (`CreateSessionChainCommand`) and updates the exhausted session's `ChainId`. This keeps the common case simple (no chain overhead) while making the handoff case fully traceable. |
+| WorkingDirectory instead of WorktreeRef | Design decision | `AgentSession` previously held a `WorktreeRef { BranchName, LocalPath }` value object that created a structural copy of Projects context data. It is now replaced with `WorkingDirectory` (a simple non-empty absolute path string). The `ProjectAgentBridge` resolves the `WorktreeId` into a `WorkingDirectory` path before handing off to the Agents context. This keeps the Agents context ignorant of git concepts entirely. |
