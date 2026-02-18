@@ -17,7 +17,7 @@
 
 ## Summary
 
-LemonDo is designed around Domain-Driven Design (DDD) with CQRS-light using Use Cases. The domain is decomposed into seven v1 bounded contexts and four additional v2 bounded contexts.
+LemonDo is designed around Domain-Driven Design (DDD) with CQRS-light using Use Cases. The domain is decomposed into eleven bounded contexts: seven active contexts from v1 and four planned contexts for v2.
 
 The three core v1 contexts are **Identity** (auth and RBAC), **Task** (task lifecycle and metadata), and **Board** (kanban spatial layout). Task and Board are deliberately separated: Task owns status transitions while Board owns card placement. Cross-context coordination is handled at the application layer by command handlers, never by direct coupling between domain objects.
 
@@ -33,7 +33,7 @@ All bounded contexts share a common kernel of primitive types: `UserId`, `Result
 
 ## Bounded Contexts Map
 
-### v1 Contexts
+### Active Contexts
 
 ```
 +-------------------+     +-------------------+     +-------------------+
@@ -55,7 +55,7 @@ All bounded contexts share a common kernel of primitive types: `UserId`, `Result
 +-------------------+
 ```
 
-### v2 Core Contexts
+### Planned Contexts (Draft)
 
 ```
                     +-------------------+
@@ -121,47 +121,47 @@ See [contexts/bridges/INDEX.md](./contexts/bridges/INDEX.md) for the bridge patt
 
 ### All Bounded Contexts
 
-| Context | Version | Type | Responsibility |
-|---------|---------|------|----------------|
-| **Identity** | v1 | Core | User registration, authentication, authorization, roles |
-| **Task** | v1 | Core | Task lifecycle, status management, metadata (title, description, priority, tags, due date) |
-| **Board** | v1 | Core | Kanban boards, columns, card placement, spatial ordering of tasks |
-| **Administration** | v1 | Supporting | Audit logs, user management, system health, protected data handling |
-| **Onboarding** | v1 | Supporting | User journey tracking, guided tours, progress tracking |
-| **Analytics** | v1 | Generic | Event collection, funnel tracking, metrics aggregation |
-| **Notification** | v1 | Generic | Email sending, in-app notifications, push notifications |
-| **Projects** | v2 | Core | Git repository registration, worktrees, dev servers, ngrok tunnels |
-| **Comms** | v2 | Core | Unified communication inbox across Gmail, WhatsApp, Discord, Slack, LinkedIn, GitHub |
-| **People** | v2 | Supporting | Person and company CRM — notes, contact handles, preferences, project links |
-| **Agents** | v2 | Core | AI agent session lifecycle, budget management, human-in-the-loop approval |
-| **ProjectAgentBridge** | v2 | Bridge | Session-to-worktree correlation; WorkQueue orchestration; "start in worktree" and "merge on approve" workflows |
-| **AgentTaskBridge** | v2 | Bridge | Session-to-task correlation; task completion on session approval; agent-created task linkage |
-| **ProjectTaskBridge** | v2 | Bridge | Project-to-task link records; cross-context task queries; auto-complete tasks on worktree merge |
+| Context | Status | Type | Responsibility |
+|---------|--------|------|----------------|
+| **Identity** | Active | Core | User registration, authentication, authorization, roles |
+| **Task** | Active | Core | Task lifecycle, status management, metadata (title, description, priority, tags, due date) |
+| **Board** | Active | Core | Kanban boards, columns, card placement, spatial ordering of tasks |
+| **Administration** | Active | Supporting | Audit logs, user management, system health, protected data handling |
+| **Onboarding** | Active | Supporting | User journey tracking, guided tours, progress tracking |
+| **Analytics** | Active | Generic | Event collection, funnel tracking, metrics aggregation |
+| **Notification** | Active | Generic | Email sending, in-app notifications, push notifications |
+| **Projects** | Draft | Core | Git repository registration, worktrees, dev servers, ngrok tunnels |
+| **Comms** | Draft | Core | Unified communication inbox across Gmail, WhatsApp, Discord, Slack, LinkedIn, GitHub |
+| **People** | Draft | Supporting | Person and company CRM — notes, contact handles, preferences, project links |
+| **Agents** | Draft | Core | AI agent session lifecycle, budget management, human-in-the-loop approval |
+| **ProjectAgentBridge** | Draft | Bridge | Session-to-worktree correlation; WorkQueue orchestration; "start in worktree" and "merge on approve" workflows |
+| **AgentTaskBridge** | Draft | Bridge | Session-to-task correlation; task completion on session approval; agent-created task linkage |
+| **ProjectTaskBridge** | Draft | Bridge | Project-to-task link records; cross-context task queries; auto-complete tasks on worktree merge |
 
 ### Context Files
 
-| Context | Version | File |
-|---------|---------|------|
-| Identity | v1 | [contexts/identity.md](./contexts/identity.md) |
-| Task | v1 | [contexts/tasks.md](./contexts/tasks.md) |
-| Board | v1 | [contexts/boards.md](./contexts/boards.md) |
-| Administration | v1 | [contexts/administration.md](./contexts/administration.md) |
-| Onboarding | v1 | [contexts/onboarding.md](./contexts/onboarding.md) |
-| Analytics | v1 | [contexts/analytics.md](./contexts/analytics.md) |
-| Notification | v1 | [contexts/notification.md](./contexts/notification.md) |
-| Projects | v2 Draft | [contexts/projects.md](./contexts/projects.md) |
-| Comms | v2 Draft | [contexts/comms.md](./contexts/comms.md) |
-| People | v2 Draft | [contexts/people.md](./contexts/people.md) |
-| Agents | v2 Draft | [contexts/agents.md](./contexts/agents.md) |
-| ProjectAgentBridge | v2 Draft | [contexts/bridges/project-agent-bridge.md](./contexts/bridges/project-agent-bridge.md) |
-| AgentTaskBridge | v2 Draft | [contexts/bridges/agent-task-bridge.md](./contexts/bridges/agent-task-bridge.md) |
-| ProjectTaskBridge | v2 Draft | [contexts/bridges/project-task-bridge.md](./contexts/bridges/project-task-bridge.md) |
+| Context | Status | File |
+|---------|--------|------|
+| Identity | Active | [contexts/identity.md](./contexts/identity.md) |
+| Task | Active | [contexts/tasks.md](./contexts/tasks.md) |
+| Board | Active | [contexts/boards.md](./contexts/boards.md) |
+| Administration | Active | [contexts/administration.md](./contexts/administration.md) |
+| Onboarding | Active | [contexts/onboarding.md](./contexts/onboarding.md) |
+| Analytics | Active | [contexts/analytics.md](./contexts/analytics.md) |
+| Notification | Active | [contexts/notification.md](./contexts/notification.md) |
+| Projects | Draft | [contexts/projects.md](./contexts/projects.md) |
+| Comms | Draft | [contexts/comms.md](./contexts/comms.md) |
+| People | Draft | [contexts/people.md](./contexts/people.md) |
+| Agents | Draft | [contexts/agents.md](./contexts/agents.md) |
+| ProjectAgentBridge | Draft | [contexts/bridges/project-agent-bridge.md](./contexts/bridges/project-agent-bridge.md) |
+| AgentTaskBridge | Draft | [contexts/bridges/agent-task-bridge.md](./contexts/bridges/agent-task-bridge.md) |
+| ProjectTaskBridge | Draft | [contexts/bridges/project-task-bridge.md](./contexts/bridges/project-task-bridge.md) |
 
 ---
 
 ## Context Relationships
 
-### v1 Relationships (unchanged)
+### Core Relationships (Active)
 
 | Upstream | Downstream | Relationship |
 |----------|------------|--------------|
@@ -176,7 +176,7 @@ See [contexts/bridges/INDEX.md](./contexts/bridges/INDEX.md) for the bridge patt
 | Identity | Notification | Customer-Supplier (user data for email) |
 | Administration | Notification | Customer-Supplier (alerts, reports) |
 
-### v2 Core Context Relationships
+### Planned Context Relationships (Draft)
 
 | Upstream | Downstream | Relationship | Integration Mechanism |
 |----------|------------|--------------|----------------------|
@@ -192,7 +192,7 @@ See [contexts/bridges/INDEX.md](./contexts/bridges/INDEX.md) for the bridge patt
 | Comms | People | ACL (read-only) | People reads linked message summaries from Comms via `ICommsReadService` ACL port for timeline and meeting briefing queries |
 | Comms | Notification | Customer-Supplier | `MessageReceivedEvent` with priority >= High triggers Notification context to dispatch push/in-app alert |
 
-### v2 Bridge Relationships
+### Bridge Relationships (Draft)
 
 | Upstream | Bridge | Downstream | Mechanism |
 |----------|--------|------------|-----------|
@@ -255,7 +255,7 @@ This table summarises which contexts subscribe to events published by other cont
 
 ## Shared Kernel
 
-All v1 and v2 contexts use the shared kernel defined in [shared-kernel.md](./shared-kernel.md).
+All active and planned contexts use the shared kernel defined in [shared-kernel.md](./shared-kernel.md).
 
 ### Existing Shared Types (v1)
 
@@ -269,7 +269,7 @@ Entity<TId>         -> Base class with Id, CreatedAt, UpdatedAt
 ValueObject         -> Base class with structural equality
 ```
 
-### New Shared Types Needed for v2
+### Planned Shared Types (Draft)
 
 These types appear as cross-context references in multiple v2 contexts and should be promoted to the shared kernel:
 
@@ -286,7 +286,7 @@ These types appear as cross-context references in multiple v2 contexts and shoul
 
 ## Entity Relationship Diagram
 
-### v1 Entities (unchanged)
+### Active Entities
 
 ```
 +----------+       +-----------+
@@ -349,7 +349,7 @@ These types appear as cross-context references in multiple v2 contexts and shoul
              +------------------+
 ```
 
-### v2 Aggregate Roots (Core Contexts)
+### Planned Aggregate Roots (Draft)
 
 ```
 +----------+
@@ -409,7 +409,7 @@ These types appear as cross-context references in multiple v2 contexts and shoul
 +--------+
 ```
 
-### v2 Bridge Aggregate Roots
+### Bridge Aggregate Roots (Draft)
 
 ```
 +------------------------------+   +------------------------------+

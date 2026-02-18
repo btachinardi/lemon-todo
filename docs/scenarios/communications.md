@@ -1,6 +1,6 @@
 # Communications Scenarios
 
-> **Source**: Expanded from docs/PRD.2.draft.md §5.4 and task brief (2026-02-18)
+> **Source**: Expanded from docs/PRD.md §5.4 and task brief (2026-02-18)
 > **Status**: Draft (v2)
 > **Last Updated**: 2026-02-18
 

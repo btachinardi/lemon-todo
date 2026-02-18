@@ -1,9 +1,9 @@
-# LemonDo v2 - Product Requirements Document
+# LemonDo - Product Requirements Document
 
 > **Date**: 2026-02-18
 > **Status**: Active (promoted from Draft — Phase 2 design complete)
 > **Author**: Bruno (product owner)
-> **Previous Version**: [Product Requirements](./product/INDEX.md) (v1 — Task Management Platform)
+> **Previous Version**: [Product Requirements](./product/INDEX.md) (Task Management Platform)
 > **Branch**: `feature/v2-planning`
 
 ---

@@ -1,7 +1,7 @@
 # ProjectAgentBridge Context
 
 > **Source**: Designed for v2 — see docs/domain/contexts/projects.md and docs/domain/contexts/agents.md
-> **Status**: Draft (v2)
+> **Status**: Draft
 > **Last Updated**: 2026-02-18
 
 ---

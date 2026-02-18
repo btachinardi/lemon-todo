@@ -47,7 +47,7 @@ If a required specialist does not yet exist, delegate its creation to `subagent-
   - Key user scenarios (summary level — full scenarios come in Phase 2)
   - Integration points with existing modules and external systems
   - Non-functional requirement deltas (what changes from the previous version)
-- [ ] **0.2** Create a planning roadmap document (like `docs/PLANNING.v2.md`) with:
+- [ ] **0.2** Create a planning roadmap document (like `docs/PLANNING.md`) with:
   - Phased task table (# | Task | Status | Notes)
   - Phase dependencies
   - Guiding principles for this planning cycle
@@ -284,13 +284,13 @@ Wave 2c (depends on Wave 2b domain design):
   - Adapt v1's `./dev verify` for v2's scope
   - Each checkpoint gate: unit tests pass, integration tests pass, E2E scenarios pass, performance budget met
 - [ ] **3.6** Write checkpoint plan:
-  - Target file: `docs/roadmap/v2-checkpoints.md`
+  - Target file: `docs/roadmap/checkpoints.md`
   - Format: one section per checkpoint with goal, tasks table, verification gate
 - [ ] **3.7** Commit with `git-commit-specialist`: `docs(roadmap): add v2 checkpoint plan and task breakdown`
 
 ### Checkpoint Template
 
-Each checkpoint section in `docs/roadmap/v2-checkpoints.md` follows this structure:
+Each checkpoint section in `docs/roadmap/checkpoints.md` follows this structure:
 
 ```markdown
 ## Checkpoint N: [Name]
@@ -318,9 +318,9 @@ Each checkpoint section in `docs/roadmap/v2-checkpoints.md` follows this structu
 | Artifact | Location |
 |----------|----------|
 | Module build order | `docs/PLANNING.[version].md` Phase 3 section |
-| Checkpoint plan | `docs/roadmap/v2-checkpoints.md` |
-| Spike list | `docs/roadmap/v2-checkpoints.md` (per checkpoint) |
-| Verification gates | `docs/roadmap/v2-checkpoints.md` (per checkpoint) |
+| Checkpoint plan | `docs/roadmap/checkpoints.md` |
+| Spike list | `docs/roadmap/checkpoints.md` (per checkpoint) |
+| Verification gates | `docs/roadmap/checkpoints.md` (per checkpoint) |
 
 ---
 

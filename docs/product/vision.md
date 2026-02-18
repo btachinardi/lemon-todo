@@ -1,6 +1,6 @@
 # Vision
 
-> **Source**: Extracted from docs/PRD.draft.md §1, docs/PRD.md §Review Summary + §4 Updated Success Criteria, docs/PRD.2.draft.md §1 + §10 + §13
+> **Source**: Extracted from docs/PRD.draft.md §1, docs/PRD.md §Review Summary + §4 Updated Success Criteria, docs/PRD.md §1 + §10 + §13
 > **Status**: Active
 > **Last Updated**: 2026-02-18
 

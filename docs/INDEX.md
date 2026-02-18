@@ -60,8 +60,8 @@ v2 is in the planning phase. The current focus is documentation decomposition, v
 
 | Document | Purpose | Status |
 |----------|---------|--------|
-| [PLANNING.v2.md](./PLANNING.v2.md) | v2 planning roadmap: phases, tasks, and delivery sequence | Active |
-| [PRD.2.draft.md](./PRD.2.draft.md) | v2 product requirements draft: vision, modules, scenarios, and domain design notes | Draft |
+| [PLANNING.md](./PLANNING.md) | planning roadmap: phases, tasks, and delivery sequence | Active |
+| [PRD.md](./PRD.md) | product requirements: vision, modules, scenarios, and domain design notes | Draft |
 
 **Phase summary:**
 
@@ -73,4 +73,4 @@ v2 is in the planning phase. The current focus is documentation decomposition, v
 | Phase 3 | Implementation planning | TODO |
 | Implementation | Build v2 modules (CP6–CP10) | TODO |
 
-See [PLANNING.v2.md](./PLANNING.v2.md) for the detailed task list and per-phase status.
+See [PLANNING.md](./PLANNING.md) for the detailed task list and per-phase status.

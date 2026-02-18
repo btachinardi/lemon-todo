@@ -1,6 +1,6 @@
 # Agent Sessions Module
 
-> **Source**: Extracted from docs/PRD.2.draft.md §7
+> **Source**: Extracted from docs/PRD.md §7
 > **Status**: Draft (v2)
 > **Last Updated**: 2026-02-18
 

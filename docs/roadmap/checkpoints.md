@@ -1,6 +1,6 @@
-# v2 Implementation Checkpoints
+# Implementation Checkpoints
 
-> **Source**: Phase 3 planning — synthesized from all v2 domain contexts, scenarios, and NFRs
+> **Source**: Phase 3 planning — synthesized from all domain contexts, scenarios, and NFRs
 > **Status**: Active
 > **Last Updated**: 2026-02-18
 
@@ -606,4 +606,4 @@ This chain is **critical** because:
 - Technology research: [`docs/operations/research/`](../operations/research/)
 - Capability tiers beyond CP11: [`docs/roadmap/capability-tiers.md`](./capability-tiers.md)
 - v2 product modules: [`docs/product/modules/`](../product/modules/)
-- v2 PRD: [`docs/PRD.2.draft.md`](../PRD.2.draft.md)
+- v2 PRD: [`docs/PRD.md`](../PRD.md)

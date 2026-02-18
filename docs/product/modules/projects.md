@@ -1,6 +1,6 @@
 # Projects Module
 
-> **Source**: Extracted from docs/PRD.2.draft.md §4
+> **Source**: Extracted from docs/PRD.md §4
 > **Status**: Draft (v2)
 > **Last Updated**: 2026-02-18
 

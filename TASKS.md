@@ -567,12 +567,12 @@
 
 ---
 
-# v2: Personal Development Command Center
+# Upcoming Checkpoints (CP6–CP11)
 
 > v2 evolves LemonDo from a task management app into Bruno's personal development command center.
-> Detailed checkpoint plans, task breakdowns, and technology spikes are in [`docs/roadmap/v2-checkpoints.md`](./docs/roadmap/v2-checkpoints.md).
+> Detailed checkpoint plans, task breakdowns, and technology spikes are in [`docs/roadmap/checkpoints.md`](./docs/roadmap/checkpoints.md).
 
-## v2 Planning Phases
+## Planning Phases
 
 | Phase | Focus | Status |
 |-------|-------|--------|
@@ -581,7 +581,7 @@
 | Phase 2 | v2 requirements expansion (13 tasks + major domain expansions) | DONE |
 | Phase 3 | Implementation planning (checkpoints, tasks, spikes, gates) | DONE |
 
-## v2 Technology Spikes
+## Technology Spikes
 
 | ID | Spike | Blocks | Status |
 |----|-------|--------|--------|
@@ -594,7 +594,7 @@
 | SK-07 | Baileys (WhatsApp) stability assessment | CP10 | TODO |
 | SK-08 | Discord.Net Gateway WebSocket | CP10 | TODO |
 
-## v2 Implementation Checkpoints
+## Implementation Checkpoints
 
 | Checkpoint | Name | Module(s) | Tasks | Tests | Status |
 |------------|------|-----------|-------|-------|--------|
@@ -610,7 +610,7 @@
 > **Parallel Track**: CP7 → CP10 (can run alongside the critical path)
 > **Estimated Effort**: ~53 solo weeks (compresses significantly with parallel agent sessions)
 
-## v2 Decision Log
+## Decision Log (CP6+)
 
 | Date | Decision | Rationale |
 |------|----------|-----------|

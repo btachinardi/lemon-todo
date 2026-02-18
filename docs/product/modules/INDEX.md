@@ -31,7 +31,7 @@ All four v2 modules interconnect intentionally — see the cross-module integrat
 
 ## Cross-Module Integration Points (v2)
 
-> **Source**: Extracted from docs/PRD.2.draft.md §8
+> **Source**: Extracted from docs/PRD.md §8
 > **Status**: Draft (v2)
 
 These are the key integration points that make v2 more than the sum of its parts:

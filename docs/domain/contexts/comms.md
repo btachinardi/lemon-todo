@@ -1,7 +1,7 @@
 # Communications Context
 
 > **Source**: Designed for v2 — see docs/product/modules/comms.md and docs/scenarios/communications.md
-> **Status**: Draft (v2)
+> **Status**: Draft
 > **Last Updated**: 2026-02-18
 
 ---

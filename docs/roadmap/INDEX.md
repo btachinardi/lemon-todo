@@ -9,7 +9,7 @@
 | Document | Description | Status |
 |----------|-------------|--------|
 | [capability-tiers.md](./capability-tiers.md) | Nine capability tiers (Tiers 1–9) covering AI/agents, integrations, collaboration, advanced task modeling, reporting, platform/compliance, product growth, UX excellence, and reliability/operations | Active |
-| [v2-checkpoints.md](./v2-checkpoints.md) | v2 implementation plan: 6 checkpoints (CP6–CP11), 8 technology spikes, ~155 tasks, critical path analysis | Active |
+| [checkpoints.md](./checkpoints.md) | implementation plan: 6 checkpoints (CP6–CP11), 8 technology spikes, ~155 tasks, critical path analysis | Active |
 
 ---
 

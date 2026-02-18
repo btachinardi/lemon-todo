@@ -1,6 +1,6 @@
 # Non-Functional Requirements
 
-> **Source**: Extracted from docs/PRD.draft.md §3, docs/PRD.md §2, docs/PRD.2.draft.md §9,
+> **Source**: Extracted from docs/PRD.draft.md §3, docs/PRD.md §2, docs/PRD.md §9,
 >             docs/domain/contexts/agents.md, docs/domain/contexts/bridges/project-agent-bridge.md,
 >             docs/domain/contexts/comms.md, docs/domain/contexts/projects.md,
 >             docs/operations/research/redis-streams.md
@@ -154,11 +154,11 @@
 
 ---
 
-## v2 Non-Functional Requirements
+## Non-Functional Requirements (Planned)
 
-> **Status**: Draft (v2)
+> **Status**: Planned for v2
 > **Scope**: The following NFR categories apply exclusively to v2 modules (agents, projects, comms, people).
-> All v1 NFRs above remain in force. v2 must not regress any v1 NFR.
+> All active NFRs above remain in force. v2 must not regress any active NFRs.
 
 ---
 

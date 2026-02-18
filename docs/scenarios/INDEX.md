@@ -27,7 +27,7 @@ LemonDo's v1 scenarios cover the three core personas (Sarah the freelancer, Marc
 
 Each storyboard is written from the user's perspective, with explicit analytics event annotations at each step. This dual purpose — human narrative and analytics specification — makes scenarios the primary source of truth for both UX decisions and the analytics event taxonomy.
 
-The v2 scenarios (marked Draft) originate from `PRD.2.draft.md` and describe four new modules: project management, unified communications, people and company relationship management, and AI agent session orchestration. These scenarios are written for Bruno as a single power user rather than the multi-persona v1 model. They represent planned behavior, not yet implemented.
+The v2 scenarios (marked Draft) originate from `PRD.md` and describe four new modules: project management, unified communications, people and company relationship management, and AI agent session orchestration. These scenarios are written for Bruno as a single power user rather than the multi-persona v1 model. They represent planned behavior, not yet implemented.
 
 The Analytics Collection Points Summary below maps lifecycle stages to their key events and measurement purpose. This table is the authoritative reference for analytics coverage across all scenarios.
 

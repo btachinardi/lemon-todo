@@ -1,4 +1,4 @@
-# LemonDo v2 - Planning & Execution Roadmap
+# LemonDo - Planning & Execution Roadmap
 
 > **Date**: 2026-02-18
 > **Status**: Active
@@ -9,7 +9,7 @@
 
 ## Context
 
-v1 is complete (1,094 tests, 7 releases, cloud deployment). The v2 vision has been captured in [PRD.2.draft.md](./PRD.2.draft.md). Before implementation begins, we need to:
+v1 is complete (1,094 tests, 7 releases, cloud deployment). The v2 vision has been captured in [PRD.md](./PRD.md). Before implementation begins, we need to:
 
 1. Set up the v2 worktree properly
 2. Reorganize documentation for scalable expansion
@@ -133,7 +133,7 @@ docs/
 ├── roadmap/                          # Future planning
 │   ├── INDEX.md                      # Roadmap summary
 │   ├── v1-tiers.md                  # Original v1 capability tiers (from ROADMAP.md)
-│   └── v2-checkpoints.md           # v2 implementation checkpoints
+│   └── checkpoints.md              # implementation checkpoints
 │
 ├── operations/                       # Operational docs
 │   ├── INDEX.md
@@ -200,9 +200,9 @@ Every INDEX.md follows this template:
 
 ---
 
-## Phase 2: v2 Requirements Expansion
+## Phase 2: Requirements Expansion
 
-> **Goal**: Expand scenarios, domain design, and product requirements with v2 modules, fully integrated with existing v1 content.
+> **Goal**: Expand scenarios, domain design, and product requirements with new modules, fully integrated with existing v1 content.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
@@ -226,19 +226,19 @@ Every INDEX.md follows this template:
 
 ## Phase 3: Implementation Planning
 
-> **Goal**: Create prioritized, checkpoint-based implementation plan for v2.
+> **Goal**: Create prioritized, checkpoint-based implementation plan.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 3.1 | Prioritize v2 modules (which to build first) | DONE | Projects → People → Agent Core → Agent Intelligence → Comms → Polish. Critical path: CP6 → CP8 → CP9 → CP11 |
-| 3.2 | Define v2 checkpoints (like v1's CP1-CP5) | DONE | 6 checkpoints (CP6–CP11), each a runnable increment. See `docs/roadmap/v2-checkpoints.md` |
+| 3.2 | Define v2 checkpoints (like v1's CP1-CP5) | DONE | 6 checkpoints (CP6–CP11), each a runnable increment. See `docs/roadmap/checkpoints.md` |
 | 3.3 | Break checkpoints into tasks | DONE | ~155 tasks with layer, context, effort, and parallelizability. Agent-assignable (1-4h sessions) |
 | 3.4 | Estimate effort and dependencies | DONE | ~53 solo weeks total. Critical path identified. Bottlenecks: sidecar, Redis Streams, Baileys |
 | 3.5 | Create v2 TASKS section in TASKS.md | DONE | v2 section appended to TASKS.md with checkpoint overview, spike tracker, decision log |
 | 3.6 | Identify technology spikes needed | DONE | 8 spikes (SK-01 to SK-08): simple-git, ngrok, Redis Streams, Agent SDK sidecar, SignalR, Gmail, Baileys, Discord |
 | 3.7 | Define v2 verification gates | DONE | Per-checkpoint gates with test targets, performance benchmarks, manual verification steps |
 
-> **Phase 3 complete** (2026-02-18). Full implementation plan in `docs/roadmap/v2-checkpoints.md`: 6 checkpoints (CP6–CP11), 8 technology spikes (SK-01–SK-08), ~155 agent-assignable tasks, critical path analysis (CP6→CP8→CP9→CP11), effort summary (~53 solo weeks, compresses with parallel agent sessions). v2 task tracker appended to TASKS.md. All planning phases (0–3) are now complete — ready for implementation.
+> **Phase 3 complete** (2026-02-18). Full implementation plan in `docs/roadmap/checkpoints.md`: 6 checkpoints (CP6–CP11), 8 technology spikes (SK-01–SK-08), ~155 agent-assignable tasks, critical path analysis (CP6→CP8→CP9→CP11), effort summary (~53 solo weeks, compresses with parallel agent sessions). v2 task tracker appended to TASKS.md. All planning phases (0–3) are now complete — ready for implementation.
 
 ---
 
@@ -248,9 +248,9 @@ Every INDEX.md follows this template:
 |-------|-------|------------|
 | **Phase 0** | Workspace setup | Nothing |
 | **Phase 1** | Documentation decomposition | Phase 0 |
-| **Phase 2** | v2 requirements expansion | Phase 1 (needs new structure) |
+| **Phase 2** | Requirements expansion | Phase 1 (needs new structure) |
 | **Phase 3** | Implementation planning | Phase 2 (needs requirements) |
-| **Implementation** | Build v2 modules | Phase 3 (needs plan) |
+| **Implementation** | Build new modules | Phase 3 (needs plan) |
 
 ---
 

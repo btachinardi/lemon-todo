@@ -1,7 +1,7 @@
 # Agent Sessions Context
 
 > **Source**: Designed for v2 — see docs/product/modules/agents.md and docs/scenarios/agent-workflows.md
-> **Status**: Draft (v2)
+> **Status**: Draft
 > **Last Updated**: 2026-02-18
 
 ---

@@ -1,6 +1,6 @@
 # People Management Scenarios
 
-> **Source**: Extracted from docs/PRD.2.draft.md §6.4 and docs/product/modules/people.md
+> **Source**: Extracted from docs/PRD.md §6.4 and docs/product/modules/people.md
 > **Status**: Draft (v2)
 > **Last Updated**: 2026-02-18
 

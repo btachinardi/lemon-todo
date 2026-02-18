@@ -1,6 +1,6 @@
 # Communications Module
 
-> **Source**: Extracted from docs/PRD.2.draft.md §5
+> **Source**: Extracted from docs/PRD.md §5
 > **Status**: Draft (v2)
 > **Last Updated**: 2026-02-18
 
