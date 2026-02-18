@@ -11,6 +11,7 @@
 | [shared-kernel.md](./shared-kernel.md) | Shared types used across all bounded contexts (UserId, Result, Entity, etc.) | Active |
 | [api-design.md](./api-design.md) | All API endpoints by context and cross-cutting concerns | Active |
 | [contexts/](./contexts/) | Individual bounded context definitions | — |
+| [contexts/bridges/](./contexts/bridges/) | Integration bridge contexts connecting core domains | — |
 
 ---
 
@@ -22,7 +23,9 @@ The three core v1 contexts are **Identity** (auth and RBAC), **Task** (task life
 
 The two supporting v1 contexts are **Administration** (audit logs, protected data reveal, user management) and **Onboarding** (guided user journey tracking). The two generic v1 contexts are **Analytics** (event collection and metrics) and **Notification** (email and in-app messaging).
 
-The four v2 contexts extend LemonDo into Bruno's personal development command center. **Projects** owns git repository registration, worktrees, dev servers, and ngrok tunnels. **Comms** owns a unified communication inbox across Gmail, WhatsApp, Discord, Slack, LinkedIn, and GitHub. **People** owns a lightweight CRM for tracking persons and companies with notes, preferences, and project links. **Agents** owns AI agent session lifecycle, work queue orchestration, and budget management.
+The four v2 contexts extend LemonDo into Bruno's personal development command center. **Projects** owns git repository registration, worktrees, dev servers, and ngrok tunnels. **Comms** owns a unified communication inbox across Gmail, WhatsApp, Discord, Slack, LinkedIn, and GitHub. **People** owns a lightweight CRM for tracking persons and companies with notes, preferences, and project links. **Agents** owns AI agent session lifecycle and budget management.
+
+Three **bridge contexts** coordinate the v2 core domains without coupling them. **ProjectAgentBridge** owns the session-to-worktree correlation and the WorkQueue aggregate (moved here from Agents). **AgentTaskBridge** owns the session-to-task correlation and drives task completion on session approval. **ProjectTaskBridge** owns the project-to-task link records and the auto-complete-on-merge behaviour.
 
 All bounded contexts share a common kernel of primitive types: `UserId`, `Result<T, E>`, `PagedResult<T>`, `DomainEvent`, `Entity<TId>`, and `ValueObject`. All timestamps are `DateTimeOffset` in UTC.
 
@@ -52,7 +55,7 @@ All bounded contexts share a common kernel of primitive types: `UserId`, `Result
 +-------------------+
 ```
 
-### v2 Contexts and Integration Points
+### v2 Core Contexts
 
 ```
                     +-------------------+
@@ -67,34 +70,50 @@ All bounded contexts share a common kernel of primitive types: `UserId`, `Result
 |   Projects   |   |   People  |   |  Comms   |   |  Agents  |
 | (Repos/Dev)  |   |   (CRM)   |   | (Inbox)  |   | (AI Orch)|
 +--------------+   +----------+    +----------+   +----------+
-     |    ^             |  ^           |  ^            |   |
-     |    |  PersonId   |  |           |  |  auto-link |   |
-     |    +-------------+  |           |  +------------+   |
-     |        ProjectId    |           |  PersonCreated     |
-     |    +----------------+           |  HandleAdded       |
-     |    |                            |                    |
-     |    | ProjectId (weak ref)       |                    |
-     +<---+----------------------------+                    |
-     |                                                      |
-     |  AgentSessionStartedEvent (create worktree)          |
-     |<-----------------------------------------------------+
-     |                                                      |
-     |  AgentSessionApprovedEvent (merge worktree)          |
-     |<-----------------------------------------------------+
-          |              |                         |
-          v              v                         v
-    +-----------+  +-----------+           +-------------------+
-    |   Task    |  |   Task    |           |   Notification    |
-    | (weak ref)|  |(complete  |           | (alerts, budget,  |
-    | TaskId    |  | on approve)|          |  failures, comms) |
-    +-----------+  +-----------+           +-------------------+
+     |                  |              |  ^              |
+     |        ProjectId (weak ref)     |  |              |
+     |          +--------+            |  +--PersonCreated|
+     |          |                     |    HandleAdded   |
+     |                                |                  |
+     |           ...mediated by bridge contexts below... |
+     +--------------------------------------------------++
+                           |
+          +----------------+--------------------+
+          |                |                    |
+          v                v                    v
++--------------------+ +------------------+ +------------------+
+| ProjectAgentBridge | | AgentTaskBridge  | | ProjectTaskBridge|
+| (session+worktree  | | (session+task    | | (project+task    |
+|  correlation,      | |  correlation,    | |  links, auto-    |
+|  WorkQueue)        | |  task completion)| |  complete)       |
++--------------------+ +------------------+ +------------------+
+          |                |                    |
+          v                v                    v
++---------+           +-----------+        +----------+
+| Projects|           |   Tasks   |        |   Tasks  |
+|(worktree|           |(complete  |        |(complete  |
+| create/ |           | on approve|        | on merge) |
+| delete) |           +----------+        +----------+
++---------+
+          |
+          v
++-------------------+
+|   Notification    |
+| (alerts, budget,  |
+|  failures, queues)|
++-------------------+
 ```
 
-Legend:
-- Solid arrow `-->` : downstream dependency (conformist or customer-supplier)
-- `<-->` : bidirectional event-driven coupling
-- `(weak ref)` : opaque ID stored as cross-context foreign reference; no validation at write time
-- ACL boundary : People reads Comms via ICommsReadService (read-only anti-corruption layer)
+### Bridge Context Pattern
+
+Bridge contexts are thin integration bounded contexts that sit between two core domains. They own:
+- Correlation aggregates (mapping IDs between contexts)
+- Cross-context workflow state (multi-step operations spanning two contexts)
+- Rich cross-context queries (hydrated views of data from two contexts)
+
+They do NOT own domain logic that belongs in either upstream context.
+
+See [contexts/bridges/INDEX.md](./contexts/bridges/INDEX.md) for the bridge pattern documentation.
 
 ---
 
@@ -114,7 +133,10 @@ Legend:
 | **Projects** | v2 | Core | Git repository registration, worktrees, dev servers, ngrok tunnels |
 | **Comms** | v2 | Core | Unified communication inbox across Gmail, WhatsApp, Discord, Slack, LinkedIn, GitHub |
 | **People** | v2 | Supporting | Person and company CRM — notes, contact handles, preferences, project links |
-| **Agents** | v2 | Core | AI agent session lifecycle, work queue orchestration, budget management, human-in-the-loop approval |
+| **Agents** | v2 | Core | AI agent session lifecycle, budget management, human-in-the-loop approval |
+| **ProjectAgentBridge** | v2 | Bridge | Session-to-worktree correlation; WorkQueue orchestration; "start in worktree" and "merge on approve" workflows |
+| **AgentTaskBridge** | v2 | Bridge | Session-to-task correlation; task completion on session approval; agent-created task linkage |
+| **ProjectTaskBridge** | v2 | Bridge | Project-to-task link records; cross-context task queries; auto-complete tasks on worktree merge |
 
 ### Context Files
 
@@ -131,6 +153,9 @@ Legend:
 | Comms | v2 Draft | [contexts/comms.md](./contexts/comms.md) |
 | People | v2 Draft | [contexts/people.md](./contexts/people.md) |
 | Agents | v2 Draft | [contexts/agents.md](./contexts/agents.md) |
+| ProjectAgentBridge | v2 Draft | [contexts/bridges/project-agent-bridge.md](./contexts/bridges/project-agent-bridge.md) |
+| AgentTaskBridge | v2 Draft | [contexts/bridges/agent-task-bridge.md](./contexts/bridges/agent-task-bridge.md) |
+| ProjectTaskBridge | v2 Draft | [contexts/bridges/project-task-bridge.md](./contexts/bridges/project-task-bridge.md) |
 
 ---
 
@@ -151,26 +176,30 @@ Legend:
 | Identity | Notification | Customer-Supplier (user data for email) |
 | Administration | Notification | Customer-Supplier (alerts, reports) |
 
-### v2 Relationships
+### v2 Core Context Relationships
 
 | Upstream | Downstream | Relationship | Integration Mechanism |
 |----------|------------|--------------|----------------------|
 | Identity | Projects | Conformist | `UserId` stored on Project, Worktree, DevServer, Tunnel for auth scoping |
 | Identity | Comms | Conformist | `UserId` stored on Channel and Thread for auth scoping |
 | Identity | People | Conformist | `UserId` stored on Person and Company as `OwnerId` |
-| Identity | Agents | Conformist | `UserId` stored on AgentSession, WorkQueue, AgentTemplate as `OwnerId` |
+| Identity | Agents | Conformist | `UserId` stored on AgentSession, AgentTemplate as `OwnerId` |
 | Task | Projects | Conformist (weak ref) | `TaskId` stored as opaque cross-context foreign reference on Project; no validation |
 | Task | Comms | Conformist (weak ref) | `TaskId` stored in `CommLink` on Thread; no validation at write time |
-| Task | Agents | Conformist (weak ref) | `TaskId` stored on AgentSession and WorkItem; Task context completes task on session approval |
 | Projects | Comms | Conformist (weak ref) | `ProjectId` stored in `CommLink` on Thread; no validation at write time |
 | Projects | People | Conformist (weak ref) | `ProjectId` stored in `ProjectLink` on Person and Company; no validation at write time |
-| Projects | Agents | Customer-Supplier | Agents context publishes `AgentSessionStartedEvent`; Projects creates worktree. Agents publishes `AgentSessionApprovedEvent`; Projects merges worktree |
 | People | Comms | Published Language | People publishes `PersonCreatedEvent` and `PersonContactHandleAddedEvent`; Comms subscribes to register handles for auto-linking incoming messages |
 | Comms | People | ACL (read-only) | People reads linked message summaries from Comms via `ICommsReadService` ACL port for timeline and meeting briefing queries |
 | Comms | Notification | Customer-Supplier | `MessageReceivedEvent` with priority >= High triggers Notification context to dispatch push/in-app alert |
-| Agents | Task | Customer-Supplier | `AgentSessionApprovedEvent` triggers Task context to call `task.Complete()` for the linked task; `AgentApiTaskCreatedEvent` triggers `CreateTaskCommand` for agent-created follow-up tasks |
-| Agents | Projects | Customer-Supplier | `AgentSessionStartedEvent` triggers Projects to create a worktree; `AgentSessionApprovedEvent` triggers Projects to merge and clean up the worktree |
-| Agents | Notification | Customer-Supplier | `AgentSessionFailedEvent`, `SessionBudgetExhaustedEvent`, `SessionBudgetWarningEvent`, `AgentSessionApprovedEvent`, `WorkQueueCompletedEvent` all trigger Notification dispatches |
+
+### v2 Bridge Relationships
+
+| Upstream | Bridge | Downstream | Mechanism |
+|----------|--------|------------|-----------|
+| Agents | ProjectAgentBridge | Projects | Bridge subscribes to `AgentSessionApprovedEvent` and `AgentSessionFailedEvent`; dispatches `CreateWorktreeCommand` and `DeleteWorktreeCommand` to Projects |
+| Projects | ProjectAgentBridge | Agents | Bridge subscribes to `WorktreeCreatedEvent` and `WorktreeDeletedEvent`; resolves `WorkingDirectory` to pass to Agents via `StartAgentSessionCommand` |
+| Agents | AgentTaskBridge | Tasks | Bridge subscribes to `AgentSessionApprovedEvent`, `AgentSessionFailedEvent`, `AgentSessionRejectedEvent`, `AgentApiTaskCreatedEvent`; dispatches `CompleteTaskCommand` to Tasks when approved |
+| Projects | ProjectTaskBridge | Tasks | Bridge subscribes to `TaskLinkedToProjectEvent`, `TaskUnlinkedFromProjectEvent`, `WorktreeDeletedEvent`; dispatches `CompleteTaskCommand` to Tasks for auto-complete links |
 
 ### Integration Pattern Key
 
@@ -181,6 +210,7 @@ Legend:
 | **Customer-Supplier** | Downstream depends on upstream, and upstream's team collaborates to meet downstream's needs |
 | **Published Language** | Upstream publishes a stable event schema; downstream subscribes without tight coupling |
 | **ACL (read-only)** | Downstream reads upstream data through an Anti-Corruption Layer port; upstream types never appear in downstream domain objects |
+| **Bridge** | A thin integration context that owns the cross-context correlation state and workflow; sits between two core contexts that must not be directly coupled |
 
 ---
 
@@ -188,19 +218,38 @@ Legend:
 
 This table summarises which contexts subscribe to events published by other contexts. All subscriptions are handled by application-layer event handlers — never by direct domain object coupling.
 
+### Core Context Subscriptions
+
 | Event Published By | Event | Subscriber(s) | Handler Behaviour |
 |--------------------|-------|---------------|-------------------|
 | People | `PersonCreatedEvent` | Comms | Register person's email handles for incoming message auto-linking |
 | People | `PersonContactHandleAddedEvent` | Comms | Register new handle for incoming message auto-linking |
-| Projects | `PersonLinkedToProjectEvent` | People | No reverse subscription — People context writes the link; Projects stores the reference |
-| Agents | `AgentSessionStartedEvent` | Projects | Create a git worktree matching `WorktreeRef` if set |
-| Agents | `AgentSessionApprovedEvent` | Projects, Task, Notification | Projects: merge and clean up worktree; Task: call `task.Complete()` if `TaskId` set; Notification: send completion alert |
-| Agents | `AgentSessionFailedEvent` | Notification | Send failure alert to user |
 | Agents | `SessionBudgetExhaustedEvent` | Notification | Send budget exhaustion alert to user |
 | Agents | `SessionBudgetWarningEvent` | Notification | Send budget 80% warning to user |
-| Agents | `WorkQueueCompletedEvent` | Notification | Send queue completion summary to user |
-| Agents | `AgentApiTaskCreatedEvent` | Task | Dispatch `CreateTaskCommand` with agent-supplied fields |
+| Agents | `AgentSessionFailedEvent` | Notification | Send failure alert to user |
+| Agents | `AgentSessionApprovedEvent` | Notification | Send completion alert to user |
 | Comms | `MessageReceivedEvent` (priority >= High) | Notification | Dispatch push/in-app notification to user |
+
+### Bridge Context Subscriptions
+
+| Event Published By | Event | Bridge Subscriber | Handler Behaviour |
+|--------------------|-------|------------------|-------------------|
+| Agents | `AgentSessionStartedEvent` | ProjectAgentBridge | Create correlation; begin worktree resolution if required |
+| Agents | `AgentSessionApprovedEvent` | ProjectAgentBridge | Begin worktree merge; advance work queue if queue item |
+| Agents | `AgentSessionFailedEvent` | ProjectAgentBridge | Fail correlation; record queue item failure |
+| Agents | `SessionCancelledEvent` | ProjectAgentBridge | Cancel correlation if still pending resolution |
+| Agents | `AgentSessionStartedEvent` | AgentTaskBridge | Create task correlation record |
+| Agents | `AgentSessionApprovedEvent` | AgentTaskBridge | Complete primary task; mark correlation TaskCompleted |
+| Agents | `AgentSessionRejectedEvent` | AgentTaskBridge | Mark correlation Failed; do not complete task |
+| Agents | `AgentSessionFailedEvent` | AgentTaskBridge | Mark correlation Failed; do not complete task |
+| Agents | `AgentApiTaskCreatedEvent` | AgentTaskBridge | Record follow-up task on correlation |
+| Projects | `WorktreeCreatedEvent` | ProjectAgentBridge | Activate correlation with resolved WorkingDirectory |
+| Projects | `WorktreeDeletedEvent` | ProjectAgentBridge | Complete merge on correlation |
+| Projects | `TaskLinkedToProjectEvent` | ProjectTaskBridge | Create active ProjectTaskLink record |
+| Projects | `TaskUnlinkedFromProjectEvent` | ProjectTaskBridge | Deactivate ProjectTaskLink record |
+| Projects | `WorktreeDeletedEvent` | ProjectTaskBridge | Auto-complete tasks where AutoCompleteOnMerge = true |
+| ProjectAgentBridge | `WorkQueueCompletedEvent` | Notification | Send queue completion summary to user |
+| ProjectAgentBridge | `WorkQueueItemFailedEvent` | Notification | Send queue item failure alert to user |
 
 ---
 
@@ -226,10 +275,12 @@ These types appear as cross-context references in multiple v2 contexts and shoul
 
 | Type | Currently defined in | Used by | Recommended Action |
 |------|---------------------|---------|-------------------|
-| `ProjectId` | Projects context (8.3) | People (ProjectLink), Comms (CommLink), Agents (AgentSession, WorkQueue) | Add to shared kernel as Guid wrapper |
-| `TaskId` | Task context (v1) | Projects (LinkedTaskIds), Comms (CommLink), Agents (AgentSession, WorkItem) | Already in v1 shared vocabulary — confirm Guid wrapper is exported |
-| `PersonId` | Projects context (8.3) / People context (8.3) | Projects (LinkedPersonIds), Comms (CommLink) | Owned by People context; Projects and Comms import it as a Guid wrapper |
-| `WorktreeRef` | Agents context (8.3) | Used only by Agents — references Projects worktree by branch + path | Keep in Agents context for now; migrate to typed `WorktreeId` once Projects context is stable |
+| `ProjectId` | Projects context (8.3) | People (ProjectLink), Comms (CommLink), ProjectAgentBridge, ProjectTaskBridge | Add to shared kernel as Guid wrapper |
+| `TaskId` | Task context (v1) | Projects (LinkedTaskIds), Comms (CommLink), AgentTaskBridge, ProjectTaskBridge | Already in v1 shared vocabulary — confirm Guid wrapper is exported |
+| `WorktreeId` | Projects context (8.3) | ProjectAgentBridge (correlation), AgentTaskBridge (WorkItem) | Add to shared kernel as Guid wrapper once Projects context is stable |
+| `AgentSessionId` | Agents context (8.5) | ProjectAgentBridge (correlation), AgentTaskBridge (correlation) | Add to shared kernel as Guid wrapper |
+| `PersonId` | People context | Projects (LinkedPersonIds), Comms (CommLink) | Owned by People context; Projects and Comms import it as a Guid wrapper |
+| `WorktreeRef` | Agents context (8.5) | Used only by Agents — references Projects worktree by branch + path | Migrate to `WorktreeId` once ProjectAgentBridge is in place; keep for now for backwards compatibility |
 
 ---
 
@@ -298,7 +349,7 @@ These types appear as cross-context references in multiple v2 contexts and shoul
              +------------------+
 ```
 
-### v2 Aggregate Roots
+### v2 Aggregate Roots (Core Contexts)
 
 ```
 +----------+
@@ -314,14 +365,14 @@ These types appear as cross-context references in multiple v2 contexts and shoul
      v       v       v       v       v
 
 +---------+  +---------+  +---------+  +----------------+  +--------------+
-| Project |  | Channel |  | Person  |  | AgentSession   |  |  WorkQueue   |
+| Project |  | Channel |  | Person  |  | AgentSession   |  | AgentTemplate|
 +---------+  +---------+  +---------+  +----------------+  +--------------+
 | Id      |  | Id      |  | Id      |  | Id             |  | Id           |
 | Name    |  | Type    |  | Name    |  | Status         |  | Name         |
-| Path    |  | Status  |  | Emails  |  | Budget         |  | ExecutionMode|
-| Status  |  | Filter  |  | Tags    |  | WorktreeRef?   |  | Items[]      |
-| Tasks[] |  +---------+  | Notes[] |  | Output?        |  +--------------+
-| People[]|       |       +---------+       |
+| Path    |  | Status  |  | Emails  |  | Budget         |  | ModelId      |
+| Status  |  | Filter  |  | Tags    |  | WorktreeRef?   |  | Rules[]      |
+| Tasks[] |  +---------+  | Notes[] |  | Output?        |  | Schedule?    |
+| People[]|       |       +---------+       |            +--------------+
 +---------+       |          |   |          |
     |             |          |   |          |
     | 1-N         | 1-N      |   | Company  | TaskId (weak ref -> Task)
@@ -331,14 +382,14 @@ These types appear as cross-context references in multiple v2 contexts and shoul
 +-----------+  +--------+  +-----+  +---+
 | Id        |  | Id     |
 | Branch    |  | Channel|
-| Status    |  | Subject|        +--------------+
-| Ahead     |  | Msgs[] |        | AgentTemplate|
-| Behind    |  | Links[]|        +--------------+
-+-----------+  +--------+        | Id           |
-    |                            | ModelId      |
-    | 1-N                        | Rules[]      |
-    v                            | Schedule?    |
-+----------+                     +--------------+
+| Status    |  | Subject|
+| Ahead     |  | Msgs[] |
+| Behind    |  | Links[]|
++-----------+  +--------+
+    |
+    | 1-N
+    v
++----------+
 | DevServer|
 +----------+
 | Id       |
@@ -356,4 +407,34 @@ These types appear as cross-context references in multiple v2 contexts and shoul
 | Url    |
 | Status |
 +--------+
+```
+
+### v2 Bridge Aggregate Roots
+
+```
++------------------------------+   +------------------------------+
+| AgentProjectCorrelation      |   | WorkQueue                    |
+| (ProjectAgentBridge)         |   | (ProjectAgentBridge)         |
++------------------------------+   +------------------------------+
+| CorrelationId                |   | WorkQueueId                  |
+| AgentSessionId               |   | ProjectId                    |
+| ProjectId                    |   | ExecutionMode                |
+| WorktreeId?                  |   | Status                       |
+| TaskId?                      |   | Items: WorkItem[]            |
+| WorkQueueId?                 |   | Budget?                      |
+| WorkItemId?                  |   +------------------------------+
+| WorkingDirectory             |
+| Status: CorrelationStatus    |
++------------------------------+
+
++------------------------------+   +------------------------------+
+| AgentTaskCorrelation         |   | ProjectTaskLink              |
+| (AgentTaskBridge)            |   | (ProjectTaskBridge)          |
++------------------------------+   +------------------------------+
+| AgentTaskCorrelationId       |   | ProjectTaskLinkId            |
+| AgentSessionId               |   | ProjectId                    |
+| PrimaryTaskId?               |   | TaskId                       |
+| FollowUpTaskIds[]            |   | AutoCompleteOnMerge          |
+| Status: CorrelationStatus    |   | IsActive                     |
++------------------------------+   +------------------------------+
 ```
