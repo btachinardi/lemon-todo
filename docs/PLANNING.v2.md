@@ -206,19 +206,21 @@ Every INDEX.md follows this template:
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 2.1 | Add Bruno persona to `docs/product/personas.md` | TODO | New primary persona for v2 |
-| 2.2 | Write project management scenarios → `docs/scenarios/project-management.md` | TODO | |
-| 2.3 | Write communication management scenarios → `docs/scenarios/communications.md` | TODO | |
-| 2.4 | Write people management scenarios → `docs/scenarios/people-management.md` | TODO | |
-| 2.5 | Write agent workflow scenarios → `docs/scenarios/agent-workflows.md` | TODO | |
-| 2.6 | Design Project bounded context → `docs/domain/contexts/projects.md` | TODO | Entities, VOs, events, use cases |
-| 2.7 | Design Communication bounded context → `docs/domain/contexts/comms.md` | TODO | |
-| 2.8 | Design People & Companies bounded context → `docs/domain/contexts/people.md` | TODO | |
-| 2.9 | Design Agent Sessions bounded context → `docs/domain/contexts/agents.md` | TODO | |
-| 2.10 | Update context map with v2 relationships → `docs/domain/INDEX.md` | TODO | |
-| 2.11 | Expand NFR for v2 → `docs/product/nfr.md` | TODO | |
-| 2.12 | Research v2 technology choices → `docs/operations/research.md` | TODO | Gmail API, WhatsApp, Claude SDK, etc. |
-| 2.13 | Finalize PRD.2 (promote from draft) → `docs/product/` module files | TODO | After scenario + domain design |
+| 2.1 | Add Bruno persona to `docs/product/personas.md` | DONE | Created docs/product/personas/bruno.md + decomposed all personas into per-file structure |
+| 2.2 | Write project management scenarios → `docs/scenarios/project-management.md` | DONE | 4 scenarios (S-PM-01 to S-PM-04), 29 analytics events |
+| 2.3 | Write communication management scenarios → `docs/scenarios/communications.md` | DONE | 4 scenarios (S-CM-01 to S-CM-04), 22 analytics events |
+| 2.4 | Write people management scenarios → `docs/scenarios/people-management.md` | DONE | 4 scenarios (S-PP-01 to S-PP-04), 30 analytics events |
+| 2.5 | Write agent workflow scenarios → `docs/scenarios/agent-workflows.md` | DONE | 4 scenarios (S-AG-01 to S-AG-04), 48 analytics events |
+| 2.6 | Design Project bounded context → `docs/domain/contexts/projects.md` | DONE | 4 aggregates, 23 events, 27 use cases, 30 endpoints |
+| 2.7 | Design Communication bounded context → `docs/domain/contexts/comms.md` | DONE | 2 aggregates, 19 events, 20 use cases, 17 endpoints |
+| 2.8 | Design People & Companies bounded context → `docs/domain/contexts/people.md` | DONE | 2 aggregates, 25 events, 37 use cases, 39 endpoints |
+| 2.9 | Design Agent Sessions bounded context → `docs/domain/contexts/agents.md` | DONE | 5 aggregates (AgentSession, WorkQueue, AgentTemplate, SessionMessageQueue, SessionChain), 40+ events, 30+ use cases, 40+ endpoints. Includes event-sourced sidecar architecture, bidirectional comms, session chains, and metrics modeling |
+| 2.10 | Update context map with v2 relationships → `docs/domain/INDEX.md` | DONE | 11 bounded contexts, 13 v2 relationships mapped |
+| 2.11 | Expand NFR for v2 → `docs/product/nfr.md` | TODO | Still pending |
+| 2.12 | Research v2 technology choices → `docs/operations/research.md` | DONE | 8 technologies researched: Gmail API, WhatsApp, Claude Agent SDK, ngrok, Discord, Slack, Redis Streams + decomposed into per-tech files in docs/operations/research/ |
+| 2.13 | Finalize PRD.2 (promote from draft) → `docs/product/` module files | TODO | Pending NFR expansion first |
+
+> **Phase 2 in progress** (2026-02-18). 11 of 13 tasks complete. Remaining: NFR expansion (2.11) and PRD finalization (2.13). Key artifacts: 16 user scenarios across 4 modules, 4 full bounded context designs (Projects, Comms, People, Agents), 8 technology research files, 7 ADRs, and a planning playbook. Agent Sessions context includes event-sourced sidecar architecture (ADR-006), bidirectional communication (ADR-007), session chains with handoff, and rich metrics modeling.
 
 ---
 
