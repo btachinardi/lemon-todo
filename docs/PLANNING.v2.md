@@ -230,13 +230,15 @@ Every INDEX.md follows this template:
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 3.1 | Prioritize v2 modules (which to build first) | TODO | Dependency analysis |
-| 3.2 | Define v2 checkpoints (like v1's CP1-CP5) | TODO | Each checkpoint = runnable increment |
-| 3.3 | Break checkpoints into tasks | TODO | Granular enough for agent assignment |
-| 3.4 | Estimate effort and dependencies | TODO | Identify critical path |
-| 3.5 | Create v2 TASKS section in TASKS.md | TODO | Or migrate to new structure |
-| 3.6 | Identify technology spikes needed | TODO | Agent SDK, WhatsApp API, etc. |
-| 3.7 | Define v2 verification gates | TODO | Adapted from v1's `./dev verify` |
+| 3.1 | Prioritize v2 modules (which to build first) | DONE | Projects → People → Agent Core → Agent Intelligence → Comms → Polish. Critical path: CP6 → CP8 → CP9 → CP11 |
+| 3.2 | Define v2 checkpoints (like v1's CP1-CP5) | DONE | 6 checkpoints (CP6–CP11), each a runnable increment. See `docs/roadmap/v2-checkpoints.md` |
+| 3.3 | Break checkpoints into tasks | DONE | ~155 tasks with layer, context, effort, and parallelizability. Agent-assignable (1-4h sessions) |
+| 3.4 | Estimate effort and dependencies | DONE | ~53 solo weeks total. Critical path identified. Bottlenecks: sidecar, Redis Streams, Baileys |
+| 3.5 | Create v2 TASKS section in TASKS.md | DONE | v2 section appended to TASKS.md with checkpoint overview, spike tracker, decision log |
+| 3.6 | Identify technology spikes needed | DONE | 8 spikes (SK-01 to SK-08): simple-git, ngrok, Redis Streams, Agent SDK sidecar, SignalR, Gmail, Baileys, Discord |
+| 3.7 | Define v2 verification gates | DONE | Per-checkpoint gates with test targets, performance benchmarks, manual verification steps |
+
+> **Phase 3 complete** (2026-02-18). Full implementation plan in `docs/roadmap/v2-checkpoints.md`: 6 checkpoints (CP6–CP11), 8 technology spikes (SK-01–SK-08), ~155 agent-assignable tasks, critical path analysis (CP6→CP8→CP9→CP11), effort summary (~53 solo weeks, compresses with parallel agent sessions). v2 task tracker appended to TASKS.md. All planning phases (0–3) are now complete — ready for implementation.
 
 ---
 
