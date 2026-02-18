@@ -8,7 +8,14 @@
 
 | Document | Description | Status |
 |----------|-------------|--------|
-| [trade-offs.md](./trade-offs.md) | Full trade-off tables covering all technology and design choices | Active |
+| [adr-001-planning-delivery.md](./adr-001-planning-delivery.md) | Assignment context, assumptions, and planning & delivery trade-offs | Active |
+| [adr-002-architecture-infrastructure.md](./adr-002-architecture-infrastructure.md) | Technology choices, bounded context architecture, and scalability | Active |
+| [adr-003-domain-design.md](./adr-003-domain-design.md) | Domain design trade-offs and card ordering / API design | Active |
+| [adr-004-auth-security.md](./adr-004-auth-security.md) | Authentication, token strategy, and protected data decisions | Active |
+| [adr-005-frontend-testing-pwa.md](./adr-005-frontend-testing-pwa.md) | Frontend UX, API type safety, testing strategy, and offline/PWA | Active |
+| [adr-006-agent-session-architecture.md](./adr-006-agent-session-architecture.md) | Agent Sessions use event-sourced Node.js sidecars with Redis Streams and ACL | Accepted |
+| [adr-007-agent-bidirectional-comms.md](./adr-007-agent-bidirectional-comms.md) | Bidirectional agent session communication with domain-level message queuing | Accepted |
+| [trade-offs.md](./trade-offs.md) | Pointer — all content decomposed into individual ADR files above | Active |
 
 ---
 
@@ -19,6 +26,8 @@ Architectural decisions are tracked in two complementary forms. The decision log
 The project was built as a take-home assignment interpreted through the lens of regulated healthcare, which drove decisions toward HIPAA-ready patterns, offline reliability, Azure deployment, and product analytics. Most early decisions were made on 2026-02-13 and 2026-02-14 during the planning phase, then refined as implementation revealed edge cases throughout the checkpoint-based delivery.
 
 Key architectural themes that appear repeatedly: the DDD bounded context split between Task and Board, the three-form protected data strategy (redacted/hashed/encrypted), the memory-only auth store with HttpOnly cookie refresh, and the sparse decimal rank ordering strategy for drag-and-drop. These are the decisions with the most downstream impact and the most detailed rationale in the trade-offs document.
+
+The trade-off tables are now decomposed into five ADR files organized by domain. ADR-001 covers the assignment framing and delivery strategy that shaped all other decisions. ADR-002 covers infrastructure and bounded context choices. ADR-003 covers domain modeling and the card ordering API design. ADR-004 is the most extensive, covering the full authentication and protected data strategy. ADR-005 covers the frontend UX library choices, type-safe API contract generation, testing strategy, and the offline/PWA mutation queue. ADR-006 is the first v2 architectural decision, documenting why Agent Sessions use event-sourced Node.js sidecars with Redis Streams and an Anti-Corruption Layer rather than direct API calls or embedded runtimes. ADR-007 extends ADR-006 by making that communication bidirectional: inbound steering messages, interruptions, and queued follow-ups flow from the .NET backend through a per-session Redis command stream into the Node.js sidecar. It also promotes the message queue to a first-class domain aggregate (`SessionMessageQueue`), introduces a session pool domain service for concurrent session limits, and establishes MCP custom tools as a domain concept on session templates.
 
 ---
 
