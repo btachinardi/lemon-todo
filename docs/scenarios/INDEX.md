@@ -14,9 +14,9 @@
 | [mobile-offline.md](./mobile-offline.md) | S06 (mobile offline usage — Sarah on a flight) | Active |
 | [settings-preferences.md](./settings-preferences.md) | S07 (theme and language switching), S09 (multi-factor authentication setup) | Active |
 | [engagement.md](./engagement.md) | S08 (churn prevention — inactive user re-engagement) | Active |
-| [project-management.md](./project-management.md) | S-PM-01 through S-PM-03 — v2 project registration, worktrees, demo setup | Draft (v2) |
-| [communications.md](./communications.md) | S-CM-01 through S-CM-03 — v2 unified inbox, linking comms to work, person-centric history | Draft (v2) |
-| [people-management.md](./people-management.md) | S-PP-01 through S-PP-02 — v2 meeting preparation, knowledge capture | Draft (v2) |
+| [project-management.md](./project-management.md) | S-PM-01 through S-PM-04 — v2 project registration, worktrees, dev server + ngrok, morning dashboard | Draft (v2) |
+| [communications.md](./communications.md) | S-CM-01 through S-CM-04 — v2 morning inbox triage, WhatsApp reply, cross-channel search, channel configuration | Draft (v2) |
+| [people-management.md](./people-management.md) | S-PP-01 through S-PP-04 — v2 add contact, full context view, meeting prep, company relationship | Draft (v2) |
 | [agent-workflows.md](./agent-workflows.md) | S-AG-01 through S-AG-04 — v2 batch feature dev, email-to-task automation, sequential pipeline, agent follow-up | Draft (v2) |
 
 ---
@@ -45,3 +45,9 @@ The Analytics Collection Points Summary below maps lifecycle stages to their key
 | Feature Adoption | `view_switched`, `pwa_installed`, `theme_toggled` | Measure discovery |
 | Churn Prevention | `churn_email_sent`, `re_engagement_success` | Measure recovery |
 | Compliance | `admin_panel_opened`, `protected_data_revealed`, `audit_log_searched` | Measure admin usage |
+| Agent Orchestration | `agent_session_started`, `agent_batch_started`, `agent_queue_started` | Measure agent adoption and usage patterns |
+| Agent Progress | `agent_session_detail_viewed`, `agent_dashboard_viewed`, `agent_log_scrolled` | Measure monitoring engagement |
+| Agent Outcomes | `agent_change_approved`, `agent_worktree_merged`, `agent_batch_completed` | Measure success rate and cost efficiency |
+| Agent Automation | `agent_scheduled_run_opened`, `agent_tasks_approved`, `agent_config_updated` | Measure automation reliance and quality |
+| Agent API Usage | `agent_api_called`, `agent_api_task_created` | Measure agent-driven task creation |
+| Agent Quality | `agent_verification_gate_passed`, `agent_verification_gate_failed`, `agent_retry_requested` | Measure reliability of agent output |
