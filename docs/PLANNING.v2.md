@@ -216,11 +216,11 @@ Every INDEX.md follows this template:
 | 2.8 | Design People & Companies bounded context → `docs/domain/contexts/people.md` | DONE | 2 aggregates, 25 events, 37 use cases, 39 endpoints |
 | 2.9 | Design Agent Sessions bounded context → `docs/domain/contexts/agents.md` | DONE | 5 aggregates (AgentSession, WorkQueue, AgentTemplate, SessionMessageQueue, SessionChain), 40+ events, 30+ use cases, 40+ endpoints. Includes event-sourced sidecar architecture, bidirectional comms, session chains, and metrics modeling |
 | 2.10 | Update context map with v2 relationships → `docs/domain/INDEX.md` | DONE | 11 bounded contexts, 13 v2 relationships mapped |
-| 2.11 | Expand NFR for v2 → `docs/product/nfr.md` | TODO | Still pending |
+| 2.11 | Expand NFR for v2 → `docs/product/nfr.md` | DONE | 88 v2 requirements across 12 categories (agent performance, real-time streaming, budget accuracy, skills, comms adapters, security, bridges, data/storage, reliability, scalability, local-first, v1 non-regression) |
 | 2.12 | Research v2 technology choices → `docs/operations/research.md` | DONE | 8 technologies researched: Gmail API, WhatsApp, Claude Agent SDK, ngrok, Discord, Slack, Redis Streams + decomposed into per-tech files in docs/operations/research/ |
-| 2.13 | Finalize PRD.2 (promote from draft) → `docs/product/` module files | TODO | Pending NFR expansion first |
+| 2.13 | Finalize PRD.2 (promote from draft) → `docs/product/` module files | DONE | PRD.2.draft.md promoted to Active status. Agent FRs expanded to AG-050, bridge contexts added, NFR references updated, technology decisions finalized, all 6 open questions resolved |
 
-> **Phase 2 in progress** (2026-02-18). 11 of 13 tasks complete. Remaining: NFR expansion (2.11) and PRD finalization (2.13). Key artifacts: 16 user scenarios across 4 modules, 4 full bounded context designs (Projects, Comms, People, Agents), 8 technology research files, 7 ADRs, and a planning playbook. Agent Sessions context includes event-sourced sidecar architecture (ADR-006), bidirectional communication (ADR-007), session chains with handoff, and rich metrics modeling.
+> **Phase 2 complete** (2026-02-18). All 13 tasks done + major expansions: 10 agent workflow scenarios (S-AG-01 to S-AG-10) covering 50 FRs, 3 bridge contexts (ProjectAgentBridge, AgentTaskBridge, ProjectTaskBridge), Skills system with MemoryPill consolidation, structured activity stream, special tool call handling (AskUserQuestion, TodoWrite, PlanMode), auto-continue mode, session chains with voluntary handoff, and model selection per session. PRD promoted from Draft to Active.
 
 ---
 
