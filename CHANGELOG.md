@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-02-20
+
+Hotfix — SQL Server pagination overflow and input validation hardening.
+
+### Fixed
+
+- **Pagination arithmetic overflow on SQL Server** — `Int32.MaxValue` as page number caused `(page - 1) * pageSize` to overflow in `Skip()`, crashing SQL Server with 500; page is now clamped to `int.MaxValue / pageSize` in all 4 paginated endpoints (tasks, notifications, admin users, audit log)
+- **Oversized ReasonDetails crashing SQL Server** — 1MB+ strings in reveal endpoint `ReasonDetails` and `Comments` fields overflowed the `nvarchar(4000)` audit `Details` column; added 2000-char validation on both reveal endpoints (user data and task note)
+- **MSTest analyzer warnings failing CI** — resolved MSTEST0037 warnings (replaced `Assert.IsTrue`/`Assert.IsFalse` with specific assertions) and improved SQLite transient fault detection patterns
+
 ## [1.0.9] - 2026-02-20
 
 Infrastructure resilience patch — service-level transient fault retry replaces 500 tolerance.
@@ -517,7 +527,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.9...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.10...HEAD
+[1.0.10]: https://github.com/btachinardi/lemon-todo/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/btachinardi/lemon-todo/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/btachinardi/lemon-todo/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/btachinardi/lemon-todo/compare/v1.0.6...v1.0.7

@@ -167,7 +167,7 @@ public sealed class ConcurrencySecurityTests
         Assert.AreEqual(0, serverErrorCount,
             $"Concurrent refresh must not cause 500 errors. " +
             $"Got: {string.Join(", ", statusCodes.Select(s => (int)s))}");
-        Assert.IsTrue(successCount <= 1,
+        Assert.IsLessThanOrEqualTo(1, successCount,
             $"At most one concurrent refresh must succeed (no double-spend). " +
             $"Got {successCount} successes: {string.Join(", ", statusCodes.Select(s => (int)s))}");
 

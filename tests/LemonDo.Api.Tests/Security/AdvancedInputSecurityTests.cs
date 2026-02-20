@@ -206,7 +206,7 @@ public sealed class AdvancedInputSecurityTests
             var body = await response.Content.ReadAsStringAsync();
             // The response title should contain the null byte or the part before it, but must not
             // have secretly stripped validation (the real check is that no 500 occurred).
-            Assert.IsFalse(body.Contains("500"),
+            Assert.DoesNotContain("500", body,
                 "If null byte is accepted, response must still be a well-formed success response");
         }
     }
@@ -515,7 +515,7 @@ public sealed class AdvancedInputSecurityTests
         {
             var dto = await response.Content.ReadFromJsonAsync<TaskDto>(JsonOpts);
             Assert.IsNotNull(dto);
-            Assert.IsTrue(dto.Title.Contains("🔥"),
+            Assert.Contains("🔥", dto.Title,
                 "Emoji must round-trip correctly from storage");
         }
     }

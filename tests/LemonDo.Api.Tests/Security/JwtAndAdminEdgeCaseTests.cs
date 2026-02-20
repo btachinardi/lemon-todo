@@ -407,7 +407,7 @@ public sealed class JwtAndAdminEdgeCaseTests
         boardBResponse.EnsureSuccessStatusCode();
         var boardB = await boardBResponse.Content.ReadFromJsonAsync<BoardDto>(JsonOpts);
         Assert.IsNotNull(boardB);
-        Assert.IsTrue(boardB.Columns.Count > 0, "User B's board must have at least one column");
+        Assert.IsNotEmpty(boardB.Columns, "User B's board must have at least one column");
         var columnFromBoardB = boardB.Columns[0].Id;
 
         // User A creates a task
