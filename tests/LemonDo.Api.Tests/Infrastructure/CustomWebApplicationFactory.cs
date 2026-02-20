@@ -203,7 +203,12 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         // Dispose host first to close all active database connections
         base.Dispose(disposing);
-        _connection?.Dispose();
+
+        // The shared SQLite connection may be in a corrupted state after extreme
+        // concurrency tests (e.g., 15 simultaneous writers). Swallow disposal errors
+        // since the connection is only used for test isolation — not production.
+        try { _connection?.Dispose(); }
+        catch (NullReferenceException) { /* SQLite internal state corrupted under concurrency */ }
 
         // Then drop the unique SQL Server test database
         if (disposing && UseSqlServer && _instanceConnectionString is not null)

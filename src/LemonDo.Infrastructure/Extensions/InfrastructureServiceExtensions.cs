@@ -15,6 +15,7 @@ using LemonDo.Infrastructure.Analytics;
 using LemonDo.Infrastructure.Notifications;
 using LemonDo.Infrastructure.Events;
 using LemonDo.Infrastructure.Identity;
+using LemonDo.Infrastructure.Resilience;
 using LemonDo.Infrastructure.Persistence;
 using LemonDo.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
@@ -80,6 +81,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IAdminUserQuery, AdminUserQuery>();
         services.AddScoped<IAdminUserService, AdminUserService>();
         services.AddHostedService<RefreshTokenCleanupService>();
+
+        // Resilience
+        services.AddScoped<TransientFaultRetryPolicy>();
 
         // Analytics
         services.AddSingleton<IAnalyticsService, ConsoleAnalyticsService>();

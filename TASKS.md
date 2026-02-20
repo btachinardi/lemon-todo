@@ -210,6 +210,7 @@
 | PR.4 | Security hardening: domain validation + middleware + auth race fix | DONE | Invisible Unicode rejection, null byte guard, GUID claim validation, correlation ID sanitization, concurrency error handling, atomic refresh rotation |
 | PR.5 | Security test infrastructure + parameterized baselines | DONE | EndpointRegistry + DynamicData baselines, shared types, advanced/concurrency/response tests. Rename *HardeningTests → *SecurityTests. |
 | PR.6 | Dev CLI test-results infrastructure | DONE | Per-project TRX output, 24h cleanup, `./dev test-results` list/failures/clean |
+| PR.7 | Infrastructure resilience for SQLite transient faults | DONE | `TransientFaultRetryPolicy` + `SqliteTransientFaultDetector` in Infrastructure; `AdminUserService` wrapped with retry; middleware uses shared detector |
 
 ---
 
@@ -341,6 +342,9 @@
 | 2026-02-20 | Admin self-action guards | SystemAdmin self-deactivation or self-role-removal could leave system with no active administrator. Guards added at application layer. |
 | 2026-02-20 | Correlation ID sanitization | Unsanitized X-Correlation-Id headers enabled log injection, XSS reflection, and log bloat. Now truncated to 128 chars, stripped to alphanumeric+hyphen+underscore. |
 | 2026-02-20 | v1.0.8 patch release | Security hardening: domain validation, middleware hardening, atomic refresh rotation, admin self-action guards, parameterized security test infrastructure, dev CLI test-results. |
+| 2026-02-20 | Service-level retry over EF Core execution strategy | EF Core `EnableRetryOnFailure()` conflicts with explicit `BeginTransactionAsync` in SaveChangesAsync (used for domain event atomicity). Service-level `TransientFaultRetryPolicy` wraps the full operation above the DbContext, avoids transaction conflicts, and handles both EF Core and Identity calls. |
+| 2026-02-20 | Chain-walking SQLite transient detector | Instead of enumerating exception types in separate catch blocks, `SqliteTransientFaultDetector.IsTransient()` walks `InnerException` chains. Catches transient faults regardless of how many layers of wrapping exist. Single source of truth used by both retry policy and middleware. |
+| 2026-02-20 | v1.0.9 patch release | Infrastructure resilience: service-level transient fault retry for SQLite concurrency, shared fault detector, strict zero-500 assertion in concurrency tests. |
 
 ---
 
