@@ -14,8 +14,10 @@ namespace LemonDo.Infrastructure.Resilience;
 ///     share the same physical connection
 /// These errors are inherent to SQLite's single-writer architecture and are NOT bugs.
 /// The detector uses specific error codes for SqliteException, and stack-trace origin
-/// matching for all other exception types — if the exception originated from the SQLite
-/// driver or EF Core storage/query layers, it's classified as transient.
+/// matching for other exception types — only exceptions originating from the SQLite
+/// driver itself (Microsoft.Data.Sqlite) are classified as transient. EF Core layer
+/// exceptions (Query, Storage, Update) are NOT matched because they can represent
+/// legitimate application errors (e.g., overflow in Skip/Take calculations).
 /// </remarks>
 public static class SqliteTransientFaultDetector
 {
@@ -42,16 +44,16 @@ public static class SqliteTransientFaultDetector
             // Under extreme concurrency on a shared SQLite connection, the driver can
             // throw ANY exception type from corrupted internal state (e.g., list index
             // out of range in RemoveCommand, null reference in Close, transaction/connection
-            // mismatch). Check if the exception originated from the SQLite driver or
-            // EF Core data layer by inspecting the stack trace.
-            if (OriginatesFromSqliteStack(current))
+            // mismatch). Only match exceptions originating from the SQLite driver itself —
+            // NOT from EF Core layers, which can throw for legitimate reasons.
+            if (OriginatesFromSqliteDriver(current))
                 return true;
         }
 
         return false;
     }
 
-    private static bool OriginatesFromSqliteStack(Exception ex)
+    private static bool OriginatesFromSqliteDriver(Exception ex)
     {
         // SqliteException is already handled above by error code; skip it here
         if (ex is Microsoft.Data.Sqlite.SqliteException)
@@ -60,9 +62,10 @@ public static class SqliteTransientFaultDetector
         var trace = ex.StackTrace;
         if (trace is null) return false;
 
-        return trace.Contains("Microsoft.Data.Sqlite", StringComparison.Ordinal)
-            || trace.Contains("Microsoft.EntityFrameworkCore.Storage", StringComparison.Ordinal)
-            || trace.Contains("Microsoft.EntityFrameworkCore.Query", StringComparison.Ordinal)
-            || trace.Contains("Microsoft.EntityFrameworkCore.Update", StringComparison.Ordinal);
+        // Only match the SQLite driver namespace — this is where connection/transaction
+        // state corruption manifests. EF Core namespaces (Query, Storage, Update) are
+        // intentionally excluded because they can throw for legitimate reasons like
+        // query parameter overflow, model validation, etc.
+        return trace.Contains("Microsoft.Data.Sqlite", StringComparison.Ordinal);
     }
 }
