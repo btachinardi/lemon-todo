@@ -463,7 +463,6 @@ public sealed class ResponseSecurityTests
             (HttpMethod.Get, "/api/onboarding/status"),
         };
 
-        string? firstType = null;
         foreach (var (method, path) in endpoints)
         {
             var req = new HttpRequestMessage(method, path);
@@ -576,7 +575,7 @@ public sealed class ResponseSecurityTests
         var echoed = GetHeader(response, "X-Correlation-Id");
         if (echoed is not null)
         {
-            Assert.IsTrue(echoed.Length <= 256,
+            Assert.IsLessThanOrEqualTo(256, echoed.Length,
                 $"Echoed X-Correlation-Id is {echoed.Length} chars — must be truncated to ≤256. " +
                 $"An unlimited reflection enables log bloat attacks.");
         }
@@ -603,7 +602,7 @@ public sealed class ResponseSecurityTests
             // If the header is reflected, it must not contain unescaped HTML tags.
             // Header values are not HTML-rendered, but they can appear in error pages.
             // The strict check: if the payload passes through, document it as a WARN.
-            Assert.IsFalse(echoed.Contains("<script>"),
+            Assert.DoesNotContain("<script>", echoed,
                 $"Raw XSS payload reflected verbatim in X-Correlation-Id response header: '{echoed}'. " +
                 "If this value appears in log-based UIs or error pages, it enables stored XSS.");
         }

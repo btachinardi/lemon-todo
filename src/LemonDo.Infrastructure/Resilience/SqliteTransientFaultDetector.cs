@@ -8,12 +8,14 @@ namespace LemonDo.Infrastructure.Resilience;
 /// <remarks>
 /// SQLite in-memory databases share a single physical connection. Under concurrent
 /// access, operations can fail with transient errors that succeed on retry:
-///   - Code 1 (SQLITE_ERROR): "cannot start a transaction within a transaction", "SQL logic error"
-///   - Code 5 (SQLITE_BUSY): database file locked / cannot execute due to active statements
-///   - Code 6 (SQLITE_LOCKED): table in use by another connection
-///   - InvalidOperationException: nested transactions, pending local transactions,
-///     transaction/connection mismatch, concurrent context access
+///   - SqliteException with codes 1 (SQLITE_ERROR), 5 (SQLITE_BUSY), 6 (SQLITE_LOCKED)
+///   - Various exceptions (InvalidOperationException, ArgumentOutOfRangeException,
+///     NullReferenceException, etc.) from corrupted internal state when multiple threads
+///     share the same physical connection
 /// These errors are inherent to SQLite's single-writer architecture and are NOT bugs.
+/// The detector uses specific error codes for SqliteException, and stack-trace origin
+/// matching for all other exception types — if the exception originated from the SQLite
+/// driver or EF Core storage/query layers, it's classified as transient.
 /// </remarks>
 public static class SqliteTransientFaultDetector
 {
@@ -31,28 +33,36 @@ public static class SqliteTransientFaultDetector
                 && TransientSqliteErrorCodes.Contains(sqliteEx.SqliteErrorCode))
                 return true;
 
-            if (current is InvalidOperationException ioe && IsSqliteConnectionStateError(ioe))
-                return true;
-
             // EF Core wraps SQLite errors in DbUpdateException
             if (current is Microsoft.EntityFrameworkCore.DbUpdateException dbEx
                 && dbEx.InnerException is Microsoft.Data.Sqlite.SqliteException innerSqlite
                 && TransientSqliteErrorCodes.Contains(innerSqlite.SqliteErrorCode))
+                return true;
+
+            // Under extreme concurrency on a shared SQLite connection, the driver can
+            // throw ANY exception type from corrupted internal state (e.g., list index
+            // out of range in RemoveCommand, null reference in Close, transaction/connection
+            // mismatch). Check if the exception originated from the SQLite driver or
+            // EF Core data layer by inspecting the stack trace.
+            if (OriginatesFromSqliteStack(current))
                 return true;
         }
 
         return false;
     }
 
-    private static bool IsSqliteConnectionStateError(InvalidOperationException ex)
+    private static bool OriginatesFromSqliteStack(Exception ex)
     {
-        var msg = ex.Message;
-        return msg.Contains("nested transaction", StringComparison.OrdinalIgnoreCase)
-            || msg.Contains("SqliteConnection does not support", StringComparison.OrdinalIgnoreCase)
-            || msg.Contains("pending local transaction", StringComparison.OrdinalIgnoreCase)
-            || msg.Contains("Execute requires the command to have a transaction", StringComparison.OrdinalIgnoreCase)
-            || msg.Contains("not associated with the same connection", StringComparison.OrdinalIgnoreCase)
-            || msg.Contains("A second operation was started on this context", StringComparison.OrdinalIgnoreCase)
-            || msg.Contains("Cannot access a disposed context instance", StringComparison.OrdinalIgnoreCase);
+        // SqliteException is already handled above by error code; skip it here
+        if (ex is Microsoft.Data.Sqlite.SqliteException)
+            return false;
+
+        var trace = ex.StackTrace;
+        if (trace is null) return false;
+
+        return trace.Contains("Microsoft.Data.Sqlite", StringComparison.Ordinal)
+            || trace.Contains("Microsoft.EntityFrameworkCore.Storage", StringComparison.Ordinal)
+            || trace.Contains("Microsoft.EntityFrameworkCore.Query", StringComparison.Ordinal)
+            || trace.Contains("Microsoft.EntityFrameworkCore.Update", StringComparison.Ordinal);
     }
 }
