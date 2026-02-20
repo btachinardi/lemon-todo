@@ -11,7 +11,8 @@ namespace LemonDo.Infrastructure.Resilience;
 ///   - Code 1 (SQLITE_ERROR): "cannot start a transaction within a transaction", "SQL logic error"
 ///   - Code 5 (SQLITE_BUSY): database file locked / cannot execute due to active statements
 ///   - Code 6 (SQLITE_LOCKED): table in use by another connection
-///   - InvalidOperationException: nested transactions, pending local transactions
+///   - InvalidOperationException: nested transactions, pending local transactions,
+///     transaction/connection mismatch, concurrent context access
 /// These errors are inherent to SQLite's single-writer architecture and are NOT bugs.
 /// </remarks>
 public static class SqliteTransientFaultDetector
@@ -49,6 +50,9 @@ public static class SqliteTransientFaultDetector
         return msg.Contains("nested transaction", StringComparison.OrdinalIgnoreCase)
             || msg.Contains("SqliteConnection does not support", StringComparison.OrdinalIgnoreCase)
             || msg.Contains("pending local transaction", StringComparison.OrdinalIgnoreCase)
-            || msg.Contains("Execute requires the command to have a transaction", StringComparison.OrdinalIgnoreCase);
+            || msg.Contains("Execute requires the command to have a transaction", StringComparison.OrdinalIgnoreCase)
+            || msg.Contains("not associated with the same connection", StringComparison.OrdinalIgnoreCase)
+            || msg.Contains("A second operation was started on this context", StringComparison.OrdinalIgnoreCase)
+            || msg.Contains("Cannot access a disposed context instance", StringComparison.OrdinalIgnoreCase);
     }
 }
