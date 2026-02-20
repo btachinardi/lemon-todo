@@ -20,7 +20,7 @@ public sealed class ActiveUserMiddleware(RequestDelegate next)
         if (context.User.Identity?.IsAuthenticated == true)
         {
             var userIdClaim = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userIdClaim is not null)
+            if (userIdClaim is not null && Guid.TryParse(userIdClaim, out var claimGuid) && claimGuid != Guid.Empty)
             {
                 var userManager = context.RequestServices
                     .GetRequiredService<UserManager<ApplicationUser>>();
@@ -30,6 +30,12 @@ public sealed class ActiveUserMiddleware(RequestDelegate next)
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     return;
                 }
+            }
+            else if (userIdClaim is not null)
+            {
+                // Sub claim present but not a valid non-empty GUID — reject as unauthorized.
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return;
             }
         }
 

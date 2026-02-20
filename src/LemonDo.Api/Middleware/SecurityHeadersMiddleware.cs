@@ -24,6 +24,7 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next)
             headers["X-Frame-Options"] = "DENY";
             headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
             headers["X-XSS-Protection"] = "0";
+            headers["Cache-Control"] = "no-store";
 
             // Skip restrictive CSP for API documentation pages — Scalar loads JS/CSS from CDN
             var path = context.Request.Path.Value ?? string.Empty;
