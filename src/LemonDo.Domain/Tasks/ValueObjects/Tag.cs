@@ -29,6 +29,14 @@ public sealed class Tag : ValueObject<string>, IReconstructable<Tag, string>
             return Result<Tag, DomainError>.Failure(
                 DomainError.Validation("tag", $"Tag must be {MaxLength} characters or fewer."));
 
+        if (normalized.All(c => char.GetUnicodeCategory(c) is
+                System.Globalization.UnicodeCategory.Format or
+                System.Globalization.UnicodeCategory.Control or
+                System.Globalization.UnicodeCategory.OtherNotAssigned or
+                System.Globalization.UnicodeCategory.Surrogate))
+            return Result<Tag, DomainError>.Failure(
+                DomainError.Validation("tag", "Tag must contain visible characters."));
+
         return Result<Tag, DomainError>.Success(new Tag(normalized));
     }
 

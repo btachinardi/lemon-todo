@@ -27,6 +27,14 @@ public sealed class ColumnName : ValueObject<string>, IReconstructable<ColumnNam
             return Result<ColumnName, DomainError>.Failure(
                 new DomainError("column_name.validation", $"Column name must not exceed {MaxLength} characters."));
 
+        if (trimmed.All(c => char.GetUnicodeCategory(c) is
+                System.Globalization.UnicodeCategory.Format or
+                System.Globalization.UnicodeCategory.Control or
+                System.Globalization.UnicodeCategory.OtherNotAssigned or
+                System.Globalization.UnicodeCategory.Surrogate))
+            return Result<ColumnName, DomainError>.Failure(
+                new DomainError("column_name.validation", "Column name must contain visible characters."));
+
         return Result<ColumnName, DomainError>.Success(new ColumnName(trimmed));
     }
 
