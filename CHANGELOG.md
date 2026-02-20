@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.8] - 2026-02-20
+
+Security hardening patch — domain input validation, middleware hardening, atomic refresh token rotation, admin self-action guards, and parameterized security test infrastructure.
+
+### Added
+
+- **Parameterized security test baselines** — `EndpointRegistry` + `DynamicData`-driven tests auto-cover auth bypass, method enforcement, pagination abuse, privilege escalation, and info leakage for all endpoints
+- **Security test infrastructure** — shared `EndpointDescriptor`, `SecurityAssertions`, `SecurityTestExtensions`, `MalformedTokens`, `InjectionPayloads`, and `PaginationTestData` types
+- **Advanced security tests** — Unicode normalization, prototype pollution, JSON parsing edge cases, concurrency race conditions, response header validation, JWT edge cases
+- **Test results CLI** — `./dev test-results` with list/failures/clean commands, per-project TRX output with 24h rolling retention, auto-discovery of test projects from solution
+
+### Changed
+
+- **Admin self-action guards** — SystemAdmin can no longer deactivate their own account or remove roles from themselves, preventing accidental privilege loss
+- **CorrelationIdMiddleware** — incoming `X-Correlation-Id` values are now sanitized (truncated to 128 chars, stripped of non-alphanumeric characters) to prevent log injection
+- **ActiveUserMiddleware** — validates that the JWT `sub` claim is a non-empty GUID before DB lookup, rejecting malformed claims as 401
+- **SecurityHeadersMiddleware** — adds `Cache-Control: no-store` to all API responses
+- **ErrorHandlingMiddleware** — catches `DbUpdateConcurrencyException`, constraint violations, SQLite concurrency errors, and nested transaction conflicts as 409 Conflict instead of 500
+- Security test files renamed from `*SecurityHardeningTests` to `*SecurityTests` and slimmed (duplicate coverage moved to parameterized baselines)
+
+### Fixed
+
+- **Refresh token race condition** — replaced two-step read-then-revoke with atomic `UPDATE...WHERE RevokedAt IS NULL` so only one concurrent request wins the rotation; handles rare hash collisions gracefully
+- **Invisible Unicode input** — `ColumnName` and `Tag` value objects now reject strings composed entirely of invisible Unicode characters (format, control, surrogate, unassigned)
+- **Null byte in email** — `Email` value object rejects embedded null bytes before format validation
+
 ## [1.0.7] - 2026-02-17
 
 Patch release fixing stale data on account switch and loading screen ripple alignment.
@@ -476,7 +502,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.7...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.8...HEAD
+[1.0.8]: https://github.com/btachinardi/lemon-todo/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/btachinardi/lemon-todo/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/btachinardi/lemon-todo/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/btachinardi/lemon-todo/compare/v1.0.4...v1.0.5
