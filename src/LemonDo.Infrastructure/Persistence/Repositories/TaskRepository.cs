@@ -61,9 +61,24 @@ public sealed class TaskRepository(LemonDoDbContext context, IFieldEncryptionSer
             query = query.Where(t => t.Status == status.Value);
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
-            query = query.Where(t =>
-                EF.Property<string>(t, "Title").Contains(searchTerm) ||
-                (EF.Property<string?>(t, "Description") != null && EF.Property<string>(t, "Description").Contains(searchTerm)));
+        {
+            // The Title and Description properties have TaskTitle/TaskDescription value converters.
+            // EF Core's LIKE expression sanitizer applies the MODEL-side type (TaskTitle/TaskDescription)
+            // to the pattern parameter, causing InvalidCastException at runtime.
+            // Fix: use parameterized raw SQL to retrieve matching task IDs, then filter the EF
+            // query using an IN-style Contains. The SQL parameters are typed as plain strings,
+            // bypassing the value-converter sanitizer entirely.
+            var likePattern = $"%{searchTerm}%";
+            var matchingIds = await context.Database
+                .SqlQuery<Guid>(
+                    $"""
+                    SELECT "Id" FROM "Tasks"
+                    WHERE ("Title" LIKE {likePattern} OR "Description" LIKE {likePattern})
+                    """)
+                .ToListAsync(ct);
+            var matchingTaskIds = matchingIds.Select(TaskId.Reconstruct).ToHashSet();
+            query = query.Where(t => matchingTaskIds.Contains(t.Id));
+        }
 
         if (!string.IsNullOrWhiteSpace(tag))
             query = query.Where(t => t.Tags.Any(tg => EF.Property<string>(tg, "Value") == tag));
