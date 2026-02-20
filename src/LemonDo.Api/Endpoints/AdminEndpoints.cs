@@ -55,6 +55,12 @@ public static class AdminEndpoints
         int pageSize = 10,
         CancellationToken ct = default)
     {
+        if (pageSize > 200)
+            return Results.BadRequest(new { Error = "pageSize must not exceed 200." });
+
+        pageSize = Math.Clamp(pageSize, 1, 200);
+        page = Math.Max(1, page);
+
         var result = await handler.HandleAsync(
             new ListUsersAdminQuery(search, role, page, pageSize), ct);
         return Results.Ok(result);
@@ -123,6 +129,12 @@ public static class AdminEndpoints
         int pageSize = 10,
         CancellationToken ct = default)
     {
+        if (pageSize > 200)
+            return Results.BadRequest(new { Error = "pageSize must not exceed 200." });
+
+        pageSize = Math.Clamp(pageSize, 1, 200);
+        page = Math.Max(1, page);
+
         var result = await handler.HandleAsync(
             new SearchAuditLogQuery(dateFrom, dateTo, action, actorId, resourceType, page, pageSize), ct);
         return Results.Ok(result);

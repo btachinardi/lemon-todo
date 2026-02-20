@@ -49,6 +49,12 @@ public static class TaskEndpoints
         int pageSize = 50,
         CancellationToken ct = default)
     {
+        if (pageSize > 200)
+            return Results.BadRequest(new { Error = "pageSize must not exceed 200." });
+
+        pageSize = Math.Clamp(pageSize, 1, 200);
+        page = Math.Max(1, page);
+
         var filter = new TaskListFilter
         {
             Status = Enum.TryParse<TaskStatus>(status, true, out var s) ? s : null,
@@ -213,6 +219,9 @@ public static class TaskEndpoints
         HttpContext httpContext,
         CancellationToken ct)
     {
+        if (request.TaskIds is null || request.TaskIds.Count == 0)
+            return Results.BadRequest(new { type = "validation_error", title = "TaskIds is required and must not be empty.", status = 400 });
+
         var command = new BulkCompleteTasksCommand(request.TaskIds);
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(() => Results.Ok(new { CompletedCount = request.TaskIds.Count, FailedCount = 0 }), httpContext: httpContext);

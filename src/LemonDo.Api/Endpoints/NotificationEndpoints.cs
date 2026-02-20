@@ -29,6 +29,12 @@ public static class NotificationEndpoints
         int pageSize = 20,
         CancellationToken ct = default)
     {
+        if (pageSize > 200)
+            return Results.BadRequest(new { Error = "pageSize must not exceed 200." });
+
+        pageSize = Math.Clamp(pageSize, 1, 200);
+        page = Math.Max(1, page);
+
         var userId = GetUserId(principal);
         if (userId is null) return Results.Unauthorized();
 
@@ -69,7 +75,7 @@ public static class NotificationEndpoints
         if (userId is null) return Results.Unauthorized();
 
         if (!Guid.TryParse(id, out var guid))
-            return Results.BadRequest("Invalid notification id.");
+            return Results.BadRequest(new { Error = "Invalid notification id. A valid GUID is required." });
 
         var notification = await notificationRepository.GetByIdAsync(NotificationId.From(guid), ct);
         if (notification is null || notification.UserId != userId)
