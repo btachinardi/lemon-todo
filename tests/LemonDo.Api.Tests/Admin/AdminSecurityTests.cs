@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using LemonDo.Api.Contracts.Auth;
 using LemonDo.Api.Tests.Infrastructure;
 using LemonDo.Application.Administration.DTOs;
 using LemonDo.Domain.Common;
@@ -15,7 +16,7 @@ using LemonDo.Domain.Common;
 /// A FAILING test means the endpoint is VULNERABLE (it accepted or mishandled the attack).
 /// </summary>
 [TestClass]
-public sealed class AdminSecurityHardeningTests
+public sealed class AdminSecurityTests
 {
     private static CustomWebApplicationFactory _factory = null!;
     private static readonly JsonSerializerOptions JsonOpts = TestJsonOptions.Default;
@@ -27,261 +28,10 @@ public sealed class AdminSecurityHardeningTests
     public static void ClassCleanup() => _factory.Dispose();
 
     // ============================================================
-    // CATEGORY 1: Authentication Bypass
-    // All admin endpoints must reject unauthenticated requests.
+    // Auth bypass (Cat 1), privilege escalation User→Admin (Cat 2),
+    // and Admin→SystemAdmin (Cat 3) tests removed — covered by
+    // AuthBypassBaselineTests and PrivilegeEscalationBaselineTests.
     // ============================================================
-
-    [TestMethod]
-    public async Task Should_Return401_When_NoTokenOnListUsers()
-    {
-        var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/admin/users");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_MalformedTokenOnListUsers()
-    {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", "this.is.not.a.valid.jwt");
-        var response = await client.GetAsync("/api/admin/users");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_EmptyBearerTokenOnListUsers()
-    {
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "Bearer ");
-        var response = await client.GetAsync("/api/admin/users");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_TokenSignedWithWrongKeyOnListUsers()
-    {
-        var client = _factory.CreateClient();
-        // Build a JWT signed with a DIFFERENT key than what the test app uses.
-        // The test app expects: "test-secret-key-at-least-32-characters-long!!"
-        var wrongKey = Convert.ToBase64String(Encoding.UTF8.GetBytes("wrong-secret-key-at-least-32-characters-long!!"));
-        var header = Convert.ToBase64String(Encoding.UTF8.GetBytes("""{"alg":"HS256","typ":"JWT"}""")).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-        var payload = Convert.ToBase64String(Encoding.UTF8.GetBytes(
-            $"{{\"sub\":\"{Guid.NewGuid()}\",\"email\":\"fake@fake.com\",\"role\":\"SystemAdmin\",\"exp\":{DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds()}}}")).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-        var fakeSig = Convert.ToBase64String(Encoding.UTF8.GetBytes("fakesignature")).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", $"{header}.{payload}.{fakeSig}");
-        var response = await client.GetAsync("/api/admin/users");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_NoTokenOnGetUser()
-    {
-        var client = _factory.CreateClient();
-        var response = await client.GetAsync($"/api/admin/users/{Guid.NewGuid()}");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_NoTokenOnAssignRole()
-    {
-        var client = _factory.CreateClient();
-        var response = await client.PostAsJsonAsync(
-            $"/api/admin/users/{Guid.NewGuid()}/roles",
-            new { RoleName = "Admin" });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_NoTokenOnRemoveRole()
-    {
-        var client = _factory.CreateClient();
-        var response = await client.DeleteAsync($"/api/admin/users/{Guid.NewGuid()}/roles/Admin");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_NoTokenOnDeactivateUser()
-    {
-        var client = _factory.CreateClient();
-        var response = await client.PostAsync($"/api/admin/users/{Guid.NewGuid()}/deactivate", null);
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_NoTokenOnReactivateUser()
-    {
-        var client = _factory.CreateClient();
-        var response = await client.PostAsync($"/api/admin/users/{Guid.NewGuid()}/reactivate", null);
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_NoTokenOnRevealProtectedData()
-    {
-        var client = _factory.CreateClient();
-        var response = await client.PostAsJsonAsync($"/api/admin/users/{Guid.NewGuid()}/reveal",
-            new { Reason = "SupportTicket", Password = "anything" });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_NoTokenOnRevealTaskNote()
-    {
-        var client = _factory.CreateClient();
-        var response = await client.PostAsJsonAsync($"/api/admin/tasks/{Guid.NewGuid()}/reveal-note",
-            new { Reason = "SupportTicket", Password = "anything" });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_NoTokenOnAuditLog()
-    {
-        var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/admin/audit");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    // ============================================================
-    // CATEGORY 2: Privilege Escalation — Regular User → Admin
-    // Users with only the "User" role must be blocked from all
-    // admin endpoints (expect 403).
-    // ============================================================
-
-    [TestMethod]
-    public async Task Should_Return403_When_RegularUserListsUsers()
-    {
-        var client = await _factory.CreateAuthenticatedClientAsync();
-        var response = await client.GetAsync("/api/admin/users");
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_RegularUserGetsSpecificUser()
-    {
-        var client = await _factory.CreateAuthenticatedClientAsync();
-        var response = await client.GetAsync($"/api/admin/users/{Guid.NewGuid()}");
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_RegularUserAssignsRole()
-    {
-        var client = await _factory.CreateAuthenticatedClientAsync();
-        var response = await client.PostAsJsonAsync(
-            $"/api/admin/users/{Guid.NewGuid()}/roles",
-            new { RoleName = "Admin" });
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_RegularUserRemovesRole()
-    {
-        var client = await _factory.CreateAuthenticatedClientAsync();
-        var response = await client.DeleteAsync($"/api/admin/users/{Guid.NewGuid()}/roles/Admin");
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_RegularUserDeactivatesUser()
-    {
-        var client = await _factory.CreateAuthenticatedClientAsync();
-        var response = await client.PostAsync($"/api/admin/users/{Guid.NewGuid()}/deactivate", null);
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_RegularUserReactivatesUser()
-    {
-        var client = await _factory.CreateAuthenticatedClientAsync();
-        var response = await client.PostAsync($"/api/admin/users/{Guid.NewGuid()}/reactivate", null);
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_RegularUserRevealsProtectedData()
-    {
-        var client = await _factory.CreateAuthenticatedClientAsync();
-        var response = await client.PostAsJsonAsync($"/api/admin/users/{Guid.NewGuid()}/reveal",
-            new { Reason = "SupportTicket", Password = CustomWebApplicationFactory.TestUserPassword });
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_RegularUserRevealsTaskNote()
-    {
-        var client = await _factory.CreateAuthenticatedClientAsync();
-        var response = await client.PostAsJsonAsync($"/api/admin/tasks/{Guid.NewGuid()}/reveal-note",
-            new { Reason = "SupportTicket", Password = CustomWebApplicationFactory.TestUserPassword });
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_RegularUserAccessesAuditLog()
-    {
-        var client = await _factory.CreateAuthenticatedClientAsync();
-        var response = await client.GetAsync("/api/admin/audit");
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    // ============================================================
-    // CATEGORY 3: Privilege Escalation — Admin → SystemAdmin
-    // Admin role can read users and audit log, but MUST be blocked
-    // from all SystemAdmin-only write operations (expect 403).
-    // ============================================================
-
-    [TestMethod]
-    public async Task Should_Return403_When_AdminAssignsRole()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.PostAsJsonAsync(
-            $"/api/admin/users/{Guid.NewGuid()}/roles",
-            new { RoleName = "Admin" });
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_AdminRemovesRole()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.DeleteAsync($"/api/admin/users/{Guid.NewGuid()}/roles/Admin");
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_AdminDeactivatesUser()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.PostAsync($"/api/admin/users/{Guid.NewGuid()}/deactivate", null);
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_AdminReactivatesUser()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.PostAsync($"/api/admin/users/{Guid.NewGuid()}/reactivate", null);
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_AdminRevealsProtectedData()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.PostAsJsonAsync($"/api/admin/users/{Guid.NewGuid()}/reveal",
-            new { Reason = "SupportTicket", Password = CustomWebApplicationFactory.AdminUserPassword });
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return403_When_AdminRevealsTaskNote()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.PostAsJsonAsync($"/api/admin/tasks/{Guid.NewGuid()}/reveal-note",
-            new { Reason = "SupportTicket", Password = CustomWebApplicationFactory.AdminUserPassword });
-        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
-    }
 
     // ============================================================
     // CATEGORY 4: Invalid Role Injection
@@ -656,103 +406,14 @@ public sealed class AdminSecurityHardeningTests
     }
 
     // ============================================================
-    // CATEGORY 9: Pagination Abuse
-    // Extremely large pageSize values must not crash the server or
-    // return excessively large responses (resource exhaustion).
+    // Pagination abuse (Cat 9) removed — covered by PaginationAbuseBaselineTests.
     // ============================================================
-
-    [TestMethod]
-    public async Task Should_NotCrash_When_AdminRequestsHugePageSizeOnListUsers()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.GetAsync("/api/admin/users?pageSize=999999&page=1");
-
-        // Must not return 500 — either returns data capped or 400
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "pageSize=999999 must not cause a 500 Internal Server Error");
-        Assert.IsTrue(
-            response.StatusCode == HttpStatusCode.OK || (int)response.StatusCode == 400,
-            $"Expected 200 or 400 for huge pageSize, got {(int)response.StatusCode}");
-    }
-
-    [TestMethod]
-    public async Task Should_NotCrash_When_AdminRequestsHugePageSizeOnAuditLog()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.GetAsync("/api/admin/audit?pageSize=999999&page=1");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "pageSize=999999 on audit log must not cause a 500");
-        Assert.IsTrue(
-            response.StatusCode == HttpStatusCode.OK || (int)response.StatusCode == 400,
-            $"Expected 200 or 400 for huge pageSize, got {(int)response.StatusCode}");
-    }
-
-    [TestMethod]
-    public async Task Should_NotCrash_When_AdminRequestsNegativePageSize()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.GetAsync("/api/admin/users?pageSize=-1&page=1");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "pageSize=-1 must not cause a 500");
-    }
-
-    [TestMethod]
-    public async Task Should_NotCrash_When_AdminRequestsZeroPageSize()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.GetAsync("/api/admin/users?pageSize=0&page=1");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "pageSize=0 must not cause a 500");
-    }
-
-    [TestMethod]
-    public async Task Should_NotCrash_When_AdminRequestsNegativePage()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.GetAsync("/api/admin/users?page=-1&pageSize=10");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "page=-1 must not cause a 500");
-    }
 
     // ============================================================
     // CATEGORY 10: Information Leakage
-    // Error responses must not expose stack traces, internal IDs,
-    // database schemas, or unredacted PII in non-reveal contexts.
+    // Generic stack trace checks removed — covered by InfoLeakageBaselineTests.
+    // Admin-specific PII redaction and header checks retained below.
     // ============================================================
-
-    [TestMethod]
-    public async Task Should_NotLeakStackTrace_When_AdminGetsNonExistentUser()
-    {
-        var client = await _factory.CreateAdminClientAsync();
-        var response = await client.GetAsync($"/api/admin/users/{Guid.NewGuid()}");
-        var body = await response.Content.ReadAsStringAsync();
-
-        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.IsFalse(body.Contains("StackTrace", StringComparison.OrdinalIgnoreCase),
-            "404 response must not include StackTrace");
-        Assert.IsFalse(body.Contains("System.", StringComparison.OrdinalIgnoreCase),
-            "404 response must not include .NET type names");
-    }
-
-    [TestMethod]
-    public async Task Should_NotLeakStackTrace_When_RevealFailsDueToWrongPassword()
-    {
-        var client = await _factory.CreateSystemAdminClientAsync();
-        var userId = await GetAnyExistingUserIdAsync(client);
-
-        var response = await client.PostAsJsonAsync($"/api/admin/users/{userId}/reveal",
-            new { Reason = "SupportTicket", Password = "WrongPass999!" });
-        var body = await response.Content.ReadAsStringAsync();
-
-        Assert.IsFalse(body.Contains("StackTrace", StringComparison.OrdinalIgnoreCase),
-            "Error response on wrong password must not expose StackTrace");
-        Assert.IsFalse(body.Contains("System.", StringComparison.OrdinalIgnoreCase),
-            "Error response must not expose .NET type names");
-    }
 
     [TestMethod]
     public async Task Should_ReturnRedactedEmail_When_AdminListsUsers()
@@ -1113,37 +774,9 @@ public sealed class AdminSecurityHardeningTests
             "Endpoints should validate that the user is still active.");
     }
 
-    /// <summary>Authentication response from login/register endpoints.</summary>
-    private sealed record AuthResponse(string AccessToken, UserResponse User);
-    private sealed record UserResponse(Guid Id, string Email, string DisplayName, IReadOnlyList<string> Roles);
-
     // ============================================================
-    // CATEGORY 14: HTTP Method Enforcement
+    // Method enforcement (Cat 14) removed — covered by MethodEnforcementBaselineTests.
     // ============================================================
-
-    [TestMethod]
-    public async Task Should_Return405_When_PutSentToListUsers()
-    {
-        var client = await _factory.CreateSystemAdminClientAsync();
-        var response = await client.PutAsJsonAsync("/api/admin/users", new { });
-
-        Assert.IsTrue(
-            response.StatusCode == HttpStatusCode.MethodNotAllowed
-            || response.StatusCode == HttpStatusCode.NotFound,
-            $"PUT /api/admin/users should not be routable. Got {(int)response.StatusCode}");
-    }
-
-    [TestMethod]
-    public async Task Should_Return405_When_DeleteSentToDeactivate()
-    {
-        var client = await _factory.CreateSystemAdminClientAsync();
-        var response = await client.DeleteAsync($"/api/admin/users/{Guid.NewGuid()}/deactivate");
-
-        Assert.IsTrue(
-            response.StatusCode == HttpStatusCode.MethodNotAllowed
-            || response.StatusCode == HttpStatusCode.NotFound,
-            $"DELETE /deactivate should not work. Got {(int)response.StatusCode}");
-    }
 
     // ============================================================
     // Helper

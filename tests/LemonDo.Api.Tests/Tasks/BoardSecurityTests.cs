@@ -1,12 +1,11 @@
 namespace LemonDo.Api.Tests.Tasks;
 
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using LemonDo.Api.Contracts.Auth;
 using LemonDo.Api.Tests.Infrastructure;
+using LemonDo.Api.Tests.Infrastructure.Security;
 using LemonDo.Application.Tasks.DTOs;
 
 /// <summary>
@@ -15,7 +14,7 @@ using LemonDo.Application.Tasks.DTOs;
 /// A FAILING test means a vulnerability was found.
 /// </summary>
 [TestClass]
-public sealed class BoardSecurityHardeningTests
+public sealed class BoardSecurityTests
 {
     private static CustomWebApplicationFactory _factory = null!;
     private static HttpClient _client = null!;
@@ -39,26 +38,6 @@ public sealed class BoardSecurityHardeningTests
     //  HELPERS
     // ─────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Registers a brand-new user and returns an authenticated HttpClient for that user.
-    /// Each call produces a unique email so tests are fully isolated.
-    /// </summary>
-    private static async Task<HttpClient> RegisterFreshUserAsync(string prefix)
-    {
-        var email = $"{prefix}-{Guid.NewGuid():N}@lemondo.dev";
-        var client = _factory.CreateClient();
-
-        var registerResponse = await client.PostAsJsonAsync("/api/auth/register",
-            new { Email = email, Password = "TestPass123!", DisplayName = $"User {prefix}" });
-        registerResponse.EnsureSuccessStatusCode();
-
-        var auth = await registerResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", auth!.AccessToken);
-
-        return client;
-    }
-
     /// <summary>Returns the authenticated test user's default board.</summary>
     private static async Task<BoardDto> GetDefaultBoardAsync(HttpClient client)
     {
@@ -69,139 +48,8 @@ public sealed class BoardSecurityHardeningTests
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  CATEGORY 1: AUTHENTICATION BYPASS
-    //  Expected: All unauthenticated / malformed-token requests → 401
+    //  Auth bypass tests removed — covered by AuthBypassBaselineTests
     // ─────────────────────────────────────────────────────────────
-
-    [TestMethod]
-    public async Task Should_Return401_When_GetDefaultBoard_WithNoToken()
-    {
-        using var anonymousClient = _factory.CreateClient();
-        var response = await anonymousClient.GetAsync("/api/boards/default");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "GET /api/boards/default must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_GetBoardById_WithNoToken()
-    {
-        using var anonymousClient = _factory.CreateClient();
-        var response = await anonymousClient.GetAsync($"/api/boards/{Guid.NewGuid()}");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "GET /api/boards/{id} must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_AddColumn_WithNoToken()
-    {
-        var board = await GetDefaultBoardAsync(_client);
-        using var anonymousClient = _factory.CreateClient();
-
-        var response = await anonymousClient.PostAsJsonAsync(
-            $"/api/boards/{board.Id}/columns",
-            new { Name = "Injected", TargetStatus = "InProgress" });
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "POST /api/boards/{id}/columns must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_RenameColumn_WithNoToken()
-    {
-        var board = await GetDefaultBoardAsync(_client);
-        var columnId = board.Columns[0].Id;
-        using var anonymousClient = _factory.CreateClient();
-
-        var response = await anonymousClient.PutAsJsonAsync(
-            $"/api/boards/{board.Id}/columns/{columnId}",
-            new { Name = "Hacked" });
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "PUT /api/boards/{id}/columns/{colId} must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_RemoveColumn_WithNoToken()
-    {
-        var board = await GetDefaultBoardAsync(_client);
-        var columnId = board.Columns[0].Id;
-        using var anonymousClient = _factory.CreateClient();
-
-        var response = await anonymousClient.DeleteAsync(
-            $"/api/boards/{board.Id}/columns/{columnId}");
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "DELETE /api/boards/{id}/columns/{colId} must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_ReorderColumn_WithNoToken()
-    {
-        var board = await GetDefaultBoardAsync(_client);
-        var columnId = board.Columns[0].Id;
-        using var anonymousClient = _factory.CreateClient();
-
-        var response = await anonymousClient.PostAsJsonAsync(
-            $"/api/boards/{board.Id}/columns/reorder",
-            new { ColumnId = columnId, NewPosition = 1 });
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "POST /api/boards/{id}/columns/reorder must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_AddColumn_WithMalformedToken()
-    {
-        var board = await GetDefaultBoardAsync(_client);
-        using var badClient = _factory.CreateClient();
-        badClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", "this.is.not.a.valid.jwt.token");
-
-        var response = await badClient.PostAsJsonAsync(
-            $"/api/boards/{board.Id}/columns",
-            new { Name = "Test", TargetStatus = "InProgress" });
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "Malformed JWT token must be rejected with 401");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_AddColumn_WithEmptyBearerToken()
-    {
-        var board = await GetDefaultBoardAsync(_client);
-        using var badClient = _factory.CreateClient();
-        badClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "Bearer ");
-
-        var response = await badClient.PostAsJsonAsync(
-            $"/api/boards/{board.Id}/columns",
-            new { Name = "Test", TargetStatus = "InProgress" });
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "Empty Bearer token must be rejected with 401");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_AddColumn_WithWrongSignatureToken()
-    {
-        // JWT structure is valid but signed with a different key
-        // Header: {"alg":"HS256","typ":"JWT"} | Payload: {"sub":"attacker"} | Signature: garbage
-        const string wrongKeyToken =
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-            "eyJzdWIiOiJhdHRhY2tlciIsIm5hbWUiOiJBdHRhY2tlciIsImlhdCI6MTUxNjIzOTAyMn0." +
-            "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-
-        var board = await GetDefaultBoardAsync(_client);
-        using var badClient = _factory.CreateClient();
-        badClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", wrongKeyToken);
-
-        var response = await badClient.PostAsJsonAsync(
-            $"/api/boards/{board.Id}/columns",
-            new { Name = "Test", TargetStatus = "InProgress" });
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "JWT signed with a different key must be rejected with 401");
-    }
 
     // ─────────────────────────────────────────────────────────────
     //  CATEGORY 2: AUTHORIZATION / IDOR EDGE CASES
@@ -265,8 +113,8 @@ public sealed class BoardSecurityHardeningTests
     {
         // User A's column IDs are only meaningful on User A's board.
         // Presenting a real column ID from User A against User B's board should fail gracefully.
-        using var clientA = await RegisterFreshUserAsync("idor-crossboard-a");
-        using var clientB = await RegisterFreshUserAsync("idor-crossboard-b");
+        using var clientA = await _factory.RegisterFreshUserAsync("idor-crossboard-a");
+        using var clientB = await _factory.RegisterFreshUserAsync("idor-crossboard-b");
 
         var boardA = await GetDefaultBoardAsync(clientA);
         var boardB = await GetDefaultBoardAsync(clientB);
@@ -601,7 +449,7 @@ public sealed class BoardSecurityHardeningTests
     [TestMethod]
     public async Task Should_Return4xx_When_AddColumn_WithDuplicateColumnName()
     {
-        using var client = await RegisterFreshUserAsync("biz-duplicate-col");
+        using var client = await _factory.RegisterFreshUserAsync("biz-duplicate-col");
         var board = await GetDefaultBoardAsync(client);
 
         // "To Do" column already exists on the default board
@@ -620,7 +468,7 @@ public sealed class BoardSecurityHardeningTests
     {
         // Each board has exactly one Todo column by default.
         // Removing it must be rejected by the domain invariant.
-        using var client = await RegisterFreshUserAsync("biz-remove-todo-col");
+        using var client = await _factory.RegisterFreshUserAsync("biz-remove-todo-col");
         var board = await GetDefaultBoardAsync(client);
         var todoColumn = board.Columns.First(c => c.TargetStatus == "Todo");
 
@@ -636,7 +484,7 @@ public sealed class BoardSecurityHardeningTests
     public async Task Should_Return4xx_When_RemoveColumn_WithLastDoneColumn()
     {
         // Similarly, the Done column must not be removable when it's the only one.
-        using var client = await RegisterFreshUserAsync("biz-remove-done-col");
+        using var client = await _factory.RegisterFreshUserAsync("biz-remove-done-col");
         var board = await GetDefaultBoardAsync(client);
         var doneColumn = board.Columns.First(c => c.TargetStatus == "Done");
 
@@ -670,7 +518,7 @@ public sealed class BoardSecurityHardeningTests
         // a real DB write. We verify the 26th unique column is still accepted or that
         // the system handles it without 500.  This is a WARN-level check: no hard limit
         // means an authenticated user COULD spam columns — document the finding.
-        using var client = await RegisterFreshUserAsync("dos-column-flood");
+        using var client = await _factory.RegisterFreshUserAsync("dos-column-flood");
         var board = await GetDefaultBoardAsync(client);
         var boardId = board.Id;
 
@@ -707,7 +555,7 @@ public sealed class BoardSecurityHardeningTests
     public async Task Should_IgnoreExtraFields_When_AddColumn_WithUnknownProperties()
     {
         // Send extra fields that should not be persisted
-        using var client = await RegisterFreshUserAsync("mass-assign-addcol");
+        using var client = await _factory.RegisterFreshUserAsync("mass-assign-addcol");
         var board = await GetDefaultBoardAsync(client);
 
         // id, ownerId, createdAt are not part of AddColumnRequest — they must be ignored
@@ -737,7 +585,7 @@ public sealed class BoardSecurityHardeningTests
     [TestMethod]
     public async Task Should_IgnoreExtraFields_When_RenameColumn_WithUnknownProperties()
     {
-        using var client = await RegisterFreshUserAsync("mass-assign-rename");
+        using var client = await _factory.RegisterFreshUserAsync("mass-assign-rename");
         var board = await GetDefaultBoardAsync(client);
         var columnId = board.Columns[1].Id; // InProgress column
 
@@ -770,67 +618,14 @@ public sealed class BoardSecurityHardeningTests
 
     // ─────────────────────────────────────────────────────────────
     //  CATEGORY 6: INFORMATION LEAKAGE
+    //  Generic info leakage tests removed — covered by InfoLeakageBaselineTests.
+    //  Board-specific checks retained below.
     // ─────────────────────────────────────────────────────────────
-
-    [TestMethod]
-    public async Task Should_ReturnConsistentErrorShape_When_GetBoardById_WithNonExistentId()
-    {
-        var response = await _client.GetAsync($"/api/boards/{Guid.NewGuid()}");
-
-        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
-
-        var body = await response.Content.ReadAsStringAsync();
-        // Must not include stack traces, file paths, or EF internals
-        Assert.IsFalse(body.Contains("StackTrace", StringComparison.OrdinalIgnoreCase),
-            "Error response must not contain a stack trace");
-        Assert.IsFalse(body.Contains("Microsoft.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase),
-            "Error response must not expose EF Core internals");
-        Assert.IsFalse(body.Contains("System.Exception", StringComparison.OrdinalIgnoreCase),
-            "Error response must not expose raw exception types");
-    }
-
-    [TestMethod]
-    public async Task Should_ReturnConsistentErrorShape_When_AddColumn_WithInvalidInput()
-    {
-        var board = await GetDefaultBoardAsync(_client);
-
-        var response = await _client.PostAsJsonAsync(
-            $"/api/boards/{board.Id}/columns",
-            new { Name = "", TargetStatus = "InProgress" });
-
-        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
-
-        var body = await response.Content.ReadAsStringAsync();
-        Assert.IsFalse(body.Contains("StackTrace", StringComparison.OrdinalIgnoreCase),
-            "Validation error response must not expose stack trace");
-        Assert.IsFalse(body.Contains("Microsoft.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase),
-            "Validation error response must not expose EF Core internals");
-
-        // Must be parseable as the standard ErrorResponse shape
-        var errorResponse = JsonSerializer.Deserialize<ErrorResponseShape>(body, JsonOpts);
-        Assert.IsNotNull(errorResponse, "Error response must be parseable JSON");
-        Assert.IsTrue(errorResponse.Status >= 400, "Error response must include a valid status code");
-        Assert.IsFalse(string.IsNullOrWhiteSpace(errorResponse.Title),
-            "Error response must include a human-readable title");
-    }
-
-    [TestMethod]
-    public async Task Should_ReturnConsistentErrorShape_When_Unauthenticated()
-    {
-        using var anonymousClient = _factory.CreateClient();
-        var response = await anonymousClient.GetAsync("/api/boards/default");
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-
-        var body = await response.Content.ReadAsStringAsync();
-        Assert.IsFalse(body.Contains("StackTrace", StringComparison.OrdinalIgnoreCase),
-            "Auth failure response must not expose stack trace");
-    }
 
     [TestMethod]
     public async Task Should_NotExposeInternalIds_When_AddColumn_Succeeds()
     {
-        using var client = await RegisterFreshUserAsync("info-leak-col");
+        using var client = await _factory.RegisterFreshUserAsync("info-leak-col");
         var board = await GetDefaultBoardAsync(client);
 
         var response = await client.PostAsJsonAsync(
@@ -850,26 +645,9 @@ public sealed class BoardSecurityHardeningTests
 
     // ─────────────────────────────────────────────────────────────
     //  CATEGORY 7: HTTP / ROUTING BEHAVIOUR
+    //  Method enforcement (405) tests removed — covered by MethodEnforcementBaselineTests.
+    //  Board-specific routing checks retained below.
     // ─────────────────────────────────────────────────────────────
-
-    [TestMethod]
-    public async Task Should_Return405_When_PutSentToGetDefaultBoardRoute()
-    {
-        var response = await _client.PutAsJsonAsync("/api/boards/default", new { });
-
-        // Method not allowed — the route only accepts GET
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode,
-            "PUT to a GET-only endpoint must return 405");
-    }
-
-    [TestMethod]
-    public async Task Should_Return405_When_DeleteSentToGetDefaultBoardRoute()
-    {
-        var response = await _client.DeleteAsync("/api/boards/default");
-
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode,
-            "DELETE to a GET-only endpoint must return 405");
-    }
 
     [TestMethod]
     public async Task Should_Return4xx_When_BoardIdIsNotAValidGuid()
@@ -896,9 +674,4 @@ public sealed class BoardSecurityHardeningTests
             $"Non-GUID column ID must be rejected by route constraint, got {response.StatusCode}");
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  HELPER SHAPE for error-body deserialization
-    // ─────────────────────────────────────────────────────────────
-
-    private sealed record ErrorResponseShape(string? Type, string? Title, int Status);
 }

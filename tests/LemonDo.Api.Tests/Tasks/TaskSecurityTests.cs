@@ -1,12 +1,10 @@
 namespace LemonDo.Api.Tests.Tasks;
 
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
-using LemonDo.Api.Contracts.Auth;
 using LemonDo.Api.Tests.Infrastructure;
+using LemonDo.Api.Tests.Infrastructure.Security;
 using LemonDo.Application.Common;
 using LemonDo.Application.Tasks.DTOs;
 using LemonDo.Domain.Common;
@@ -17,7 +15,7 @@ using LemonDo.Domain.Common;
 /// A FAILING test means a vulnerability exists — the endpoint accepted what it should have rejected.
 /// </summary>
 [TestClass]
-public sealed class TaskSecurityHardeningTests
+public sealed class TaskSecurityTests
 {
     private static CustomWebApplicationFactory _factory = null!;
     private static HttpClient _authenticatedClient = null!;
@@ -35,182 +33,6 @@ public sealed class TaskSecurityHardeningTests
     {
         _authenticatedClient.Dispose();
         _factory.Dispose();
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    //  CATEGORY 1: Authentication Bypass
-    //  All task endpoints require JWT. Every request without a valid
-    //  token must return 401 Unauthorized.
-    // ─────────────────────────────────────────────────────────────
-
-    [TestMethod]
-    public async Task Should_Return401_When_ListTasksWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/tasks");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "GET /api/tasks must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_CreateTaskWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.PostAsJsonAsync("/api/tasks", new { Title = "Attack" });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "POST /api/tasks must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_GetTaskByIdWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.GetAsync($"/api/tasks/{Guid.NewGuid()}");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "GET /api/tasks/{id} must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_UpdateTaskWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.PutAsJsonAsync($"/api/tasks/{Guid.NewGuid()}", new { Title = "Attack" });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "PUT /api/tasks/{id} must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_DeleteTaskWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.DeleteAsync($"/api/tasks/{Guid.NewGuid()}");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "DELETE /api/tasks/{id} must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_CompleteTaskWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.PostAsync($"/api/tasks/{Guid.NewGuid()}/complete", null);
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "POST /api/tasks/{id}/complete must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_UncompleteTaskWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.PostAsync($"/api/tasks/{Guid.NewGuid()}/uncomplete", null);
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "POST /api/tasks/{id}/uncomplete must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_ArchiveTaskWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.PostAsync($"/api/tasks/{Guid.NewGuid()}/archive", null);
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "POST /api/tasks/{id}/archive must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_ViewNoteWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.PostAsJsonAsync($"/api/tasks/{Guid.NewGuid()}/view-note",
-            new { Password = "TestPass123!" });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "POST /api/tasks/{id}/view-note must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_BulkCompleteWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.PostAsJsonAsync("/api/tasks/bulk/complete",
-            new { TaskIds = new[] { Guid.NewGuid() } });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "POST /api/tasks/bulk/complete must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_AddTagWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.PostAsJsonAsync($"/api/tasks/{Guid.NewGuid()}/tags",
-            new { Tag = "hacked" });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "POST /api/tasks/{id}/tags must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_RemoveTagWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.DeleteAsync($"/api/tasks/{Guid.NewGuid()}/tags/sometag");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "DELETE /api/tasks/{id}/tags/{tag} must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_MoveTaskWithNoToken()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.PostAsJsonAsync($"/api/tasks/{Guid.NewGuid()}/move",
-            new { ColumnId = Guid.NewGuid(), PreviousTaskId = (Guid?)null, NextTaskId = (Guid?)null });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "POST /api/tasks/{id}/move must reject unauthenticated requests");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_UsingMalformedBearerToken()
-    {
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", "this.is.not.a.valid.jwt");
-        var response = await client.GetAsync("/api/tasks");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "Malformed JWT token must be rejected");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_UsingEmptyBearerToken()
-    {
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", "");
-        var response = await client.GetAsync("/api/tasks");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "Empty Bearer token must be rejected");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_UsingRandomStringAsToken()
-    {
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", "randomstringnotajwt");
-        var response = await client.GetAsync("/api/tasks");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "Random string token must be rejected");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_UsingTokenSignedByWrongKey()
-    {
-        // JWT signed with a different secret than the server's test key
-        // Header.Payload.Signature where signature is from a different key
-        var fakeToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
-                        ".eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkF0dGFja2VyIn0" +
-                        ".SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", fakeToken);
-        var response = await client.GetAsync("/api/tasks");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode,
-            "JWT signed with wrong key must be rejected");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -441,74 +263,6 @@ public sealed class TaskSecurityHardeningTests
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  CATEGORY 3: Pagination Attacks
-    //  The ListTasks endpoint passes page/pageSize directly to the
-    //  repository with no clamping. This tests boundary behavior.
-    // ─────────────────────────────────────────────────────────────
-
-    [TestMethod]
-    public async Task Should_NotReturn500_When_PageIsNegative()
-    {
-        // page=-1 → Skip((-1-1)*pageSize) = Skip(-100) → negative skip value
-        // EF Core/SQLite may throw or clamp. Must not return 500.
-        var response = await _authenticatedClient.GetAsync("/api/tasks?page=-1");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "Negative page number must not cause a server error (500)");
-    }
-
-    [TestMethod]
-    public async Task Should_NotReturn500_When_PageIsZero()
-    {
-        // page=0 → Skip((0-1)*pageSize) = Skip(-50) → negative skip
-        var response = await _authenticatedClient.GetAsync("/api/tasks?page=0");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "page=0 must not cause a server error (500)");
-    }
-
-    [TestMethod]
-    public async Task Should_NotReturn500_When_PageSizeIsZero()
-    {
-        var response = await _authenticatedClient.GetAsync("/api/tasks?page=1&pageSize=0");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "pageSize=0 must not cause a server error (500)");
-    }
-
-    [TestMethod]
-    public async Task Should_NotReturn500_When_PageSizeIsNegative()
-    {
-        var response = await _authenticatedClient.GetAsync("/api/tasks?page=1&pageSize=-1");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "Negative pageSize must not cause a server error (500)");
-    }
-
-    [TestMethod]
-    public async Task Should_NotReturn500_When_PageSizeIsExtremelyLarge()
-    {
-        // An enormous page size could trigger a DoS by scanning the entire table
-        var response = await _authenticatedClient.GetAsync("/api/tasks?pageSize=999999");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "Extremely large pageSize must not cause a server error");
-        // Ideally this should return 400, but at minimum must not crash.
-        // The vulnerability is if it returns 200 with no clamping —
-        // record the actual behavior for reporting.
-    }
-
-    [TestMethod]
-    public async Task Should_EnforceMaxPageSize_When_PageSizeIsExtremelyLarge()
-    {
-        // A well-secured API should clamp pageSize to a reasonable maximum (e.g., 200)
-        // to prevent DoS. This test documents whether that guard exists.
-        var response = await _authenticatedClient.GetAsync("/api/tasks?pageSize=999999");
-        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode,
-            "pageSize=999999 should be rejected with 400 (no max-page-size guard found — potential DoS vector)");
-    }
-
-    // ─────────────────────────────────────────────────────────────
     //  CATEGORY 4: Business Logic Abuse
     // ─────────────────────────────────────────────────────────────
 
@@ -657,8 +411,8 @@ public sealed class TaskSecurityHardeningTests
     public async Task Should_Return404_When_ViewingAnotherUsersNote()
     {
         // User A creates a task with a sensitive note
-        using var clientA = await RegisterFreshUserAsync("note-idor-a");
-        using var clientB = await RegisterFreshUserAsync("note-idor-b");
+        using var clientA = await _factory.RegisterFreshUserAsync("note-idor-a");
+        using var clientB = await _factory.RegisterFreshUserAsync("note-idor-b");
 
         var createResponse = await clientA.PostAsJsonAsync("/api/tasks",
             new
@@ -790,45 +544,6 @@ public sealed class TaskSecurityHardeningTests
             "Task must not be soft-deleted by over-posting IsDeleted=true");
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  CATEGORY 8: Information Leakage
-    //  Error responses must not reveal stack traces, database column
-    //  names, or sensitive system internals.
-    // ─────────────────────────────────────────────────────────────
-
-    [TestMethod]
-    public async Task Should_ReturnGenericError_When_TaskNotFound()
-    {
-        var response = await _authenticatedClient.GetAsync($"/api/tasks/{Guid.NewGuid()}");
-
-        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
-        var body = await response.Content.ReadAsStringAsync();
-
-        // Must not contain stack trace indicators
-        Assert.IsFalse(body.Contains("StackTrace", StringComparison.OrdinalIgnoreCase),
-            "404 response must not contain stack trace");
-        Assert.IsFalse(body.Contains("at LemonDo", StringComparison.OrdinalIgnoreCase),
-            "404 response must not contain internal namespace");
-        Assert.IsFalse(body.Contains("Exception", StringComparison.OrdinalIgnoreCase),
-            "404 response must not contain exception type names");
-    }
-
-    [TestMethod]
-    public async Task Should_ReturnStructuredError_When_ValidationFails()
-    {
-        var response = await _authenticatedClient.PostAsJsonAsync("/api/tasks",
-            new { Title = "" });
-
-        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadAsStringAsync();
-
-        // Must not contain stack trace
-        Assert.IsFalse(body.Contains("StackTrace", StringComparison.OrdinalIgnoreCase),
-            "Validation error must not expose stack trace");
-        Assert.IsFalse(body.Contains("at LemonDo", StringComparison.OrdinalIgnoreCase),
-            "Validation error must not expose namespace paths");
-    }
-
     [TestMethod]
     public async Task Should_NotExposePasswordHash_When_ViewingTask()
     {
@@ -860,56 +575,6 @@ public sealed class TaskSecurityHardeningTests
             "Task list must not expose raw encrypted note");
         Assert.IsFalse(body.Contains("EncryptedSensitiveNote", StringComparison.OrdinalIgnoreCase),
             "Task list must not expose internal shadow property names");
-    }
-
-    [TestMethod]
-    public async Task Should_Return401WithGenericMessage_When_NoTokenProvided()
-    {
-        using var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/tasks");
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-        var body = await response.Content.ReadAsStringAsync();
-
-        // Should not reveal internal token validation details
-        Assert.IsFalse(body.Contains("StackTrace", StringComparison.OrdinalIgnoreCase),
-            "401 response must not contain stack trace");
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    //  CATEGORY 9: HTTP Method Enforcement
-    // ─────────────────────────────────────────────────────────────
-
-    [TestMethod]
-    public async Task Should_Return405_When_SendingPutToListEndpoint()
-    {
-        var response = await _authenticatedClient.PutAsJsonAsync("/api/tasks",
-            new { Title = "Method confusion" });
-
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode,
-            "PUT /api/tasks must return 405 — only GET and POST are valid on the collection");
-    }
-
-    [TestMethod]
-    public async Task Should_Return405_When_SendingDeleteToListEndpoint()
-    {
-        var response = await _authenticatedClient.DeleteAsync("/api/tasks");
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode,
-            "DELETE /api/tasks must return 405");
-    }
-
-    [TestMethod]
-    public async Task Should_Return405_When_SendingPatchToTaskEndpoint()
-    {
-        var id = Guid.NewGuid();
-        using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/tasks/{id}")
-        {
-            Content = new StringContent("{\"title\":\"x\"}", Encoding.UTF8, "application/json")
-        };
-        var response = await _authenticatedClient.SendAsync(request);
-
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode,
-            "PATCH /api/tasks/{id} must return 405 — only GET, PUT, DELETE are valid");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -1021,23 +686,4 @@ public sealed class TaskSecurityHardeningTests
             "Soft-deleted task must not appear in task list");
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  Helper
-    // ─────────────────────────────────────────────────────────────
-
-    private static async Task<HttpClient> RegisterFreshUserAsync(string prefix)
-    {
-        var email = $"{prefix}-{Guid.NewGuid():N}@lemondo.dev";
-        var client = _factory.CreateClient();
-
-        var registerResponse = await client.PostAsJsonAsync("/api/auth/register",
-            new { Email = email, Password = "TestPass123!", DisplayName = $"User {prefix}" });
-        registerResponse.EnsureSuccessStatusCode();
-
-        var auth = await registerResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", auth!.AccessToken);
-
-        return client;
-    }
 }

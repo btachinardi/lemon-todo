@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using LemonDo.Api.Contracts.Auth;
 using LemonDo.Api.Tests.Infrastructure;
+using LemonDo.Api.Tests.Infrastructure.Security;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 /// <summary>
@@ -15,7 +16,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 /// A FAILING test means the endpoint is VULNERABLE (it accepted or mishandled the attack).
 /// </summary>
 [TestClass]
-public sealed class AuthSecurityHardeningTests
+public sealed class AuthSecurityTests
 {
     private static CustomWebApplicationFactory _factory = null!;
 
@@ -37,85 +38,11 @@ public sealed class AuthSecurityHardeningTests
     private HttpClient CreateFreshClient() =>
         _factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
 
-    private static string ExtractRefreshTokenCookie(HttpResponseMessage response)
-    {
-        if (!response.Headers.TryGetValues("Set-Cookie", out var cookies))
-            return string.Empty;
-        var setCookie = cookies.FirstOrDefault(c => c.StartsWith("refresh_token="));
-        if (setCookie is null) return string.Empty;
-        var semiIndex = setCookie.IndexOf(';');
-        return semiIndex > 0 ? setCookie[..semiIndex] : setCookie;
-    }
-
     // =========================================================================
     // CATEGORY 1: AUTHENTICATION BYPASS
+    // Generic auth bypass tests removed — covered by AuthBypassBaselineTests.
+    // Auth-specific attack vectors retained below.
     // =========================================================================
-
-    [TestMethod]
-    public async Task Should_Return401_When_GetMeWithNoToken()
-    {
-        using var client = CreateFreshClient();
-        var response = await client.GetAsync("/api/auth/me");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_GetMeWithMalformedToken()
-    {
-        using var client = CreateFreshClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "this.is.not.a.jwt");
-        var response = await client.GetAsync("/api/auth/me");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_GetMeWithRandomBase64Token()
-    {
-        using var client = CreateFreshClient();
-        // Looks like a JWT (three base64 segments) but is not signed by our key
-        var fakeHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes("""{"alg":"HS256","typ":"JWT"}"""));
-        var fakePayload = Convert.ToBase64String(Encoding.UTF8.GetBytes("""{"sub":"00000000-0000-0000-0000-000000000001","exp":9999999999}"""));
-        var fakeToken = $"{fakeHeader}.{fakePayload}.INVALIDSIGNATURE";
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", fakeToken);
-        var response = await client.GetAsync("/api/auth/me");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_GetMeWithEmptyBearerToken()
-    {
-        using var client = CreateFreshClient();
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "Bearer ");
-        var response = await client.GetAsync("/api/auth/me");
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_LogoutWithNoToken()
-    {
-        using var client = CreateFreshClient();
-        var response = await client.PostAsync("/api/auth/logout", null);
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_RevealProfileWithNoToken()
-    {
-        using var client = CreateFreshClient();
-        var response = await client.PostAsJsonAsync("/api/auth/reveal-profile",
-            new { Password = CustomWebApplicationFactory.TestUserPassword });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_RevealProfileWithMalformedToken()
-    {
-        using var client = CreateFreshClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "not-a-token");
-        var response = await client.PostAsJsonAsync("/api/auth/reveal-profile",
-            new { Password = CustomWebApplicationFactory.TestUserPassword });
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
 
     [TestMethod]
     public async Task Should_Return401_When_AlgorithmNoneAttack()
@@ -163,7 +90,7 @@ public sealed class AuthSecurityHardeningTests
         var loginResponse = await client.PostAsJsonAsync("/api/auth/login",
             new { Email = CustomWebApplicationFactory.TestUserEmail, Password = CustomWebApplicationFactory.TestUserPassword });
         Assert.AreEqual(HttpStatusCode.OK, loginResponse.StatusCode);
-        var originalCookie = ExtractRefreshTokenCookie(loginResponse);
+        var originalCookie = SecurityTestExtensions.ExtractRefreshTokenCookie(loginResponse);
         Assert.IsFalse(string.IsNullOrEmpty(originalCookie), "Login must set a refresh_token cookie");
 
         // First refresh — this rotates the token (old one is revoked, new one issued)
@@ -206,7 +133,7 @@ public sealed class AuthSecurityHardeningTests
         var loginResponse = await loginClient.PostAsJsonAsync("/api/auth/login",
             new { Email = CustomWebApplicationFactory.TestUserEmail, Password = CustomWebApplicationFactory.TestUserPassword });
         Assert.AreEqual(HttpStatusCode.OK, loginResponse.StatusCode);
-        var cookie = ExtractRefreshTokenCookie(loginResponse);
+        var cookie = SecurityTestExtensions.ExtractRefreshTokenCookie(loginResponse);
         Assert.IsFalse(string.IsNullOrEmpty(cookie));
 
         // Send the refresh cookie to a task endpoint as if it were a bearer token — no Authorization header
@@ -619,7 +546,7 @@ public sealed class AuthSecurityHardeningTests
 
         var auth = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(auth);
-        var cookie = ExtractRefreshTokenCookie(loginResponse);
+        var cookie = SecurityTestExtensions.ExtractRefreshTokenCookie(loginResponse);
         Assert.IsFalse(string.IsNullOrEmpty(cookie));
 
         // Logout
@@ -701,7 +628,7 @@ public sealed class AuthSecurityHardeningTests
 
         var auth = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
         Assert.IsNotNull(auth);
-        var cookie = ExtractRefreshTokenCookie(loginResponse);
+        var cookie = SecurityTestExtensions.ExtractRefreshTokenCookie(loginResponse);
 
         // Logout (revoke server-side session)
         var logoutRequest = new HttpRequestMessage(HttpMethod.Post, "/api/auth/logout");

@@ -1,13 +1,12 @@
 namespace LemonDo.Api.Tests.Misc;
 
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using LemonDo.Api.Contracts.Auth;
 using LemonDo.Api.Endpoints;
 using LemonDo.Api.Tests.Infrastructure;
+using LemonDo.Api.Tests.Infrastructure.Security;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 
@@ -19,7 +18,7 @@ using Microsoft.Extensions.Configuration;
 /// A FAILING test means the endpoint is VULNERABLE (it accepted the malicious request).
 /// </summary>
 [TestClass]
-public sealed class MiscEndpointsSecurityHardeningTests
+public sealed class MiscEndpointsSecurityTests
 {
     private static CustomWebApplicationFactory _factory = null!;
     private static HttpClient _anonymousClient = null!;
@@ -42,92 +41,8 @@ public sealed class MiscEndpointsSecurityHardeningTests
     }
 
     // -------------------------------------------------------------------------
-    // NOTIFICATIONS — Authentication Bypass
+    // Notification auth bypass tests removed — covered by AuthBypassBaselineTests.
     // -------------------------------------------------------------------------
-
-    [TestMethod]
-    public async Task Should_Return401_When_ListNotificationsWithNoToken()
-    {
-        var response = await _anonymousClient.GetAsync("/api/notifications");
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_GetUnreadCountWithNoToken()
-    {
-        var response = await _anonymousClient.GetAsync("/api/notifications/unread-count");
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_MarkAsReadWithNoToken()
-    {
-        var response = await _anonymousClient.PostAsync(
-            $"/api/notifications/{Guid.NewGuid()}/read", null);
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_MarkAllAsReadWithNoToken()
-    {
-        var response = await _anonymousClient.PostAsync("/api/notifications/read-all", null);
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_ListNotificationsWithMalformedToken()
-    {
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", "this-is-not-a-valid-jwt-token");
-
-        var response = await client.GetAsync("/api/notifications");
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_MarkAsReadWithEmptyBearerToken()
-    {
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "Bearer ");
-
-        var response = await client.PostAsync(
-            $"/api/notifications/{Guid.NewGuid()}/read", null);
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_ListNotificationsWithWronglySignedToken()
-    {
-        // Craft a structurally valid JWT signed with a DIFFERENT key than the server expects
-        var header = Convert.ToBase64String(Encoding.UTF8.GetBytes(
-            """{"alg":"HS256","typ":"JWT"}"""))
-            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
-
-        var payload = Convert.ToBase64String(Encoding.UTF8.GetBytes(
-            $$$"""{"sub":"{{{Guid.NewGuid()}}}","iss":"LemonDo","aud":"LemonDo","exp":9999999999}"""))
-            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
-
-        var fakeSignature = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes("wrongsignature"))
-            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
-
-        var fakeToken = $"{header}.{payload}.{fakeSignature}";
-
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", fakeToken);
-
-        var response = await client.GetAsync("/api/notifications");
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
 
     // -------------------------------------------------------------------------
     // NOTIFICATIONS — IDOR (Authorization / Access Control)
@@ -137,8 +52,7 @@ public sealed class MiscEndpointsSecurityHardeningTests
     public async Task Should_ReturnNotFound_When_UserBMarksUserANotificationAsRead()
     {
         // User A registers and gets their welcome notification
-        var emailA = $"sec-idor-userA-{Guid.NewGuid():N}@lemondo.dev";
-        using var clientA = await RegisterAndAuthenticateAsync(emailA);
+        using var clientA = await _factory.RegisterFreshUserAsync("sec-idor-userA");
 
         var listResponse = await clientA.GetAsync("/api/notifications");
         var list = await listResponse.Content.ReadFromJsonAsync<NotificationListResponse>(
@@ -148,8 +62,7 @@ public sealed class MiscEndpointsSecurityHardeningTests
         var userANotificationId = list.Items[0].Id;
 
         // User B tries to mark user A's notification as read — should be blocked
-        var emailB = $"sec-idor-userB-{Guid.NewGuid():N}@lemondo.dev";
-        using var clientB = await RegisterAndAuthenticateAsync(emailB);
+        using var clientB = await _factory.RegisterFreshUserAsync("sec-idor-userB");
 
         var response = await clientB.PostAsync(
             $"/api/notifications/{userANotificationId}/read", null);
@@ -162,16 +75,14 @@ public sealed class MiscEndpointsSecurityHardeningTests
     public async Task Should_NotExposeOtherUsersNotifications_When_ListingNotifications()
     {
         // User A has a welcome notification
-        var emailA = $"sec-list-userA-{Guid.NewGuid():N}@lemondo.dev";
-        using var clientA = await RegisterAndAuthenticateAsync(emailA);
+        using var clientA = await _factory.RegisterFreshUserAsync("sec-list-userA");
 
         var listA = await (await clientA.GetAsync("/api/notifications"))
             .Content.ReadFromJsonAsync<NotificationListResponse>(TestJsonOptions.Default);
         Assert.IsNotNull(listA);
 
         // User B's list must NOT contain user A's notification IDs
-        var emailB = $"sec-list-userB-{Guid.NewGuid():N}@lemondo.dev";
-        using var clientB = await RegisterAndAuthenticateAsync(emailB);
+        using var clientB = await _factory.RegisterFreshUserAsync("sec-list-userB");
 
         var listB = await (await clientB.GetAsync("/api/notifications"))
             .Content.ReadFromJsonAsync<NotificationListResponse>(TestJsonOptions.Default);
@@ -256,57 +167,8 @@ public sealed class MiscEndpointsSecurityHardeningTests
     }
 
     // -------------------------------------------------------------------------
-    // NOTIFICATIONS — Pagination Abuse
+    // Pagination abuse tests removed — covered by PaginationAbuseBaselineTests.
     // -------------------------------------------------------------------------
-
-    [TestMethod]
-    public async Task Should_NotReturn500_When_ListNotificationsWithNegativePage()
-    {
-        var response = await _authenticatedClient.GetAsync("/api/notifications?page=-1&pageSize=20");
-
-        // The repository does Skip((-1-1)*20) = Skip(-40) which EF Core may handle oddly.
-        // We verify the endpoint does NOT 500 on this input — ideally it returns 400.
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "Negative page number must not cause an unhandled server error");
-    }
-
-    [TestMethod]
-    public async Task Should_NotReturn500_When_ListNotificationsWithZeroPageSize()
-    {
-        var response = await _authenticatedClient.GetAsync("/api/notifications?page=1&pageSize=0");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "Zero pageSize must not cause an unhandled server error");
-    }
-
-    [TestMethod]
-    public async Task Should_NotReturn500_When_ListNotificationsWithHugePageSize()
-    {
-        // Attempt to force a massive DB read
-        var response = await _authenticatedClient.GetAsync("/api/notifications?page=1&pageSize=1000000");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "Extremely large pageSize must not cause an unhandled server error");
-    }
-
-    [TestMethod]
-    public async Task Should_NotReturn500_When_ListNotificationsWithNegativePageSize()
-    {
-        var response = await _authenticatedClient.GetAsync("/api/notifications?page=1&pageSize=-999");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "Negative pageSize must not cause an unhandled server error");
-    }
-
-    [TestMethod]
-    public async Task Should_NotReturn500_When_ListNotificationsWithMaxIntPage()
-    {
-        var response = await _authenticatedClient.GetAsync(
-            $"/api/notifications?page={int.MaxValue}&pageSize=20");
-
-        Assert.AreNotEqual(HttpStatusCode.InternalServerError, response.StatusCode,
-            "MAX_INT page must not overflow and cause an unhandled server error");
-    }
 
     // -------------------------------------------------------------------------
     // NOTIFICATIONS — Information Leakage
@@ -327,74 +189,11 @@ public sealed class MiscEndpointsSecurityHardeningTests
         Assert.DoesNotContain("at LemonDo", body, $"Response must not leak internal namespace: {body}");
     }
 
-    [TestMethod]
-    public async Task Should_HaveSecurityHeaders_When_ListNotificationsAuthenticated()
-    {
-        var response = await _authenticatedClient.GetAsync("/api/notifications");
-
-        Assert.IsTrue(response.Headers.Contains("X-Content-Type-Options"),
-            "X-Content-Type-Options header must be present");
-        Assert.AreEqual("nosniff",
-            response.Headers.GetValues("X-Content-Type-Options").FirstOrDefault());
-
-        Assert.IsTrue(response.Headers.Contains("X-Frame-Options"),
-            "X-Frame-Options header must be present");
-        Assert.AreEqual("DENY",
-            response.Headers.GetValues("X-Frame-Options").FirstOrDefault());
-    }
-
-    [TestMethod]
-    public async Task Should_NotExposeServerHeader_When_ListNotifications()
-    {
-        var response = await _authenticatedClient.GetAsync("/api/notifications");
-
-        // ASP.NET Core does not add X-Powered-By by default, but verify it's absent
-        Assert.IsFalse(response.Headers.Contains("X-Powered-By"),
-            "X-Powered-By header must not be present");
-    }
+    // Security headers tests removed — covered by InfoLeakageBaselineTests.
 
     // -------------------------------------------------------------------------
-    // ONBOARDING — Authentication Bypass
+    // Onboarding auth bypass tests removed — covered by AuthBypassBaselineTests.
     // -------------------------------------------------------------------------
-
-    [TestMethod]
-    public async Task Should_Return401_When_GetOnboardingStatusWithNoToken()
-    {
-        var response = await _anonymousClient.GetAsync("/api/onboarding/status");
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_CompleteOnboardingWithNoToken()
-    {
-        var response = await _anonymousClient.PostAsync("/api/onboarding/complete", null);
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_GetOnboardingStatusWithMalformedToken()
-    {
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", "eyJhbGciOiJIUzI1NiJ9.INVALID.PAYLOAD");
-
-        var response = await client.GetAsync("/api/onboarding/status");
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_CompleteOnboardingWithEmptyBearerToken()
-    {
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "Bearer ");
-
-        var response = await client.PostAsync("/api/onboarding/complete", null);
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
 
     // -------------------------------------------------------------------------
     // ONBOARDING — Business Logic / Idempotency
@@ -403,8 +202,7 @@ public sealed class MiscEndpointsSecurityHardeningTests
     [TestMethod]
     public async Task Should_Return200_When_CompleteOnboardingCalledTwice()
     {
-        var email = $"sec-onboard-idem-{Guid.NewGuid():N}@lemondo.dev";
-        using var client = await RegisterAndAuthenticateAsync(email);
+        using var client = await _factory.RegisterFreshUserAsync("sec-onboard-idem");
 
         var first = await client.PostAsync("/api/onboarding/complete", null);
         Assert.AreEqual(HttpStatusCode.OK, first.StatusCode);
@@ -418,8 +216,7 @@ public sealed class MiscEndpointsSecurityHardeningTests
     [TestMethod]
     public async Task Should_PreserveOriginalCompletedAt_When_CompleteOnboardingCalledTwice()
     {
-        var email = $"sec-onboard-ts-{Guid.NewGuid():N}@lemondo.dev";
-        using var client = await RegisterAndAuthenticateAsync(email);
+        using var client = await _factory.RegisterFreshUserAsync("sec-onboard-ts");
 
         var first = await client.PostAsync("/api/onboarding/complete", null);
         var firstStatus = await first.Content.ReadFromJsonAsync<OnboardingStatusResponse>(
@@ -439,46 +236,8 @@ public sealed class MiscEndpointsSecurityHardeningTests
     }
 
     // -------------------------------------------------------------------------
-    // ANALYTICS — Authentication Bypass
+    // Analytics auth bypass tests removed — covered by AuthBypassBaselineTests.
     // -------------------------------------------------------------------------
-
-    [TestMethod]
-    public async Task Should_Return401_When_TrackEventsWithNoToken()
-    {
-        var request = new TrackEventsRequest
-        {
-            Events = [new AnalyticsEvent { EventName = "test_event" }]
-        };
-
-        var response = await _anonymousClient.PostAsJsonAsync("/api/analytics/events", request);
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_TrackEventsWithMalformedToken()
-    {
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", "totally.invalid.token");
-
-        var response = await client.PostAsJsonAsync("/api/analytics/events",
-            new TrackEventsRequest { Events = [new AnalyticsEvent { EventName = "test" }] });
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return401_When_TrackEventsWithEmptyBearerToken()
-    {
-        using var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "Bearer ");
-
-        var response = await client.PostAsJsonAsync("/api/analytics/events",
-            new TrackEventsRequest { Events = [new AnalyticsEvent { EventName = "test" }] });
-
-        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
 
     // -------------------------------------------------------------------------
     // ANALYTICS — Input Validation / Injection in Payloads
@@ -762,16 +521,7 @@ public sealed class MiscEndpointsSecurityHardeningTests
             $"enableDemoAccounts must be a JSON boolean true or false, got: {prop.Value.ValueKind}");
     }
 
-    [TestMethod]
-    public async Task Should_HaveSecurityHeaders_When_GetConfigAnonymously()
-    {
-        var response = await _anonymousClient.GetAsync("/api/config");
-
-        Assert.IsTrue(response.Headers.Contains("X-Content-Type-Options"),
-            "X-Content-Type-Options security header must be present on /api/config");
-        Assert.IsTrue(response.Headers.Contains("X-Frame-Options"),
-            "X-Frame-Options security header must be present on /api/config");
-    }
+    // Config security headers test removed — covered by InfoLeakageBaselineTests.
 
     [TestMethod]
     public async Task Should_NotExposeEnvironmentVariables_When_GetConfig()
@@ -805,58 +555,7 @@ public sealed class MiscEndpointsSecurityHardeningTests
     }
 
     // -------------------------------------------------------------------------
-    // HTTP Security — Method Not Allowed
+    // Method enforcement tests removed — covered by MethodEnforcementBaselineTests.
     // -------------------------------------------------------------------------
 
-    [TestMethod]
-    public async Task Should_Return405_When_DeleteSentToNotificationsListEndpoint()
-    {
-        var response = await _authenticatedClient.DeleteAsync("/api/notifications");
-
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return405_When_PutSentToOnboardingStatusEndpoint()
-    {
-        var response = await _authenticatedClient.PutAsync("/api/onboarding/status",
-            new StringContent("{}", Encoding.UTF8, "application/json"));
-
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return405_When_GetSentToAnalyticsEventsEndpoint()
-    {
-        var response = await _authenticatedClient.GetAsync("/api/analytics/events");
-
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task Should_Return405_When_PostSentToConfigEndpoint()
-    {
-        var response = await _anonymousClient.PostAsync("/api/config",
-            new StringContent("{}", Encoding.UTF8, "application/json"));
-
-        Assert.AreEqual(HttpStatusCode.MethodNotAllowed, response.StatusCode);
-    }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    private async Task<HttpClient> RegisterAndAuthenticateAsync(string email)
-    {
-        var client = _factory.CreateClient();
-        var registerResponse = await client.PostAsJsonAsync("/api/auth/register",
-            new { Email = email, Password = "TestPass123!", DisplayName = "Security Test User" });
-        registerResponse.EnsureSuccessStatusCode();
-
-        var auth = await registerResponse.Content.ReadFromJsonAsync<AuthResponse>();
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", auth!.AccessToken);
-
-        return client;
-    }
 }
