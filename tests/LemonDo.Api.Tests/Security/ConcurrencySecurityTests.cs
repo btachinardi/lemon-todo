@@ -569,14 +569,14 @@ public sealed class ConcurrencySecurityTests
                 var responses = await Task.WhenAll(tasks);
                 var statusCodes = responses.Select(r => r.StatusCode).ToArray();
 
-                // SQLite in-memory DB shares a single connection. Under extreme concurrency,
-                // some requests may hit unrecoverable connection state errors (500). This is a
-                // known SQLite limitation, not a security bug. With SQL Server (production)
-                // these would be 409s. We tolerate at most 2 out of 15 requests returning 500.
-                var serverErrors = statusCodes.Count(s => s == HttpStatusCode.InternalServerError);
-                Assert.IsTrue(serverErrors <= 2,
-                    $"Round {round}: Too many 500s ({serverErrors}/{concurrency}) under concurrency. " +
-                    $"Got: {string.Join(", ", statusCodes.Select(s => (int)s))}");
+                // With TransientFaultRetryPolicy in AdminUserService and SqliteTransientFaultDetector
+                // in ErrorHandlingMiddleware, no request should produce a 500.
+                // Service-level retries handle transient SQLite errors before they reach the middleware;
+                // the middleware's catch-all for transient faults is the final safety net.
+                foreach (var status in statusCodes)
+                    Assert.AreNotEqual(HttpStatusCode.InternalServerError, status,
+                        $"Round {round}: High-concurrency role assignment must not 500. " +
+                        $"Got: {string.Join(", ", statusCodes.Select(s => (int)s))}");
 
                 var getUserResponse = await sysAdminClient.GetAsync($"/api/admin/users/{targetUserId}");
                 var user = await getUserResponse.Content.ReadFromJsonAsync<
