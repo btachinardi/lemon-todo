@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-02-20
+
+Infrastructure resilience patch — service-level transient fault retry replaces 500 tolerance.
+
+### Added
+
+- **`TransientFaultRetryPolicy`** — service-level retry with linear back-off (3 retries, 50ms base) for transient SQLite faults
+- **`SqliteTransientFaultDetector`** — walks the full exception chain to detect transient SQLite errors (codes 1/5/6, connection state errors like nested transactions and pending local transactions)
+
+### Changed
+
+- **`AdminUserService`** — all four operations (AssignRole, RemoveRole, Deactivate, Reactivate) wrapped in `TransientFaultRetryPolicy` so Identity operations survive SQLite connection contention under concurrent access
+- **`ErrorHandlingMiddleware`** — replaced two separate SQLite catch blocks with a single chain-walking catch using the shared `SqliteTransientFaultDetector`, catching ANY exception wrapping a transient SQLite fault regardless of nesting depth
+- Concurrency security test reverted to strict zero-500 assertion (resilience now prevents 500s instead of tolerating them)
+
 ## [1.0.8] - 2026-02-20
 
 Security hardening patch — domain input validation, middleware hardening, atomic refresh token rotation, admin self-action guards, and parameterized security test infrastructure.
@@ -502,7 +517,8 @@ Checkpoint 1: Core Task Management — a full-stack task management application 
 - Drop target accuracy for cross-column card positioning
 - Board query side effects removed (board seeded on startup instead)
 
-[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.8...HEAD
+[unreleased]: https://github.com/btachinardi/lemon-todo/compare/v1.0.9...HEAD
+[1.0.9]: https://github.com/btachinardi/lemon-todo/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/btachinardi/lemon-todo/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/btachinardi/lemon-todo/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/btachinardi/lemon-todo/compare/v1.0.5...v1.0.6

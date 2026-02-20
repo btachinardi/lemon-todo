@@ -14,16 +14,19 @@ using Microsoft.Extensions.Logging;
 /// </remarks>
 public sealed class TransientFaultRetryPolicy(ILogger<TransientFaultRetryPolicy> logger)
 {
-    /// <summary>Maximum number of retry attempts before giving up.</summary>
-    public int MaxRetries { get; init; } = 3;
+    private static readonly Random Jitter = new();
 
-    /// <summary>Base delay between retries (multiplied by attempt number for linear back-off).</summary>
+    /// <summary>Maximum number of retry attempts before giving up.</summary>
+    public int MaxRetries { get; init; } = 5;
+
+    /// <summary>Base delay between retries (multiplied by attempt number for linear back-off, plus jitter).</summary>
     public TimeSpan BaseDelay { get; init; } = TimeSpan.FromMilliseconds(50);
 
     /// <summary>
     /// Executes the given operation with transient fault retry.
     /// Returns the operation result on success, or re-throws the last exception
-    /// if all retries are exhausted.
+    /// if all retries are exhausted. Uses linear back-off with random jitter
+    /// to avoid thundering herd when many concurrent operations retry.
     /// </summary>
     public async Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken ct = default)
     {
@@ -35,11 +38,14 @@ public sealed class TransientFaultRetryPolicy(ILogger<TransientFaultRetryPolicy>
             }
             catch (Exception ex) when (attempt < MaxRetries && SqliteTransientFaultDetector.IsTransient(ex))
             {
-                var delay = BaseDelay * (attempt + 1);
+                var baseMs = BaseDelay.TotalMilliseconds * (attempt + 1);
+                int jitterMs;
+                lock (Jitter) { jitterMs = Jitter.Next(0, (int)baseMs); }
+                var delayMs = baseMs + jitterMs;
                 logger.LogDebug(
-                    "Transient SQLite fault (attempt {Attempt}/{MaxRetries}), retrying in {DelayMs}ms: {Message}",
-                    attempt + 1, MaxRetries, delay.TotalMilliseconds, ex.Message);
-                await Task.Delay(delay, ct);
+                    "Transient SQLite fault (attempt {Attempt}/{MaxRetries}), retrying in {DelayMs:F0}ms: {Message}",
+                    attempt + 1, MaxRetries, delayMs, ex.Message);
+                await Task.Delay(TimeSpan.FromMilliseconds(delayMs), ct);
             }
         }
     }
