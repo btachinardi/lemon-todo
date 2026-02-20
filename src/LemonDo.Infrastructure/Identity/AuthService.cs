@@ -118,10 +118,36 @@ public sealed class AuthService(
         string refreshToken, CancellationToken ct)
     {
         var tokenHash = HashToken(refreshToken);
+        var now = DateTimeOffset.UtcNow;
+
+        // Atomic conditional revocation using raw SQL. SQLite serialises all writes, so this
+        // UPDATE only succeeds (rowsAffected == 1) for the ONE request that wins the race.
+        // All other concurrent requests see rowsAffected == 0 and get 401.
+        // Raw SQL is used instead of ExecuteUpdateAsync because EF Core's bulk-update goes
+        // through a separate code path that can encounter SQLite connection state issues under
+        // high concurrency on shared in-memory connections.
+        // We only filter by RevokedAt IS NULL (not by ExpiresAt) to avoid SQLite string-based
+        // DateTimeOffset format mismatch issues. Expiry is checked below after reading the token.
+        var rowsAffected = await dbContext.Database.ExecuteSqlAsync(
+            $"""
+            UPDATE "RefreshTokens"
+            SET "RevokedAt" = {now.ToString("O")}
+            WHERE "TokenHash" = {tokenHash}
+              AND "RevokedAt" IS NULL
+            """,
+            ct);
+
+        if (rowsAffected == 0)
+            return Result<(UserId, AuthTokens), DomainError>.Failure(
+                DomainError.Unauthorized("auth", "Invalid or expired refresh token."));
+
+        // Read the now-revoked token to verify it was not already expired and get the UserId.
         var storedToken = await dbContext.RefreshTokens
+            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
 
-        if (storedToken is null || !storedToken.IsActive)
+        // Guard against the token being expired (we didn't check in the UPDATE WHERE clause)
+        if (storedToken is null || storedToken.ExpiresAt <= now)
             return Result<(UserId, AuthTokens), DomainError>.Failure(
                 DomainError.Unauthorized("auth", "Invalid or expired refresh token."));
 
@@ -130,16 +156,8 @@ public sealed class AuthService(
         // lockout only affects password-based operations.
         var user = await userManager.FindByIdAsync(storedToken.UserId.ToString());
         if (user is null || IsDeactivated(user))
-        {
-            // Revoke the token so it can't be retried
-            storedToken.RevokedAt = DateTimeOffset.UtcNow;
-            await dbContext.SaveChangesAsync(ct);
             return Result<(UserId, AuthTokens), DomainError>.Failure(
                 DomainError.Unauthorized("auth", "Account is deactivated."));
-        }
-
-        // Revoke old token
-        storedToken.RevokedAt = DateTimeOffset.UtcNow;
 
         var userId = UserId.Reconstruct(storedToken.UserId);
         var tokens = await GenerateTokensAsync(userId, ct);
@@ -197,7 +215,22 @@ public sealed class AuthService(
         };
 
         dbContext.RefreshTokens.Add(token);
-        await dbContext.SaveChangesAsync(ct);
+        try
+        {
+            await dbContext.SaveChangesAsync(ct);
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+            when (ex.InnerException?.Message?.Contains("UNIQUE constraint", StringComparison.OrdinalIgnoreCase) == true
+               || ex.InnerException?.Message?.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) == true
+               || ex.InnerException?.Message?.Contains("unique index", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            // Refresh token hash collision — extremely rare but safe to surface as a transient error.
+            // The middleware will convert this to 409 if it bubbles up; but since this is called
+            // during token generation (after successful auth), we log and rethrow so the caller
+            // can handle it gracefully.
+            logger.LogWarning("Duplicate refresh token hash conflict for user {UserId}", userId);
+            throw;
+        }
     }
 
     private static string HashToken(string token)
