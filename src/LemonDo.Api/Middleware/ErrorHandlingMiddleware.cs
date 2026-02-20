@@ -55,6 +55,44 @@ public sealed class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorH
 
             await context.Response.WriteAsJsonAsync(response);
         }
+        catch (Microsoft.AspNetCore.Http.BadHttpRequestException badReq)
+        {
+            var elapsedMs = Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
+            logger.LogWarning(
+                "Bad request on {Method} {Path} after {ElapsedMs:F1}ms: {Message}",
+                context.Request.Method,
+                context.Request.Path,
+                elapsedMs,
+                badReq.Message);
+
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                type = "validation_error",
+                title = "The request body is invalid.",
+                status = 400
+            });
+        }
+        catch (System.Text.Json.JsonException jsonEx)
+        {
+            var elapsedMs = Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
+            logger.LogWarning(
+                "JSON parse error on {Method} {Path} after {ElapsedMs:F1}ms: {Message}",
+                context.Request.Method,
+                context.Request.Path,
+                elapsedMs,
+                jsonEx.Message);
+
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                type = "validation_error",
+                title = "The request body contains invalid JSON.",
+                status = 400
+            });
+        }
         catch (Exception ex)
         {
             var elapsedMs = Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
