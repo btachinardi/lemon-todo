@@ -59,7 +59,7 @@ public static class AdminEndpoints
             return Results.BadRequest(new { Error = "pageSize must not exceed 200." });
 
         pageSize = Math.Clamp(pageSize, 1, 200);
-        page = Math.Max(1, page);
+        page = Math.Clamp(page, 1, int.MaxValue / pageSize);
 
         var result = await handler.HandleAsync(
             new ListUsersAdminQuery(search, role, page, pageSize), ct);
@@ -133,7 +133,7 @@ public static class AdminEndpoints
             return Results.BadRequest(new { Error = "pageSize must not exceed 200." });
 
         pageSize = Math.Clamp(pageSize, 1, 200);
-        page = Math.Max(1, page);
+        page = Math.Clamp(page, 1, int.MaxValue / pageSize);
 
         var result = await handler.HandleAsync(
             new SearchAuditLogQuery(dateFrom, dateTo, action, actorId, resourceType, page, pageSize), ct);
@@ -150,6 +150,12 @@ public static class AdminEndpoints
         if (!Enum.TryParse<ProtectedDataRevealReason>(request.Reason, ignoreCase: true, out var reason))
             return Results.BadRequest(new { Error = $"Invalid reason: '{request.Reason}'." });
 
+        if (request.ReasonDetails is { Length: > 2000 })
+            return Results.BadRequest(new { Error = "ReasonDetails must not exceed 2000 characters." });
+
+        if (request.Comments is { Length: > 2000 })
+            return Results.BadRequest(new { Error = "Comments must not exceed 2000 characters." });
+
         var command = new RevealTaskNoteCommand(taskId, reason, request.ReasonDetails, request.Comments, request.Password!);
         var result = await handler.HandleAsync(command, ct);
         return result.ToHttpResult(revealed => Results.Ok(new { Note = revealed }), httpContext: httpContext);
@@ -164,6 +170,12 @@ public static class AdminEndpoints
     {
         if (!Enum.TryParse<ProtectedDataRevealReason>(request.Reason, ignoreCase: true, out var reason))
             return Results.BadRequest(new { Error = $"Invalid reason: '{request.Reason}'." });
+
+        if (request.ReasonDetails is { Length: > 2000 })
+            return Results.BadRequest(new { Error = "ReasonDetails must not exceed 2000 characters." });
+
+        if (request.Comments is { Length: > 2000 })
+            return Results.BadRequest(new { Error = "Comments must not exceed 2000 characters." });
 
         var command = new RevealProtectedDataCommand(id, reason, request.ReasonDetails, request.Comments, request.Password!);
         var result = await handler.HandleAsync(command, ct);

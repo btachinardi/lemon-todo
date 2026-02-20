@@ -33,7 +33,7 @@ public static class NotificationEndpoints
             return Results.BadRequest(new { Error = "pageSize must not exceed 200." });
 
         pageSize = Math.Clamp(pageSize, 1, 200);
-        page = Math.Max(1, page);
+        page = Math.Clamp(page, 1, int.MaxValue / pageSize);
 
         var userId = GetUserId(principal);
         if (userId is null) return Results.Unauthorized();

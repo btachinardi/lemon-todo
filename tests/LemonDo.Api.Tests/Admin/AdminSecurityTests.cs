@@ -425,9 +425,9 @@ public sealed class AdminSecurityTests
         Assert.IsNotNull(result);
         foreach (var user in result.Items)
         {
-            Assert.IsTrue(user.Email.Contains("***"),
+            Assert.Contains("***", user.Email,
                 $"Email '{user.Email}' must be redacted (contain '***') in list view");
-            Assert.IsTrue(user.DisplayName.Contains("***"),
+            Assert.Contains("***", user.DisplayName,
                 $"DisplayName '{user.DisplayName}' must be redacted in list view");
         }
     }
@@ -443,9 +443,9 @@ public sealed class AdminSecurityTests
 
         var user = await response.Content.ReadFromJsonAsync<AdminUserDto>(JsonOpts);
         Assert.IsNotNull(user);
-        Assert.IsTrue(user.Email.Contains("***"),
+        Assert.Contains("***", user.Email,
             $"Email '{user.Email}' must be redacted (contain '***') in single-user GET");
-        Assert.IsTrue(user.DisplayName.Contains("***"),
+        Assert.Contains("***", user.DisplayName,
             $"DisplayName '{user.DisplayName}' must be redacted in single-user GET");
     }
 
