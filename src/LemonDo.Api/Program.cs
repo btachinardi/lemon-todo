@@ -326,6 +326,7 @@ if (!isBuildTimeDocGen)
     app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseMiddleware<ActiveUserMiddleware>();
 
     app.MapDefaultEndpoints();
 }
