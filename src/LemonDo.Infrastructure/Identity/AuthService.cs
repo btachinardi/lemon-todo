@@ -125,6 +125,19 @@ public sealed class AuthService(
             return Result<(UserId, AuthTokens), DomainError>.Failure(
                 DomainError.Unauthorized("auth", "Invalid or expired refresh token."));
 
+        // Check if the user is permanently deactivated before issuing new tokens.
+        // Temporary lockout (from failed password attempts) does NOT block token refresh —
+        // lockout only affects password-based operations.
+        var user = await userManager.FindByIdAsync(storedToken.UserId.ToString());
+        if (user is null || IsDeactivated(user))
+        {
+            // Revoke the token so it can't be retried
+            storedToken.RevokedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync(ct);
+            return Result<(UserId, AuthTokens), DomainError>.Failure(
+                DomainError.Unauthorized("auth", "Account is deactivated."));
+        }
+
         // Revoke old token
         storedToken.RevokedAt = DateTimeOffset.UtcNow;
 
@@ -159,8 +172,13 @@ public sealed class AuthService(
         if (user is null)
             return Result<DomainError>.Failure(DomainError.NotFound("user", userId.ToString()));
 
-        var isValid = await userManager.CheckPasswordAsync(user, password);
-        if (!isValid)
+        var result = await signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+
+        if (result.IsLockedOut)
+            return Result<DomainError>.Failure(
+                DomainError.RateLimited("auth", "Account temporarily locked due to too many failed attempts. Please try again later."));
+
+        if (!result.Succeeded)
             return Result<DomainError>.Failure(
                 DomainError.Unauthorized("auth", "Invalid password. Re-authentication failed."));
 
@@ -187,4 +205,14 @@ public sealed class AuthService(
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
         return Convert.ToBase64String(bytes);
     }
+
+    /// <summary>
+    /// Distinguishes permanent deactivation from temporary lockout.
+    /// Deactivation sets LockoutEnd to <see cref="DateTimeOffset.MaxValue"/>.
+    /// Temporary lockout uses short windows (e.g. 15 minutes).
+    /// A lockout more than 1 year in the future is treated as permanent deactivation.
+    /// </summary>
+    private static bool IsDeactivated(ApplicationUser user) =>
+        user.LockoutEnd.HasValue
+        && user.LockoutEnd.Value > DateTimeOffset.UtcNow.AddYears(1);
 }
