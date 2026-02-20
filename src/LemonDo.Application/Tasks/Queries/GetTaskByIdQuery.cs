@@ -1,5 +1,6 @@
 namespace LemonDo.Application.Tasks.Queries;
 
+using LemonDo.Application.Common;
 using LemonDo.Application.Tasks.DTOs;
 using LemonDo.Domain.Common;
 using LemonDo.Domain.Tasks.Repositories;
@@ -12,14 +13,14 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 public sealed record GetTaskByIdQuery(Guid TaskId);
 
 /// <summary>Returns the task as a DTO, or a not-found error.</summary>
-public sealed class GetTaskByIdQueryHandler(ITaskRepository repository, ILogger<GetTaskByIdQueryHandler> logger)
+public sealed class GetTaskByIdQueryHandler(ITaskRepository repository, ICurrentUserService currentUser, ILogger<GetTaskByIdQueryHandler> logger)
 {
-    /// <summary>Loads the task and maps it to a DTO, or returns a not-found error if the task doesn't exist.</summary>
+    /// <summary>Loads the task and maps it to a DTO, or returns a not-found error if the task doesn't exist or isn't owned by the current user.</summary>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(GetTaskByIdQuery query, CancellationToken ct = default)
     {
         logger.LogInformation("Fetching task {TaskId}", query.TaskId);
 
-        var task = await repository.GetByIdAsync(TaskId.From(query.TaskId), ct);
+        var task = await repository.GetByIdAsync(TaskId.From(query.TaskId), currentUser.UserId, ct);
         if (task is null)
         {
             logger.LogWarning("Task {TaskId} not found", query.TaskId);

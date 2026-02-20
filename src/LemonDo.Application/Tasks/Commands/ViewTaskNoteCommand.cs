@@ -27,14 +27,9 @@ public sealed class ViewTaskNoteCommandHandler(
     /// <summary>Decrypts and returns the task's sensitive note after ownership and password verification.</summary>
     public async Task<Result<RevealedField, DomainError>> HandleAsync(ViewTaskNoteCommand command, CancellationToken ct = default)
     {
-        var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);
+        var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), currentUser.UserId, ct);
         if (task is null)
             return Result<RevealedField, DomainError>.Failure(DomainError.NotFound("Task", command.TaskId.ToString()));
-
-        // Verify ownership
-        if (task.OwnerId != currentUser.UserId)
-            return Result<RevealedField, DomainError>.Failure(
-                DomainError.BusinessRule("task.not_owner", "You can only view notes on your own tasks."));
 
         // Verify the task has a sensitive note
         if (task.RedactedSensitiveNote is null)

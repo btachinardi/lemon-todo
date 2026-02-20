@@ -16,7 +16,15 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 public sealed class TaskRepository(LemonDoDbContext context, IFieldEncryptionService encryptionService) : ITaskRepository
 {
     /// <inheritdoc/>
-    public async System.Threading.Tasks.Task<TaskEntity?> GetByIdAsync(TaskId id, CancellationToken ct = default)
+    public async System.Threading.Tasks.Task<TaskEntity?> GetByIdAsync(TaskId id, UserId ownerId, CancellationToken ct = default)
+    {
+        return await context.Tasks
+            .Include(t => t.Tags)
+            .FirstOrDefaultAsync(t => t.Id == id && t.OwnerId == ownerId && !t.IsDeleted, ct);
+    }
+
+    /// <inheritdoc/>
+    public async System.Threading.Tasks.Task<TaskEntity?> GetByIdUnfilteredAsync(TaskId id, CancellationToken ct = default)
     {
         return await context.Tasks
             .Include(t => t.Tags)

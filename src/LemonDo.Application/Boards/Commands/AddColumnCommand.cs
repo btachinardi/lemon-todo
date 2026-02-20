@@ -15,14 +15,14 @@ using Microsoft.Extensions.Logging;
 public sealed record AddColumnCommand(Guid BoardId, string Name, string TargetStatus, int? Position = null);
 
 /// <summary>Validates the column name and status, then delegates to <see cref="LemonDo.Domain.Boards.Entities.Board.AddColumn"/>.</summary>
-public sealed class AddColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork, ILogger<AddColumnCommandHandler> logger)
+public sealed class AddColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork, ICurrentUserService currentUser, ILogger<AddColumnCommandHandler> logger)
 {
     /// <summary>Validates the column name and target status, adds the column to the board at the specified position, and persists the change.</summary>
     public async Task<Result<ColumnDto, DomainError>> HandleAsync(AddColumnCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Adding column {ColumnName} to board {BoardId}", command.Name, command.BoardId);
 
-        var board = await repository.GetByIdAsync(BoardId.From(command.BoardId), ct);
+        var board = await repository.GetByIdAsync(BoardId.From(command.BoardId), currentUser.UserId, ct);
         if (board is null)
         {
             var error = DomainError.NotFound("Board", command.BoardId.ToString());

@@ -10,12 +10,12 @@ using Microsoft.EntityFrameworkCore;
 public sealed class BoardRepository(LemonDoDbContext context) : IBoardRepository
 {
     /// <inheritdoc/>
-    public async Task<Board?> GetByIdAsync(BoardId id, CancellationToken ct = default)
+    public async Task<Board?> GetByIdAsync(BoardId id, UserId ownerId, CancellationToken ct = default)
     {
         return await context.Boards
             .Include(b => b.Columns)
             .Include(b => b.Cards)
-            .FirstOrDefaultAsync(b => b.Id == id, ct);
+            .FirstOrDefaultAsync(b => b.Id == id && b.OwnerId == ownerId, ct);
     }
 
     /// <inheritdoc/>

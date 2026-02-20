@@ -45,7 +45,7 @@ public sealed class CompleteTaskCommandHandlerTests
         var initialColumn = _board.GetInitialColumn();
         _board.PlaceTask(task.Id, initialColumn.Id);
 
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(new CompleteTaskCommand(task.Id.Value));
@@ -59,7 +59,7 @@ public sealed class CompleteTaskCommandHandlerTests
     [TestMethod]
     public async Task Should_Fail_When_TaskNotFound()
     {
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns((TaskEntity?)null);
 
         var result = await _handler.HandleAsync(new CompleteTaskCommand(Guid.NewGuid()));
@@ -75,7 +75,7 @@ public sealed class CompleteTaskCommandHandlerTests
         var initialColumn = _board.GetInitialColumn();
         _board.PlaceTask(task.Id, initialColumn.Id);
 
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(new CompleteTaskCommand(task.Id.Value));

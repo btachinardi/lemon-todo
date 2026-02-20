@@ -50,7 +50,7 @@ public sealed class RevealTaskNoteCommandHandler(
         }
 
         // 2. Verify the task exists and has a sensitive note
-        var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);
+        var task = await taskRepository.GetByIdUnfilteredAsync(TaskId.From(command.TaskId), ct);
         if (task is null)
             return Result<RevealedField, DomainError>.Failure(
                 DomainError.NotFound("Task", command.TaskId.ToString()));

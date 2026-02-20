@@ -46,7 +46,7 @@ public sealed class MoveTaskCommandHandler(
 
         logger.LogInformation("Moving task {TaskId} to column {ColumnId}", command.TaskId, command.ColumnId);
 
-        var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);
+        var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), currentUser.UserId, ct);
         if (task is null)
         {
             var error = DomainError.NotFound("Task", command.TaskId.ToString());
