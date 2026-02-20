@@ -12,14 +12,14 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 public sealed record RemoveTagFromTaskCommand(Guid TaskId, string Tag);
 
 /// <summary>Validates the tag and delegates to <see cref="LemonDo.Domain.Tasks.Entities.Task.RemoveTag"/>.</summary>
-public sealed class RemoveTagFromTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<RemoveTagFromTaskCommandHandler> logger)
+public sealed class RemoveTagFromTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ICurrentUserService currentUser, ILogger<RemoveTagFromTaskCommandHandler> logger)
 {
     /// <summary>Validates the tag, loads the task, removes the tag, and persists the change.</summary>
     public async Task<Result<DomainError>> HandleAsync(RemoveTagFromTaskCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Removing tag {Tag} from task {TaskId}", command.Tag, command.TaskId);
 
-        var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), ct);
+        var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), currentUser.UserId, ct);
         if (task is null)
         {
             var error = DomainError.NotFound("Task", command.TaskId.ToString());

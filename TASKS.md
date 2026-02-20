@@ -207,6 +207,9 @@
 | PR.1 | Offline queue startup drain + cache invalidation | DONE | `initOfflineQueue()` drains on startup if online with pending mutations; `offline-queue-drained` event for QueryProvider cache invalidation |
 | PR.2 | Admin E2E test coverage | DONE | 20 tests across 5 specs (users, audit, roles, route guards, PII reveal). Shared `admin.helpers.ts` module. |
 | PR.3 | Fix AuthHydrationProvider StrictMode race | DONE | `useRef` shared promise prevents double-fire of non-idempotent refresh token rotation |
+| PR.4 | Security hardening: domain validation + middleware + auth race fix | DONE | Invisible Unicode rejection, null byte guard, GUID claim validation, correlation ID sanitization, concurrency error handling, atomic refresh rotation |
+| PR.5 | Security test infrastructure + parameterized baselines | DONE | EndpointRegistry + DynamicData baselines, shared types, advanced/concurrency/response tests. Rename *HardeningTests → *SecurityTests. |
+| PR.6 | Dev CLI test-results infrastructure | DONE | Per-project TRX output, 24h cleanup, `./dev test-results` list/failures/clean |
 
 ---
 
@@ -333,6 +336,11 @@
 | 2026-02-17 | CI/CD for release branches | Added `release/*` to workflow triggers (push + PR). Tests run but deploy is skipped (deploy only on `main` push). Ensures verification gate passes in CI before merging to main. |
 | 2026-02-17 | `useVisualViewport` hook for keyboard-aware overlays | Mobile virtual keyboards resize the visual viewport but not the layout viewport. `useVisualViewport` tracks `window.visualViewport` offset/height changes and applies CSS transform to Dialog/Sheet overlays so they stay visible above the keyboard. |
 | 2026-02-17 | v1.0.4 patch release | Mobile UX polish: keyboard-aware dialogs/sheets, scrollable evaluator modal, drag-scroll direction lock fix, auth loading screen, font size hierarchy bump, i18n copy tightening. |
+| 2026-02-20 | Atomic SQL for refresh token rotation | Two-step read-then-revoke had race condition under concurrent requests. Single `UPDATE...WHERE RevokedAt IS NULL` ensures only one request wins. |
+| 2026-02-20 | Parameterized security test baselines | Per-endpoint security tests had massive duplication (auth bypass, method enforcement, etc.). Extracted `EndpointRegistry` + `DynamicData` so adding a new endpoint auto-generates baseline coverage. |
+| 2026-02-20 | Admin self-action guards | SystemAdmin self-deactivation or self-role-removal could leave system with no active administrator. Guards added at application layer. |
+| 2026-02-20 | Correlation ID sanitization | Unsanitized X-Correlation-Id headers enabled log injection, XSS reflection, and log bloat. Now truncated to 128 chars, stripped to alphanumeric+hyphen+underscore. |
+| 2026-02-20 | v1.0.8 patch release | Security hardening: domain validation, middleware hardening, atomic refresh rotation, admin self-action guards, parameterized security test infrastructure, dev CLI test-results. |
 
 ---
 
@@ -406,6 +414,9 @@
 - **Release v1.0.5**: Patch — mobile UX polish (toast overlay, kanban drag-scroll edge zones, banner overflow, demo account switcher redesign)
 - **Release v1.0.6**: Patch — smooth demo account switching (cache reset + transition overlay), kanban trailing scroll padding + custom scrollbar, test count docs update (1,086 total)
 - **Release v1.0.7**: Patch — stale data fix on account switch (resetQueries replaces clear), loading screen ripple alignment with perspective ellipses, test count docs update (1,094 total)
+- **Post-release security**: Domain input validation (invisible Unicode, null bytes), middleware hardening (GUID claim validation, correlation ID sanitization, concurrency error handling, Cache-Control), atomic refresh token rotation, admin self-action guards
+- **Post-release DX**: Parameterized security test baselines (EndpointRegistry + DynamicData), security test infrastructure extraction, dev CLI test-results commands
+- **Release v1.0.8**: Patch — security hardening across domain, middleware, auth, and admin layers; parameterized security test infrastructure; dev CLI test-results
 
 ---
 
@@ -564,3 +575,76 @@
 | 3c714a0 | fix(ui): fix mobile kanban drag-scroll direction lock and increase snap cooldown | v1.0.4 |
 | 48833bb | feat(ui): bump font size hierarchy for improved readability | v1.0.4 |
 | 9d432a0 | fix(i18n): tighten methodology page copy across all 3 locales | v1.0.4 |
+| 88c38d8 | fix(auth): block deactivated users on token refresh and enforce lockout on password verification | Security |
+| 90091dd | feat(api): add ActiveUserMiddleware to reject deactivated users | Security |
+| 416c0b1 | fix(api): handle malformed JSON and bad request bodies in error middleware | Security |
+| f8ae366 | feat(api): add input validation to paginated and bulk endpoints | Security |
+| 564d049 | test(api): add security hardening tests for all endpoint groups | Security |
+| 0dc59c3 | refactor(security): enforce resource ownership via owner-scoped repository queries | Security |
+| b045b3e | fix(infra): use raw SQL for task search to bypass value-converter cast exception | Security |
+| 3cb53c9 | feat(domain): add visible-character and null-byte validation to value objects | v1.0.8 |
+| 4b59ae9 | feat(admin): prevent self-deactivation and self-role-removal | v1.0.8 |
+| e4677e3 | fix(auth): use atomic SQL for refresh token rotation to prevent race conditions | v1.0.8 |
+| 0e98bb6 | fix(api): harden middleware against injection and concurrency errors | v1.0.8 |
+| c689173 | refactor(test): extract security test infrastructure and parameterized baselines | v1.0.8 |
+| 3a7e6ad | chore(dev): add test-results infrastructure to dev CLI | v1.0.8 |
+
+---
+
+# Upcoming Checkpoints (CP6–CP11)
+
+> v2 evolves LemonDo from a task management app into Bruno's personal development command center.
+> Detailed checkpoint plans, task breakdowns, and technology spikes are in [`docs/roadmap/checkpoints.md`](./docs/roadmap/checkpoints.md).
+
+## Planning Phases
+
+| Phase | Focus | Status |
+|-------|-------|--------|
+| Phase 0 | Workspace setup (worktree, docs) | DONE |
+| Phase 1 | Documentation decomposition (59 files) | DONE |
+| Phase 2 | v2 requirements expansion (13 tasks + major domain expansions) | DONE |
+| Phase 3 | Implementation planning (checkpoints, tasks, spikes, gates) | DONE |
+
+## Technology Spikes
+
+| ID | Spike | Blocks | Status |
+|----|-------|--------|--------|
+| SK-01 | simple-git worktree operations | CP6 | TODO |
+| SK-02 | ngrok REST API + tunnel lifecycle | CP6 | TODO |
+| SK-03 | Redis Streams bidirectional (.NET + Node.js) | CP8 | TODO |
+| SK-04 | Claude Agent SDK sidecar lifecycle | CP8 | TODO |
+| SK-05 | SignalR Hub → SSE bridge for streaming | CP8 | TODO |
+| SK-06 | Gmail OAuth2 + Push Notifications | CP10 | TODO |
+| SK-07 | Baileys (WhatsApp) stability assessment | CP10 | TODO |
+| SK-08 | Discord.Net Gateway WebSocket | CP10 | TODO |
+
+## Implementation Checkpoints
+
+| Checkpoint | Name | Module(s) | Tasks | Tests | Status |
+|------------|------|-----------|-------|-------|--------|
+| CP6 | Foundation & Projects | Projects | 34 | +180 | TODO |
+| CP7 | People & Relationships | People, ProjectTaskBridge | 27 | +130 | TODO |
+| CP8 | Agent Core | Agents | 33 | +200 | TODO |
+| CP9 | Agent Intelligence | Agents (skills/chains), ProjectAgentBridge, AgentTaskBridge | 43 | +180 | TODO |
+| CP10 | Communications | Comms | 31 | +160 | TODO |
+| CP11 | Integration & Polish | All modules | 18 | +60 | TODO |
+| **Total** | | | **~155** | **+910** | |
+
+> **Critical Path**: CP6 → CP8 → CP9 → CP11
+> **Parallel Track**: CP7 → CP10 (can run alongside the critical path)
+> **Estimated Effort**: ~53 solo weeks (compresses significantly with parallel agent sessions)
+
+## Decision Log (CP6+)
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2026-02-18 | Event-sourced Node.js sidecars with Redis Streams (ADR-006) | Claude Agent SDK is TypeScript-only; .NET API needs bidirectional communication with sidecar |
+| 2026-02-18 | Bridge bounded contexts for cross-domain integration | ProjectAgentBridge, AgentTaskBridge, ProjectTaskBridge keep core domains pure |
+| 2026-02-18 | Skills system with memory pills | Composable agent configurations that improve over time through consolidation |
+| 2026-02-18 | WorkQueue moved from Agents to ProjectAgentBridge | Batch execution is a project orchestration concern, not an agent runtime concern |
+| 2026-02-18 | AgentSession simplified: WorkingDirectory + Objective only | Bridge contexts own the project/task correlation, keeping Agents context clean |
+| 2026-02-18 | LinkedIn deferred to v3 | No reliable API; scraping is ToS-violating and fragile |
+| 2026-02-18 | Baileys for WhatsApp (spike required) | Official Cloud API not suitable for personal inbox; Baileys carries ToS risk |
+| 2026-02-18 | Per-session model selection | Users choose between Haiku (cheap/fast) and Opus (expensive/capable) per session |
+| 2026-02-18 | Auto-continue with validation criteria | Sessions continue autonomously until tests pass or max continuations reached |
+| 2026-02-18 | Two-phase lifecycle commands | Request → Confirm pattern for all destructive session actions (interrupt, pause, cancel) |

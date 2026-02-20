@@ -26,14 +26,14 @@ public sealed record UpdateTaskCommand(
     bool ClearSensitiveNote = false);
 
 /// <summary>Applies partial updates to a task. Only non-null fields are changed.</summary>
-public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<UpdateTaskCommandHandler> logger)
+public sealed class UpdateTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ICurrentUserService currentUser, ILogger<UpdateTaskCommandHandler> logger)
 {
     /// <summary>Loads the task, applies partial updates to provided fields, validates all changes, and persists the modified task.</summary>
     public async Task<Result<TaskDto, DomainError>> HandleAsync(UpdateTaskCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Updating task {TaskId}", command.TaskId);
 
-        var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), ct);
+        var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), currentUser.UserId, ct);
         if (task is null)
         {
             var error = DomainError.NotFound("Task", command.TaskId.ToString());

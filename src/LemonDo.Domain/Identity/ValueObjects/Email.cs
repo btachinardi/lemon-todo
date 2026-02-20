@@ -34,6 +34,10 @@ public sealed partial class Email : ValueObject<string>, IReconstructable<Email,
 
         var trimmed = email.Trim();
 
+        if (trimmed.Contains('\0'))
+            return Result<Email, DomainError>.Failure(
+                DomainError.Validation("email", "Email format is invalid."));
+
         if (trimmed.Length > MaxLength)
             return Result<Email, DomainError>.Failure(
                 DomainError.Validation("email", $"Email must not exceed {MaxLength} characters."));

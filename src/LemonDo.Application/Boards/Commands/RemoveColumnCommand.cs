@@ -10,14 +10,14 @@ using Microsoft.Extensions.Logging;
 public sealed record RemoveColumnCommand(Guid BoardId, Guid ColumnId);
 
 /// <summary>Removes the column via <see cref="LemonDo.Domain.Boards.Entities.Board.RemoveColumn"/>. Enforces minimum column invariants.</summary>
-public sealed class RemoveColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork, ILogger<RemoveColumnCommandHandler> logger)
+public sealed class RemoveColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork, ICurrentUserService currentUser, ILogger<RemoveColumnCommandHandler> logger)
 {
     /// <summary>Loads the board, removes the column (enforces minimum column count and no cards), and persists the change.</summary>
     public async Task<Result<DomainError>> HandleAsync(RemoveColumnCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Removing column {ColumnId} from board {BoardId}", command.ColumnId, command.BoardId);
 
-        var board = await repository.GetByIdAsync(BoardId.From(command.BoardId), ct);
+        var board = await repository.GetByIdAsync(BoardId.From(command.BoardId), currentUser.UserId, ct);
         if (board is null)
         {
             var error = DomainError.NotFound("Board", command.BoardId.ToString());

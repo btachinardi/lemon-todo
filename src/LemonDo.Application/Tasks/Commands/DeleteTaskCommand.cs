@@ -31,7 +31,7 @@ public sealed class DeleteTaskCommandHandler(
 
         logger.LogInformation("Deleting task {TaskId}", command.TaskId);
 
-        var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), ct);
+        var task = await taskRepository.GetByIdAsync(TaskId.From(command.TaskId), currentUser.UserId, ct);
         if (task is null)
         {
             var error = DomainError.NotFound("Task", command.TaskId.ToString());

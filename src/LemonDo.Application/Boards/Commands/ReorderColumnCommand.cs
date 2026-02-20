@@ -11,14 +11,14 @@ using Microsoft.Extensions.Logging;
 public sealed record ReorderColumnCommand(Guid BoardId, Guid ColumnId, int NewPosition);
 
 /// <summary>Moves the column to the new position via <see cref="LemonDo.Domain.Boards.Entities.Board.ReorderColumn"/>.</summary>
-public sealed class ReorderColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork, ILogger<ReorderColumnCommandHandler> logger)
+public sealed class ReorderColumnCommandHandler(IBoardRepository repository, IUnitOfWork unitOfWork, ICurrentUserService currentUser, ILogger<ReorderColumnCommandHandler> logger)
 {
     /// <summary>Loads the board, moves the column to the new position, and persists the change.</summary>
     public async Task<Result<ColumnDto, DomainError>> HandleAsync(ReorderColumnCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Reordering column {ColumnId} to position {NewPosition} on board {BoardId}", command.ColumnId, command.NewPosition, command.BoardId);
 
-        var board = await repository.GetByIdAsync(BoardId.From(command.BoardId), ct);
+        var board = await repository.GetByIdAsync(BoardId.From(command.BoardId), currentUser.UserId, ct);
         if (board is null)
         {
             var error = DomainError.NotFound("Board", command.BoardId.ToString());

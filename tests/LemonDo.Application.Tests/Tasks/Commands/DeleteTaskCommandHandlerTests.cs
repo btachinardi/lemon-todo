@@ -44,7 +44,7 @@ public sealed class DeleteTaskCommandHandlerTests
         var task = TaskEntity.Create(UserId.Default, TaskTitle.Create("To delete").Value).Value;
         var columnId = _board.GetInitialColumn().Id;
         _board.PlaceTask(task.Id, columnId);
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(new DeleteTaskCommand(task.Id.Value));
@@ -59,7 +59,7 @@ public sealed class DeleteTaskCommandHandlerTests
     [TestMethod]
     public async Task Should_Fail_When_TaskNotFound()
     {
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns((TaskEntity?)null);
 
         var result = await _handler.HandleAsync(new DeleteTaskCommand(Guid.NewGuid()));

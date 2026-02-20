@@ -12,14 +12,14 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 public sealed record AddTagToTaskCommand(Guid TaskId, string Tag);
 
 /// <summary>Validates the tag and delegates to <see cref="LemonDo.Domain.Tasks.Entities.Task.AddTag"/>.</summary>
-public sealed class AddTagToTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ILogger<AddTagToTaskCommandHandler> logger)
+public sealed class AddTagToTaskCommandHandler(ITaskRepository repository, IUnitOfWork unitOfWork, ICurrentUserService currentUser, ILogger<AddTagToTaskCommandHandler> logger)
 {
     /// <summary>Validates the tag, loads the task, adds the normalized tag, and persists the change.</summary>
     public async Task<Result<DomainError>> HandleAsync(AddTagToTaskCommand command, CancellationToken ct = default)
     {
         logger.LogInformation("Adding tag {Tag} to task {TaskId}", command.Tag, command.TaskId);
 
-        var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), ct);
+        var task = await repository.GetByIdAsync(TaskId.From(command.TaskId), currentUser.UserId, ct);
         if (task is null)
         {
             var error = DomainError.NotFound("Task", command.TaskId.ToString());

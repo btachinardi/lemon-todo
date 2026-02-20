@@ -20,7 +20,7 @@ public sealed class GetBoardQueryHandler(IBoardRepository boardRepository, ITask
     {
         logger.LogInformation("Fetching board {BoardId}", query.BoardId);
 
-        var board = await boardRepository.GetByIdAsync(BoardId.From(query.BoardId), ct);
+        var board = await boardRepository.GetByIdAsync(BoardId.From(query.BoardId), currentUser.UserId, ct);
         if (board is null)
         {
             logger.LogWarning("Board {BoardId} not found", query.BoardId);

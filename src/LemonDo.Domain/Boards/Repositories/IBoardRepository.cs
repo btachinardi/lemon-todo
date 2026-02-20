@@ -10,9 +10,9 @@ using LemonDo.Domain.Identity.ValueObjects;
 public interface IBoardRepository
 {
     /// <summary>
-    /// Returns the board with the given ID (with columns and cards loaded), or <c>null</c> if not found.
+    /// Returns the board with the given ID owned by the specified user, or <c>null</c> if not found or not owned.
     /// </summary>
-    Task<Board?> GetByIdAsync(BoardId id, CancellationToken ct = default);
+    Task<Board?> GetByIdAsync(BoardId id, UserId ownerId, CancellationToken ct = default);
 
     /// <summary>
     /// Returns the first board owned by the given user, or <c>null</c> if they have no boards.

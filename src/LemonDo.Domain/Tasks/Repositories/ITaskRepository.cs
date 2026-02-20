@@ -13,9 +13,14 @@ using TaskEntity = LemonDo.Domain.Tasks.Entities.Task;
 public interface ITaskRepository
 {
     /// <summary>
-    /// Returns the task with the given ID, or <c>null</c> if not found.
+    /// Returns the task with the given ID owned by the specified user, or <c>null</c> if not found or not owned.
     /// </summary>
-    System.Threading.Tasks.Task<TaskEntity?> GetByIdAsync(TaskId id, CancellationToken ct = default);
+    System.Threading.Tasks.Task<TaskEntity?> GetByIdAsync(TaskId id, UserId ownerId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the task with the given ID regardless of owner. Reserved for admin break-the-glass operations.
+    /// </summary>
+    System.Threading.Tasks.Task<TaskEntity?> GetByIdUnfilteredAsync(TaskId id, CancellationToken ct = default);
 
     /// <summary>
     /// Returns a paginated, filtered list of tasks owned by the given user.

@@ -14,6 +14,7 @@ APPHOST_PROJECT="$ROOT_DIR/src/LemonDo.AppHost"
 MIGRATIONS_SQLITE="$ROOT_DIR/src/LemonDo.Migrations.Sqlite"
 MIGRATIONS_SQLSERVER="$ROOT_DIR/src/LemonDo.Migrations.SqlServer"
 INFRA_DIR="$ROOT_DIR/infra"
+TEST_RESULTS_DIR="$ROOT_DIR/.test-results"
 DEFAULT_STAGE="stage1-mvp"
 
 # Default SQL Server connection for local Docker
@@ -114,6 +115,45 @@ setup_az_path() {
   local az_dir
   az_dir="$(dirname "$az_cmd")"
   export PATH="$az_dir:$PATH"
+}
+
+# ── Test result helpers ───────────────────────────────────────────────
+# Prune TRX files older than 24 hours.
+cleanup_old_test_results() {
+  if [ -d "$TEST_RESULTS_DIR" ]; then
+    find "$TEST_RESULTS_DIR" -name "*.trx" -mmin +1440 -delete 2>/dev/null || true
+    find "$TEST_RESULTS_DIR" -mindepth 1 -type d -empty -delete 2>/dev/null || true
+  fi
+  mkdir -p "$TEST_RESULTS_DIR"
+}
+
+# Discover test projects from the solution and run each with per-project TRX output.
+# Convention: project name "LemonDo.Foo.Tests" → results dir ".test-results/Foo"
+run_backend_tests() {
+  local projects
+  projects=$(dotnet sln "$SLN" list 2>/dev/null | grep '\.Tests\.csproj$')
+  local failed=0
+
+  while IFS= read -r rel_path; do
+    [ -z "$rel_path" ] && continue
+    # rel_path is relative to src/ dir (e.g. ..\tests\LemonDo.Api.Tests\LemonDo.Api.Tests.csproj)
+    local project_dir
+    project_dir="$ROOT_DIR/src/$rel_path"
+    # Normalize path (resolve ..\)
+    project_dir="$(cd "$(dirname "$project_dir")" 2>/dev/null && pwd)"
+
+    # Derive short name: LemonDo.Api.Tests → Api
+    local dir_name
+    dir_name="$(basename "$project_dir")"
+    local short_name
+    short_name="${dir_name#LemonDo.}"   # strip LemonDo. prefix
+    short_name="${short_name%.Tests}"    # strip .Tests suffix
+
+    mkdir -p "$TEST_RESULTS_DIR/$short_name"
+    dotnet test --project "$project_dir" --report-trx --results-directory "$TEST_RESULTS_DIR/$short_name" "$@" || failed=1
+  done <<< "$projects"
+
+  return $failed
 }
 
 # ── SQL Server helpers ────────────────────────────────────────────────
@@ -324,15 +364,17 @@ cmd_test() {
       ;;
     backend)
       header "Backend Tests (SQLite)"
-      dotnet test --solution "$SLN" "$@"
+      cleanup_old_test_results
+      run_backend_tests "$@"
       ;;
     backend:sql)
       header "Backend Tests (SQL Server)"
       ensure_sql_server
+      cleanup_old_test_results
       export TEST_DATABASE_PROVIDER=SqlServer
       export TEST_SQLSERVER_CONNECTION_STRING
       TEST_SQLSERVER_CONNECTION_STRING="$(sql_conn)"
-      dotnet test --solution "$SLN" "$@"
+      run_backend_tests "$@"
       ;;
     backend:both)
       cmd_test backend "$@"
@@ -523,7 +565,8 @@ cmd_verify() {
   fi
 
   echo -e "\n${BOLD}[4/6] Backend Tests${NC}"
-  if dotnet test --solution "$SLN"; then
+  cleanup_old_test_results
+  if run_backend_tests; then
     success "  PASS"
   else
     err "  FAIL"; failed=1
@@ -715,6 +758,92 @@ cmd_docker() {
   esac
 }
 
+cmd_test_results() {
+  local action="${1:-list}"
+
+  case "$action" in
+    list)
+      if [ ! -d "$TEST_RESULTS_DIR" ] || [ -z "$(find "$TEST_RESULTS_DIR" -name '*.trx' 2>/dev/null)" ]; then
+        warn "No test results found in .test-results/"
+        return
+      fi
+      header "Recent Test Results (last 24h)"
+      for project_dir in "$TEST_RESULTS_DIR"/*/; do
+        [ -d "$project_dir" ] || continue
+        local project
+        project="$(basename "$project_dir")"
+        local dir="$TEST_RESULTS_DIR/$project"
+        [ -d "$dir" ] || continue
+        local trx_files
+        trx_files=$(find "$dir" -name '*.trx' 2>/dev/null | sort -r)
+        [ -z "$trx_files" ] && continue
+
+        echo -e "\n  ${BOLD}$project${NC}"
+        echo -e "  ${CYAN}Timestamp              Tests   Pass    Fail${NC}"
+        while IFS= read -r f; do
+          local total passed failed
+          total=$(grep -oP 'total="\K\d+' "$f" 2>/dev/null | head -1)
+          passed=$(grep -oP 'passed="\K\d+' "$f" 2>/dev/null | head -1)
+          failed=$(grep -oP 'failed="\K\d+' "$f" 2>/dev/null | head -1)
+          local ts
+          ts=$(stat -c '%Y' "$f" 2>/dev/null || stat -f '%m' "$f" 2>/dev/null)
+          local date_str
+          date_str=$(date -d "@$ts" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -r "$ts" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "unknown")
+          local color="$GREEN"
+          [ "${failed:-0}" -gt 0 ] && color="$RED"
+          printf "  ${color}%-23s %-7s %-7s %s${NC}\n" "$date_str" "${total:-?}" "${passed:-?}" "${failed:-?}"
+        done <<< "$trx_files"
+      done
+      echo ""
+      ;;
+    failures)
+      if [ ! -d "$TEST_RESULTS_DIR" ]; then
+        warn "No test results found."
+        return
+      fi
+      header "Failed Tests (from recent TRX files)"
+      local found=0
+      for project_dir in "$TEST_RESULTS_DIR"/*/; do
+        [ -d "$project_dir" ] || continue
+        local project
+        project="$(basename "$project_dir")"
+        for f in "$project_dir"*.trx; do
+          [ -f "$f" ] || continue
+          # Count only UnitTestResult elements with outcome=Failed (not ResultSummary)
+          local fails
+          fails=$(grep -c 'UnitTestResult.*outcome="Failed"' "$f" 2>/dev/null || true)
+          fails="${fails:-0}"
+          if [ "$fails" -gt 0 ]; then
+            found=1
+            echo -e "\n${RED}${BOLD}[$project]${NC} — $fails failure(s):"
+            # Extract failed test names
+            grep -oP 'UnitTestResult[^>]*testName="\K[^"]+(?="[^>]*outcome="Failed")' "$f" 2>/dev/null | while read -r name; do
+              echo -e "  ${RED}✗${NC} $name"
+            done
+            # Extract assertion messages (inside <Message> tags)
+            grep -oP '<Message>\K[^<]+' "$f" 2>/dev/null | while read -r msg; do
+              echo -e "    ${YELLOW}→ ${msg}${NC}"
+            done
+          fi
+        done
+      done
+      if [ "$found" -eq 0 ]; then
+        success "No failures found in recent results."
+      fi
+      ;;
+    clean)
+      header "Cleaning All Test Results"
+      rm -rf "$TEST_RESULTS_DIR"
+      success "Test results cleaned."
+      ;;
+    *)
+      err "Unknown test-results action: $action"
+      echo "Usage: ./dev test-results [list|failures|clean]"
+      exit 1
+      ;;
+  esac
+}
+
 cmd_help() {
   cat <<'EOF'
 
@@ -742,6 +871,11 @@ cmd_help() {
       e2e:update-snapshots    Regenerate visual regression snapshots
 
     lint                      Frontend ESLint
+
+    test-results [action]     Browse test result logs (24h retention)
+      list                    Show recent results summary (default)
+      failures                Show failed tests with messages
+      clean                   Delete all stored results
 
     start [target]            Start services
       all                     Full stack via Aspire (default)
@@ -808,6 +942,7 @@ case "$command" in
   install)     cmd_install "$@" ;;
   build)       cmd_build "$@" ;;
   test)        cmd_test "$@" ;;
+  test-results) cmd_test_results "$@" ;;
   lint)        cmd_lint "$@" ;;
   start)       cmd_start "$@" ;;
   migrate)     cmd_migrate "$@" ;;

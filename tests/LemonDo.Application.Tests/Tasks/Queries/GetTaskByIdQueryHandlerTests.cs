@@ -1,5 +1,6 @@
 namespace LemonDo.Application.Tests.Tasks.Queries;
 
+using LemonDo.Application.Common;
 using LemonDo.Application.Tasks.Queries;
 using LemonDo.Domain.Identity.ValueObjects;
 using LemonDo.Domain.Tasks.Repositories;
@@ -19,7 +20,9 @@ public sealed class GetTaskByIdQueryHandlerTests
     public void Setup()
     {
         _repository = Substitute.For<ITaskRepository>();
-        _handler = new GetTaskByIdQueryHandler(_repository, NullLogger<GetTaskByIdQueryHandler>.Instance);
+        var currentUser = Substitute.For<ICurrentUserService>();
+        currentUser.UserId.Returns(UserId.Default);
+        _handler = new GetTaskByIdQueryHandler(_repository, currentUser, NullLogger<GetTaskByIdQueryHandler>.Instance);
     }
 
     [TestMethod]
@@ -27,7 +30,7 @@ public sealed class GetTaskByIdQueryHandlerTests
     {
         var task = TaskEntity.Create(
             UserId.Default, TaskTitle.Create("Test").Value, priority: Priority.High).Value;
-        _repository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _repository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(new GetTaskByIdQuery(task.Id.Value));
@@ -40,7 +43,7 @@ public sealed class GetTaskByIdQueryHandlerTests
     [TestMethod]
     public async Task Should_ReturnFailure_When_NotFound()
     {
-        _repository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _repository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns((TaskEntity?)null);
 
         var result = await _handler.HandleAsync(new GetTaskByIdQuery(Guid.NewGuid()));

@@ -47,7 +47,7 @@ public sealed class MoveTaskCommandHandlerTests
         _board.PlaceTask(task.Id, initialColumn.Id);
 
         var doneColumn = _board.GetDoneColumn();
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(
@@ -70,7 +70,7 @@ public sealed class MoveTaskCommandHandlerTests
         _board.PlaceTask(task.Id, initialColumn.Id);
 
         var inProgressColumn = _board.Columns.First(c => c.TargetStatus == TaskStatus.InProgress);
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(
@@ -92,7 +92,7 @@ public sealed class MoveTaskCommandHandlerTests
         _board.PlaceTask(taskB.Id, columnId);
         _board.PlaceTask(taskC.Id, columnId);
 
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(taskC);
 
         // Move C between A and B (same column reorder)
@@ -111,7 +111,7 @@ public sealed class MoveTaskCommandHandlerTests
     [TestMethod]
     public async Task Should_Fail_When_TaskNotFound()
     {
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns((TaskEntity?)null);
 
         var result = await _handler.HandleAsync(
@@ -129,7 +129,7 @@ public sealed class MoveTaskCommandHandlerTests
         var initialColumn = _board.GetInitialColumn();
         _board.PlaceTask(task.Id, initialColumn.Id);
 
-        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<CancellationToken>())
+        _taskRepository.GetByIdAsync(Arg.Any<TaskId>(), Arg.Any<UserId>(), Arg.Any<CancellationToken>())
             .Returns(task);
 
         var result = await _handler.HandleAsync(

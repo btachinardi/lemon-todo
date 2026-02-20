@@ -41,7 +41,7 @@ public sealed class BulkCompleteTasksCommandHandler(
 
         foreach (var taskId in command.TaskIds)
         {
-            var task = await taskRepository.GetByIdAsync(TaskId.From(taskId), ct);
+            var task = await taskRepository.GetByIdAsync(TaskId.From(taskId), currentUser.UserId, ct);
             if (task is null)
                 return Result<DomainError>.Failure(
                     DomainError.NotFound("Task", taskId.ToString()));

@@ -118,15 +118,46 @@ public sealed class AuthService(
         string refreshToken, CancellationToken ct)
     {
         var tokenHash = HashToken(refreshToken);
-        var storedToken = await dbContext.RefreshTokens
-            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
+        var now = DateTimeOffset.UtcNow;
 
-        if (storedToken is null || !storedToken.IsActive)
+        // Atomic conditional revocation using raw SQL. SQLite serialises all writes, so this
+        // UPDATE only succeeds (rowsAffected == 1) for the ONE request that wins the race.
+        // All other concurrent requests see rowsAffected == 0 and get 401.
+        // Raw SQL is used instead of ExecuteUpdateAsync because EF Core's bulk-update goes
+        // through a separate code path that can encounter SQLite connection state issues under
+        // high concurrency on shared in-memory connections.
+        // We only filter by RevokedAt IS NULL (not by ExpiresAt) to avoid SQLite string-based
+        // DateTimeOffset format mismatch issues. Expiry is checked below after reading the token.
+        var rowsAffected = await dbContext.Database.ExecuteSqlAsync(
+            $"""
+            UPDATE "RefreshTokens"
+            SET "RevokedAt" = {now.ToString("O")}
+            WHERE "TokenHash" = {tokenHash}
+              AND "RevokedAt" IS NULL
+            """,
+            ct);
+
+        if (rowsAffected == 0)
             return Result<(UserId, AuthTokens), DomainError>.Failure(
                 DomainError.Unauthorized("auth", "Invalid or expired refresh token."));
 
-        // Revoke old token
-        storedToken.RevokedAt = DateTimeOffset.UtcNow;
+        // Read the now-revoked token to verify it was not already expired and get the UserId.
+        var storedToken = await dbContext.RefreshTokens
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
+
+        // Guard against the token being expired (we didn't check in the UPDATE WHERE clause)
+        if (storedToken is null || storedToken.ExpiresAt <= now)
+            return Result<(UserId, AuthTokens), DomainError>.Failure(
+                DomainError.Unauthorized("auth", "Invalid or expired refresh token."));
+
+        // Check if the user is permanently deactivated before issuing new tokens.
+        // Temporary lockout (from failed password attempts) does NOT block token refresh —
+        // lockout only affects password-based operations.
+        var user = await userManager.FindByIdAsync(storedToken.UserId.ToString());
+        if (user is null || IsDeactivated(user))
+            return Result<(UserId, AuthTokens), DomainError>.Failure(
+                DomainError.Unauthorized("auth", "Account is deactivated."));
 
         var userId = UserId.Reconstruct(storedToken.UserId);
         var tokens = await GenerateTokensAsync(userId, ct);
@@ -159,8 +190,13 @@ public sealed class AuthService(
         if (user is null)
             return Result<DomainError>.Failure(DomainError.NotFound("user", userId.ToString()));
 
-        var isValid = await userManager.CheckPasswordAsync(user, password);
-        if (!isValid)
+        var result = await signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+
+        if (result.IsLockedOut)
+            return Result<DomainError>.Failure(
+                DomainError.RateLimited("auth", "Account temporarily locked due to too many failed attempts. Please try again later."));
+
+        if (!result.Succeeded)
             return Result<DomainError>.Failure(
                 DomainError.Unauthorized("auth", "Invalid password. Re-authentication failed."));
 
@@ -179,7 +215,22 @@ public sealed class AuthService(
         };
 
         dbContext.RefreshTokens.Add(token);
-        await dbContext.SaveChangesAsync(ct);
+        try
+        {
+            await dbContext.SaveChangesAsync(ct);
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+            when (ex.InnerException?.Message?.Contains("UNIQUE constraint", StringComparison.OrdinalIgnoreCase) == true
+               || ex.InnerException?.Message?.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) == true
+               || ex.InnerException?.Message?.Contains("unique index", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            // Refresh token hash collision — extremely rare but safe to surface as a transient error.
+            // The middleware will convert this to 409 if it bubbles up; but since this is called
+            // during token generation (after successful auth), we log and rethrow so the caller
+            // can handle it gracefully.
+            logger.LogWarning("Duplicate refresh token hash conflict for user {UserId}", userId);
+            throw;
+        }
     }
 
     private static string HashToken(string token)
@@ -187,4 +238,14 @@ public sealed class AuthService(
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
         return Convert.ToBase64String(bytes);
     }
+
+    /// <summary>
+    /// Distinguishes permanent deactivation from temporary lockout.
+    /// Deactivation sets LockoutEnd to <see cref="DateTimeOffset.MaxValue"/>.
+    /// Temporary lockout uses short windows (e.g. 15 minutes).
+    /// A lockout more than 1 year in the future is treated as permanent deactivation.
+    /// </summary>
+    private static bool IsDeactivated(ApplicationUser user) =>
+        user.LockoutEnd.HasValue
+        && user.LockoutEnd.Value > DateTimeOffset.UtcNow.AddYears(1);
 }

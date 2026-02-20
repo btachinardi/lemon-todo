@@ -43,7 +43,10 @@ public static class AuthEndpoints
         IOptions<JwtSettings> jwtSettings,
         CancellationToken ct)
     {
-        var command = new RegisterUserCommand(request.Email!, request.Password!, request.DisplayName!);
+        if (request.Email is null || request.Password is null || request.DisplayName is null)
+            return Results.BadRequest(new { type = "validation_error", title = "Email, Password and DisplayName are required.", status = 400 });
+
+        var command = new RegisterUserCommand(request.Email, request.Password, request.DisplayName);
         var result = await handler.HandleAsync(command, ct);
 
         return result.ToHttpResult(
@@ -58,7 +61,10 @@ public static class AuthEndpoints
         IOptions<JwtSettings> jwtSettings,
         CancellationToken ct)
     {
-        var command = new LoginUserCommand(request.Email!, request.Password!);
+        if (request.Email is null || request.Password is null)
+            return Results.BadRequest(new { type = "validation_error", title = "Email and Password are required.", status = 400 });
+
+        var command = new LoginUserCommand(request.Email, request.Password);
         var result = await handler.HandleAsync(command, ct);
 
         return result.ToHttpResult(
